@@ -1,0 +1,54 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Contract {
+  id          String       @id @default(cuid())
+  clientName  String
+  projectName String
+  description String?
+  totalValue  Float
+  signedDate  DateTime
+  status      String       @default("active") // active, completed, cancelled
+  category    String?      // e.g., "construction visit", "project design", "consulting"
+  notes       String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  receivables Receivable[]
+}
+
+model Receivable {
+  id           String    @id @default(cuid())
+  contractId   String
+  contract     Contract  @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  expectedDate DateTime
+  amount       Float
+  status       String    @default("pending") // pending, received, overdue, cancelled
+  receivedDate DateTime?
+  receivedAmount Float?
+  invoiceNumber String?
+  category     String?   // e.g., "project work", "construction visit", "purchase commission"
+  notes        String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([contractId])
+  @@index([expectedDate])
+  @@index([status])
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  color     String?  // for UI visualization
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
