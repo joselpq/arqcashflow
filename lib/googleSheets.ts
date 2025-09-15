@@ -4,6 +4,7 @@ import { format } from 'date-fns'
 export interface SheetData {
   contracts: any[]
   receivables: any[]
+  expenses: any[]
   monthlyData: any[]
 }
 
@@ -69,6 +70,7 @@ export class GoogleSheetsService {
     // Populate each sheet
     await this.populateContractsSheet(spreadsheetId, data.contracts)
     await this.populateReceivablesSheet(spreadsheetId, data.receivables)
+    await this.populateExpensesSheet(spreadsheetId, data.expenses)
     await this.populateCashflowSheet(spreadsheetId, data.monthlyData)
 
     // Apply formatting
@@ -101,8 +103,16 @@ export class GoogleSheetsService {
       {
         addSheet: {
           properties: {
-            title: 'Monthly Cashflow',
+            title: 'Expenses',
             index: 2,
+          },
+        },
+      },
+      {
+        addSheet: {
+          properties: {
+            title: 'Monthly Cashflow',
+            index: 3,
           },
         },
       },
@@ -194,8 +204,57 @@ export class GoogleSheetsService {
     })
   }
 
+  private async populateExpensesSheet(spreadsheetId: string, expenses: any[]): Promise<void> {
+    const headers = [
+      'Project',
+      'Description',
+      'Category',
+      'Type',
+      'Amount',
+      'Due Date',
+      'Status',
+      'Paid Date',
+      'Paid Amount',
+      'Vendor',
+      'Invoice #',
+    ]
+
+    const rows = expenses.map(expense => [
+      expense.projectName,
+      expense.description,
+      expense.category,
+      expense.type,
+      expense.amount,
+      expense.dueDate,
+      expense.status,
+      expense.paidDate || '-',
+      expense.paidAmount || '-',
+      expense.vendor || '-',
+      expense.invoiceNumber || '-',
+    ])
+
+    await this.sheets.spreadsheets.values.update({
+      spreadsheetId,
+      range: 'Expenses!A1',
+      valueInputOption: 'RAW',
+      requestBody: {
+        values: [headers, ...rows],
+      },
+    })
+  }
+
   private async populateCashflowSheet(spreadsheetId: string, monthlyData: any[]): Promise<void> {
-    const headers = ['Month', 'Expected', 'Received', 'Pending', 'Overdue']
+    const headers = [
+      'Month',
+      'Expected Income',
+      'Received Income',
+      'Pending Income',
+      'Overdue Income',
+      'Expected Expenses',
+      'Paid Expenses',
+      'Pending Expenses',
+      'Net Cashflow',
+    ]
 
     const rows = monthlyData.map(data => [
       data.month,
@@ -203,6 +262,10 @@ export class GoogleSheetsService {
       data.received,
       data.pending,
       data.overdue,
+      data.expectedExpenses,
+      data.paidExpenses,
+      data.pendingExpenses,
+      data.netCashflow,
     ])
 
     await this.sheets.spreadsheets.values.update({
