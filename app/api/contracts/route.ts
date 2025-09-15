@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
+import { supervisorValidateContract } from '@/lib/supervisor'
 
 const ContractSchema = z.object({
   clientName: z.string(),
@@ -56,11 +57,29 @@ export async function POST(request: NextRequest) {
     const contract = await prisma.contract.create({
       data: {
         ...validatedData,
-        signedDate: new Date(validatedData.signedDate),
+        signedDate: new Date(validatedData.signedDate + 'T00:00:00.000Z'),
       },
     })
 
-    return NextResponse.json(contract, { status: 201 })
+    // Run supervisor validation after creating to get the contract ID
+    const alerts = await supervisorValidateContract({
+      ...validatedData,
+      id: contract.id
+    }, false, contract.id)
+
+    // Complete the editUrl for any alerts
+    const alertsWithEditUrl = alerts.map(alert => ({
+      ...alert,
+      entityInfo: alert.entityInfo ? {
+        ...alert.entityInfo,
+        editUrl: `/contracts?edit=${contract.id}`
+      } : undefined
+    }))
+
+    return NextResponse.json({
+      contract,
+      alerts: alertsWithEditUrl.length > 0 ? alertsWithEditUrl : undefined
+    }, { status: 201 })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: error.errors }, { status: 400 })

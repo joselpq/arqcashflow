@@ -1,8 +1,38 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { format } from 'date-fns'
+import SupervisorAlerts, { SupervisorAlert } from '@/app/components/SupervisorAlerts'
+import { saveAlertsToStorage } from '@/lib/alertStorage'
+
+// Helper functions for date conversion with UTC handling
+function formatDateForInput(date: string | Date): string {
+  if (!date) return ''
+  if (typeof date === 'string' && date.includes('T')) {
+    // Extract date part from ISO string to avoid timezone conversion
+    return date.split('T')[0]
+  }
+  const d = new Date(date)
+  return format(d, 'yyyy-MM-dd')
+}
+
+function formatDateForDisplay(date: string | Date): string {
+  if (!date) return ''
+  if (typeof date === 'string' && date.includes('T')) {
+    // Extract date part from ISO string and format manually to avoid timezone conversion
+    const datePart = date.split('T')[0]
+    const [year, month, day] = datePart.split('-')
+    return `${day}/${month}/${year}`
+  }
+  const d = new Date(date)
+  return format(d, 'dd/MM/yyyy')
+}
 
 export default function ContractsPage() {
+  const searchParams = useSearchParams()
+  const editId = searchParams.get('edit')
+
   const [contracts, setContracts] = useState([])
   const [loading, setLoading] = useState(true)
   const [editingContract, setEditingContract] = useState<any>(null)
@@ -21,8 +51,9 @@ export default function ContractsPage() {
   const [aiLoading, setAiLoading] = useState(false)
   const [aiHistory, setAiHistory] = useState<Array<{role: 'user' | 'assistant', content: string}>>([])
   const [pendingContract, setPendingContract] = useState<any>(null)
+  const [supervisorAlerts, setSupervisorAlerts] = useState<SupervisorAlert[]>([])
   const [filters, setFilters] = useState({
-    status: 'all',
+    status: 'active',
     category: 'all',
     sortBy: 'createdAt',
     sortOrder: 'desc',
@@ -41,6 +72,20 @@ export default function ContractsPage() {
   useEffect(() => {
     fetchContracts()
   }, [filters])
+
+  // Handle auto-edit when URL parameter is present
+  useEffect(() => {
+    if (editId && contracts.length > 0) {
+      const contractToEdit = contracts.find((c: any) => c.id === editId)
+      if (contractToEdit) {
+        editContract(contractToEdit)
+        // Scroll to form
+        setTimeout(() => {
+          document.getElementById('contract-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }, 100)
+      }
+    }
+  }, [editId, contracts])
 
   async function fetchContracts() {
     try {
@@ -80,6 +125,20 @@ export default function ContractsPage() {
       })
 
       if (res.ok) {
+        const result = await res.json()
+
+        // Handle supervisor alerts
+        if (result.alerts && result.alerts.length > 0) {
+          setSupervisorAlerts(result.alerts)
+          // Save alerts to storage for Central de Alertas
+          const entityInfo = {
+            name: `Contrato - ${result.contract?.projectName || 'Projeto'}`,
+            details: `Cliente: ${result.contract?.clientName || 'N/A'} | Valor: R$${result.contract?.totalValue?.toLocaleString('pt-BR') || '0'}`,
+            editUrl: `/contracts?edit=${result.contract?.id}`
+          }
+          saveAlertsToStorage(result.alerts, 'contract', result.contract?.id, entityInfo)
+        }
+
         alert(editingContract ? 'Contrato atualizado com sucesso!' : 'Contrato criado com sucesso!')
         resetForm()
         fetchContracts()
@@ -130,7 +189,7 @@ export default function ContractsPage() {
       projectName: contract.projectName,
       description: contract.description || '',
       totalValue: contract.totalValue.toString(),
-      signedDate: contract.signedDate.split('T')[0],
+      signedDate: formatDateForInput(contract.signedDate),
       status: contract.status || 'active',
       category: category,
       notes: contract.notes || '',
@@ -206,6 +265,13 @@ export default function ContractsPage() {
       console.log('Type of result:', typeof result)
 
       if (result.action === 'created') {
+        // Handle supervisor alerts if any
+        if (result.alerts && result.alerts.length > 0) {
+          setSupervisorAlerts(result.alerts)
+          // Save alerts to storage for Central de Alertas
+          saveAlertsToStorage(result.alerts, 'contract', result.contract?.id)
+        }
+
         // Contract was created successfully
         setAiHistory([...newHistory, {
           role: 'assistant' as const,
@@ -219,6 +285,13 @@ export default function ContractsPage() {
           setPendingContract(null)
         }, 3000)
       } else if (result.action === 'edited') {
+        // Handle supervisor alerts if any
+        if (result.alerts && result.alerts.length > 0) {
+          setSupervisorAlerts(result.alerts)
+          // Save alerts to storage for Central de Alertas
+          saveAlertsToStorage(result.alerts, 'contract', result.contract?.id)
+        }
+
         // Contract was edited successfully
         setAiHistory([...newHistory, {
           role: 'assistant' as const,
@@ -277,6 +350,12 @@ export default function ContractsPage() {
 
       <h1 className="text-3xl font-bold mb-8">Gerenciamento de Contratos</h1>
 
+      {/* Supervisor Alerts */}
+      <SupervisorAlerts
+        alerts={supervisorAlerts}
+        onDismiss={() => setSupervisorAlerts([])}
+      />
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div>
           {/* Toggle between AI and Manual */}
@@ -304,7 +383,7 @@ export default function ContractsPage() {
           </div>
 
           {showAISection ? (
-            <div>
+            <div id="contract-form">
               <h2 className="text-xl font-semibold mb-4">Adicionar Contrato com IA</h2>
 
               <div className="bg-blue-50 border border-blue-200 p-4 rounded mb-4">
@@ -371,7 +450,7 @@ export default function ContractsPage() {
               <h2 className="text-xl font-semibold mb-4">
                 {editingContract ? 'Editar Contrato' : 'Adicionar Contrato Manual'}
               </h2>
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-4" id="contract-form">
             <div>
               <label className="block mb-1">Nome do Cliente *</label>
               <input

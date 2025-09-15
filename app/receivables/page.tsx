@@ -1,8 +1,38 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { format } from 'date-fns'
+import SupervisorAlerts, { SupervisorAlert } from '@/app/components/SupervisorAlerts'
+import { saveAlertsToStorage } from '@/lib/alertStorage'
+
+// Helper functions for date conversion with UTC handling
+function formatDateForInput(date: string | Date): string {
+  if (!date) return ''
+  if (typeof date === 'string' && date.includes('T')) {
+    // Extract date part from ISO string to avoid timezone conversion
+    return date.split('T')[0]
+  }
+  const d = new Date(date)
+  return format(d, 'yyyy-MM-dd')
+}
+
+function formatDateForDisplay(date: string | Date): string {
+  if (!date) return ''
+  if (typeof date === 'string' && date.includes('T')) {
+    // Extract date part from ISO string and format manually to avoid timezone conversion
+    const datePart = date.split('T')[0]
+    const [year, month, day] = datePart.split('-')
+    return `${day}/${month}/${year}`
+  }
+  const d = new Date(date)
+  return format(d, 'dd/MM/yyyy')
+}
 
 export default function ReceivablesPage() {
+  const searchParams = useSearchParams()
+  const editId = searchParams.get('edit')
+
   const [receivables, setReceivables] = useState([])
   const [contracts, setContracts] = useState([])
   const [loading, setLoading] = useState(true)
@@ -11,7 +41,7 @@ export default function ReceivablesPage() {
   const [uniqueStatuses] = useState(['pending', 'received', 'overdue', 'cancelled'])
   const [filters, setFilters] = useState({
     contractId: 'all',
-    status: 'all',
+    status: 'pending',
     category: 'all',
     sortBy: 'expectedDate',
     sortOrder: 'asc',
@@ -23,6 +53,8 @@ export default function ReceivablesPage() {
     invoiceNumber: '',
     category: '',
     notes: '',
+    receivedDate: '',
+    receivedAmount: '',
   })
   const [customCategory, setCustomCategory] = useState('')
   const [showCustomCategory, setShowCustomCategory] = useState(false)
@@ -35,6 +67,8 @@ export default function ReceivablesPage() {
   const [aiMessage, setAiMessage] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
   const [aiHistory, setAiHistory] = useState<Array<{role: 'user' | 'assistant', content: string}>>([])
+  const [supervisorAlerts, setSupervisorAlerts] = useState<SupervisorAlert[]>([])
+  const [pendingReceivable, setPendingReceivable] = useState<any>(null)
 
   useEffect(() => {
     fetchContracts()
@@ -45,6 +79,20 @@ export default function ReceivablesPage() {
       fetchReceivables()
     }
   }, [filters, contracts])
+
+  // Handle auto-edit when URL parameter is present
+  useEffect(() => {
+    if (editId && receivables.length > 0) {
+      const receivableToEdit = receivables.find((r: any) => r.id === editId)
+      if (receivableToEdit) {
+        editReceivable(receivableToEdit)
+        // Scroll to form
+        setTimeout(() => {
+          document.getElementById('receivable-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }, 100)
+      }
+    }
+  }, [editId, receivables])
 
   async function fetchContracts() {
     try {
@@ -96,10 +144,25 @@ export default function ReceivablesPage() {
         body: JSON.stringify({
           ...formData,
           amount: parseFloat(formData.amount),
+          receivedAmount: formData.receivedAmount ? parseFloat(formData.receivedAmount) : null,
         }),
       })
 
       if (res.ok) {
+        const result = await res.json()
+
+        // Handle supervisor alerts
+        if (result.alerts && result.alerts.length > 0) {
+          setSupervisorAlerts(result.alerts)
+          // Save alerts to storage for Central de Alertas
+          const entityInfo = {
+            name: `Conta a Receber - ${result.receivable?.contract?.projectName || 'Projeto'}`,
+            details: `Cliente: ${result.receivable?.contract?.clientName || 'N/A'} | Valor: R$${result.receivable?.amount?.toLocaleString('pt-BR') || '0'} | Data: ${result.receivable?.expectedDate ? new Date(result.receivable.expectedDate).toLocaleDateString('pt-BR') : 'N/A'}`,
+            editUrl: `/receivables?edit=${result.receivable?.id}`
+          }
+          saveAlertsToStorage(result.alerts, 'receivable', result.receivable?.id, entityInfo)
+        }
+
         alert(editingReceivable ? 'Conta a receber atualizada com sucesso!' : 'Conta a receber criada com sucesso!')
         resetForm()
         fetchData()
@@ -120,6 +183,8 @@ export default function ReceivablesPage() {
       invoiceNumber: '',
       category: '',
       notes: '',
+      receivedDate: '',
+      receivedAmount: '',
     })
     setEditingReceivable(null)
     setCustomCategory('')
@@ -144,12 +209,14 @@ export default function ReceivablesPage() {
     }
 
     setFormData({
-      contractId: receivable.contractId,
-      expectedDate: receivable.expectedDate.split('T')[0],
-      amount: receivable.amount.toString(),
+      contractId: receivable.contractId || '',
+      expectedDate: receivable.expectedDate ? formatDateForInput(receivable.expectedDate) : '',
+      amount: receivable.amount ? receivable.amount.toString() : '',
       invoiceNumber: receivable.invoiceNumber || '',
-      category: category,
+      category: category || '',
       notes: receivable.notes || '',
+      receivedDate: receivable.receivedDate ? formatDateForInput(receivable.receivedDate) : '',
+      receivedAmount: receivable.receivedAmount ? receivable.receivedAmount.toString() : '',
     })
   }
 
@@ -190,22 +257,39 @@ export default function ReceivablesPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: userMessage,
-          history: aiHistory
+          history: aiHistory,
+          pendingReceivable,
+          isConfirming: pendingReceivable !== null
         }),
       })
 
       const result = await res.json()
 
       if (result.action === 'created') {
-        // Receivable(s) created successfully
+        // Handle supervisor alerts if any
+        if (result.alerts && result.alerts.length > 0) {
+          setSupervisorAlerts(result.alerts)
+          // Save alerts to storage for Central de Alertas
+          const entityInfo = {
+            name: `Conta a Receber - ${result.receivable?.contract?.projectName || 'Projeto'}`,
+            details: `Cliente: ${result.receivable?.contract?.clientName || 'N/A'} | Valor: R$${result.receivable?.amount?.toLocaleString('pt-BR') || '0'} | Data: ${result.receivable?.expectedDate ? new Date(result.receivable.expectedDate).toLocaleDateString('pt-BR') : 'N/A'}`,
+            editUrl: `/receivables?edit=${result.receivable?.id}`
+          }
+          console.log('🔍 DEBUG AI: Saving alerts with entityInfo:', { alerts: result.alerts, entityInfo })
+          saveAlertsToStorage(result.alerts, 'receivable', result.receivable?.id, entityInfo)
+        }
+
+        // Receivable created successfully
         setAiHistory([...newHistory, {
           role: 'assistant' as const,
-          content: `${result.message}\n📋 ${result.contractInfo}`
+          content: `${result.message}\n📋 Conta a receber criada com sucesso!`
         }])
+        setPendingReceivable(null)
         fetchData()
         // Clear history after successful creation
         setTimeout(() => {
           setAiHistory([])
+          setPendingReceivable(null)
         }, 3000)
       } else if (result.action === 'clarify') {
         // AI needs more information
@@ -225,6 +309,13 @@ export default function ReceivablesPage() {
         setAiHistory([...newHistory, {
           role: 'assistant' as const,
           content: response
+        }])
+      } else if (result.action === 'confirm') {
+        // AI needs confirmation before creating
+        setPendingReceivable(result.pendingReceivable)
+        setAiHistory([...newHistory, {
+          role: 'assistant' as const,
+          content: result.question
         }])
       } else if (result.action === 'edit_suggestion') {
         // AI detected edit intention
@@ -283,6 +374,12 @@ export default function ReceivablesPage() {
 
       <h1 className="text-3xl font-bold mb-8">Gerenciamento de Contas a Receber</h1>
 
+      {/* Supervisor Alerts */}
+      <SupervisorAlerts
+        alerts={supervisorAlerts}
+        onDismiss={() => setSupervisorAlerts([])}
+      />
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div>
           {/* Toggle between AI and Manual */}
@@ -312,7 +409,7 @@ export default function ReceivablesPage() {
           {contracts.length === 0 ? (
             <p className="text-gray-500">Por favor, crie um contrato primeiro</p>
           ) : showAISection ? (
-            <div>
+            <div id="receivable-form">
               <h2 className="text-xl font-semibold mb-4">Adicionar Conta a Receber com IA</h2>
 
               <div className="bg-green-50 border border-green-200 p-4 rounded mb-4">
@@ -387,13 +484,13 @@ export default function ReceivablesPage() {
           )}
 
           {contracts.length > 0 && !showAISection && (
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4" id="receivable-form">
               <div>
                 <label className="block mb-1">Contrato *</label>
                 <select
                   required
                   className="w-full border rounded px-3 py-2"
-                  value={formData.contractId}
+                  value={formData.contractId || ''}
                   onChange={(e) => setFormData({ ...formData, contractId: e.target.value })}
                 >
                   <option value="">Selecione um contrato</option>
@@ -411,7 +508,7 @@ export default function ReceivablesPage() {
                   type="date"
                   required
                   className="w-full border rounded px-3 py-2"
-                  value={formData.expectedDate}
+                  value={formData.expectedDate || ''}
                   onChange={(e) => setFormData({ ...formData, expectedDate: e.target.value })}
                 />
               </div>
@@ -423,7 +520,7 @@ export default function ReceivablesPage() {
                   step="0.01"
                   required
                   className="w-full border rounded px-3 py-2"
-                  value={formData.amount}
+                  value={formData.amount || ''}
                   onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                 />
               </div>
@@ -433,8 +530,29 @@ export default function ReceivablesPage() {
                 <input
                   type="text"
                   className="w-full border rounded px-3 py-2"
-                  value={formData.invoiceNumber}
+                  value={formData.invoiceNumber || ''}
                   onChange={(e) => setFormData({ ...formData, invoiceNumber: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <label className="block mb-1">Data de Recebimento</label>
+                <input
+                  type="date"
+                  className="w-full border rounded px-3 py-2"
+                  value={formData.receivedDate || ''}
+                  onChange={(e) => setFormData({ ...formData, receivedDate: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <label className="block mb-1">Valor Recebido</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  className="w-full border rounded px-3 py-2"
+                  value={formData.receivedAmount || ''}
+                  onChange={(e) => setFormData({ ...formData, receivedAmount: e.target.value })}
                 />
               </div>
 
@@ -442,7 +560,7 @@ export default function ReceivablesPage() {
                 <label className="block mb-1">Categoria</label>
                 <select
                   className="w-full border rounded px-3 py-2"
-                  value={showCustomCategory ? 'custom' : formData.category}
+                  value={showCustomCategory ? 'custom' : (formData.category || '')}
                   onChange={(e) => {
                     const value = e.target.value
                     if (value === 'custom') {
@@ -474,7 +592,7 @@ export default function ReceivablesPage() {
                     type="text"
                     className="w-full border rounded px-3 py-2 mt-2"
                     placeholder="Inserir categoria personalizada"
-                    value={customCategory}
+                    value={customCategory || ''}
                     onChange={(e) => {
                       setCustomCategory(e.target.value)
                       setFormData({ ...formData, category: e.target.value })
@@ -487,7 +605,7 @@ export default function ReceivablesPage() {
                 <label className="block mb-1">Observações</label>
                 <textarea
                   className="w-full border rounded px-3 py-2"
-                  value={formData.notes}
+                  value={formData.notes || ''}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                 />
               </div>
@@ -605,7 +723,7 @@ export default function ReceivablesPage() {
                       <h3 className="font-semibold">{receivable.contract.projectName}</h3>
                       <p className="text-sm text-gray-600">Cliente: {receivable.contract.clientName}</p>
                       <p className="text-sm">
-                        Previsto: {new Date(receivable.expectedDate).toLocaleDateString()}
+                        Previsto: {formatDateForDisplay(receivable.expectedDate)}
                       </p>
                       <p className="text-sm">Valor: R${receivable.amount.toLocaleString()}</p>
                       {receivable.category && (
@@ -618,6 +736,12 @@ export default function ReceivablesPage() {
                           'text-yellow-600'
                         }>{receivable.status}</span>
                       </p>
+                      {receivable.receivedDate && (
+                        <p className="text-sm text-green-600">
+                          Recebido: {formatDateForDisplay(receivable.receivedDate)}
+                          {receivable.receivedAmount && ` - R$${receivable.receivedAmount.toLocaleString()}`}
+                        </p>
+                      )}
                     </div>
                     <div className="flex gap-2 ml-4">
                       <button
@@ -635,7 +759,7 @@ export default function ReceivablesPage() {
                     </div>
                   </div>
                   <div className="mt-2 flex gap-2">
-                    {receivable.status === 'pending' && (
+                    {(receivable.status === 'pending' || receivable.status === 'overdue') && (
                       <button
                         onClick={() => markAsReceived(receivable.id, receivable.amount)}
                         className="text-sm bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"

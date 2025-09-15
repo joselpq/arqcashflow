@@ -2,20 +2,89 @@ import { NextRequest, NextResponse } from 'next/server'
 import { ChatOpenAI } from '@langchain/openai'
 import { prisma } from '@/lib/prisma'
 import { findContractMatches } from '@/lib/fuzzyMatch'
+import { supervisorValidateReceivable } from '@/lib/supervisor'
 import { z } from 'zod'
+
+// Helper function for date display to avoid timezone conversion
+function formatDateForDisplay(date: string | Date): string {
+  if (!date) return ''
+  if (typeof date === 'string' && date.includes('T')) {
+    // Extract date part from ISO string and format manually to avoid timezone conversion
+    const datePart = date.split('T')[0]
+    const [year, month, day] = datePart.split('-')
+    return `${day}/${month}/${year}`
+  }
+  // For date strings like "YYYY-MM-DD", parse manually to avoid timezone issues
+  if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    const [year, month, day] = date.split('-')
+    return `${day}/${month}/${year}`
+  }
+  const d = new Date(date)
+  return d.toLocaleDateString('pt-BR')
+}
 
 const AIReceivableSchema = z.object({
   message: z.string(),
   history: z.array(z.object({
     role: z.enum(['user', 'assistant']),
     content: z.string()
-  })).optional()
+  })).optional(),
+  pendingReceivable: z.any().optional(),
+  isConfirming: z.boolean().optional()
 })
+
+// Helper function to detect affirmative responses in Portuguese
+function isAffirmativeResponse(message: string): boolean {
+  const affirmativeWords = [
+    'sim', 'yes', 'ok', 'okay', 'confirmo', 'confirmar', 'correto', 'certo',
+    'perfeito', 'exato', 'isso', 'concordo', 'aceito', 'pode', 'vai', 'vamos',
+    'tudo certo', 'está certo', 'beleza', 'pode criar', 'criar', 'confirma'
+  ]
+
+  const normalized = message.toLowerCase().trim()
+  return affirmativeWords.some(word => normalized.includes(word))
+}
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { message, history } = AIReceivableSchema.parse(body)
+    const { message, history, pendingReceivable, isConfirming } = AIReceivableSchema.parse(body)
+
+    // If user is confirming a pending receivable, check if it's an affirmative response
+    if (isConfirming && pendingReceivable) {
+      if (!isAffirmativeResponse(message)) {
+        // User is not confirming, treat as cancellation or new request
+        return NextResponse.json({
+          success: true,
+          action: 'clarify',
+          question: '😅 Entendi que você não quer criar esse recebível. Em que posso ajudar agora?'
+        })
+      }
+
+      // User confirmed, proceed with creation
+      const alerts = await supervisorValidateReceivable(pendingReceivable, pendingReceivable.contractId)
+
+      const receivable = await prisma.receivable.create({
+        data: {
+          ...pendingReceivable,
+          expectedDate: new Date(pendingReceivable.expectedDate),
+          status: 'pending'
+        },
+        include: {
+          contract: true
+        }
+      })
+
+      // Note: Alert storage is handled on the client side
+
+      return NextResponse.json({
+        success: true,
+        action: 'created',
+        receivable,
+        message: 'Conta a receber criada com sucesso!',
+        alerts: alerts.length > 0 ? alerts : undefined
+      })
+    }
 
     if (!process.env.OPENAI_API_KEY) {
       throw new Error('OPENAI_API_KEY not configured')
@@ -175,27 +244,14 @@ Se NÃO ENCONTRAR contrato correspondente:
     }
 
     if (result.action === 'create') {
-      // Create the receivables
-      const createdReceivables = []
-      for (const receivableData of result.receivables) {
-        const receivable = await prisma.receivable.create({
-          data: {
-            ...receivableData,
-            expectedDate: new Date(receivableData.expectedDate),
-            status: 'pending'
-          },
-          include: {
-            contract: true
-          }
-        })
-        createdReceivables.push(receivable)
-      }
+      // Instead of creating immediately, return confirmation request
+      const receivableData = result.receivables[0] // Take first receivable for confirmation
 
       return NextResponse.json({
         success: true,
-        action: 'created',
-        receivables: createdReceivables,
-        message: result.confirmation,
+        action: 'confirm',
+        pendingReceivable: receivableData,
+        question: `${result.confirmation}\n\n📋 **Por favor, confirme se os dados estão corretos:**\n• Valor: R$${receivableData.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n• Data esperada: ${formatDateForDisplay(receivableData.expectedDate)}\n• Projeto: ${result.contractInfo}\n\n💬 *Pode confirmar se está tudo certo? Qualquer confirmação sua e eu criarei o recebível!*`,
         contractInfo: result.contractInfo
       })
     } else if (result.action === 'no_contract') {

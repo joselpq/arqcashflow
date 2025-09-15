@@ -7,13 +7,23 @@ A simple cashflow management system designed for architects to track contracts, 
 1. **Contract Management** - Create, edit, delete, and manage client contracts with categories
 2. **AI Contract Creation** - Create contracts using natural language (Portuguese) with intelligent parsing
 3. **Receivables Tracking** - Track expected and received payments with categories and filtering
-4. **Advanced Filtering & Sorting** - Filter and sort both contracts and receivables by multiple criteria
-5. **Excel Export** - Generate comprehensive cashflow reports with 3 detailed sheets
-6. **AI-Powered Analytics** - Ask natural language questions about your financial data using OpenAI
-7. **SQLite Database** - Simple, file-based database (easily upgradeable to PostgreSQL)
-8. **Edit/Delete Functionality** - Full CRUD operations on both contracts and receivables
-9. **Category System** - Organize contracts and receivables by custom categories
-10. **Duplicate Detection** - Smart handling of duplicate client/project names with auto-increment
+4. **Payment Recording** - Record actual payment dates and amounts for receivables (supports partial payments)
+5. **Expense Management** - Complete cost tracking with vendors, categories, and payment status
+6. **AI Expense Creation** - Create expenses using natural language (Portuguese)
+7. **Budget Management** - Set and monitor spending budgets by category or project
+8. **Advanced Filtering & Sorting** - Filter and sort contracts, receivables, and expenses by multiple criteria
+9. **Smart Default Filters** - Default views show only active contracts, pending receivables, and unpaid expenses
+10. **Excel Export** - Generate comprehensive cashflow reports with 4 detailed sheets (including expenses)
+11. **Google Sheets Export** - Create and share reports directly in Google Sheets with OAuth2 authentication
+12. **AI-Powered Analytics** - Ask natural language questions about your financial data using OpenAI
+13. **🤖 AI Supervisor System** - Intelligent data quality monitoring with real-time anomaly detection
+14. **Smart Alerts & Notifications** - Automated detection of duplicates, value anomalies, date inconsistencies, and business rule violations
+15. **Alert Action Integration** - Click alerts to directly edit the related items with auto-redirect functionality
+16. **Net Cashflow Analysis** - Complete financial picture with income vs expenses
+17. **SQLite Database** - Simple, file-based database (easily upgradeable to PostgreSQL)
+18. **Edit/Delete Functionality** - Full CRUD operations on all entities
+19. **Category System** - Organize contracts, receivables, and expenses by custom categories
+20. **Duplicate Detection** - Smart handling of duplicate client/project names with auto-increment
 
 ## Setup Instructions
 
@@ -44,9 +54,9 @@ npx prisma migrate dev
 npm run dev
 ```
 
-Visit http://localhost:3000
+Visit http://localhost:3001
 
-**Note**: If port 3000 is occupied, the app will run on the next available port (3001, 3002, etc.)
+**Note**: The app runs on port 3001 by default. If occupied, use `PORT=3002 npm run dev` to specify a different port.
 
 ## API Documentation
 
@@ -68,6 +78,7 @@ Visit http://localhost:3000
     "notes": "string (optional)"
   }
   ```
+  - **Response**: `{contract, alerts}` - includes supervisor validation results
 - **GET /api/contracts/[id]** - Get specific contract with receivables
 - **PUT /api/contracts/[id]** - Update contract (all fields optional)
 - **DELETE /api/contracts/[id]** - Delete contract (cascades to receivables)
@@ -89,6 +100,7 @@ Visit http://localhost:3000
     "notes": "string (optional)"
   }
   ```
+  - **Response**: `{receivable, alerts}` - includes value/date validation alerts
 - **PUT /api/receivables/[id]** - Update receivable (all fields optional)
   ```json
   {
@@ -100,12 +112,72 @@ Visit http://localhost:3000
   ```
 - **DELETE /api/receivables/[id]** - Delete receivable
 
+### Expenses
+
+- **GET /api/expenses** - List all expenses with summary statistics
+  - **Query params**: `?contractId=xxx&status=pending&category=materials&type=operational&sortBy=dueDate&sortOrder=asc`
+  - **Filters**: `contractId`, `status` (pending/paid/overdue/cancelled), `category`, `type` (operational/project/administrative), `vendor`
+  - **Sorting**: `sortBy` (dueDate/amount/description/vendor/createdAt), `sortOrder` (asc/desc)
+  - **Response includes**: expenses list + summary (total, paid, pending, overdue amounts)
+- **POST /api/expenses** - Create new expense
+  ```json
+  {
+    "description": "string",
+    "amount": number,
+    "dueDate": "YYYY-MM-DD",
+    "category": "string",
+    "contractId": "string (optional)",
+    "vendor": "string (optional)",
+    "invoiceNumber": "string (optional)",
+    "type": "operational|project|administrative",
+    "notes": "string (optional)"
+  }
+  ```
+  - **Response**: `{expense, alerts}` - includes anomaly detection and pattern analysis
+- **PUT /api/expenses/[id]** - Update expense (all fields optional)
+  ```json
+  {
+    "status": "paid",
+    "paidDate": "YYYY-MM-DD",
+    "paidAmount": number,
+    "description": "string",
+    "category": "string"
+  }
+  ```
+- **DELETE /api/expenses/[id]** - Delete expense
+
+### Budgets
+
+- **GET /api/budgets** - List all budgets with utilization metrics
+  - **Query params**: `?contractId=xxx&category=materials&period=monthly&isActive=true`
+  - **Response includes**: budget details + utilization (totalExpenses, paidExpenses, utilizationPercent, remaining)
+- **POST /api/budgets** - Create new budget
+  ```json
+  {
+    "name": "string",
+    "category": "string",
+    "budgetAmount": number,
+    "period": "monthly|quarterly|project|annual",
+    "startDate": "YYYY-MM-DD",
+    "endDate": "YYYY-MM-DD",
+    "contractId": "string (optional)"
+  }
+  ```
+
 ### Excel Export
 
-- **GET /api/export/excel** - Download Excel report with 3 sheets:
-  1. **Contracts Overview** - Summary of all contracts with totals and receivable counts
+- **GET /api/export/excel** - Download Excel report with 4 sheets:
+  1. **Contracts Overview** - Summary of all contracts with totals, receivables, and expenses
   2. **Receivables Detail** - All receivables with categories, statuses, and contract info
-  3. **Monthly Cashflow** - Month-by-month breakdown of expected vs received payments
+  3. **Expenses Detail** - All expenses with vendors, categories, and payment status
+  4. **Monthly Cashflow** - Month-by-month breakdown with income, expenses, and net cashflow
+
+### Google Sheets Export
+
+- **POST /api/export/google-sheets** - Create Google Sheets report with OAuth2 authentication
+  - Requires Google Cloud setup (see GOOGLE_SHEETS_SETUP.md)
+  - Creates shareable online spreadsheet with same structure as Excel export
+  - Returns spreadsheet URL for immediate access
 
 ### AI Queries
 
@@ -115,6 +187,29 @@ Visit http://localhost:3000
     "question": "What was my average monthly income?"
   }
   ```
+  - Returns: `{answer, sqlQuery, alerts}` with supervisor insights
+
+### 🤖 AI Supervisor System
+
+The AI Supervisor monitors all data inputs in real-time and provides intelligent alerts:
+
+- **POST /api/contracts** - Contract validation with business logic checks
+- **POST /api/receivables** - Receivable validation against contract totals and dates
+- **POST /api/expenses** - Expense anomaly detection and vendor analysis
+- **POST /api/ai/query** - Query context analysis with proactive insights
+
+**Alert Types:**
+- **Value Anomalies**: Extra zeros, unrealistic amounts, contract total mismatches
+- **Date Issues**: Past dates, wrong years, timeline inconsistencies
+- **Duplicates**: Similar entries, client variations, repeated transactions
+- **Business Logic**: Contract status violations, missing relationships
+- **Data Quality**: Unusual patterns, category mismatches, vendor inconsistencies
+
+**Alert Severity Levels:**
+- `critical` - Immediate attention required (major discrepancies)
+- `high` - Important issues that should be addressed
+- `medium` - Notable patterns worth reviewing
+- `low` - Minor suggestions for optimization
 
 ### AI Contract Creation
 
@@ -132,6 +227,23 @@ Visit http://localhost:3000
   - Handles missing information by asking follow-up questions
   - Detects duplicate contracts and offers to create new or edit existing
 
+### AI Expense Creation
+
+- **POST /api/ai/create-expense** - Create expenses using natural language
+  ```json
+  {
+    "message": "Compra de materiais na Leroy Merlin, 5 mil reais, vencimento amanhã",
+    "history": [],
+    "pendingExpense": null,
+    "isConfirming": false
+  }
+  ```
+  - Natural language parsing in Portuguese
+  - Intelligent date parsing: "hoje", "amanhã", "vencimento em 10 dias"
+  - Value parsing: "5k" or "5 mil" → 5000
+  - Links expenses to projects when mentioned
+  - Asks for missing required information
+
 ## UI Pages
 
 1. **/** - Home page with navigation and API endpoints overview
@@ -140,15 +252,57 @@ Visit http://localhost:3000
    - **Smart Duplicate Detection**: Automatically detects existing contracts and offers options
    - **Date Intelligence**: Understands various date formats in Portuguese
    - **Missing Info Handling**: Asks for missing required fields intelligently
+   - **Smart Default Filter**: Shows only active contracts by default
    - Manual creation mode with forms
-   - Filter by status, category
+   - Filter by status, category (can view all if needed)
    - Sort by date, value, client, etc.
 3. **/receivables** - Full receivable management with advanced filtering
+   - **AI Assistant**: Create receivables using natural language
+   - **Payment Recording**: Record actual payment dates and amounts (supports partial payments)
+   - **Enhanced Payment Actions**: "Marcar como Recebido" available for all pending/overdue receivables
+   - **Smart Default Filter**: Shows only pending receivables by default
    - Create, edit, delete receivables with categories
-   - Filter by contract, status, category
+   - Filter by contract, status, category (can view all if needed)
    - Sort by date, amount, status, etc.
-   - Mark payments as received
-4. **/ai-chat** - Natural language chat interface for financial analytics
+   - Visual payment status indicators
+4. **/expenses** - Complete expense management system
+   - **AI Assistant**: Create expenses using natural language
+   - **Smart Default Filter**: Shows only pending expenses by default
+   - Create, edit, delete expenses with full categorization
+   - Filter by contract, status, category, type, vendor
+   - Sort by due date, amount, description, etc.
+5. **/alerts** - Central alert management system
+   - **Direct Edit Links**: Click alerts to automatically redirect to edit the specific item
+   - **Smart Integration**: Alerts include entity information and direct edit URLs
+   - View all AI Supervisor alerts in one place
+   - Dismiss individual or all alerts
+   - Real-time alert updates
+6. **/ai-chat** - Natural language chat interface for financial analytics
+
+## Recent Improvements & User Experience
+
+### Enhanced Payment Management
+- **Payment Date Recording**: Added optional "Data de Recebimento" and "Valor Recebido" fields to receivables
+- **Partial Payment Support**: Record different amounts than expected for partial payments or discounts
+- **Overdue Payment Actions**: "Marcar como Recebido" button now available for both pending and overdue receivables
+- **Visual Payment Indicators**: Received payments display in green with date and amount
+
+### Smart Default Filters
+- **Focused Views**: Default filters show only relevant items for better workflow
+  - Contracts: Shows only "active" contracts by default
+  - Receivables: Shows only "pending" receivables by default
+  - Expenses: Shows only "pending" expenses by default
+- **Flexible Filtering**: Users can easily switch to "all" to view completed/received items when needed
+
+### Alert System Integration
+- **Direct Edit Links**: Clicking "Editar" from alerts automatically opens the edit form for that specific item
+- **Smart Redirection**: URLs with `?edit=ID` parameter auto-populate forms and scroll to editing section
+- **Seamless Workflow**: No more manual searching for items after clicking alert actions
+
+### Form Improvements
+- **Controlled Inputs**: Fixed React controlled/uncontrolled input warnings for better stability
+- **Proper Validation**: All form fields properly handle null/undefined values from database
+- **Enhanced UX**: Better error handling and form state management
 
 ## Database Schema
 

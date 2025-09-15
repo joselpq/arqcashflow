@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
+import { supervisorValidateContract } from '@/lib/supervisor'
 
 const UpdateContractSchema = z.object({
   clientName: z.string().optional(),
@@ -41,9 +42,12 @@ export async function PUT(
     const body = await request.json()
     const validatedData = UpdateContractSchema.parse(body)
 
+    // Run supervisor validation for updates
+    const alerts = await supervisorValidateContract(validatedData, true, params.id)
+
     const updateData: any = { ...validatedData }
     if (validatedData.signedDate) {
-      updateData.signedDate = new Date(validatedData.signedDate)
+      updateData.signedDate = new Date(validatedData.signedDate + 'T00:00:00.000Z')
     }
 
     const contract = await prisma.contract.update({
@@ -51,7 +55,10 @@ export async function PUT(
       data: updateData,
     })
 
-    return NextResponse.json(contract)
+    return NextResponse.json({
+      contract,
+      alerts: alerts.length > 0 ? alerts : undefined
+    })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: error.errors }, { status: 400 })

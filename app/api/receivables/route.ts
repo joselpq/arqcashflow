@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
+import { supervisorValidateReceivable } from '@/lib/supervisor'
 
 const ReceivableSchema = z.object({
   contractId: z.string(),
@@ -76,18 +77,34 @@ export async function POST(request: NextRequest) {
 
     const createData: any = {
       ...validatedData,
-      expectedDate: new Date(validatedData.expectedDate),
+      expectedDate: new Date(validatedData.expectedDate + 'T00:00:00.000Z'),
     }
 
     if (validatedData.receivedDate) {
-      createData.receivedDate = new Date(validatedData.receivedDate)
+      createData.receivedDate = new Date(validatedData.receivedDate + 'T00:00:00.000Z')
     }
 
     const receivable = await prisma.receivable.create({
       data: createData,
+      include: { contract: true }
     })
 
-    return NextResponse.json(receivable, { status: 201 })
+    // Run supervisor validation after creating to get the receivable ID
+    const alerts = await supervisorValidateReceivable(validatedData, validatedData.contractId)
+
+    // Complete the editUrl for any alerts
+    const alertsWithEditUrl = alerts.map(alert => ({
+      ...alert,
+      entityInfo: alert.entityInfo ? {
+        ...alert.entityInfo,
+        editUrl: `/receivables?edit=${receivable.id}`
+      } : undefined
+    }))
+
+    return NextResponse.json({
+      receivable,
+      alerts: alertsWithEditUrl.length > 0 ? alertsWithEditUrl : undefined
+    }, { status: 201 })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: error.errors }, { status: 400 })

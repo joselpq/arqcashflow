@@ -23,10 +23,10 @@ export async function PUT(
 
     const updateData: any = { ...validatedData }
     if (validatedData.expectedDate) {
-      updateData.expectedDate = new Date(validatedData.expectedDate)
+      updateData.expectedDate = new Date(validatedData.expectedDate + 'T00:00:00.000Z')
     }
     if (validatedData.receivedDate) {
-      updateData.receivedDate = new Date(validatedData.receivedDate)
+      updateData.receivedDate = new Date(validatedData.receivedDate + 'T00:00:00.000Z')
     }
 
     const receivable = await prisma.receivable.update({

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { queryDatabase } from '@/lib/langchain'
+import { supervisorValidateQuery } from '@/lib/supervisor'
 import { z } from 'zod'
 
 const QuerySchema = z.object({
@@ -17,7 +18,13 @@ export async function POST(request: NextRequest) {
 
     const result = await queryDatabase(question, history)
 
-    return NextResponse.json(result)
+    // Run supervisor validation on the query context
+    const alerts = await supervisorValidateQuery(question, { result, history })
+
+    return NextResponse.json({
+      ...result,
+      alerts: alerts.length > 0 ? alerts : undefined
+    })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: 'Invalid question format' }, { status: 400 })

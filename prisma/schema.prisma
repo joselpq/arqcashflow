@@ -23,6 +23,8 @@ model Contract {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   receivables Receivable[]
+  expenses    Expense[]    // Project-related expenses
+  budgets     Budget[]     // Project budgets
 }
 
 model Receivable {
@@ -51,4 +53,100 @@ model Category {
   color     String?  // for UI visualization
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// Cost Management Models
+model Expense {
+  id           String    @id @default(cuid())
+  contractId   String?   // Optional: link to specific project
+  contract     Contract? @relation(fields: [contractId], references: [id], onDelete: SetNull)
+
+  // Basic Info
+  description  String
+  amount       Float
+  dueDate      DateTime
+  category     String    // e.g., "materials", "labor", "equipment", "transport", "office", "software"
+
+  // Payment Status
+  status       String    @default("pending") // pending, paid, overdue, cancelled
+  paidDate     DateTime?
+  paidAmount   Float?
+
+  // Vendor/Supplier Info
+  vendor       String?   // Who to pay
+  invoiceNumber String?
+
+  // Classification
+  type         String    @default("operational") // operational, project, administrative
+  isRecurring  Boolean   @default(false)
+
+  // Additional Info
+  notes        String?
+  receiptUrl   String?   // Link to receipt/invoice file
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([contractId])
+  @@index([dueDate])
+  @@index([status])
+  @@index([category])
+}
+
+model Budget {
+  id          String   @id @default(cuid())
+  contractId  String?  // Optional: project-specific budget
+  contract    Contract? @relation(fields: [contractId], references: [id], onDelete: SetNull)
+
+  // Budget Info
+  name        String   // e.g., "Q1 2024 Budget", "Project João Budget"
+  category    String   // expense category this budget covers
+  budgetAmount Float   // allocated amount
+  period      String   // "monthly", "quarterly", "project", "annual"
+
+  // Date Range
+  startDate   DateTime
+  endDate     DateTime
+
+  // Status
+  isActive    Boolean  @default(true)
+  notes       String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([contractId])
+  @@index([category])
+  @@index([startDate, endDate])
+}
+
+model RecurringExpense {
+  id              String   @id @default(cuid())
+
+  // Basic Info
+  description     String
+  amount          Float
+  category        String
+  vendor          String?
+
+  // Recurrence Pattern
+  frequency       String   // "weekly", "monthly", "quarterly", "annual"
+  interval        Int      @default(1) // every X periods (e.g., every 2 months)
+  dayOfMonth      Int?     // for monthly: which day (1-31)
+
+  // Date Range
+  startDate       DateTime
+  endDate         DateTime?
+
+  // Status
+  isActive        Boolean  @default(true)
+  lastGenerated   DateTime?
+  nextDue         DateTime
+
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([nextDue])
+  @@index([isActive])
 }
