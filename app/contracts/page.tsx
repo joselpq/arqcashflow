@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { format } from 'date-fns'
 import SupervisorAlerts, { SupervisorAlert } from '@/app/components/SupervisorAlerts'
@@ -29,7 +29,7 @@ function formatDateForDisplay(date: string | Date): string {
   return format(d, 'dd/MM/yyyy')
 }
 
-export default function ContractsPage() {
+function ContractsPageContent() {
   const searchParams = useSearchParams()
   const editId = searchParams.get('edit')
 
@@ -728,5 +728,13 @@ export default function ContractsPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function ContractsPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen p-8">Carregando...</div>}>
+      <ContractsPageContent />
+    </Suspense>
   )
 }
