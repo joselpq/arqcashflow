@@ -16,10 +16,21 @@ export class GoogleSheetsService {
       throw new Error('Google Sheets credentials not configured')
     }
 
+    // Process the private key to handle newlines properly
+    const privateKey = process.env.GOOGLE_PRIVATE_KEY!
+      .replace(/\\n/g, '\n')
+      .replace(/"/g, '')
+
+    console.log('Google Auth Debug:', {
+      email: process.env.GOOGLE_CLIENT_EMAIL,
+      keyStart: privateKey.substring(0, 50),
+      keyEnd: privateKey.substring(privateKey.length - 50)
+    })
+
     this.auth = new google.auth.JWT(
       process.env.GOOGLE_CLIENT_EMAIL,
       undefined,
-      process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+      privateKey,
       [
         'https://www.googleapis.com/auth/spreadsheets',
         'https://www.googleapis.com/auth/drive.file'
