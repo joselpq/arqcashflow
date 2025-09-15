@@ -58,136 +58,448 @@ Visit http://localhost:3001
 
 **Note**: The app runs on port 3001 by default. If occupied, use `PORT=3002 npm run dev` to specify a different port.
 
-## API Documentation
+## 🔌 Complete API Documentation
 
-### Contracts
+### Base URL
+- **Production**: `https://arqcashflow.vercel.app/api`
+- **Local Development**: `http://localhost:3000/api`
 
-- **GET /api/contracts** - List all contracts with receivables
-  - **Query params**: `?status=active&category=construction&sortBy=totalValue&sortOrder=desc`
-  - **Filters**: `status` (active/completed/cancelled), `category` (any custom category)
-  - **Sorting**: `sortBy` (createdAt/signedDate/clientName/projectName/totalValue/status), `sortOrder` (asc/desc)
-- **POST /api/contracts** - Create new contract
-  ```json
+All API endpoints return JSON responses and support CORS for cross-origin requests.
+
+---
+
+### 📝 Contracts API
+
+**Purpose**: Manage client contracts and project agreements
+
+#### **GET /api/contracts** - List All Contracts
+**Purpose**: Retrieve all contracts with optional filtering and sorting
+
+**Query Parameters:**
+- `status` (string): Filter by contract status
+  - Values: `active`, `completed`, `cancelled`
+- `category` (string): Filter by contract category
+  - Examples: `Residencial`, `Comercial`, `Restaurante`
+- `sortBy` (string): Sort field
+  - Values: `createdAt`, `signedDate`, `clientName`, `projectName`, `totalValue`, `status`
+- `sortOrder` (string): Sort direction
+  - Values: `asc`, `desc`
+
+**Example Request:**
+```bash
+curl "https://arqcashflow.vercel.app/api/contracts?status=active&sortBy=totalValue&sortOrder=desc"
+```
+
+**Response Format:**
+```json
+[
   {
-    "clientName": "string",
-    "projectName": "string",
-    "description": "string (optional)",
-    "totalValue": number,
-    "signedDate": "YYYY-MM-DD",
-    "category": "string (optional)",
-    "notes": "string (optional)"
+    "id": "cmflj9fi70001ju04pkdnplsq",
+    "clientName": "João Silva",
+    "projectName": "Casa Residencial",
+    "description": "Projeto arquitetônico completo",
+    "totalValue": 15000,
+    "signedDate": "2024-09-15T00:00:00.000Z",
+    "status": "active",
+    "category": "Residencial",
+    "notes": null,
+    "createdAt": "2025-09-15T19:44:47.435Z",
+    "updatedAt": "2025-09-15T19:44:47.435Z",
+    "receivables": []
   }
-  ```
-  - **Response**: `{contract, alerts}` - includes supervisor validation results
-- **GET /api/contracts/[id]** - Get specific contract with receivables
-- **PUT /api/contracts/[id]** - Update contract (all fields optional)
-- **DELETE /api/contracts/[id]** - Delete contract (cascades to receivables)
+]
+```
 
-### Receivables
+#### **POST /api/contracts** - Create New Contract
+**Purpose**: Create a new client contract
 
-- **GET /api/receivables** - List all receivables with contract details
-  - **Query params**: `?contractId=xxx&status=pending&category=construction&sortBy=expectedDate&sortOrder=asc`
-  - **Filters**: `contractId` (specific contract), `status` (pending/received/overdue/cancelled), `category` (any custom category)
-  - **Sorting**: `sortBy` (expectedDate/amount/status/category/receivedDate/createdAt), `sortOrder` (asc/desc)
-- **POST /api/receivables** - Create new receivable
-  ```json
+**Request Body:**
+```json
+{
+  "clientName": "string (required)",
+  "projectName": "string (required)",
+  "description": "string (optional)",
+  "totalValue": "number (required)",
+  "signedDate": "YYYY-MM-DD (required)",
+  "category": "string (optional)",
+  "notes": "string (optional)"
+}
+```
+
+**Example Request:**
+```bash
+curl -X POST "https://arqcashflow.vercel.app/api/contracts" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "clientName": "Maria Santos",
+    "projectName": "Loja Comercial",
+    "description": "Design de interiores para loja",
+    "totalValue": 25000,
+    "signedDate": "2024-09-15",
+    "category": "Comercial"
+  }'
+```
+
+**Response**: `{contract, alerts}` - includes AI supervisor validation results
+
+#### **GET /api/contracts/[id]** - Get Specific Contract
+**Purpose**: Retrieve a single contract with all associated receivables
+
+#### **PUT /api/contracts/[id]** - Update Contract
+**Purpose**: Update contract fields (all fields optional)
+
+#### **DELETE /api/contracts/[id]** - Delete Contract
+**Purpose**: Delete contract (cascades to all associated receivables)
+
+### 💰 Receivables API
+
+**Purpose**: Track expected payments and record actual payments from contracts
+
+#### **GET /api/receivables** - List All Receivables
+**Purpose**: Retrieve all receivables with contract details and payment status
+
+**Query Parameters:**
+- `contractId` (string): Filter by specific contract ID
+- `status` (string): Filter by payment status
+  - Values: `pending`, `received`, `overdue`, `cancelled`
+- `category` (string): Filter by receivable category
+  - Examples: `project work`, `construction visit`, `commission`
+- `sortBy` (string): Sort field
+  - Values: `expectedDate`, `amount`, `status`, `category`, `receivedDate`, `createdAt`
+- `sortOrder` (string): Sort direction
+  - Values: `asc`, `desc`
+
+**Example Request:**
+```bash
+curl "https://arqcashflow.vercel.app/api/receivables?status=pending&sortBy=expectedDate&sortOrder=asc"
+```
+
+**Response Format:**
+```json
+[
   {
-    "contractId": "string",
-    "expectedDate": "YYYY-MM-DD",
-    "amount": number,
-    "invoiceNumber": "string (optional)",
-    "category": "string (optional)",
-    "notes": "string (optional)"
+    "id": "receivable_id",
+    "contractId": "contract_id",
+    "expectedDate": "2024-10-15T00:00:00.000Z",
+    "amount": 5000,
+    "status": "pending",
+    "receivedDate": null,
+    "receivedAmount": null,
+    "invoiceNumber": "INV-001",
+    "category": "project work",
+    "notes": "First payment",
+    "createdAt": "2024-09-15T10:00:00.000Z",
+    "updatedAt": "2024-09-15T10:00:00.000Z",
+    "contract": {
+      "clientName": "João Silva",
+      "projectName": "Casa Residencial"
+    }
   }
-  ```
-  - **Response**: `{receivable, alerts}` - includes value/date validation alerts
-- **PUT /api/receivables/[id]** - Update receivable (all fields optional)
-  ```json
-  {
+]
+```
+
+#### **POST /api/receivables** - Create New Receivable
+**Purpose**: Create a new expected payment for a contract
+
+**Request Body:**
+```json
+{
+  "contractId": "string (required)",
+  "expectedDate": "YYYY-MM-DD (required)",
+  "amount": "number (required)",
+  "invoiceNumber": "string (optional)",
+  "category": "string (optional)",
+  "notes": "string (optional)"
+}
+```
+
+**Example Request:**
+```bash
+curl -X POST "https://arqcashflow.vercel.app/api/receivables" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "contractId": "cmflj9fi70001ju04pkdnplsq",
+    "expectedDate": "2024-10-15",
+    "amount": 7500,
+    "invoiceNumber": "INV-001",
+    "category": "project work"
+  }'
+```
+
+**Response**: `{receivable, alerts}` - includes value/date validation alerts
+
+#### **PUT /api/receivables/[id]** - Update Receivable
+**Purpose**: Update receivable details or record payment
+
+**Request Body (Payment Recording):**
+```json
+{
+  "status": "received",
+  "receivedDate": "YYYY-MM-DD",
+  "receivedAmount": "number",
+  "category": "string (optional)"
+}
+```
+
+**Example Request:**
+```bash
+curl -X PUT "https://arqcashflow.vercel.app/api/receivables/receivable_id" \
+  -H "Content-Type: application/json" \
+  -d '{
     "status": "received",
-    "receivedDate": "YYYY-MM-DD",
-    "receivedAmount": number,
-    "category": "string (optional)"
+    "receivedDate": "2024-09-20",
+    "receivedAmount": 7500
+  }'
+```
+
+#### **DELETE /api/receivables/[id]** - Delete Receivable
+**Purpose**: Remove a receivable from the system
+
+### 💸 Expenses API
+
+**Purpose**: Track business expenses, operational costs, and project-related spending
+
+#### **GET /api/expenses** - List All Expenses
+**Purpose**: Retrieve all expenses with summary statistics and filtering
+
+**Query Parameters:**
+- `contractId` (string): Filter by specific contract/project
+- `status` (string): Filter by payment status
+  - Values: `pending`, `paid`, `overdue`, `cancelled`
+- `category` (string): Filter by expense category
+  - Examples: `materials`, `labor`, `equipment`, `transport`, `office`, `software`
+- `type` (string): Filter by expense type
+  - Values: `operational`, `project`, `administrative`
+- `vendor` (string): Filter by vendor/supplier name
+- `sortBy` (string): Sort field
+  - Values: `dueDate`, `amount`, `description`, `vendor`, `createdAt`
+- `sortOrder` (string): Sort direction
+  - Values: `asc`, `desc`
+
+**Example Request:**
+```bash
+curl "https://arqcashflow.vercel.app/api/expenses?status=pending&type=project&sortBy=dueDate&sortOrder=asc"
+```
+
+**Response Format:**
+```json
+{
+  "expenses": [
+    {
+      "id": "expense_id",
+      "contractId": "contract_id",
+      "description": "Materiais de construção",
+      "amount": 5000,
+      "dueDate": "2024-10-20T00:00:00.000Z",
+      "category": "materials",
+      "status": "pending",
+      "paidDate": null,
+      "paidAmount": null,
+      "vendor": "Leroy Merlin",
+      "invoiceNumber": "LM-2024-001",
+      "type": "project",
+      "isRecurring": false,
+      "notes": "Materiais para primeira fase",
+      "receiptUrl": null,
+      "createdAt": "2024-09-15T10:00:00.000Z",
+      "updatedAt": "2024-09-15T10:00:00.000Z",
+      "contract": {
+        "clientName": "João Silva",
+        "projectName": "Casa Residencial"
+      }
+    }
+  ],
+  "summary": {
+    "total": 15000,
+    "paid": 5000,
+    "pending": 10000,
+    "overdue": 0,
+    "count": 3
   }
-  ```
-- **DELETE /api/receivables/[id]** - Delete receivable
+}
+```
 
-### Expenses
+#### **POST /api/expenses** - Create New Expense
+**Purpose**: Create a new business expense
 
-- **GET /api/expenses** - List all expenses with summary statistics
-  - **Query params**: `?contractId=xxx&status=pending&category=materials&type=operational&sortBy=dueDate&sortOrder=asc`
-  - **Filters**: `contractId`, `status` (pending/paid/overdue/cancelled), `category`, `type` (operational/project/administrative), `vendor`
-  - **Sorting**: `sortBy` (dueDate/amount/description/vendor/createdAt), `sortOrder` (asc/desc)
-  - **Response includes**: expenses list + summary (total, paid, pending, overdue amounts)
-- **POST /api/expenses** - Create new expense
-  ```json
-  {
-    "description": "string",
-    "amount": number,
-    "dueDate": "YYYY-MM-DD",
-    "category": "string",
-    "contractId": "string (optional)",
-    "vendor": "string (optional)",
-    "invoiceNumber": "string (optional)",
-    "type": "operational|project|administrative",
-    "notes": "string (optional)"
-  }
-  ```
-  - **Response**: `{expense, alerts}` - includes anomaly detection and pattern analysis
-- **PUT /api/expenses/[id]** - Update expense (all fields optional)
-  ```json
-  {
-    "status": "paid",
-    "paidDate": "YYYY-MM-DD",
-    "paidAmount": number,
-    "description": "string",
-    "category": "string"
-  }
-  ```
-- **DELETE /api/expenses/[id]** - Delete expense
+**Request Body:**
+```json
+{
+  "description": "string (required)",
+  "amount": "number (required)",
+  "dueDate": "YYYY-MM-DD (required)",
+  "category": "string (required)",
+  "contractId": "string (optional)",
+  "vendor": "string (optional)",
+  "invoiceNumber": "string (optional)",
+  "type": "operational|project|administrative (required)",
+  "notes": "string (optional)"
+}
+```
 
-### Budgets
+**Example Request:**
+```bash
+curl -X POST "https://arqcashflow.vercel.app/api/expenses" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "description": "Software de design AutoCAD",
+    "amount": 2400,
+    "dueDate": "2024-10-01",
+    "category": "software",
+    "vendor": "Autodesk",
+    "type": "operational",
+    "notes": "Licença anual"
+  }'
+```
 
-- **GET /api/budgets** - List all budgets with utilization metrics
-  - **Query params**: `?contractId=xxx&category=materials&period=monthly&isActive=true`
-  - **Response includes**: budget details + utilization (totalExpenses, paidExpenses, utilizationPercent, remaining)
-- **POST /api/budgets** - Create new budget
-  ```json
-  {
-    "name": "string",
-    "category": "string",
-    "budgetAmount": number,
-    "period": "monthly|quarterly|project|annual",
-    "startDate": "YYYY-MM-DD",
-    "endDate": "YYYY-MM-DD",
-    "contractId": "string (optional)"
-  }
-  ```
+**Response**: `{expense, alerts}` - includes anomaly detection and pattern analysis
 
-### Excel Export
+#### **PUT /api/expenses/[id]** - Update Expense
+**Purpose**: Update expense details or record payment
 
-- **GET /api/export/excel** - Download Excel report with 4 sheets:
-  1. **Contracts Overview** - Summary of all contracts with totals, receivables, and expenses
-  2. **Receivables Detail** - All receivables with categories, statuses, and contract info
-  3. **Expenses Detail** - All expenses with vendors, categories, and payment status
-  4. **Monthly Cashflow** - Month-by-month breakdown with income, expenses, and net cashflow
+**Request Body (Payment Recording):**
+```json
+{
+  "status": "paid",
+  "paidDate": "YYYY-MM-DD",
+  "paidAmount": "number",
+  "description": "string (optional)",
+  "category": "string (optional)"
+}
+```
 
-### Google Sheets Export
+#### **DELETE /api/expenses/[id]** - Delete Expense
+**Purpose**: Remove an expense from the system
 
-- **POST /api/export/google-sheets** - Create Google Sheets report with OAuth2 authentication
-  - Requires Google Cloud setup (see GOOGLE_SHEETS_SETUP.md)
-  - Creates shareable online spreadsheet with same structure as Excel export
-  - Returns spreadsheet URL for immediate access
+### 📊 Budgets API
 
-### AI Queries
+**Purpose**: Manage spending budgets and monitor utilization
 
-- **POST /api/ai/query** - Ask questions in natural language
-  ```json
-  {
-    "question": "What was my average monthly income?"
-  }
-  ```
-  - Returns: `{answer, sqlQuery, alerts}` with supervisor insights
+#### **GET /api/budgets** - List All Budgets
+**Purpose**: Retrieve all budgets with utilization metrics
+
+**Query Parameters:**
+- `contractId` (string): Filter by specific contract/project
+- `category` (string): Filter by budget category
+- `period` (string): Filter by budget period
+  - Values: `monthly`, `quarterly`, `project`, `annual`
+- `isActive` (boolean): Filter by active status
+
+**Response includes**: budget details + utilization (totalExpenses, paidExpenses, utilizationPercent, remaining)
+
+#### **POST /api/budgets** - Create New Budget
+**Purpose**: Create a new spending budget
+
+**Request Body:**
+```json
+{
+  "name": "string (required)",
+  "category": "string (required)",
+  "budgetAmount": "number (required)",
+  "period": "monthly|quarterly|project|annual (required)",
+  "startDate": "YYYY-MM-DD (required)",
+  "endDate": "YYYY-MM-DD (required)",
+  "contractId": "string (optional)"
+}
+```
+
+---
+
+### 📋 Export APIs
+
+#### **GET /api/export/excel** - Excel Report Download
+**Purpose**: Download comprehensive Excel report with multiple sheets
+
+**Sheets Generated:**
+1. **Contracts Overview** - Summary of all contracts with totals, receivables, and expenses
+2. **Receivables Detail** - All receivables with categories, statuses, and contract info
+3. **Expenses Detail** - All expenses with vendors, categories, and payment status
+4. **Monthly Cashflow** - Month-by-month breakdown with income, expenses, and net cashflow
+
+**Example Request:**
+```bash
+curl -O "https://arqcashflow.vercel.app/api/export/excel"
+```
+
+#### **POST /api/export/google-sheets** - Google Sheets Export
+**Purpose**: Create shareable Google Sheets report with OAuth2 authentication
+
+- Requires Google Cloud setup (see GOOGLE_SHEETS_SETUP.md)
+- Creates shareable online spreadsheet with same structure as Excel export
+- Returns spreadsheet URL for immediate access
+
+---
+
+### 🤖 AI-Powered APIs
+
+#### **POST /api/ai/query** - Natural Language Analytics
+**Purpose**: Ask questions about financial data in natural language (Portuguese/English)
+
+**Request Body:**
+```json
+{
+  "question": "string (required)"
+}
+```
+
+**Example Request:**
+```bash
+curl -X POST "https://arqcashflow.vercel.app/api/ai/query" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "question": "Qual foi minha receita total este mês?"
+  }'
+```
+
+**Response**: `{answer, sqlQuery, alerts}` with AI supervisor insights
+
+#### **POST /api/ai/create-contract** - AI Contract Creation
+**Purpose**: Create contracts using natural language (Portuguese)
+
+**Request Body:**
+```json
+{
+  "message": "string (required)",
+  "history": "array (optional)",
+  "pendingContract": "object (optional)",
+  "isConfirming": "boolean (optional)"
+}
+```
+
+**Example Request:**
+```bash
+curl -X POST "https://arqcashflow.vercel.app/api/ai/create-contract" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "Projeto João e Maria, residencial, 70m2, R$17k, 1/5/2024",
+    "history": [],
+    "isConfirming": false
+  }'
+```
+
+#### **POST /api/ai/create-expense** - AI Expense Creation
+**Purpose**: Create expenses using natural language (Portuguese)
+
+**Request Body:**
+```json
+{
+  "message": "string (required)",
+  "history": "array (optional)",
+  "pendingExpense": "object (optional)",
+  "isConfirming": "boolean (optional)"
+}
+```
+
+**Example Request:**
+```bash
+curl -X POST "https://arqcashflow.vercel.app/api/ai/create-expense" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "Compra de materiais na Leroy Merlin, 5 mil reais, vencimento amanhã",
+    "history": [],
+    "isConfirming": false
+  }'
+```
 
 ### 🤖 AI Supervisor System
 
@@ -304,43 +616,191 @@ The AI Supervisor monitors all data inputs in real-time and provides intelligent
 - **Proper Validation**: All form fields properly handle null/undefined values from database
 - **Enhanced UX**: Better error handling and form state management
 
-## Database Schema
+## 📊 Complete Data Models & Schemas
 
-### Contract
-- id (unique identifier)
-- clientName
-- projectName
-- description
-- totalValue
-- signedDate
-- status (active/completed/cancelled)
-- category
-- notes
-- receivables (relation)
+### 📝 Contract Model
+**Purpose**: Represents client contracts and project agreements
 
-### Receivable
-- id (unique identifier)
-- contractId (foreign key to Contract.id)
-- expectedDate (when payment is expected)
-- amount (expected payment amount)
-- status (pending/received/overdue/cancelled)
-- receivedDate (actual date payment was received)
-- receivedAmount (actual amount received)
-- invoiceNumber (optional invoice reference)
-- category (e.g., "project work", "construction visit", "commission")
-- notes (optional additional info)
-- createdAt, updatedAt (automatic timestamps)
+| Field | Type | Required | Description | Example Values |
+|-------|------|----------|-------------|----------------|
+| `id` | String (CUID) | ✅ | Unique identifier | `cmflj9fi70001ju04pkdnplsq` |
+| `clientName` | String | ✅ | Client's full name | `"João Silva"`, `"Maria Santos Ltda"` |
+| `projectName` | String | ✅ | Project/service name | `"Casa Residencial"`, `"Loja Comercial"` |
+| `description` | String | ❌ | Detailed project description | `"Projeto arquitetônico completo"` |
+| `totalValue` | Float | ✅ | Total contract value (BRL) | `15000.00`, `50000.50` |
+| `signedDate` | DateTime | ✅ | Contract signature date | `"2024-09-15T00:00:00.000Z"` |
+| `status` | String | ✅ | Contract status | `"active"`, `"completed"`, `"cancelled"` |
+| `category` | String | ❌ | Project category | `"Residencial"`, `"Comercial"`, `"Restaurante"` |
+| `notes` | String | ❌ | Additional notes | `"Cliente preferencial"` |
+| `createdAt` | DateTime | ✅ | Creation timestamp | `"2024-09-15T10:00:00.000Z"` |
+| `updatedAt` | DateTime | ✅ | Last update timestamp | `"2024-09-15T10:00:00.000Z"` |
+| `receivables` | Receivable[] | - | Related receivables (relation) | Array of receivable objects |
+| `expenses` | Expense[] | - | Related expenses (relation) | Array of expense objects |
+| `budgets` | Budget[] | - | Related budgets (relation) | Array of budget objects |
 
-### Category
-- id (unique identifier)
-- name
-- color (for UI visualization)
+**Status Values:**
+- `active`: Contract is ongoing
+- `completed`: Contract finished successfully
+- `cancelled`: Contract was cancelled
+
+---
+
+### 💰 Receivable Model
+**Purpose**: Tracks expected payments and records actual payments
+
+| Field | Type | Required | Description | Example Values |
+|-------|------|----------|-------------|----------------|
+| `id` | String (CUID) | ✅ | Unique identifier | `receivable_123abc` |
+| `contractId` | String | ✅ | Foreign key to Contract | `cmflj9fi70001ju04pkdnplsq` |
+| `expectedDate` | DateTime | ✅ | When payment is expected | `"2024-10-15T00:00:00.000Z"` |
+| `amount` | Float | ✅ | Expected payment amount | `7500.00` |
+| `status` | String | ✅ | Payment status | `"pending"`, `"received"`, `"overdue"`, `"cancelled"` |
+| `receivedDate` | DateTime | ❌ | Actual payment date | `"2024-10-10T00:00:00.000Z"` |
+| `receivedAmount` | Float | ❌ | Actual amount received | `7500.00` (can differ for partial payments) |
+| `invoiceNumber` | String | ❌ | Invoice reference | `"INV-2024-001"` |
+| `category` | String | ❌ | Payment category | `"project work"`, `"construction visit"`, `"commission"` |
+| `notes` | String | ❌ | Additional notes | `"First payment"`, `"50% advance"` |
+| `createdAt` | DateTime | ✅ | Creation timestamp | `"2024-09-15T10:00:00.000Z"` |
+| `updatedAt` | DateTime | ✅ | Last update timestamp | `"2024-09-15T10:00:00.000Z"` |
+| `contract` | Contract | - | Related contract (relation) | Contract object |
+
+**Status Values:**
+- `pending`: Payment not yet received
+- `received`: Payment completed
+- `overdue`: Payment past due date
+- `cancelled`: Payment cancelled
+
+**Payment Categories:**
+- `project work`: Main project payments
+- `construction visit`: Site visit fees
+- `commission`: Sales commissions
+- `consultation`: Consultation fees
+
+---
+
+### 💸 Expense Model
+**Purpose**: Tracks business expenses and operational costs
+
+| Field | Type | Required | Description | Example Values |
+|-------|------|----------|-------------|----------------|
+| `id` | String (CUID) | ✅ | Unique identifier | `expense_456def` |
+| `contractId` | String | ❌ | Optional link to project | `cmflj9fi70001ju04pkdnplsq` |
+| `description` | String | ✅ | Expense description | `"Materiais de construção"`, `"Software AutoCAD"` |
+| `amount` | Float | ✅ | Expense amount | `5000.00` |
+| `dueDate` | DateTime | ✅ | Payment due date | `"2024-10-20T00:00:00.000Z"` |
+| `category` | String | ✅ | Expense category | `"materials"`, `"software"`, `"transport"` |
+| `status` | String | ✅ | Payment status | `"pending"`, `"paid"`, `"overdue"`, `"cancelled"` |
+| `paidDate` | DateTime | ❌ | Actual payment date | `"2024-10-18T00:00:00.000Z"` |
+| `paidAmount` | Float | ❌ | Actual amount paid | `5000.00` |
+| `vendor` | String | ❌ | Vendor/supplier name | `"Leroy Merlin"`, `"Autodesk"` |
+| `invoiceNumber` | String | ❌ | Vendor invoice number | `"LM-2024-001"` |
+| `type` | String | ✅ | Expense type | `"operational"`, `"project"`, `"administrative"` |
+| `isRecurring` | Boolean | ✅ | Is recurring expense | `false` |
+| `notes` | String | ❌ | Additional notes | `"Materiais para primeira fase"` |
+| `receiptUrl` | String | ❌ | Receipt/invoice file URL | `"https://storage.com/receipt.pdf"` |
+| `createdAt` | DateTime | ✅ | Creation timestamp | `"2024-09-15T10:00:00.000Z"` |
+| `updatedAt` | DateTime | ✅ | Last update timestamp | `"2024-09-15T10:00:00.000Z"` |
+| `contract` | Contract | - | Related contract (relation) | Contract object (if linked) |
+
+**Expense Types:**
+- `operational`: General business operations
+- `project`: Specific project costs
+- `administrative`: Office and admin costs
+
+**Expense Categories:**
+- `materials`: Construction/project materials
+- `labor`: Worker payments
+- `equipment`: Tools and equipment
+- `transport`: Travel and transportation
+- `office`: Office supplies and rent
+- `software`: Software licenses
+
+---
+
+### 📊 Budget Model
+**Purpose**: Manages spending budgets and tracks utilization
+
+| Field | Type | Required | Description | Example Values |
+|-------|------|----------|-------------|----------------|
+| `id` | String (CUID) | ✅ | Unique identifier | `budget_789ghi` |
+| `contractId` | String | ❌ | Optional project link | `cmflj9fi70001ju04pkdnplsq` |
+| `name` | String | ✅ | Budget name | `"Q1 2024 Budget"`, `"Project João Budget"` |
+| `category` | String | ✅ | Budget category | `"materials"`, `"software"` |
+| `budgetAmount` | Float | ✅ | Allocated amount | `20000.00` |
+| `period` | String | ✅ | Budget period | `"monthly"`, `"quarterly"`, `"project"`, `"annual"` |
+| `startDate` | DateTime | ✅ | Budget start date | `"2024-01-01T00:00:00.000Z"` |
+| `endDate` | DateTime | ✅ | Budget end date | `"2024-03-31T23:59:59.000Z"` |
+| `isActive` | Boolean | ✅ | Is budget active | `true` |
+| `notes` | String | ❌ | Additional notes | `"Increased for Q2"` |
+| `createdAt` | DateTime | ✅ | Creation timestamp | `"2024-09-15T10:00:00.000Z"` |
+| `updatedAt` | DateTime | ✅ | Last update timestamp | `"2024-09-15T10:00:00.000Z"` |
+| `contract` | Contract | - | Related contract (relation) | Contract object (if linked) |
+
+**Budget Periods:**
+- `monthly`: 1-month budget cycle
+- `quarterly`: 3-month budget cycle
+- `project`: Entire project duration
+- `annual`: 12-month budget cycle
+
+---
+
+### 🎨 Category Model
+**Purpose**: Organizes items by custom categories
+
+| Field | Type | Required | Description | Example Values |
+|-------|------|----------|-------------|----------------|
+| `id` | String (CUID) | ✅ | Unique identifier | `category_abc123` |
+| `name` | String | ✅ | Category name (unique) | `"Residencial"`, `"Comercial"` |
+| `color` | String | ❌ | UI visualization color | `"#FF5733"`, `"blue"` |
+| `createdAt` | DateTime | ✅ | Creation timestamp | `"2024-09-15T10:00:00.000Z"` |
+| `updatedAt` | DateTime | ✅ | Last update timestamp | `"2024-09-15T10:00:00.000Z"` |
+
+---
+
+### 🔄 RecurringExpense Model
+**Purpose**: Manages recurring/repeating expenses
+
+| Field | Type | Required | Description | Example Values |
+|-------|------|----------|-------------|----------------|
+| `id` | String (CUID) | ✅ | Unique identifier | `recurring_xyz789` |
+| `description` | String | ✅ | Expense description | `"Office rent"`, `"Software subscription"` |
+| `amount` | Float | ✅ | Recurring amount | `2500.00` |
+| `category` | String | ✅ | Expense category | `"office"`, `"software"` |
+| `vendor` | String | ❌ | Vendor name | `"Property Manager"` |
+| `frequency` | String | ✅ | Recurrence pattern | `"monthly"`, `"quarterly"`, `"annual"` |
+| `interval` | Int | ✅ | Interval multiplier | `1` (every 1 month), `3` (every 3 months) |
+| `dayOfMonth` | Int | ❌ | Day of month (1-31) | `15` (15th of each month) |
+| `startDate` | DateTime | ✅ | Recurrence start | `"2024-01-01T00:00:00.000Z"` |
+| `endDate` | DateTime | ❌ | Recurrence end | `"2024-12-31T23:59:59.000Z"` |
+| `isActive` | Boolean | ✅ | Is recurrence active | `true` |
+| `lastGenerated` | DateTime | ❌ | Last expense generated | `"2024-09-15T00:00:00.000Z"` |
+| `nextDue` | DateTime | ✅ | Next due date | `"2024-10-15T00:00:00.000Z"` |
+| `notes` | String | ❌ | Additional notes | `"Yearly payment in advance"` |
+| `createdAt` | DateTime | ✅ | Creation timestamp | `"2024-09-15T10:00:00.000Z"` |
+| `updatedAt` | DateTime | ✅ | Last update timestamp | `"2024-09-15T10:00:00.000Z"` |
+
+**Frequency Values:**
+- `weekly`: Every week
+- `monthly`: Every month
+- `quarterly`: Every 3 months
+- `annual`: Every year
 
 ## Deployment
 
-### Production Deployment (Vercel + Neon)
+### 🚀 Live Production Application
 
-The application is deployed using **Vercel** for hosting and **Neon** for PostgreSQL database.
+**Production URL:** https://arqcashflow.vercel.app
+
+The application is deployed using **Vercel** for hosting and **Neon** for PostgreSQL database and is fully operational.
+
+#### **Current Production Status:**
+- ✅ **Application**: Deployed and running
+- ✅ **Database**: PostgreSQL tables created and connected
+- ✅ **API**: All endpoints functional and tested
+- ✅ **AI Features**: OpenAI integration active
+- ✅ **Export**: Excel/Google Sheets functionality available
+
+### Production Deployment (Vercel + Neon)
 
 #### **Prerequisites:**
 - Vercel account
@@ -373,14 +833,18 @@ The application is deployed using **Vercel** for hosting and **Neon** for Postgr
    - `DATABASE_URL` - Automatically set by Neon integration
    - `DATABASE_HOST`, `DATABASE_USERNAME`, etc. - Automatically set by Neon
 
-5. **Run Database Migration**
-   After deployment, run:
+5. **Create Database Tables**
+   After deployment, create the database schema:
    ```bash
-   npx prisma migrate deploy
+   # Pull production environment variables
+   vercel env pull .env.production
+
+   # Create tables in production database
+   DATABASE_URL="[production-url]" npx prisma db push
    ```
 
 #### **Production URLs:**
-- **Application**: https://arqcashflow-[deployment-id].vercel.app
+- **Application**: https://arqcashflow.vercel.app
 - **Database**: Managed by Neon (PostgreSQL)
 - **GitHub**: https://github.com/joselpq/arqcashflow
 
