@@ -242,7 +242,7 @@ export async function GET(request: NextRequest) {
       const finalFirstDate = new Date(Math.min(firstDate.getTime(), earliestDate.getTime()))
       const finalLastDate = new Date(Math.max(lastDate.getTime(), latestDate.getTime()))
 
-      const months = eachMonthOfInterval({
+      const monthsRange = eachMonthOfInterval({
         start: startOfMonth(finalFirstDate),
         end: endOfMonth(addMonths(finalLastDate, 3)), // Show 3 months ahead
       })
@@ -262,7 +262,7 @@ export async function GET(request: NextRequest) {
       cashflowSheet.columns = columns
 
       // Add data for each month
-      months.forEach(month => {
+      monthsRange.forEach(month => {
         const monthStart = startOfMonth(month)
         const monthEnd = endOfMonth(month)
 
