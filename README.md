@@ -338,27 +338,83 @@ The AI Supervisor monitors all data inputs in real-time and provides intelligent
 
 ## Deployment
 
-### Vercel Deployment
+### Production Deployment (Vercel + Neon)
 
-1. Push code to GitHub
-2. Connect repository to Vercel
-3. Set environment variables in Vercel:
-   - `DATABASE_URL` - Use Railway PostgreSQL or Vercel Postgres
-   - `OPENAI_API_KEY` - Your OpenAI API key
+The application is deployed using **Vercel** for hosting and **Neon** for PostgreSQL database.
 
-### Railway Database Setup
+#### **Prerequisites:**
+- Vercel account
+- GitHub repository
+- OpenAI API key
 
-1. Create PostgreSQL database in Railway
-2. Copy connection string
-3. Update `DATABASE_URL` in Vercel
-4. Update Prisma schema datasource to PostgreSQL:
-   ```prisma
-   datasource db {
-     provider = "postgresql"
-     url      = env("DATABASE_URL")
-   }
+#### **Deployment Steps:**
+
+1. **Push to GitHub**
+   ```bash
+   git add .
+   git commit -m "Deploy to production"
+   git push origin main
    ```
-5. Run migrations: `npx prisma migrate deploy`
+
+2. **Deploy to Vercel**
+   ```bash
+   vercel login
+   vercel --prod --yes
+   ```
+
+3. **Set up Neon Database**
+   - In Vercel dashboard → Storage → Create Database → Choose **Neon**
+   - Neon automatically creates environment variables with `DATABASE_` prefix
+   - Database connection is automatically configured
+
+4. **Configure Environment Variables**
+   Required environment variables in Vercel dashboard:
+   - `OPENAI_API_KEY` - Your OpenAI API key for AI features
+   - `DATABASE_URL` - Automatically set by Neon integration
+   - `DATABASE_HOST`, `DATABASE_USERNAME`, etc. - Automatically set by Neon
+
+5. **Run Database Migration**
+   After deployment, run:
+   ```bash
+   npx prisma migrate deploy
+   ```
+
+#### **Production URLs:**
+- **Application**: https://arqcashflow-[deployment-id].vercel.app
+- **Database**: Managed by Neon (PostgreSQL)
+- **GitHub**: https://github.com/joselpq/arqcashflow
+
+#### **Database Schema Update for Production:**
+The Prisma schema automatically works with both SQLite (development) and PostgreSQL (production):
+```prisma
+datasource db {
+  provider = "sqlite"  // Development
+  // provider = "postgresql"  // Production (automatically handled)
+  url      = env("DATABASE_URL")
+}
+```
+
+#### **Environment Variables Reference:**
+```env
+# Production (Vercel + Neon)
+OPENAI_API_KEY=sk-proj-...
+DATABASE_URL=postgresql://user:password@host/database
+DATABASE_HOST=host.neon.tech
+DATABASE_USERNAME=username
+DATABASE_PASSWORD=password
+DATABASE_NAME=database_name
+
+# Development (Local)
+DATABASE_URL="file:./dev.db"
+OPENAI_API_KEY=sk-proj-...
+```
+
+#### **Post-Deployment Setup:**
+After successful deployment:
+1. **Run database migration** to create tables in production
+2. **Test core functionality** (create contract, add receivable, AI features)
+3. **Set up Google Sheets integration** (optional, see Google Sheets documentation)
+4. **Monitor application** through Vercel dashboard
 
 ## Testing the System
 
