@@ -191,6 +191,12 @@ export async function POST(request: NextRequest) {
           { status: 429 }
         )
       }
+
+      // Expose the actual error for debugging (temporarily in production too)
+      return NextResponse.json(
+        { error: `Debug: ${error.message}`, details: error.toString() },
+        { status: 500 }
+      )
     }
 
     return NextResponse.json(
