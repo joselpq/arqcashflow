@@ -38,7 +38,17 @@ export class GoogleSheetsService {
       },
     })
 
-    return response.data.spreadsheetId!
+    const spreadsheetId = response.data.spreadsheetId!
+
+    // Move the spreadsheet to the shared folder
+    const drive = google.drive({ version: 'v3', auth: this.auth })
+    await drive.files.update({
+      fileId: spreadsheetId,
+      addParents: '1MYwYcz9S8dTGztP5_Fi19QNzE-jwYrb0',
+      removeParents: 'root',
+    })
+
+    return spreadsheetId
   }
 
   async populateSpreadsheet(spreadsheetId: string, data: SheetData): Promise<void> {
