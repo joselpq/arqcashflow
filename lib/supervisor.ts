@@ -209,12 +209,22 @@ ${isUpdate ? 'UPDATING' : 'NEW'} CONTRACT DATA:
 ${JSON.stringify(contractData, null, 2)}
 
 FOCOS DE VALIDAÇÃO (responda em português brasileiro):
-1. **Duplicatas**: Nomes similares de cliente/projeto, correspondências exatas
-2. **Anomalias de Valor**: Valores muito altos/baixos comparados ao histórico, zeros extras, valores irreais
-3. **Problemas de Data**: Datas futuras, datas que não fazem sentido, erros de ano
-4. **Consistência**: Variações no nome do cliente, padrões de nomeação de projetos
-5. **Lógica de Negócio**: Relacionamentos de contratos, informações ausentes
-6. **Qualidade dos Dados**: Padrões incomuns, erros de digitação, problemas de formatação
+1. **Duplicatas**:
+   - Flag ANY contract with same client name within last 6 months
+   - Flag similar project names for same client
+2. **Anomalias de Valor**:
+   - Flag if totalValue > 2x the average value (ALWAYS flag outliers)
+   - Flag if totalValue > R$100,000 (might need extra validation)
+   - Flag possible extra zeros (e.g., 50000 instead of 5000)
+3. **Problemas de Data**:
+   - Flag dates more than 1 year in the future
+   - Flag dates more than 2 years in the past
+4. **Padrões Suspeitos**:
+   - Flag round numbers (exactly 10000, 50000, 100000)
+   - Flag if description is missing or too generic
+   - Flag if client name is too short (< 3 characters)
+
+BE AGGRESSIVE IN DETECTION - It's better to warn about potential issues than miss real problems.
 
 **RESPOND IN BRAZILIAN PORTUGUESE with intelligent suggestions using JSON format:**
 
@@ -308,11 +318,21 @@ NEW RECEIVABLE DATA:
 ${JSON.stringify(receivableData, null, 2)}
 
 VALIDATION FOCUS:
-1. **Lógica de Valores**: Valor vs total do contrato, divisão razoável, soma excedendo contrato
-2. **Lógica de Datas**: Data esperada vs data de assinatura do contrato, datas passadas, timing irrealístico
-3. **Duplicatas**: Valores/datas similares já existem
-4. **Regras de Negócio**: Status do contrato vs criação de recebível, contratos completados
-5. **Padrões**: Cronogramas de pagamento incomuns, valores
+1. **Lógica de Valores**:
+   - Flag if single receivable > 50% of contract value
+   - Flag if total receivables exceed contract value
+   - Flag possible extra zeros
+2. **Duplicatas**:
+   - Flag ANY receivable with same amount for same contract
+   - Flag receivables on same date for same contract
+3. **Problemas de Data**:
+   - Flag dates more than 1 year in the future
+   - Flag past dates for new receivables
+4. **Padrões Suspeitos**:
+   - Flag round numbers (exactly 1000, 5000, 10000)
+   - Flag if creating receivable for completed/cancelled contract
+
+BE AGGRESSIVE IN DETECTION - It's better to warn about potential issues than miss real problems.
 
 **RESPOND IN BRAZILIAN PORTUGUESE with actionable suggestions and intelligent corrections using JSON format:**
 
@@ -405,12 +425,21 @@ NEW EXPENSE DATA:
 ${JSON.stringify(expenseData, null, 2)}
 
 VALIDATION FOCUS (in Brazilian Portuguese):
-1. **Anomalias de Valor**: Valores muito altos/baixos, zeros extras, erros de digitação
-2. **Problemas de Data**: Datas de vencimento passadas, timing irrealístico, erros de ano
-3. **Duplicatas**: Combinações similares de descrição/valor/fornecedor/data
-4. **Lógica de Categoria**: Categoria apropriada para descrição, consistência do fornecedor
-5. **Padrões de Negócio**: Relacionamentos com fornecedores, despesas recorrentes, padrões incomuns
-6. **Qualidade dos Dados**: Clareza da descrição, variações do nome do fornecedor
+1. **Anomalias de Valor**:
+   - Flag if amount is > 2x the average (ALWAYS flag outliers)
+   - Flag if amount > R$10,000 for simple expenses
+   - Flag possible extra zeros (e.g., 5000 instead of 500)
+2. **Duplicatas**:
+   - Flag ANY expense with same description within last 30 days
+   - Flag similar amounts (within 10%) with similar descriptions
+3. **Problemas de Data**:
+   - Flag dates more than 1 year in the future
+   - Flag past due dates for new expenses
+4. **Padrões Suspeitos**:
+   - Flag round numbers that might be estimates (e.g., exactly 1000, 5000, 10000)
+   - Flag if description is too generic (e.g., "despesa", "pagamento", "compra")
+
+BE AGGRESSIVE IN DETECTION - It's better to warn about potential issues than miss real problems.
 
 **RESPOND IN BRAZILIAN PORTUGUESE with intelligent corrections using JSON format:**
 

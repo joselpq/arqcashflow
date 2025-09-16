@@ -100,10 +100,19 @@ export async function POST(request: NextRequest) {
     })
 
     // Run supervisor validation after creating to get the contract ID
+    console.log('📍 About to call supervisorValidateContract with:', {
+      clientName: validatedData.clientName,
+      projectName: validatedData.projectName,
+      totalValue: validatedData.totalValue,
+      teamId
+    })
+
     const alerts = await supervisorValidateContract({
       ...validatedData,
       id: contract.id
     }, teamId, false, contract.id)
+
+    console.log('📍 Contract supervisor returned alerts:', alerts)
 
     // Complete the editUrl for any alerts
     const alertsWithEditUrl = alerts.map(alert => ({
