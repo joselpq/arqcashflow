@@ -176,7 +176,14 @@ export async function supervisorValidateContract(
   isUpdate = false,
   existingContractId?: string
 ): Promise<SupervisorAlert[]> {
+  console.log('🤖 Supervisor validating contract:', { contractData, teamId, isUpdate })
+
   const context = await buildSupervisorContext(teamId)
+  console.log('📊 Contract validation context:', {
+    contractsCount: context.contracts.length,
+    averageValue: context.contractStats.averageValue,
+    newValue: contractData.totalValue
+  })
 
   const prompt = `You are a financial data supervisor for an architect's cashflow management system. Analyze this contract ${isUpdate ? 'update' : 'creation'} and identify any potential issues or anomalies.
 
@@ -230,6 +237,7 @@ Example format:
 Return {"alerts": []} JSON object if no issues found.`
 
   try {
+    console.log('🔍 Starting OpenAI contract validation...')
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [{ role: 'user', content: prompt + '\n\nPlease respond with a JSON object in the specified format.' }],
@@ -237,7 +245,12 @@ Return {"alerts": []} JSON object if no issues found.`
       response_format: { type: 'json_object' }
     })
 
-    const result = JSON.parse(response.choices[0].message.content || '{"alerts": []}')
+    console.log('✅ OpenAI contract response received')
+    const rawContent = response.choices[0].message.content
+    console.log('📝 Raw contract OpenAI response:', rawContent)
+
+    const result = JSON.parse(rawContent || '{"alerts": []}')
+    console.log('🚨 Parsed contract alerts:', result)
 
     // Create entityInfo for contract alerts
     const contractId = existingContractId || contractData.id
@@ -247,9 +260,16 @@ Return {"alerts": []} JSON object if no issues found.`
       editUrl: `/contracts?edit=${contractId}`
     } : undefined
 
-    return normalizeAlerts(result.alerts || [], entityInfo)
+    const normalizedAlerts = normalizeAlerts(result.alerts || [], entityInfo)
+    console.log('📋 Final normalized contract alerts:', normalizedAlerts)
+
+    return normalizedAlerts
   } catch (error) {
-    console.error('Supervisor validation error:', error)
+    console.error('🚨 Contract supervisor validation error:', error)
+    console.error('Contract error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    })
     return []
   }
 }
@@ -352,7 +372,21 @@ export async function supervisorValidateExpense(
   expenseData: any,
   teamId: string
 ): Promise<SupervisorAlert[]> {
+  console.log('🤖 Supervisor validating expense:', { expenseData, teamId })
+
+  // Check if OpenAI API key is configured
+  if (!process.env.OPENAI_API_KEY) {
+    console.error('❌ OPENAI_API_KEY not configured for supervisor')
+    return []
+  }
+  console.log('✅ OPENAI_API_KEY is configured')
+
   const context = await buildSupervisorContext(teamId)
+  console.log('📊 Expense validation context:', {
+    expensesCount: context.expenses.length,
+    averageAmount: context.expenseStats.averageAmount,
+    newAmount: expenseData.amount
+  })
 
   const prompt = `You are a financial data supervisor. Analyze this new expense creation for potential issues.
 
@@ -399,6 +433,7 @@ Example format:
 Return {"alerts": []} JSON object if no issues found.`
 
   try {
+    console.log('🔍 Starting OpenAI validation...')
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [{ role: 'user', content: prompt + '\n\nPlease respond with a JSON object in the specified format.' }],
@@ -406,7 +441,12 @@ Return {"alerts": []} JSON object if no issues found.`
       response_format: { type: 'json_object' }
     })
 
-    const result = JSON.parse(response.choices[0].message.content || '{"alerts": []}')
+    console.log('✅ OpenAI response received')
+    const rawContent = response.choices[0].message.content
+    console.log('📝 Raw OpenAI response:', rawContent)
+
+    const result = JSON.parse(rawContent || '{"alerts": []}')
+    console.log('🚨 Parsed alerts:', result)
 
     // Create entityInfo for expense alerts
     const entityInfo = {
@@ -415,9 +455,16 @@ Return {"alerts": []} JSON object if no issues found.`
       editUrl: `` // Will be completed in API with actual expense ID
     }
 
-    return normalizeAlerts(result.alerts || [], entityInfo)
+    const normalizedAlerts = normalizeAlerts(result.alerts || [], entityInfo)
+    console.log('📋 Final normalized alerts:', normalizedAlerts)
+
+    return normalizedAlerts
   } catch (error) {
-    console.error('Supervisor validation error:', error)
+    console.error('🚨 Supervisor validation error:', error)
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    })
     return []
   }
 }
