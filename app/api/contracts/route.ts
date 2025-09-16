@@ -25,7 +25,10 @@ export async function GET(request: NextRequest) {
     const sortBy = searchParams.get('sortBy') || 'createdAt'
     const sortOrder = searchParams.get('sortOrder') || 'desc'
 
-    const where: any = { teamId }
+    const where: any = {
+      teamId,  // Ensure we only get contracts for this team
+      NOT: { teamId: null }  // Exclude any contracts without a team
+    }
     if (status && status !== 'all') where.status = status
     if (category && category !== 'all') where.category = category
 
@@ -90,9 +93,13 @@ export async function POST(request: NextRequest) {
       alerts: alertsWithEditUrl.length > 0 ? alertsWithEditUrl : undefined
     }, { status: 201 })
   } catch (error) {
+    if (error instanceof Error && error.message === "Unauthorized") {
+      return NextResponse.json({ error: 'Unauthorized - User must belong to a team' }, { status: 401 })
+    }
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: error.errors }, { status: 400 })
     }
+    console.error('Contract creation error:', error)
     return NextResponse.json({ error: 'Failed to create contract' }, { status: 500 })
   }
 }
