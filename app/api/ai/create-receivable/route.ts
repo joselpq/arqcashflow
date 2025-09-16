@@ -71,7 +71,20 @@ export async function POST(request: NextRequest) {
       }
 
       // User confirmed, proceed with creation
-      const alerts = await supervisorValidateReceivable(pendingReceivable, pendingReceivable.contractId, teamId)
+      console.log('📍 About to call supervisorValidateReceivable (AI) with:', {
+        amount: pendingReceivable.amount,
+        contractId: pendingReceivable.contractId,
+        teamId
+      })
+
+      let alerts = []
+      try {
+        alerts = await supervisorValidateReceivable(pendingReceivable, pendingReceivable.contractId, teamId)
+        console.log('📍 AI Receivable supervisor returned alerts:', alerts)
+      } catch (supervisorError) {
+        console.error('📍 AI Receivable supervisor validation failed (non-critical):', supervisorError)
+        alerts = [] // Continue without alerts if supervisor fails
+      }
 
       const receivable = await prisma.receivable.create({
         data: {

@@ -132,7 +132,20 @@ export async function POST(request: NextRequest) {
     })
 
     // Run supervisor validation after creating to get the receivable ID
-    const alerts = await supervisorValidateReceivable(validatedData, validatedData.contractId, teamId)
+    console.log('📍 About to call supervisorValidateReceivable with:', {
+      amount: validatedData.amount,
+      contractId: validatedData.contractId,
+      teamId
+    })
+
+    let alerts = []
+    try {
+      alerts = await supervisorValidateReceivable(validatedData, validatedData.contractId, teamId)
+      console.log('📍 Receivable supervisor returned alerts:', alerts)
+    } catch (supervisorError) {
+      console.error('📍 Receivable supervisor validation failed (non-critical):', supervisorError)
+      alerts = [] // Continue without alerts if supervisor fails
+    }
 
     // Complete the editUrl for any alerts
     const alertsWithEditUrl = alerts.map(alert => ({

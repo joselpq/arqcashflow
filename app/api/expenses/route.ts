@@ -156,9 +156,14 @@ export async function POST(request: NextRequest) {
       teamId
     })
 
-    const alerts = await supervisorValidateExpense(validatedData, teamId)
-
-    console.log('📍 Supervisor returned alerts:', alerts)
+    let alerts = []
+    try {
+      alerts = await supervisorValidateExpense(validatedData, teamId)
+      console.log('📍 Supervisor returned alerts:', alerts)
+    } catch (supervisorError) {
+      console.error('📍 Supervisor validation failed (non-critical):', supervisorError)
+      alerts = [] // Continue without alerts if supervisor fails
+    }
 
     // Complete the editUrl for any alerts
     const alertsWithEditUrl = alerts.map(alert => ({

@@ -51,7 +51,20 @@ export async function PUT(
     const validatedData = UpdateContractSchema.parse(body)
 
     // Run supervisor validation for updates
-    const alerts = await supervisorValidateContract(validatedData, teamId, true, params.id)
+    console.log('📍 About to call supervisorValidateContract (UPDATE) with:', {
+      contractId: params.id,
+      teamId,
+      updateData: validatedData
+    })
+
+    let alerts = []
+    try {
+      alerts = await supervisorValidateContract(validatedData, teamId, true, params.id)
+      console.log('📍 Contract UPDATE supervisor returned alerts:', alerts)
+    } catch (supervisorError) {
+      console.error('📍 Contract UPDATE supervisor validation failed (non-critical):', supervisorError)
+      alerts = [] // Continue without alerts if supervisor fails
+    }
 
     const updateData: any = { ...validatedData }
     if (validatedData.signedDate) {

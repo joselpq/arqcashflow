@@ -107,12 +107,17 @@ export async function POST(request: NextRequest) {
       teamId
     })
 
-    const alerts = await supervisorValidateContract({
-      ...validatedData,
-      id: contract.id
-    }, teamId, false, contract.id)
-
-    console.log('📍 Contract supervisor returned alerts:', alerts)
+    let alerts = []
+    try {
+      alerts = await supervisorValidateContract({
+        ...validatedData,
+        id: contract.id
+      }, teamId, false, contract.id)
+      console.log('📍 Contract supervisor returned alerts:', alerts)
+    } catch (supervisorError) {
+      console.error('📍 Contract supervisor validation failed (non-critical):', supervisorError)
+      alerts = [] // Continue without alerts if supervisor fails
+    }
 
     // Complete the editUrl for any alerts
     const alertsWithEditUrl = alerts.map(alert => ({
