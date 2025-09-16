@@ -151,40 +151,40 @@ function SimpleChart({ data }: { data: DashboardData['monthlyTrend'] }) {
   const scale = 100 / (maxValue || 1)
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {data.map((month, index) => (
-        <div key={index} className="space-y-2">
-          <div className="text-sm font-medium">{month.month}</div>
-          <div className="space-y-1">
-            <div className="flex items-center space-x-2">
-              <div className="w-16 text-xs">Receita</div>
-              <div className="flex-1 bg-gray-200 rounded-full h-3">
+        <div key={index} className="space-y-3">
+          <div className="text-sm font-medium text-neutral-900">{month.month}</div>
+          <div className="space-y-2">
+            <div className="flex items-center space-x-3">
+              <div className="w-16 text-sm text-neutral-700">Receita</div>
+              <div className="flex-1 bg-neutral-200 rounded-full h-4">
                 <div
-                  className="bg-green-500 h-3 rounded-full"
+                  className="bg-green-600 h-4 rounded-full"
                   style={{ width: `${month.revenue * scale}%` }}
                 ></div>
               </div>
-              <div className="text-xs w-20 text-right">{formatCurrency(month.revenue)}</div>
+              <div className="text-sm w-24 text-right text-neutral-900 font-medium">{formatCurrency(month.revenue)}</div>
             </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-16 text-xs">Despesas</div>
-              <div className="flex-1 bg-gray-200 rounded-full h-3">
+            <div className="flex items-center space-x-3">
+              <div className="w-16 text-sm text-neutral-700">Despesas</div>
+              <div className="flex-1 bg-neutral-200 rounded-full h-4">
                 <div
-                  className="bg-red-500 h-3 rounded-full"
+                  className="bg-red-500 h-4 rounded-full"
                   style={{ width: `${month.expenses * scale}%` }}
                 ></div>
               </div>
-              <div className="text-xs w-20 text-right">{formatCurrency(month.expenses)}</div>
+              <div className="text-sm w-24 text-right text-neutral-900 font-medium">{formatCurrency(month.expenses)}</div>
             </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-16 text-xs font-bold">Lucro</div>
-              <div className="flex-1 bg-gray-200 rounded-full h-3">
+            <div className="flex items-center space-x-3">
+              <div className="w-16 text-sm text-neutral-700 font-medium">Lucro</div>
+              <div className="flex-1 bg-neutral-200 rounded-full h-4">
                 <div
-                  className={`h-3 rounded-full ${month.profit >= 0 ? 'bg-blue-500' : 'bg-red-300'}`}
+                  className={`h-4 rounded-full ${month.profit >= 0 ? 'bg-blue-600' : 'bg-red-400'}`}
                   style={{ width: `${Math.abs(month.profit) * scale}%` }}
                 ></div>
               </div>
-              <div className={`text-xs w-20 text-right font-bold ${month.profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              <div className={`text-sm w-24 text-right font-medium ${month.profit >= 0 ? 'text-green-700' : 'text-red-600'}`}>
                 {formatCurrency(month.profit)}
               </div>
             </div>
@@ -323,23 +323,23 @@ export default function Dashboard() {
               </div>
               <div className="space-y-3">
                 {data.alerts.overdueItems.slice(0, 5).map((item) => (
-                  <div key={item.id} className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 bg-white rounded border">
+                  <div key={item.id} className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-white rounded border">
                     <div>
-                      <p className="font-medium">{item.description}</p>
-                      <p className="text-sm text-gray-600">
+                      <p className="font-medium text-neutral-900">{item.description}</p>
+                      <p className="text-sm text-neutral-600">
                         Venceu em {formatDate(item.dueDate)}
                       </p>
                     </div>
                     <Link
                       href={item.editUrl}
-                      className="mt-2 sm:mt-0 bg-red-600 text-white px-4 py-2 rounded text-sm hover:bg-red-700"
+                      className="mt-2 sm:mt-0 bg-red-600 text-white px-4 py-2 rounded text-sm hover:bg-red-700 transition-colors"
                     >
                       Resolver
                     </Link>
                   </div>
                 ))}
                 {data.alerts.overdueItems.length > 5 && (
-                  <p className="text-sm text-gray-600 text-center">
+                  <p className="text-sm text-neutral-600 text-center">
                     ... e mais {data.alerts.overdueItems.length - 5} itens
                   </p>
                 )}
@@ -358,20 +358,20 @@ export default function Dashboard() {
             {data.upcoming.receivables.length > 0 ? (
               <div className="space-y-3">
                 {data.upcoming.receivables.map((item) => (
-                  <div key={item.id} className="flex justify-between items-center p-3 bg-green-50 rounded">
+                  <div key={item.id} className="flex justify-between items-center p-4 bg-neutral-50 border border-neutral-200 rounded">
                     <div>
-                      <p className="font-medium">{item.client}</p>
-                      <p className="text-sm text-gray-600">{item.project}</p>
-                      <p className="text-sm text-green-600">{formatDate(item.expectedDate)}</p>
+                      <p className="font-medium text-neutral-900">{item.client}</p>
+                      <p className="text-sm text-neutral-600">{item.project}</p>
+                      <p className="text-sm text-green-700">{formatDate(item.expectedDate)}</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-green-700">{formatCurrency(item.amount)}</p>
+                      <p className="font-semibold text-green-700">{formatCurrency(item.amount)}</p>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-gray-500 text-center py-4">Nenhum recebimento próximo</p>
+              <p className="text-neutral-500 text-center py-4">Nenhum recebimento próximo</p>
             )}
           </div>
 
@@ -384,20 +384,20 @@ export default function Dashboard() {
             {data.upcoming.expenses.length > 0 ? (
               <div className="space-y-3">
                 {data.upcoming.expenses.map((item) => (
-                  <div key={item.id} className="flex justify-between items-center p-3 bg-yellow-50 rounded">
+                  <div key={item.id} className="flex justify-between items-center p-4 bg-neutral-50 border border-neutral-200 rounded">
                     <div>
-                      <p className="font-medium">{item.description}</p>
-                      {item.vendor && <p className="text-sm text-gray-600">{item.vendor}</p>}
-                      <p className="text-sm text-yellow-600">{formatDate(item.dueDate)}</p>
+                      <p className="font-medium text-neutral-900">{item.description}</p>
+                      {item.vendor && <p className="text-sm text-neutral-600">{item.vendor}</p>}
+                      <p className="text-sm text-amber-700">{formatDate(item.dueDate)}</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-yellow-700">{formatCurrency(item.amount)}</p>
+                      <p className="font-semibold text-amber-700">{formatCurrency(item.amount)}</p>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-gray-500 text-center py-4">Nenhuma despesa próxima</p>
+              <p className="text-neutral-500 text-center py-4">Nenhuma despesa próxima</p>
             )}
           </div>
         </div>

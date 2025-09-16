@@ -15,13 +15,14 @@ A secure, multi-tenant cashflow management system designed for architects to tra
 
 ## Features
 
-1. **📊 Smart Dashboard** - Comprehensive financial overview designed for users with basic finance knowledge
-   - Health indicators (Green/Yellow/Red status)
-   - Key metrics (Revenue, Expenses, Profit this month)
-   - Visual cash flow trends for last 6 months
-   - Critical alerts for overdue items
-   - Upcoming deadlines to prevent missed payments
-   - Quick action buttons for common tasks
+1. **📊 Professional Dashboard** - Clean, architect-focused financial overview with modern design
+   - Health indicators with clear visual status
+   - Key metrics with color-coded values and trend indicators
+   - Enhanced visual cash flow trends for last 6 months
+   - High-contrast alerts for overdue items with improved readability
+   - Upcoming receivables and expenses with clear typography
+   - Quick action buttons with professional styling
+   - Export functionality with Brazilian Portuguese labels
 2. **Contract Management** - Create, edit, delete, and manage client contracts with categories
 3. **AI Contract Creation** - Create contracts using natural language (Portuguese) with intelligent parsing
 4. **Receivables Tracking** - Track expected and received payments with categories and filtering
@@ -47,12 +48,43 @@ A secure, multi-tenant cashflow management system designed for architects to tra
 24. **Route Protection** - Middleware-based authentication for all protected routes
 25. **Session Management** - JWT-based session handling with secure token validation
 
+## 🎨 Design System & UI/UX
+
+### Professional Architect-Focused Design
+ArqCashflow features a clean, professional design system specifically crafted for architects who value:
+
+- **Minimal Aesthetics**: Clean lines, proper spacing, and functional beauty
+- **Typography Hierarchy**: Clear information organization with readable font weights
+- **Professional Color Palette**: Neutral base with semantic accent colors
+- **High Contrast**: Optimal readability with proper color contrast ratios
+- **Consistent Spacing**: Systematic spacing scale for visual rhythm
+
+### Key Design Features:
+- **Clean Navigation**: Minimal navigation bar with underline-based active states
+- **Professional Cards**: White cards with subtle borders and clean typography
+- **Enhanced Charts**: Readable bar charts with proper text sizing and contrast
+- **Semantic Colors**: Green for income, red for expenses, amber for warnings
+- **Brazilian Portuguese**: All export and interface elements properly localized
+
+### Component Design:
+- **Metric Cards**: Color-coded values with trend indicators
+- **Alert Sections**: High-contrast notifications with clear action buttons
+- **Data Tables**: Clean layouts with proper spacing and readability
+- **Form Elements**: Professional styling with focus states
+- **Quick Actions**: Minimal button design with hover states
+
 ## 🚨 Known Bugs & Issues
 
 ### Recent Fixes (September 2025):
+- ✅ **UI/UX Professional Redesign**: Complete visual overhaul with architect-focused aesthetics
+- ✅ **Contrast & Readability**: Fixed poor contrast issues throughout dashboard
+- ✅ **Navigation Enhancement**: Clean, minimal navigation with proper typography
+- ✅ **Chart Improvements**: Enhanced chart readability with better text sizes and colors
+- ✅ **Export Translation**: Brazilian Portuguese labels for export functionality
+- ✅ **AI Contract Creation**: Fixed 'hoje' (today) date parsing for natural language input
+- ✅ **Contracts Page Error**: Resolved client-side exception after supervisor removal
 - ✅ **AI Assistant Security**: No longer exposes internal IDs to users
 - ✅ **Quality Supervisor Fixes**: Resolved OpenAI JSON format errors that were causing 400 responses
-- ✅ **AI Query Alerts**: Removed unnecessary Quality Supervisor alerts from AI assistant responses
 - ✅ **Team Data Filtering**: Fixed Quality Supervisor to properly filter by team for data validation
 
 ### Critical Issues (High Priority):
@@ -81,7 +113,12 @@ A secure, multi-tenant cashflow management system designed for architects to tra
 - ⚠️ **Team Assignment**: New user registrations properly create teams
 - ✅ **Cascade Filtering**: All API endpoints now properly filter by team
 
-### UI/UX Issues:
+### UI/UX Status:
+- ✅ **Professional Design**: Clean, architect-focused aesthetics implemented
+- ✅ **Typography**: Proper font hierarchy and readability
+- ✅ **Contrast**: Fixed all poor contrast issues
+- ✅ **Navigation**: Minimal, professional navigation design
+- ✅ **Charts**: Enhanced readability and visual clarity
 - ⚠️ **Error Messages**: Some 401 errors may not redirect properly to login
 - ⚠️ **Loading States**: Pages may show "no data" briefly during authentication
 - ⚠️ **Session Expiry**: Users may need to manually refresh after token expiry
