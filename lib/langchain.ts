@@ -22,57 +22,59 @@ export async function queryDatabase(question: string, teamId: string, history?: 
     Database Schema:
 
     IMPORTANT: Current date context - Today is ${new Date().toISOString().split('T')[0]} (YYYY-MM-DD format).
-    When using 'now' in SQLite, be aware that the system might have timezone issues.
+    This is a PostgreSQL database, use PostgreSQL syntax for all queries.
 
-    CRITICAL: ALL QUERIES MUST FILTER BY teamId = '${teamId}' to ensure data isolation!
+    CRITICAL: ALL QUERIES MUST FILTER BY "teamId" = '${teamId}' to ensure data isolation!
+    Note: Use double quotes for column names in PostgreSQL.
 
-    Contract table:
-    - id (TEXT, PRIMARY KEY)
-    - teamId (TEXT, REQUIRED) - MUST FILTER BY THIS: teamId = '${teamId}'
-    - clientName (TEXT)
-    - projectName (TEXT)
-    - description (TEXT, nullable)
-    - totalValue (REAL)
-    - signedDate (DATETIME)
-    - status (TEXT, default: 'active') - values: active, completed, cancelled
-    - category (TEXT, nullable)
-    - notes (TEXT, nullable)
-    - createdAt (DATETIME)
-    - updatedAt (DATETIME)
+    "Contract" table:
+    - "id" (TEXT, PRIMARY KEY)
+    - "teamId" (TEXT, REQUIRED) - MUST FILTER BY THIS: "teamId" = '${teamId}'
+    - "clientName" (TEXT)
+    - "projectName" (TEXT)
+    - "description" (TEXT, nullable)
+    - "totalValue" (DECIMAL)
+    - "signedDate" (TIMESTAMP)
+    - "status" (TEXT, default: 'active') - values: active, completed, cancelled
+    - "category" (TEXT, nullable)
+    - "notes" (TEXT, nullable)
+    - "createdAt" (TIMESTAMP)
+    - "updatedAt" (TIMESTAMP)
 
-    Receivable table (income/payments expected):
-    - id (TEXT, PRIMARY KEY)
-    - contractId (TEXT, FOREIGN KEY to Contract.id)
-    - expectedDate (DATETIME)
-    - amount (REAL)
-    - status (TEXT, default: 'pending') - values: pending, received, overdue, cancelled
-    - receivedDate (DATETIME, nullable)
-    - receivedAmount (REAL, nullable)
-    - invoiceNumber (TEXT, nullable)
-    - category (TEXT, nullable)
-    - notes (TEXT, nullable)
-    - createdAt (DATETIME)
-    - updatedAt (DATETIME)
+    "Receivable" table (income/payments expected):
+    - "id" (TEXT, PRIMARY KEY)
+    - "contractId" (TEXT, FOREIGN KEY to "Contract"."id")
+    - "expectedDate" (TIMESTAMP)
+    - "amount" (DECIMAL)
+    - "status" (TEXT, default: 'pending') - values: pending, received, overdue, cancelled
+    - "receivedDate" (TIMESTAMP, nullable)
+    - "receivedAmount" (DECIMAL, nullable)
+    - "invoiceNumber" (TEXT, nullable)
+    - "category" (TEXT, nullable)
+    - "notes" (TEXT, nullable)
+    - "createdAt" (TIMESTAMP)
+    - "updatedAt" (TIMESTAMP)
+    NOTE: Filter by "Contract"."teamId" = '${teamId}' when joining
 
-    Expense table (costs/expenses):
-    - id (TEXT, PRIMARY KEY)
-    - teamId (TEXT, REQUIRED) - MUST FILTER BY THIS: teamId = '${teamId}'
-    - contractId (TEXT, FOREIGN KEY to Contract.id, nullable)
-    - description (TEXT)
-    - amount (REAL)
-    - dueDate (DATETIME)
-    - category (TEXT) - common values: materials, labor, equipment, transport, office, software, utilities, rent, insurance, marketing, professional-services, other
-    - status (TEXT, default: 'pending') - values: pending, paid, overdue, cancelled
-    - paidDate (DATETIME, nullable)
-    - paidAmount (REAL, nullable)
-    - vendor (TEXT, nullable) - supplier/vendor name
-    - invoiceNumber (TEXT, nullable)
-    - type (TEXT, default: 'operational') - values: operational, project, administrative
-    - isRecurring (BOOLEAN, default: false)
-    - notes (TEXT, nullable)
-    - receiptUrl (TEXT, nullable)
-    - createdAt (DATETIME)
-    - updatedAt (DATETIME)
+    "Expense" table (costs/expenses):
+    - "id" (TEXT, PRIMARY KEY)
+    - "teamId" (TEXT, REQUIRED) - MUST FILTER BY THIS: "teamId" = '${teamId}'
+    - "contractId" (TEXT, FOREIGN KEY to "Contract"."id", nullable)
+    - "description" (TEXT)
+    - "amount" (DECIMAL)
+    - "dueDate" (TIMESTAMP)
+    - "category" (TEXT) - common values: materials, labor, equipment, transport, office, software, utilities, rent, insurance, marketing, professional-services, other
+    - "status" (TEXT, default: 'pending') - values: pending, paid, overdue, cancelled
+    - "paidDate" (TIMESTAMP, nullable)
+    - "paidAmount" (DECIMAL, nullable)
+    - "vendor" (TEXT, nullable) - supplier/vendor name
+    - "invoiceNumber" (TEXT, nullable)
+    - "type" (TEXT, default: 'operational') - values: operational, project, administrative
+    - "isRecurring" (BOOLEAN, default: false)
+    - "notes" (TEXT, nullable)
+    - "receiptUrl" (TEXT, nullable)
+    - "createdAt" (TIMESTAMP)
+    - "updatedAt" (TIMESTAMP)
 
     Budget table:
     - id (TEXT, PRIMARY KEY)
@@ -120,28 +122,29 @@ export async function queryDatabase(question: string, teamId: string, history?: 
     IMPORTANT GUIDELINES FOR DATE AND STATUS QUERIES:
 
     FOR RECEIVABLES (INCOME):
-    - Actual income received: use receivedDate and status = 'received'
-    - Expected/planned income: use expectedDate
-    - "Quanto recebi esse mês": Use datetime function: WHERE strftime('%Y-%m', datetime(receivedDate/1000, 'unixepoch')) = '2025-09' AND status = 'received'
+    - Actual income received: use "receivedDate" and status = 'received'
+    - Expected/planned income: use "expectedDate"
+    - "Quanto recebi esse mês": Use PostgreSQL date functions: WHERE DATE_TRUNC('month', "receivedDate") = DATE_TRUNC('month', CURRENT_DATE) AND status = 'received'
 
     FOR EXPENSES (COSTS):
-    - Actual expenses paid: use paidDate and status = 'paid'
-    - Expected/planned expenses: use dueDate
-    - "Quanto gastei esse mês": Use datetime function: WHERE strftime('%Y-%m', datetime(paidDate/1000, 'unixepoch')) = '2025-09' AND status = 'paid'
+    - Actual expenses paid: use "paidDate" and status = 'paid'
+    - Expected/planned expenses: use "dueDate"
+    - "Quanto gastei esse mês": Use PostgreSQL date functions: WHERE DATE_TRUNC('month', "paidDate") = DATE_TRUNC('month', CURRENT_DATE) AND status = 'paid'
 
     GENERAL RULES:
     - For actual cashflow questions, always use the "actual" date fields (receivedDate/paidDate) with completed status
     - For planning/budget questions, use expected date fields (expectedDate/dueDate)
     - For comprehensive cashflow, consider both actual income (receivedDate+received) AND actual expenses (paidDate+paid)
-    - IMPORTANT: Dates are stored as Unix timestamps in milliseconds (e.g., 1725408000000)
-    - To query dates, use: datetime(dateField/1000, 'unixepoch') to convert to SQLite datetime
-    - For "this month" queries: WHERE strftime('%Y-%m', datetime(dateField/1000, 'unixepoch')) = '2025-09'
-    - For specific dates: WHERE date(datetime(dateField/1000, 'unixepoch')) = '2025-09-15'
-    - Current month is September 2025 ('2025-09')
+    - IMPORTANT: Dates are stored as PostgreSQL TIMESTAMP fields (e.g., '2025-09-15 10:30:00')
+    - For "this month" queries: WHERE DATE_TRUNC('month', "dateField") = DATE_TRUNC('month', CURRENT_DATE)
+    - For specific dates: WHERE DATE("dateField") = '2025-09-15'
+    - For date ranges: WHERE "dateField" >= '2025-09-01' AND "dateField" < '2025-10-01'
+    - Current month is September 2025
 
-    Return ONLY the SQL query, no explanations. Use proper SQLite syntax.
+    Return ONLY the SQL query, no explanations. Use proper PostgreSQL syntax.
     When joining tables, use proper JOIN syntax.
-    For dates, use DATE() function for date comparisons.
+    Use double quotes for column names and table names.
+    For dates, use PostgreSQL date functions like DATE(), DATE_TRUNC(), etc.
     Consider the conversation context to understand pronouns and references (like "those", "them", "it").
     `
 
