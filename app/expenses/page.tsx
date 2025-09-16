@@ -113,12 +113,23 @@ function ExpensesPageContent() {
     try {
       const params = new URLSearchParams(filters)
       const response = await fetch(`/api/expenses?${params}`)
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          window.location.href = '/login'
+          return
+        }
+        throw new Error(`Failed to fetch expenses: ${response.status}`)
+      }
+
       const data = await response.json()
       setExpenses(data.expenses || [])
       setSummary(data.summary || { total: 0, paid: 0, pending: 0, overdue: 0, count: 0 })
     } catch (error) {
       console.error('Error fetching expenses:', error)
       alert('Erro ao carregar despesas')
+      setExpenses([])
+      setSummary({ total: 0, paid: 0, pending: 0, overdue: 0, count: 0 })
     } finally {
       setLoading(false)
     }
@@ -127,10 +138,20 @@ function ExpensesPageContent() {
   async function fetchContracts() {
     try {
       const response = await fetch('/api/contracts')
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          window.location.href = '/login'
+          return
+        }
+        throw new Error(`Failed to fetch contracts: ${response.status}`)
+      }
+
       const data = await response.json()
       setContracts(data || [])
     } catch (error) {
       console.error('Error fetching contracts:', error)
+      setContracts([])
     }
   }
 

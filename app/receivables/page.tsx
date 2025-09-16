@@ -97,10 +97,20 @@ function ReceivablesPageContent() {
   async function fetchContracts() {
     try {
       const res = await fetch('/api/contracts')
+
+      if (!res.ok) {
+        if (res.status === 401) {
+          window.location.href = '/login'
+          return
+        }
+        throw new Error(`Failed to fetch contracts: ${res.status}`)
+      }
+
       const data = await res.json()
       setContracts(data)
     } catch (error) {
       console.error('Falha ao buscar contratos:', error)
+      setContracts([])
     }
   }
 
@@ -114,6 +124,15 @@ function ReceivablesPageContent() {
       params.set('sortOrder', filters.sortOrder)
 
       const res = await fetch(`/api/receivables?${params.toString()}`)
+
+      if (!res.ok) {
+        if (res.status === 401) {
+          window.location.href = '/login'
+          return
+        }
+        throw new Error(`Failed to fetch receivables: ${res.status}`)
+      }
+
       const data = await res.json()
       setReceivables(data)
 
@@ -122,6 +141,7 @@ function ReceivablesPageContent() {
       setUniqueCategories(categories)
     } catch (error) {
       console.error('Falha ao buscar contas a receber:', error)
+      setReceivables([])
     } finally {
       setLoading(false)
     }

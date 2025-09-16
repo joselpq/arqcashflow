@@ -60,7 +60,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { teamId } = await requireAuth()
+    const { user, teamId } = await requireAuth()
+    console.log(`🔍 Creating contract for user ${user.email} with teamId: ${teamId}`)
 
     const body = await request.json()
     const validatedData = ContractSchema.parse(body)

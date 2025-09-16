@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 
 export async function getCurrentUser() {
   const session = await getServerSession(authOptions);
+  console.log(`🔍 Session user id: ${session?.user?.id}`)
 
   if (!session?.user?.id) {
     return null;
@@ -14,6 +15,7 @@ export async function getCurrentUser() {
     include: { team: true }
   });
 
+  console.log(`🔍 Found user: ${user?.email} with teamId: ${user?.teamId}`)
   return user;
 }
 
