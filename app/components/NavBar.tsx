@@ -12,11 +12,11 @@ export default function NavBar() {
 
   const navItems = [
     { href: "/", label: "Dashboard" },
-    { href: "/contracts", label: "Contracts" },
-    { href: "/receivables", label: "Receivables" },
-    { href: "/expenses", label: "Expenses" },
-    { href: "/alerts", label: "Alerts" },
-    { href: "/ai-chat", label: "AI Assistant" }
+    { href: "/contracts", label: "Contratos" },
+    { href: "/receivables", label: "Recebíveis" },
+    { href: "/expenses", label: "Despesas" },
+    { href: "/alerts", label: "Alertas" },
+    { href: "/ai-chat", label: "Assistente IA" }
   ];
 
   return (
@@ -51,7 +51,7 @@ export default function NavBar() {
               onClick={() => signOut()}
               className="text-sm text-gray-500 hover:text-gray-700"
             >
-              Sign out
+              Sair
             </button>
           </div>
         </div>

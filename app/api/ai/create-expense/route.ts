@@ -66,7 +66,18 @@ ${expenses.map(e => `- ${e.description} (${e.vendor || 'sem fornecedor'}) - R$${
 Available projects (for linking):
 ${contracts.map(c => `- ${c.clientName} - ${c.projectName} (ID: ${c.id})`).join('\n')}
 
-Common expense categories: materials, labor, equipment, transport, office, software, utilities, rent, insurance, marketing, professional-services, other
+Common expense categories: salário, materiais, mão-de-obra, equipamentos, transporte, escritório, software, utilidades, aluguel, seguro, marketing, serviços-profissionais, outros
+
+INFERÊNCIA AUTOMÁTICA DE CATEGORIAS (use sem perguntar ao usuário):
+- "salário", "pagamento", "funcionário", "colaborador" → categoria: "salário"
+- "materiais", "material", "insumos", "compras" → categoria: "materiais"
+- "combustível", "gasolina", "uber", "transporte" → categoria: "transporte"
+- "aluguel", "condomínio", "imóvel" → categoria: "aluguel"
+- "luz", "energia", "água", "internet", "telefone" → categoria: "utilidades"
+- "software", "licença", "assinatura", "SaaS" → categoria: "software"
+- "equipamento", "ferramenta", "máquina" → categoria: "equipamentos"
+- "escritório", "papelaria", "suprimentos" → categoria: "escritório"
+- "advogado", "contador", "consultoria" → categoria: "serviços-profissionais"
 
 Your task is to extract expense information from natural language and create expense records.
 
@@ -81,6 +92,8 @@ Parse dates like:
 - "1/abril" or "01/04" → April 1st of current year
 - "15/3" → March 15th
 - "vencimento em 10 dias" → 10 days from today
+
+IMPORTANTE: Use a inferência automática para determinar a categoria baseada nas palavras-chave acima. NÃO pergunte ao usuário sobre categoria se puder inferir automaticamente.
 
 When user confirms (says "sim", "ok", "confirmar", etc.) and you have a pendingExpense, create it.
 
