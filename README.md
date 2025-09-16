@@ -1,6 +1,17 @@
 # ArqCashflow - Architect Cashflow Management System
 
-A simple cashflow management system designed for architects to track contracts, receivables, and analyze financial data using AI.
+A secure, multi-tenant cashflow management system designed for architects to track contracts, receivables, and analyze financial data using AI with team-based data segregation.
+
+## 🔐 Current Status: Multi-Tenant Architecture with Authentication
+
+**IMPORTANT**: This system now requires authentication and implements team-based data segregation. Each team can only access their own data.
+
+### Authentication & Team System Status:
+- ✅ **User Registration/Login**: NextAuth.js with credentials provider
+- ✅ **Team Creation**: Auto-creates teams during registration
+- ✅ **Route Protection**: Middleware protects all pages except auth routes
+- ✅ **API Security**: All APIs require authentication and filter by team
+- ⚠️  **Known Issues**: Contract team assignment bug (see Known Bugs section)
 
 ## Features
 
@@ -24,6 +35,42 @@ A simple cashflow management system designed for architects to track contracts, 
 18. **Edit/Delete Functionality** - Full CRUD operations on all entities
 19. **Category System** - Organize contracts, receivables, and expenses by custom categories
 20. **Duplicate Detection** - Smart handling of duplicate client/project names with auto-increment
+21. **User Authentication** - Secure registration/login system with NextAuth.js
+22. **Team-based Data Segregation** - Multi-tenant architecture with isolated data per team
+23. **Route Protection** - Middleware-based authentication for all protected routes
+24. **Session Management** - JWT-based session handling with secure token validation
+
+## 🚨 Known Bugs & Issues
+
+### Critical Issues (High Priority):
+1. **Contract Team Assignment Bug**
+   - **Issue**: Contracts may be assigned to wrong team during creation
+   - **Symptoms**: New contracts appear under different user's team than the creator
+   - **Root Cause**: Suspected JWT session collision or user ID caching issue
+   - **Status**: ⚠️ Under investigation - debug logging added
+   - **Workaround**: Users should verify contract visibility after creation
+   - **Technical Details**: All contracts showing under "jose's Team" regardless of creator
+
+### Security Vulnerabilities Fixed:
+- ✅ **Budgets API**: Was completely unprotected, now requires team authentication
+- ✅ **Receivables POST**: Added contract ownership validation
+- ✅ **Expenses API**: Already had team filtering, enhanced error handling
+- ✅ **AI Query API**: Added team-specific data filtering
+
+### Authentication Issues:
+- ⚠️ **Session Validation**: Added email-to-database user matching for session integrity
+- ⚠️ **JWT Token Refresh**: Updated NEXTAUTH_SECRET to force token refresh
+- ⚠️ **Error Handling**: Enhanced auth error responses across all APIs
+
+### Data Integrity:
+- ⚠️ **Legacy Data**: Some historical data may have NULL teamId (filtered out)
+- ⚠️ **Team Assignment**: New user registrations properly create teams
+- ✅ **Cascade Filtering**: All API endpoints now properly filter by team
+
+### UI/UX Issues:
+- ⚠️ **Error Messages**: Some 401 errors may not redirect properly to login
+- ⚠️ **Loading States**: Pages may show "no data" briefly during authentication
+- ⚠️ **Session Expiry**: Users may need to manually refresh after token expiry
 
 ## Setup Instructions
 
@@ -38,8 +85,24 @@ npm install
 Create a `.env` file in the root directory:
 
 ```env
+# Database
 DATABASE_URL="file:./dev.db"
+
+# AI Features
 OPENAI_API_KEY="your-openai-api-key-here"
+
+# Authentication (NextAuth.js)
+NEXTAUTH_SECRET="your-nextauth-secret-here"
+NEXTAUTH_URL="http://localhost:3000"
+
+# Google Sheets (Optional)
+GOOGLE_CLIENT_EMAIL="your-service-account@project.iam.gserviceaccount.com"
+GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nYOUR-KEY-HERE\n-----END PRIVATE KEY-----"
+```
+
+**Generate NEXTAUTH_SECRET:**
+```bash
+openssl rand -base64 32
 ```
 
 ### 3. Initialize Database
@@ -54,9 +117,27 @@ npx prisma migrate dev
 npm run dev
 ```
 
-Visit http://localhost:3001
+Visit http://localhost:3000
 
-**Note**: The app runs on port 3001 by default. If occupied, use `PORT=3002 npm run dev` to specify a different port.
+**Note**: The app runs on port 3000 by default. If occupied, use `PORT=3001 npm run dev` to specify a different port.
+
+### 5. First Time Setup - Authentication
+
+1. **Create an Account**:
+   - Visit http://localhost:3000
+   - You will be redirected to `/login`
+   - Click "Register" to create a new account
+   - A team will be automatically created for you
+
+2. **Team Isolation**:
+   - Each user gets their own team during registration
+   - Data is completely isolated between teams
+   - Users can only see and manage their team's data
+
+3. **Login**:
+   - Use your email and password to login
+   - Sessions are managed via JWT tokens
+   - Protected routes require authentication
 
 ## 🔌 Complete API Documentation
 
@@ -64,7 +145,15 @@ Visit http://localhost:3001
 - **Production**: `https://arqcashflow.vercel.app/api`
 - **Local Development**: `http://localhost:3000/api`
 
+**🔐 Authentication Required**: All API endpoints require authentication via NextAuth.js session cookies. Data is automatically filtered by team membership.
+
 All API endpoints return JSON responses and support CORS for cross-origin requests.
+
+### Authentication Endpoints
+- **POST** `/api/auth/register` - User registration with automatic team creation
+- **POST** `/api/auth/signin` - User login
+- **POST** `/api/auth/signout` - User logout
+- **GET** `/api/auth/session` - Get current session info
 
 ---
 
