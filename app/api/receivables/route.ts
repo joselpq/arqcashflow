@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
-import { supervisorValidateReceivable } from '@/lib/supervisor'
 import { requireAuth } from '@/lib/auth-utils'
 
 const ReceivableSchema = z.object({
@@ -131,34 +130,8 @@ export async function POST(request: NextRequest) {
       include: { contract: true }
     })
 
-    // Run supervisor validation after creating to get the receivable ID
-    console.log('📍 About to call supervisorValidateReceivable with:', {
-      amount: validatedData.amount,
-      contractId: validatedData.contractId,
-      teamId
-    })
-
-    let alerts = []
-    try {
-      alerts = await supervisorValidateReceivable(validatedData, validatedData.contractId, teamId)
-      console.log('📍 Receivable supervisor returned alerts:', alerts)
-    } catch (supervisorError) {
-      console.error('📍 Receivable supervisor validation failed (non-critical):', supervisorError)
-      alerts = [] // Continue without alerts if supervisor fails
-    }
-
-    // Complete the editUrl for any alerts
-    const alertsWithEditUrl = alerts.map(alert => ({
-      ...alert,
-      entityInfo: alert.entityInfo ? {
-        ...alert.entityInfo,
-        editUrl: `/receivables?edit=${receivable.id}`
-      } : undefined
-    }))
-
     return NextResponse.json({
-      receivable,
-      alerts: alertsWithEditUrl.length > 0 ? alertsWithEditUrl : undefined
+      receivable
     }, { status: 201 })
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") {

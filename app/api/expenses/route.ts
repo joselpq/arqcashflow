@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
-import { supervisorValidateExpense } from '@/lib/supervisor'
 import { requireAuth } from '@/lib/auth-utils'
 
 const ExpenseSchema = z.object({
@@ -149,34 +148,8 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    // Run supervisor validation after creating to get the expense ID
-    console.log('📍 About to call supervisorValidateExpense with:', {
-      description: validatedData.description,
-      amount: validatedData.amount,
-      teamId
-    })
-
-    let alerts = []
-    try {
-      alerts = await supervisorValidateExpense(validatedData, teamId)
-      console.log('📍 Supervisor returned alerts:', alerts)
-    } catch (supervisorError) {
-      console.error('📍 Supervisor validation failed (non-critical):', supervisorError)
-      alerts = [] // Continue without alerts if supervisor fails
-    }
-
-    // Complete the editUrl for any alerts
-    const alertsWithEditUrl = alerts.map(alert => ({
-      ...alert,
-      entityInfo: alert.entityInfo ? {
-        ...alert.entityInfo,
-        editUrl: `/expenses?edit=${expense.id}`
-      } : undefined
-    }))
-
     return NextResponse.json({
-      expense,
-      alerts: alertsWithEditUrl.length > 0 ? alertsWithEditUrl : undefined
+      expense
     }, { status: 201 })
   } catch (error) {
     if (error instanceof z.ZodError) {

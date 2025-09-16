@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { ChatOpenAI } from '@langchain/openai'
 import { prisma } from '@/lib/prisma'
 import { findContractMatches } from '@/lib/fuzzyMatch'
-import { supervisorValidateReceivable } from '@/lib/supervisor'
 import { z } from 'zod'
 import { requireAuth } from '@/lib/auth-utils'
 
@@ -71,21 +70,6 @@ export async function POST(request: NextRequest) {
       }
 
       // User confirmed, proceed with creation
-      console.log('📍 About to call supervisorValidateReceivable (AI) with:', {
-        amount: pendingReceivable.amount,
-        contractId: pendingReceivable.contractId,
-        teamId
-      })
-
-      let alerts = []
-      try {
-        alerts = await supervisorValidateReceivable(pendingReceivable, pendingReceivable.contractId, teamId)
-        console.log('📍 AI Receivable supervisor returned alerts:', alerts)
-      } catch (supervisorError) {
-        console.error('📍 AI Receivable supervisor validation failed (non-critical):', supervisorError)
-        alerts = [] // Continue without alerts if supervisor fails
-      }
-
       const receivable = await prisma.receivable.create({
         data: {
           ...pendingReceivable,
@@ -97,14 +81,11 @@ export async function POST(request: NextRequest) {
         }
       })
 
-      // Note: Alert storage is handled on the client side
-
       return NextResponse.json({
         success: true,
         action: 'created',
         receivable,
-        message: 'Conta a receber criada com sucesso!',
-        alerts: alerts.length > 0 ? alerts : undefined
+        message: 'Conta a receber criada com sucesso!'
       })
     }
 

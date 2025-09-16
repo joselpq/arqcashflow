@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
-import { supervisorValidateContract } from '@/lib/supervisor'
 import { requireAuth } from '@/lib/auth-utils'
 
 const UpdateContractSchema = z.object({
@@ -50,22 +49,6 @@ export async function PUT(
     const body = await request.json()
     const validatedData = UpdateContractSchema.parse(body)
 
-    // Run supervisor validation for updates
-    console.log('📍 About to call supervisorValidateContract (UPDATE) with:', {
-      contractId: params.id,
-      teamId,
-      updateData: validatedData
-    })
-
-    let alerts = []
-    try {
-      alerts = await supervisorValidateContract(validatedData, teamId, true, params.id)
-      console.log('📍 Contract UPDATE supervisor returned alerts:', alerts)
-    } catch (supervisorError) {
-      console.error('📍 Contract UPDATE supervisor validation failed (non-critical):', supervisorError)
-      alerts = [] // Continue without alerts if supervisor fails
-    }
-
     const updateData: any = { ...validatedData }
     if (validatedData.signedDate) {
       updateData.signedDate = new Date(validatedData.signedDate + 'T00:00:00.000Z')
@@ -85,8 +68,7 @@ export async function PUT(
     })
 
     return NextResponse.json({
-      contract: updatedContract,
-      alerts: alerts.length > 0 ? alerts : undefined
+      contract: updatedContract
     })
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") {
