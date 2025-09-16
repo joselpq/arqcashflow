@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
       }
 
       // User confirmed, proceed with creation
-      const alerts = await supervisorValidateReceivable(pendingReceivable, pendingReceivable.contractId)
+      const alerts = await supervisorValidateReceivable(pendingReceivable, pendingReceivable.contractId, teamId)
 
       const receivable = await prisma.receivable.create({
         data: {

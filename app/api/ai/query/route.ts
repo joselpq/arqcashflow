@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { queryDatabase } from '@/lib/langchain'
-import { supervisorValidateQuery } from '@/lib/supervisor'
 import { requireAuth } from '@/lib/auth-utils'
 import { z } from 'zod'
 
@@ -21,12 +20,8 @@ export async function POST(request: NextRequest) {
 
     const result = await queryDatabase(question, teamId, history)
 
-    // Run supervisor validation on the query context
-    const alerts = await supervisorValidateQuery(question, { result, history })
-
     return NextResponse.json({
-      ...result,
-      alerts: alerts.length > 0 ? alerts : undefined
+      ...result
     })
   } catch (error) {
     if (error instanceof z.ZodError) {

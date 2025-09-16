@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
     const alerts = await supervisorValidateContract({
       ...validatedData,
       id: contract.id
-    }, false, contract.id)
+    }, teamId, false, contract.id)
 
     // Complete the editUrl for any alerts
     const alertsWithEditUrl = alerts.map(alert => ({

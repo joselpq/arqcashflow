@@ -171,6 +171,11 @@ export async function queryDatabase(question: string, teamId: string, history?: 
     If the result includes monetary values, format them as Brazilian currency (R$ X.XXX,XX).
     If the result includes dates, format them in Brazilian format (DD/MM/YYYY).
 
+    CRITICAL SECURITY REQUIREMENT:
+    - NEVER include internal IDs (like contract IDs, receivable IDs, expense IDs) in your response
+    - These IDs are for internal use only and should not be exposed to users
+    - Focus only on business-relevant information: client names, project names, amounts, dates, statuses
+
     IMPORTANT: If the result is empty or seems incorrect, it might be because the user used different terminology.
     In this case, provide a helpful follow-up question in Portuguese to clarify what they're looking for.
     For example:

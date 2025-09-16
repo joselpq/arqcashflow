@@ -51,7 +51,7 @@ export async function PUT(
     const validatedData = UpdateContractSchema.parse(body)
 
     // Run supervisor validation for updates
-    const alerts = await supervisorValidateContract(validatedData, true, params.id)
+    const alerts = await supervisorValidateContract(validatedData, teamId, true, params.id)
 
     const updateData: any = { ...validatedData }
     if (validatedData.signedDate) {

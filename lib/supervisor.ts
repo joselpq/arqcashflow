@@ -62,24 +62,32 @@ export interface SupervisorContext {
   budgets: any[]
 }
 
-async function buildSupervisorContext(): Promise<SupervisorContext> {
-  // Fetch all data
+async function buildSupervisorContext(teamId: string): Promise<SupervisorContext> {
+  // Fetch all data filtered by team
   const contracts = await prisma.contract.findMany({
+    where: { teamId },
     include: { receivables: true, expenses: true },
     orderBy: { createdAt: 'desc' }
   })
 
   const receivables = await prisma.receivable.findMany({
+    where: {
+      contract: {
+        teamId
+      }
+    },
     include: { contract: true },
     orderBy: { createdAt: 'desc' }
   })
 
   const expenses = await prisma.expense.findMany({
+    where: { teamId },
     include: { contract: true },
     orderBy: { createdAt: 'desc' }
   })
 
   const budgets = await prisma.budget.findMany({
+    where: { teamId },
     include: { contract: true }
   })
 
@@ -164,10 +172,11 @@ async function buildSupervisorContext(): Promise<SupervisorContext> {
 
 export async function supervisorValidateContract(
   contractData: any,
+  teamId: string,
   isUpdate = false,
   existingContractId?: string
 ): Promise<SupervisorAlert[]> {
-  const context = await buildSupervisorContext()
+  const context = await buildSupervisorContext(teamId)
 
   const prompt = `You are a financial data supervisor for an architect's cashflow management system. Analyze this contract ${isUpdate ? 'update' : 'creation'} and identify any potential issues or anomalies.
 
@@ -200,7 +209,7 @@ FOCOS DE VALIDAÇÃO (responda em português brasileiro):
 5. **Lógica de Negócio**: Relacionamentos de contratos, informações ausentes
 6. **Qualidade dos Dados**: Padrões incomuns, erros de digitação, problemas de formatação
 
-**RESPOND IN BRAZILIAN PORTUGUESE with intelligent suggestions:**
+**RESPOND IN BRAZILIAN PORTUGUESE with intelligent suggestions using JSON format:**
 
 Example format:
 {
@@ -218,12 +227,12 @@ Example format:
   ]
 }
 
-Return {"alerts": []} if no issues found.`
+Return {"alerts": []} JSON object if no issues found.`
 
   try {
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
-      messages: [{ role: 'user', content: prompt }],
+      messages: [{ role: 'user', content: prompt + '\n\nPlease respond with a JSON object in the specified format.' }],
       temperature: 0.1,
       response_format: { type: 'json_object' }
     })
@@ -247,11 +256,12 @@ Return {"alerts": []} if no issues found.`
 
 export async function supervisorValidateReceivable(
   receivableData: any,
-  contractId: string
+  contractId: string,
+  teamId: string
 ): Promise<SupervisorAlert[]> {
   console.log('🤖 Supervisor validating receivable:', { receivableData, contractId })
 
-  const context = await buildSupervisorContext()
+  const context = await buildSupervisorContext(teamId)
   const relatedContract = context.contracts.find(c => c.id === contractId)
 
   console.log('📊 Context:', {
@@ -284,7 +294,7 @@ VALIDATION FOCUS:
 4. **Regras de Negócio**: Status do contrato vs criação de recebível, contratos completados
 5. **Padrões**: Cronogramas de pagamento incomuns, valores
 
-**RESPOND IN BRAZILIAN PORTUGUESE with actionable suggestions and intelligent corrections:**
+**RESPOND IN BRAZILIAN PORTUGUESE with actionable suggestions and intelligent corrections using JSON format:**
 
 IMPORTANT: Respond with JSON in exactly this format:
 {
@@ -311,12 +321,12 @@ IMPORTANT: Respond with JSON in exactly this format:
 - DO NOT create alerts for: active contracts, normal payment schedules, or standard business operations
 - ONLY alert if there are VALUE ERRORS, DATE PROBLEMS, DUPLICATES, or CONTRACT VIOLATIONS
 
-Return {"alerts": []} if no issues found.`
+Return {"alerts": []} JSON object if no issues found.`
 
   try {
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
-      messages: [{ role: 'user', content: prompt }],
+      messages: [{ role: 'user', content: prompt + '\n\nPlease respond with a JSON object in the specified format.' }],
       temperature: 0.1,
       response_format: { type: 'json_object' }
     })
@@ -339,9 +349,10 @@ Return {"alerts": []} if no issues found.`
 }
 
 export async function supervisorValidateExpense(
-  expenseData: any
+  expenseData: any,
+  teamId: string
 ): Promise<SupervisorAlert[]> {
-  const context = await buildSupervisorContext()
+  const context = await buildSupervisorContext(teamId)
 
   const prompt = `You are a financial data supervisor. Analyze this new expense creation for potential issues.
 
@@ -367,7 +378,7 @@ VALIDATION FOCUS (in Brazilian Portuguese):
 5. **Padrões de Negócio**: Relacionamentos com fornecedores, despesas recorrentes, padrões incomuns
 6. **Qualidade dos Dados**: Clareza da descrição, variações do nome do fornecedor
 
-**RESPOND IN BRAZILIAN PORTUGUESE with intelligent corrections:**
+**RESPOND IN BRAZILIAN PORTUGUESE with intelligent corrections using JSON format:**
 
 Example format:
 {
@@ -385,12 +396,12 @@ Example format:
   ]
 }
 
-Return {"alerts": []} if no issues found.`
+Return {"alerts": []} JSON object if no issues found.`
 
   try {
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
-      messages: [{ role: 'user', content: prompt }],
+      messages: [{ role: 'user', content: prompt + '\n\nPlease respond with a JSON object in the specified format.' }],
       temperature: 0.1,
       response_format: { type: 'json_object' }
     })
@@ -411,47 +422,3 @@ Return {"alerts": []} if no issues found.`
   }
 }
 
-export async function supervisorValidateQuery(
-  query: string,
-  context: any
-): Promise<SupervisorAlert[]> {
-  const dbContext = await buildSupervisorContext()
-
-  const prompt = `You are a financial data supervisor. Analyze this user query for potential issues or concerns they should be aware of based on their financial data.
-
-DATABASE CONTEXT:
-${JSON.stringify({
-  contractCount: dbContext.contractStats.totalCount,
-  avgContractValue: dbContext.contractStats.averageValue,
-  receivableCount: dbContext.receivableStats.totalCount,
-  overdueReceivables: dbContext.receivableStats.overdueCount,
-  expenseCount: dbContext.expenseStats.totalCount,
-  avgExpenseAmount: dbContext.expenseStats.averageAmount
-}, null, 2)}
-
-USER QUERY: "${query}"
-
-VALIDATION FOCUS:
-1. **Data Gaps**: Query asking about data that doesn't exist or is incomplete
-2. **Insights**: Patterns or issues the user might want to know about
-3. **Recommendations**: Proactive suggestions based on the query context
-4. **Warnings**: Potential financial concerns revealed by the query
-
-Be helpful and proactive. If the query is about overdue items, cash flow, or financial analysis, provide relevant insights.
-Respond with JSON array of alerts or empty array [] if no specific concerns.`
-
-  try {
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.2,
-      response_format: { type: 'json_object' }
-    })
-
-    const result = JSON.parse(response.choices[0].message.content || '{"alerts": []}')
-    return normalizeAlerts(result.alerts || [])
-  } catch (error) {
-    console.error('Supervisor validation error:', error)
-    return []
-  }
-}

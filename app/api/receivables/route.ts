@@ -132,7 +132,7 @@ export async function POST(request: NextRequest) {
     })
 
     // Run supervisor validation after creating to get the receivable ID
-    const alerts = await supervisorValidateReceivable(validatedData, validatedData.contractId)
+    const alerts = await supervisorValidateReceivable(validatedData, validatedData.contractId, teamId)
 
     // Complete the editUrl for any alerts
     const alertsWithEditUrl = alerts.map(alert => ({

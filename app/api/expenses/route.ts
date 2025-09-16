@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
     })
 
     // Run supervisor validation after creating to get the expense ID
-    const alerts = await supervisorValidateExpense(validatedData)
+    const alerts = await supervisorValidateExpense(validatedData, teamId)
 
     // Complete the editUrl for any alerts
     const alertsWithEditUrl = alerts.map(alert => ({
