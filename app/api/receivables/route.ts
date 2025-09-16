@@ -35,8 +35,7 @@ export async function GET(request: NextRequest) {
 
     const where: any = {
       contract: {
-        teamId,
-        NOT: { teamId: null }
+        teamId
       }
     }
     if (contractId && contractId !== 'all') where.contractId = contractId

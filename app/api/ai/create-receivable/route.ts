@@ -115,8 +115,7 @@ export async function POST(request: NextRequest) {
       },
       where: {
         teamId,
-        status: 'active',
-        NOT: { teamId: null }
+        status: 'active'
       }
     })
 

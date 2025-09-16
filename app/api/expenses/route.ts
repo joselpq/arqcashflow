@@ -56,8 +56,7 @@ export async function GET(request: NextRequest) {
 
     // Build where clause - ALWAYS filter by teamId
     const where: any = {
-      teamId,
-      NOT: { teamId: null }
+      teamId
     }
 
     if (contractId && contractId !== 'all') where.contractId = contractId

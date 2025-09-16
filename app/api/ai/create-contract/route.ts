@@ -219,8 +219,7 @@ export async function POST(request: NextRequest) {
     // Get existing clients and projects for reference - filtered by team
     const existingContracts = await prisma.contract.findMany({
       where: {
-        teamId,
-        NOT: { teamId: null }
+        teamId
       },
       select: {
         id: true,

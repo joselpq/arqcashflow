@@ -29,8 +29,7 @@ export async function POST(request: NextRequest) {
     // Get existing expenses for context - filtered by team
     const expenses = await prisma.expense.findMany({
       where: {
-        teamId,
-        NOT: { teamId: null }
+        teamId
       },
       orderBy: { createdAt: 'desc' },
       take: 20,
@@ -47,8 +46,7 @@ export async function POST(request: NextRequest) {
     // Get contracts for linking expenses - filtered by team
     const contracts = await prisma.contract.findMany({
       where: {
-        teamId,
-        NOT: { teamId: null }
+        teamId
       },
       select: {
         id: true,

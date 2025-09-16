@@ -32,8 +32,7 @@ export async function GET(request: NextRequest) {
     const sortOrder = searchParams.get('sortOrder') || 'desc'
 
     const where: any = {
-      teamId,  // Ensure we only get contracts for this team
-      NOT: { teamId: null }  // Exclude any contracts without a team
+      teamId  // Ensure we only get contracts for this team
     }
     if (status && status !== 'all') where.status = status
     if (category && category !== 'all') where.category = category
@@ -64,6 +63,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(contracts)
   } catch (error) {
+    console.error('❌ CONTRACT FETCH ERROR:', error)
     if (error instanceof Error && error.message === "Unauthorized") {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
