@@ -1,13 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import SupervisorAlerts, { SupervisorAlert } from '@/app/components/SupervisorAlerts'
 
 export default function AIChatPage() {
   const [question, setQuestion] = useState('')
   const [loading, setLoading] = useState(false)
   const [history, setHistory] = useState<Array<{ question: string; answer: string; sqlQuery?: string }>>([])
-  const [supervisorAlerts, setSupervisorAlerts] = useState<SupervisorAlert[]>([])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -34,10 +32,6 @@ export default function AIChatPage() {
       if (res.ok) {
         const result = await res.json()
 
-        // Handle supervisor alerts
-        if (result.alerts && result.alerts.length > 0) {
-          setSupervisorAlerts(result.alerts)
-        }
 
         const newHistoryItem = {
           question,
@@ -65,11 +59,6 @@ export default function AIChatPage() {
 
       <h1 className="text-3xl font-bold mb-8">Chat IA - Faça Perguntas Sobre Seu Fluxo de Caixa</h1>
 
-      {/* Supervisor Alerts */}
-      <SupervisorAlerts
-        alerts={supervisorAlerts}
-        onDismiss={() => setSupervisorAlerts([])}
-      />
 
       <div className="max-w-4xl mx-auto">
         <div className="bg-yellow-50 border border-yellow-200 p-4 rounded mb-6">

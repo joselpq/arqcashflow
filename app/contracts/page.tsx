@@ -3,7 +3,6 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { format } from 'date-fns'
-// Supervisor imports removed - clean slate for rebuild
 
 // Helper functions for date conversion with UTC handling
 function formatDateForInput(date: string | Date): string {
@@ -50,7 +49,6 @@ function ContractsPageContent() {
   const [aiLoading, setAiLoading] = useState(false)
   const [aiHistory, setAiHistory] = useState<Array<{role: 'user' | 'assistant', content: string}>>([])
   const [pendingContract, setPendingContract] = useState<any>(null)
-  const [supervisorAlerts, setSupervisorAlerts] = useState<SupervisorAlert[]>([])
   const [filters, setFilters] = useState({
     status: 'active',
     category: 'all',
@@ -137,17 +135,6 @@ function ContractsPageContent() {
       if (res.ok) {
         const result = await res.json()
 
-        // Handle supervisor alerts
-        if (result.alerts && result.alerts.length > 0) {
-          setSupervisorAlerts(result.alerts)
-          // Save alerts to storage for Central de Alertas
-          const entityInfo = {
-            name: `Contrato - ${result.contract?.projectName || 'Projeto'}`,
-            details: `Cliente: ${result.contract?.clientName || 'N/A'} | Valor: R$${result.contract?.totalValue?.toLocaleString('pt-BR') || '0'}`,
-            editUrl: `/contracts?edit=${result.contract?.id}`
-          }
-          saveAlertsToStorage(result.alerts, 'contract', result.contract?.id, entityInfo)
-        }
 
         alert(editingContract ? 'Contrato atualizado com sucesso!' : 'Contrato criado com sucesso!')
         resetForm()
@@ -275,12 +262,6 @@ function ContractsPageContent() {
       console.log('Type of result:', typeof result)
 
       if (result.action === 'created') {
-        // Handle supervisor alerts if any
-        if (result.alerts && result.alerts.length > 0) {
-          setSupervisorAlerts(result.alerts)
-          // Save alerts to storage for Central de Alertas
-          saveAlertsToStorage(result.alerts, 'contract', result.contract?.id)
-        }
 
         // Contract was created successfully
         setAiHistory([...newHistory, {
@@ -295,12 +276,6 @@ function ContractsPageContent() {
           setPendingContract(null)
         }, 3000)
       } else if (result.action === 'edited') {
-        // Handle supervisor alerts if any
-        if (result.alerts && result.alerts.length > 0) {
-          setSupervisorAlerts(result.alerts)
-          // Save alerts to storage for Central de Alertas
-          saveAlertsToStorage(result.alerts, 'contract', result.contract?.id)
-        }
 
         // Contract was edited successfully
         setAiHistory([...newHistory, {
@@ -360,11 +335,6 @@ function ContractsPageContent() {
 
       <h1 className="text-3xl font-bold mb-8">Gerenciamento de Contratos</h1>
 
-      {/* Supervisor Alerts */}
-      <SupervisorAlerts
-        alerts={supervisorAlerts}
-        onDismiss={() => setSupervisorAlerts([])}
-      />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div>

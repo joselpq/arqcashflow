@@ -3,8 +3,6 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { format } from 'date-fns'
-import SupervisorAlerts, { SupervisorAlert } from '@/app/components/SupervisorAlerts'
-import { saveAlertsToStorage } from '@/lib/alertStorage'
 
 // Helper functions for date conversion with UTC handling
 function formatDateForInput(date: string | Date): string {
@@ -67,7 +65,6 @@ function ReceivablesPageContent() {
   const [aiMessage, setAiMessage] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
   const [aiHistory, setAiHistory] = useState<Array<{role: 'user' | 'assistant', content: string}>>([])
-  const [supervisorAlerts, setSupervisorAlerts] = useState<SupervisorAlert[]>([])
   const [pendingReceivable, setPendingReceivable] = useState<any>(null)
 
   useEffect(() => {
@@ -171,17 +168,6 @@ function ReceivablesPageContent() {
       if (res.ok) {
         const result = await res.json()
 
-        // Handle supervisor alerts
-        if (result.alerts && result.alerts.length > 0) {
-          setSupervisorAlerts(result.alerts)
-          // Save alerts to storage for Central de Alertas
-          const entityInfo = {
-            name: `Conta a Receber - ${result.receivable?.contract?.projectName || 'Projeto'}`,
-            details: `Cliente: ${result.receivable?.contract?.clientName || 'N/A'} | Valor: R$${result.receivable?.amount?.toLocaleString('pt-BR') || '0'} | Data: ${result.receivable?.expectedDate ? new Date(result.receivable.expectedDate).toLocaleDateString('pt-BR') : 'N/A'}`,
-            editUrl: `/receivables?edit=${result.receivable?.id}`
-          }
-          saveAlertsToStorage(result.alerts, 'receivable', result.receivable?.id, entityInfo)
-        }
 
         alert(editingReceivable ? 'Conta a receber atualizada com sucesso!' : 'Conta a receber criada com sucesso!')
         resetForm()
@@ -286,18 +272,6 @@ function ReceivablesPageContent() {
       const result = await res.json()
 
       if (result.action === 'created') {
-        // Handle supervisor alerts if any
-        if (result.alerts && result.alerts.length > 0) {
-          setSupervisorAlerts(result.alerts)
-          // Save alerts to storage for Central de Alertas
-          const entityInfo = {
-            name: `Conta a Receber - ${result.receivable?.contract?.projectName || 'Projeto'}`,
-            details: `Cliente: ${result.receivable?.contract?.clientName || 'N/A'} | Valor: R$${result.receivable?.amount?.toLocaleString('pt-BR') || '0'} | Data: ${result.receivable?.expectedDate ? new Date(result.receivable.expectedDate).toLocaleDateString('pt-BR') : 'N/A'}`,
-            editUrl: `/receivables?edit=${result.receivable?.id}`
-          }
-          console.log('🔍 DEBUG AI: Saving alerts with entityInfo:', { alerts: result.alerts, entityInfo })
-          saveAlertsToStorage(result.alerts, 'receivable', result.receivable?.id, entityInfo)
-        }
 
         // Receivable created successfully
         setAiHistory([...newHistory, {
@@ -394,11 +368,6 @@ function ReceivablesPageContent() {
 
       <h1 className="text-3xl font-bold mb-8">Gerenciamento de Contas a Receber</h1>
 
-      {/* Supervisor Alerts */}
-      <SupervisorAlerts
-        alerts={supervisorAlerts}
-        onDismiss={() => setSupervisorAlerts([])}
-      />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div>
