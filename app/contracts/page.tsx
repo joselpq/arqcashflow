@@ -96,6 +96,16 @@ function ContractsPageContent() {
       params.set('sortOrder', filters.sortOrder)
 
       const res = await fetch(`/api/contracts?${params.toString()}`)
+
+      if (!res.ok) {
+        if (res.status === 401) {
+          // User not authenticated, redirect to login
+          window.location.href = '/login'
+          return
+        }
+        throw new Error(`Failed to fetch contracts: ${res.status}`)
+      }
+
       const data = await res.json()
       setContracts(data)
 
@@ -104,6 +114,7 @@ function ContractsPageContent() {
       setUniqueCategories(categories)
     } catch (error) {
       console.error('Failed to fetch contracts:', error)
+      setContracts([])
     } finally {
       setLoading(false)
     }
