@@ -15,32 +15,45 @@ A secure, multi-tenant cashflow management system designed for architects to tra
 
 ## Features
 
-1. **Contract Management** - Create, edit, delete, and manage client contracts with categories
-2. **AI Contract Creation** - Create contracts using natural language (Portuguese) with intelligent parsing
-3. **Receivables Tracking** - Track expected and received payments with categories and filtering
-4. **Payment Recording** - Record actual payment dates and amounts for receivables (supports partial payments)
-5. **Expense Management** - Complete cost tracking with vendors, categories, and payment status
-6. **AI Expense Creation** - Create expenses using natural language (Portuguese)
-7. **Budget Management** - Set and monitor spending budgets by category or project
-8. **Advanced Filtering & Sorting** - Filter and sort contracts, receivables, and expenses by multiple criteria
-9. **Smart Default Filters** - Default views show only active contracts, pending receivables, and unpaid expenses
-10. **Excel Export** - Generate comprehensive cashflow reports with 4 detailed sheets (including expenses)
-11. **Google Sheets Export** - Create and share reports directly in Google Sheets with OAuth2 authentication
-12. **AI-Powered Analytics** - Ask natural language questions about your financial data using OpenAI
-13. **🤖 AI Supervisor System** - Intelligent data quality monitoring with real-time anomaly detection
-14. **Smart Alerts & Notifications** - Automated detection of duplicates, value anomalies, date inconsistencies, and business rule violations
-15. **Alert Action Integration** - Click alerts to directly edit the related items with auto-redirect functionality
-16. **Net Cashflow Analysis** - Complete financial picture with income vs expenses
-17. **SQLite Database** - Simple, file-based database (easily upgradeable to PostgreSQL)
-18. **Edit/Delete Functionality** - Full CRUD operations on all entities
-19. **Category System** - Organize contracts, receivables, and expenses by custom categories
-20. **Duplicate Detection** - Smart handling of duplicate client/project names with auto-increment
-21. **User Authentication** - Secure registration/login system with NextAuth.js
-22. **Team-based Data Segregation** - Multi-tenant architecture with isolated data per team
-23. **Route Protection** - Middleware-based authentication for all protected routes
-24. **Session Management** - JWT-based session handling with secure token validation
+1. **📊 Smart Dashboard** - Comprehensive financial overview designed for users with basic finance knowledge
+   - Health indicators (Green/Yellow/Red status)
+   - Key metrics (Revenue, Expenses, Profit this month)
+   - Visual cash flow trends for last 6 months
+   - Critical alerts for overdue items
+   - Upcoming deadlines to prevent missed payments
+   - Quick action buttons for common tasks
+2. **Contract Management** - Create, edit, delete, and manage client contracts with categories
+3. **AI Contract Creation** - Create contracts using natural language (Portuguese) with intelligent parsing
+4. **Receivables Tracking** - Track expected and received payments with categories and filtering
+5. **Payment Recording** - Record actual payment dates and amounts for receivables (supports partial payments)
+6. **Expense Management** - Complete cost tracking with vendors, categories, and payment status
+7. **AI Expense Creation** - Create expenses using natural language (Portuguese)
+8. **Budget Management** - Set and monitor spending budgets by category or project
+9. **Advanced Filtering & Sorting** - Filter and sort contracts, receivables, and expenses by multiple criteria
+10. **Smart Default Filters** - Default views show only active contracts, pending receivables, and unpaid expenses
+11. **Excel Export** - Generate comprehensive cashflow reports with 4 detailed sheets (including expenses)
+12. **Google Sheets Export** - Create and share reports directly in Google Sheets with OAuth2 authentication
+13. **AI-Powered Analytics** - Ask natural language questions about your financial data using OpenAI (no internal IDs exposed)
+14. **🤖 AI Supervisor System** - Intelligent data quality monitoring with real-time anomaly detection for data entry
+15. **Smart Alerts & Notifications** - Automated detection of duplicates, value anomalies, date inconsistencies, and business rule violations
+16. **Alert Action Integration** - Click alerts to directly edit the related items with auto-redirect functionality
+17. **Net Cashflow Analysis** - Complete financial picture with income vs expenses
+18. **SQLite Database** - Simple, file-based database (easily upgradeable to PostgreSQL)
+19. **Edit/Delete Functionality** - Full CRUD operations on all entities
+20. **Category System** - Organize contracts, receivables, and expenses by custom categories
+21. **Duplicate Detection** - Smart handling of duplicate client/project names with auto-increment
+22. **User Authentication** - Secure registration/login system with NextAuth.js
+23. **Team-based Data Segregation** - Multi-tenant architecture with isolated data per team
+24. **Route Protection** - Middleware-based authentication for all protected routes
+25. **Session Management** - JWT-based session handling with secure token validation
 
 ## 🚨 Known Bugs & Issues
+
+### Recent Fixes (September 2025):
+- ✅ **AI Assistant Security**: No longer exposes internal IDs to users
+- ✅ **Quality Supervisor Fixes**: Resolved OpenAI JSON format errors that were causing 400 responses
+- ✅ **AI Query Alerts**: Removed unnecessary Quality Supervisor alerts from AI assistant responses
+- ✅ **Team Data Filtering**: Fixed Quality Supervisor to properly filter by team for data validation
 
 ### Critical Issues (High Priority):
 1. **Contract Team Assignment Bug**
@@ -55,7 +68,8 @@ A secure, multi-tenant cashflow management system designed for architects to tra
 - ✅ **Budgets API**: Was completely unprotected, now requires team authentication
 - ✅ **Receivables POST**: Added contract ownership validation
 - ✅ **Expenses API**: Already had team filtering, enhanced error handling
-- ✅ **AI Query API**: Added team-specific data filtering
+- ✅ **AI Query API**: Added team-specific data filtering, removed internal ID exposure
+- ✅ **Quality Supervisor**: Fixed team isolation in data validation context
 
 ### Authentication Issues:
 - ⚠️ **Session Validation**: Added email-to-database user matching for session integrity
@@ -154,6 +168,71 @@ All API endpoints return JSON responses and support CORS for cross-origin reques
 - **POST** `/api/auth/signin` - User login
 - **POST** `/api/auth/signout` - User logout
 - **GET** `/api/auth/session` - Get current session info
+
+---
+
+### 📊 Dashboard API
+
+**Purpose**: Provide comprehensive dashboard data for financial overview
+
+#### **GET /api/dashboard** - Dashboard Data
+**Purpose**: Retrieve key financial metrics and health indicators for the dashboard
+
+**Authentication**: Required (team-filtered data)
+
+**Response Format:**
+```json
+{
+  "metrics": {
+    "thisMonthRevenue": 15000,
+    "thisMonthExpenses": 8000,
+    "thisMonthProfit": 7000,
+    "totalProfit": 45000,
+    "pendingReceivables": 25000,
+    "pendingExpenses": 12000,
+    "activeContracts": 8,
+    "totalContracts": 12
+  },
+  "cashFlowHealth": {
+    "status": "good", // "good", "warning", "critical"
+    "message": "Fluxo de caixa saudável"
+  },
+  "alerts": {
+    "overdueReceivables": 2,
+    "overdueExpenses": 1,
+    "overdueItems": [
+      {
+        "type": "receivable",
+        "id": "receivable_id",
+        "description": "Receber R$5.000 de João Silva",
+        "dueDate": "2024-09-10T00:00:00.000Z",
+        "amount": 5000,
+        "editUrl": "/receivables?edit=receivable_id"
+      }
+    ]
+  },
+  "upcoming": {
+    "receivables": [...],
+    "expenses": [...]
+  },
+  "monthlyTrend": [
+    {
+      "month": "set 2024",
+      "revenue": 15000,
+      "expenses": 8000,
+      "profit": 7000
+    }
+  ]
+}
+```
+
+**Dashboard Features:**
+- **Health Indicators**: Automatic assessment of financial health (Good/Warning/Critical)
+- **Key Metrics**: Monthly revenue, expenses, profit, and outstanding amounts
+- **Overdue Alerts**: Direct links to resolve overdue receivables and expenses
+- **Upcoming Items**: Next 7 days receivables and expenses to prevent missed deadlines
+- **Trend Analysis**: 6-month visual cashflow history
+- **Quick Actions**: Direct navigation to common tasks
 
 ---
 
@@ -647,7 +726,14 @@ The AI Supervisor monitors all data inputs in real-time and provides intelligent
 
 ## UI Pages
 
-1. **/** - Home page with navigation and API endpoints overview
+1. **/** - **Smart Dashboard** - Comprehensive financial overview designed for users with basic finance knowledge
+   - **🚨 Health Status**: Visual indicators (Green=Good, Yellow=Warning, Red=Critical) with explanatory messages
+   - **📊 Key Metrics**: This month's revenue, expenses, profit, plus outstanding amounts
+   - **⚠️ Critical Alerts**: Prominently displayed overdue items with direct "Resolve" buttons
+   - **📅 Upcoming Deadlines**: Next week's receivables and expenses to prevent missed payments
+   - **📈 6-Month Trends**: Simple bar charts showing revenue, expenses, and profit patterns
+   - **🚀 Quick Actions**: Direct navigation to create contracts, record payments, add expenses
+   - **Mobile Responsive**: Optimized layout for small screens and tablets
 2. **/contracts** - Full contract management with advanced filtering
    - **AI Assistant**: Create contracts using natural language (e.g., "Projeto João, residencial, 32k, 1/abril")
    - **Smart Duplicate Detection**: Automatically detects existing contracts and offers options
