@@ -55,12 +55,14 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+        console.log(`🔍 JWT: Setting token.id to ${user.id} for ${user.email}`);
       }
       return token;
     },
     async session({ session, token }) {
       if (session?.user) {
         session.user.id = token.id as string;
+        console.log(`🔍 Session: Setting session.user.id to ${token.id} for ${session.user.email}`);
       }
       return session;
     }

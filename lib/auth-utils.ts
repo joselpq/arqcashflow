@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 export async function getCurrentUser() {
   const session = await getServerSession(authOptions);
   console.log(`🔍 Session user id: ${session?.user?.id}`)
+  console.log(`🔍 Session user email: ${session?.user?.email}`)
 
   if (!session?.user?.id) {
     return null;
@@ -16,6 +17,13 @@ export async function getCurrentUser() {
   });
 
   console.log(`🔍 Found user: ${user?.email} with teamId: ${user?.teamId}`)
+
+  // Additional validation: ensure session email matches database user
+  if (user && session.user.email !== user.email) {
+    console.log(`🚨 Session email mismatch! Session: ${session.user.email}, DB: ${user.email}`);
+    throw new Error("Session validation failed - user mismatch");
+  }
+
   return user;
 }
 
