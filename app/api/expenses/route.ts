@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { supervisorValidateExpense } from '@/lib/supervisor'
+import { requireAuth } from '@/lib/auth-utils'
 
 const ExpenseSchema = z.object({
   description: z.string().min(1, 'Description is required'),
@@ -34,6 +35,8 @@ const UpdateExpenseSchema = ExpenseSchema.partial().extend({
 
 export async function GET(request: NextRequest) {
   try {
+    const { teamId } = await requireAuth()
+
     const searchParams = request.nextUrl.searchParams
 
     // Filter parameters
@@ -51,8 +54,11 @@ export async function GET(request: NextRequest) {
     const startDate = searchParams.get('startDate')
     const endDate = searchParams.get('endDate')
 
-    // Build where clause
-    const where: any = {}
+    // Build where clause - ALWAYS filter by teamId
+    const where: any = {
+      teamId,
+      NOT: { teamId: null }
+    }
 
     if (contractId && contractId !== 'all') where.contractId = contractId
     if (status && status !== 'all') where.status = status
@@ -123,11 +129,16 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const { teamId } = await requireAuth()
+
     const body = await request.json()
     const validatedData = ExpenseSchema.parse(body)
 
     const expense = await prisma.expense.create({
-      data: validatedData,
+      data: {
+        ...validatedData,
+        teamId
+      },
       include: {
         contract: {
           select: {

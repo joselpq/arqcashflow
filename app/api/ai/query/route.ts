@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { queryDatabase } from '@/lib/langchain'
 import { supervisorValidateQuery } from '@/lib/supervisor'
+import { requireAuth } from '@/lib/auth-utils'
 import { z } from 'zod'
 
 const QuerySchema = z.object({
@@ -13,10 +14,12 @@ const QuerySchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    const { teamId } = await requireAuth()
+
     const body = await request.json()
     const { question, history } = QuerySchema.parse(body)
 
-    const result = await queryDatabase(question, history)
+    const result = await queryDatabase(question, teamId, history)
 
     // Run supervisor validation on the query context
     const alerts = await supervisorValidateQuery(question, { result, history })

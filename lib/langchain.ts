@@ -1,9 +1,13 @@
 import { ChatOpenAI } from '@langchain/openai'
 import { prisma } from './prisma'
 
-export async function queryDatabase(question: string, history?: Array<{ question: string; answer: string }>) {
+export async function queryDatabase(question: string, teamId: string, history?: Array<{ question: string; answer: string }>) {
   if (!process.env.OPENAI_API_KEY) {
     throw new Error('OPENAI_API_KEY not configured')
+  }
+
+  if (!teamId) {
+    throw new Error('Team ID is required for queries')
   }
 
   const llm = new ChatOpenAI({
@@ -20,8 +24,11 @@ export async function queryDatabase(question: string, history?: Array<{ question
     IMPORTANT: Current date context - Today is ${new Date().toISOString().split('T')[0]} (YYYY-MM-DD format).
     When using 'now' in SQLite, be aware that the system might have timezone issues.
 
+    CRITICAL: ALL QUERIES MUST FILTER BY teamId = '${teamId}' to ensure data isolation!
+
     Contract table:
     - id (TEXT, PRIMARY KEY)
+    - teamId (TEXT, REQUIRED) - MUST FILTER BY THIS: teamId = '${teamId}'
     - clientName (TEXT)
     - projectName (TEXT)
     - description (TEXT, nullable)
@@ -49,6 +56,7 @@ export async function queryDatabase(question: string, history?: Array<{ question
 
     Expense table (costs/expenses):
     - id (TEXT, PRIMARY KEY)
+    - teamId (TEXT, REQUIRED) - MUST FILTER BY THIS: teamId = '${teamId}'
     - contractId (TEXT, FOREIGN KEY to Contract.id, nullable)
     - description (TEXT)
     - amount (REAL)
