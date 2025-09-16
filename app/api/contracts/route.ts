@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { supervisorValidateContract } from '@/lib/supervisor'
+import { requireAuth } from '@/lib/auth-utils'
 
 const ContractSchema = z.object({
   clientName: z.string(),
@@ -16,13 +17,15 @@ const ContractSchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
+    const { teamId } = await requireAuth()
+
     const searchParams = request.nextUrl.searchParams
     const status = searchParams.get('status')
     const category = searchParams.get('category')
     const sortBy = searchParams.get('sortBy') || 'createdAt'
     const sortOrder = searchParams.get('sortOrder') || 'desc'
 
-    const where: any = {}
+    const where: any = { teamId }
     if (status && status !== 'all') where.status = status
     if (category && category !== 'all') where.category = category
 
@@ -45,18 +48,24 @@ export async function GET(request: NextRequest) {
     })
     return NextResponse.json(contracts)
   } catch (error) {
+    if (error instanceof Error && error.message === "Unauthorized") {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
     return NextResponse.json({ error: 'Failed to fetch contracts' }, { status: 500 })
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
+    const { teamId } = await requireAuth()
+
     const body = await request.json()
     const validatedData = ContractSchema.parse(body)
 
     const contract = await prisma.contract.create({
       data: {
         ...validatedData,
+        teamId,
         signedDate: new Date(validatedData.signedDate + 'T00:00:00.000Z'),
       },
     })

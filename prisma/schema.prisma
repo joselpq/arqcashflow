@@ -12,6 +12,8 @@ datasource db {
 
 model Contract {
   id          String       @id @default(cuid())
+  teamId      String
+  team        Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
   clientName  String
   projectName String
   description String?
@@ -25,6 +27,8 @@ model Contract {
   receivables Receivable[]
   expenses    Expense[]    // Project-related expenses
   budgets     Budget[]     // Project budgets
+
+  @@index([teamId])
 }
 
 model Receivable {
@@ -58,6 +62,8 @@ model Category {
 // Cost Management Models
 model Expense {
   id           String    @id @default(cuid())
+  teamId       String?
+  team         Team?     @relation(fields: [teamId], references: [id], onDelete: Cascade)
   contractId   String?   // Optional: link to specific project
   contract     Contract? @relation(fields: [contractId], references: [id], onDelete: SetNull)
 
@@ -87,6 +93,7 @@ model Expense {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
+  @@index([teamId])
   @@index([contractId])
   @@index([dueDate])
   @@index([status])
@@ -95,6 +102,8 @@ model Expense {
 
 model Budget {
   id          String   @id @default(cuid())
+  teamId      String?
+  team        Team?    @relation(fields: [teamId], references: [id], onDelete: Cascade)
   contractId  String?  // Optional: project-specific budget
   contract    Contract? @relation(fields: [contractId], references: [id], onDelete: SetNull)
 
@@ -115,6 +124,7 @@ model Budget {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  @@index([teamId])
   @@index([contractId])
   @@index([category])
   @@index([startDate, endDate])
@@ -151,13 +161,29 @@ model RecurringExpense {
   @@index([isActive])
 }
 
+model Team {
+  id            String   @id @default(cuid())
+  name          String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  users         User[]
+  contracts     Contract[]
+  expenses      Expense[]
+  budgets       Budget[]
+}
+
 model User {
   id            String   @id @default(cuid())
   email         String   @unique
   name          String?
   password      String   // Hashed password
+  teamId        String
+  team          Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
   @@index([email])
+  @@index([teamId])
 }

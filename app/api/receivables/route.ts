@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { supervisorValidateReceivable } from '@/lib/supervisor'
+import { requireAuth } from '@/lib/auth-utils'
 
 const ReceivableSchema = z.object({
   contractId: z.string(),
@@ -17,6 +18,8 @@ const ReceivableSchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
+    const { teamId } = await requireAuth()
+
     const searchParams = request.nextUrl.searchParams
     const contractId = searchParams.get('contractId')
     const status = searchParams.get('status')
@@ -24,7 +27,9 @@ export async function GET(request: NextRequest) {
     const sortBy = searchParams.get('sortBy') || 'expectedDate'
     const sortOrder = searchParams.get('sortOrder') || 'asc'
 
-    const where: any = {}
+    const where: any = {
+      contract: { teamId }
+    }
     if (contractId && contractId !== 'all') where.contractId = contractId
     if (status && status !== 'all') where.status = status
     if (category && category !== 'all') where.category = category
