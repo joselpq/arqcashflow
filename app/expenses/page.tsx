@@ -3,8 +3,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { format } from 'date-fns'
-import SupervisorAlerts, { SupervisorAlert } from '@/app/components/SupervisorAlerts'
-import { saveAlertsToStorage } from '@/lib/alertStorage'
+// Supervisor imports removed - clean slate for rebuild
 
 // Helper functions for date conversion with UTC handling
 function formatDateForInput(date: string | Date): string {
@@ -43,7 +42,7 @@ function ExpensesPageContent() {
   const [aiLoading, setAiLoading] = useState(false)
   const [aiHistory, setAiHistory] = useState<Array<{role: 'user' | 'assistant', content: string}>>([])
   const [pendingExpense, setPendingExpense] = useState<any>(null)
-  const [supervisorAlerts, setSupervisorAlerts] = useState<SupervisorAlert[]>([])
+  // Supervisor state removed - clean slate for rebuild
 
   // Filters
   const [filters, setFilters] = useState({
@@ -205,17 +204,7 @@ function ExpensesPageContent() {
       if (response.ok) {
         const result = await response.json()
 
-        // Handle supervisor alerts
-        if (result.alerts && result.alerts.length > 0) {
-          setSupervisorAlerts(result.alerts)
-          // Save alerts to storage for Central de Alertas
-          const entityInfo = {
-            name: `Despesa - ${result.expense?.description || 'Sem descrição'}`,
-            details: `Valor: R$${result.expense?.amount?.toLocaleString('pt-BR') || '0'} | Vencimento: ${result.expense?.dueDate ? new Date(result.expense.dueDate).toLocaleDateString('pt-BR') : 'N/A'}`,
-            editUrl: `/expenses?edit=${result.expense?.id}`
-          }
-          saveAlertsToStorage(result.alerts, 'expense', result.expense?.id, entityInfo)
-        }
+        // Supervisor alert handling removed - clean slate for rebuild
 
         alert(editingExpense ? 'Despesa atualizada com sucesso!' : 'Despesa criada com sucesso!')
         resetForm()
@@ -254,17 +243,7 @@ function ExpensesPageContent() {
       const result = await res.json()
 
       if (result.action === 'created') {
-        // Handle supervisor alerts if any
-        if (result.alerts && result.alerts.length > 0) {
-          setSupervisorAlerts(result.alerts)
-          // Save alerts to storage for Central de Alertas
-          const entityInfo = {
-            name: `Despesa - ${result.expense?.description || 'Sem descrição'}`,
-            details: `Valor: R$${result.expense?.amount?.toLocaleString('pt-BR') || '0'} | Vencimento: ${result.expense?.dueDate ? new Date(result.expense.dueDate).toLocaleDateString('pt-BR') : 'N/A'}`,
-            editUrl: `/expenses?edit=${result.expense?.id}`
-          }
-          saveAlertsToStorage(result.alerts, 'expense', result.expense?.id, entityInfo)
-        }
+        // Supervisor alert handling removed - clean slate for rebuild
 
         setAiHistory([...newHistory, {
           role: 'assistant' as const,
@@ -412,11 +391,7 @@ function ExpensesPageContent() {
 
       <h1 className="text-3xl font-bold mb-8">Gerenciamento de Despesas</h1>
 
-      {/* Supervisor Alerts */}
-      <SupervisorAlerts
-        alerts={supervisorAlerts}
-        onDismiss={() => setSupervisorAlerts([])}
-      />
+      {/* Supervisor Alerts removed - clean slate for rebuild */}
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">

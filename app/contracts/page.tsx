@@ -3,8 +3,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { format } from 'date-fns'
-import SupervisorAlerts, { SupervisorAlert } from '@/app/components/SupervisorAlerts'
-import { saveAlertsToStorage } from '@/lib/alertStorage'
+// Supervisor imports removed - clean slate for rebuild
 
 // Helper functions for date conversion with UTC handling
 function formatDateForInput(date: string | Date): string {
