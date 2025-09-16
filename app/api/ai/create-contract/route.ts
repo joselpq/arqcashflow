@@ -285,8 +285,13 @@ Para NOVO CONTRATO, você precisa inferir/extrair:
 - clientName: nomes de pessoas mencionados (ex: "Mila e Lucas")
 - projectName: combine com tipo se mencionado (ex: "Projeto Residencial Mila e Lucas")
 - totalValue: converta valores (ex: "16 mil" = 16000)
-- signedDate: converta datas (ex: "1 de agosto de 2023" = "2023-08-01")
+- signedDate: converta datas (ex: "1 de agosto de 2023" = "2023-08-01", "hoje" = "${new Date().toISOString().split('T')[0]}", "ontem" = "${new Date(Date.now() - 86400000).toISOString().split('T')[0]}")
 - category: identifique tipo (residencial/comercial/restaurante/loja)
+
+DATAS RELATIVAS:
+- "hoje" = "${new Date().toISOString().split('T')[0]}"
+- "ontem" = "${new Date(Date.now() - 86400000).toISOString().split('T')[0]}"
+- "anteontem" = "${new Date(Date.now() - 172800000).toISOString().split('T')[0]}"
 
 EXEMPLO para "Projeto Mila e Lucas, residencial, 70m2, data 1 de agosto de 2023, 16 mil":
 {
