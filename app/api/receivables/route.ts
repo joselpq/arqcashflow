@@ -71,14 +71,32 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(receivablesWithUpdatedStatus)
   } catch (error) {
+    if (error instanceof Error && error.message === "Unauthorized") {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    console.error('Receivables fetch error:', error)
     return NextResponse.json({ error: 'Failed to fetch receivables' }, { status: 500 })
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
+    const { teamId } = await requireAuth()
+
     const body = await request.json()
     const validatedData = ReceivableSchema.parse(body)
+
+    // Verify that the contract belongs to the user's team
+    const contract = await prisma.contract.findFirst({
+      where: {
+        id: validatedData.contractId,
+        teamId
+      }
+    })
+
+    if (!contract) {
+      return NextResponse.json({ error: 'Contract not found or access denied' }, { status: 404 })
+    }
 
     const createData: any = {
       ...validatedData,
@@ -111,9 +129,13 @@ export async function POST(request: NextRequest) {
       alerts: alertsWithEditUrl.length > 0 ? alertsWithEditUrl : undefined
     }, { status: 201 })
   } catch (error) {
+    if (error instanceof Error && error.message === "Unauthorized") {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: error.errors }, { status: 400 })
     }
+    console.error('Receivable creation error:', error)
     return NextResponse.json({ error: 'Failed to create receivable' }, { status: 500 })
   }
 }
