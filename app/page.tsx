@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import ExportButtons from './components/ExportButtons'
 
 interface DashboardData {
   metrics: {
@@ -69,9 +70,9 @@ function formatDate(dateStr: string): string {
 
 function HealthIndicator({ status, message }: { status: string, message: string }) {
   const colors = {
-    good: 'bg-green-100 text-green-800 border-green-200',
-    warning: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    critical: 'bg-red-100 text-red-800 border-red-200'
+    good: 'bg-success-light text-success border-success/20 shadow-sm',
+    warning: 'bg-warning-light text-warning border-warning/20 shadow-sm',
+    critical: 'bg-danger-light text-danger border-danger/20 shadow-sm'
   }
 
   const icons = {
@@ -81,10 +82,12 @@ function HealthIndicator({ status, message }: { status: string, message: string 
   }
 
   return (
-    <div className={`p-4 rounded-lg border-2 ${colors[status as keyof typeof colors] || colors.good}`}>
-      <div className="flex items-center space-x-2">
-        <span className="text-xl">{icons[status as keyof typeof icons] || icons.good}</span>
-        <span className="font-medium">{message}</span>
+    <div className={`p-6 rounded-xl border ${colors[status as keyof typeof colors] || colors.good}`}>
+      <div className="flex items-center space-x-3">
+        <div className="text-2xl">{icons[status as keyof typeof icons] || icons.good}</div>
+        <div>
+          <span className="font-semibold text-lg">{message}</span>
+        </div>
       </div>
     </div>
   )
@@ -98,22 +101,29 @@ function MetricCard({ title, value, subtitle, trend, color = 'blue' }: {
   color?: 'blue' | 'green' | 'red' | 'yellow'
 }) {
   const colorClasses = {
-    blue: 'bg-blue-50 text-blue-900 border-blue-200',
-    green: 'bg-green-50 text-green-900 border-green-200',
-    red: 'bg-red-50 text-red-900 border-red-200',
-    yellow: 'bg-yellow-50 text-yellow-900 border-yellow-200'
+    blue: 'bg-white border-primary/20 hover:border-primary/30 hover:shadow-md',
+    green: 'bg-white border-success/20 hover:border-success/30 hover:shadow-md',
+    red: 'bg-white border-danger/20 hover:border-danger/30 hover:shadow-md',
+    yellow: 'bg-white border-warning/20 hover:border-warning/30 hover:shadow-md'
+  }
+
+  const valueColors = {
+    blue: 'text-primary',
+    green: 'text-success',
+    red: 'text-danger',
+    yellow: 'text-warning'
   }
 
   return (
-    <div className={`p-6 rounded-lg border ${colorClasses[color]}`}>
+    <div className={`p-6 rounded-xl border shadow-sm transition-all duration-200 ${colorClasses[color]}`}>
       <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium opacity-70">{title}</p>
-          <p className="text-2xl font-bold mt-1">{value}</p>
-          {subtitle && <p className="text-sm opacity-60 mt-1">{subtitle}</p>}
+        <div className="flex-1">
+          <p className="text-sm font-medium text-neutral-600 mb-2">{title}</p>
+          <p className={`text-3xl font-bold tracking-tight ${valueColors[color]}`}>{value}</p>
+          {subtitle && <p className="text-sm text-neutral-500 mt-2">{subtitle}</p>}
         </div>
         {trend && (
-          <div className="text-2xl">
+          <div className="ml-4 text-3xl opacity-60">
             {trend === 'up' ? '📈' : trend === 'down' ? '📉' : '➡️'}
           </div>
         )}
@@ -225,12 +235,15 @@ export default function Dashboard() {
                      data.metrics.thisMonthProfit < 0 ? 'down' : 'neutral'
 
   return (
-    <div className="min-h-screen p-4 sm:p-8">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-neutral-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
-          <h1 className="text-3xl font-bold">Dashboard</h1>
-          <div className="text-sm text-gray-600 mt-2 sm:mt-0">
-            Atualizado em {new Date().toLocaleString('pt-BR')}
+          <div>
+            <h1 className="text-4xl font-bold text-neutral-900 tracking-tight">Dashboard</h1>
+            <p className="text-neutral-600 mt-2">Visão geral do seu fluxo de caixa</p>
+          </div>
+          <div className="text-sm text-neutral-500 mt-4 sm:mt-0 bg-white px-3 py-2 rounded-lg border border-neutral-200">
+            <span className="text-neutral-400">📅</span> Atualizado em {new Date().toLocaleString('pt-BR')}
           </div>
         </div>
 
@@ -287,12 +300,17 @@ export default function Dashboard() {
         {/* Critical Alerts */}
         {data.alerts.overdueItems.length > 0 && (
           <div className="mb-8">
-            <div className="bg-red-50 border-2 border-red-200 rounded-lg p-6">
-              <div className="flex items-center space-x-2 mb-4">
-                <span className="text-2xl">🚨</span>
-                <h2 className="text-xl font-bold text-red-800">
-                  Itens em Atraso ({data.alerts.overdueItems.length})
-                </h2>
+            <div className="bg-danger-light border border-danger/20 rounded-xl p-6 shadow-sm">
+              <div className="flex items-center space-x-3 mb-6">
+                <div className="w-10 h-10 bg-danger/10 rounded-full flex items-center justify-center">
+                  <span className="text-xl">🚨</span>
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-danger">
+                    Itens em Atraso
+                  </h2>
+                  <p className="text-sm text-danger/80">{data.alerts.overdueItems.length} itens precisam de atenção</p>
+                </div>
               </div>
               <div className="space-y-3">
                 {data.alerts.overdueItems.slice(0, 5).map((item) => (
@@ -323,10 +341,15 @@ export default function Dashboard() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           {/* Upcoming Receivables */}
-          <div className="bg-white border rounded-lg p-6">
-            <div className="flex items-center space-x-2 mb-4">
-              <span className="text-xl">💰</span>
-              <h2 className="text-xl font-bold">Próximos Recebimentos</h2>
+          <div className="bg-white border border-neutral-200 rounded-xl p-6 shadow-sm">
+            <div className="flex items-center space-x-3 mb-6">
+              <div className="w-10 h-10 bg-success/10 rounded-full flex items-center justify-center">
+                <span className="text-xl">💰</span>
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-neutral-900">Próximos Recebimentos</h2>
+                <p className="text-sm text-neutral-500">Valores esperados nos próximos dias</p>
+              </div>
             </div>
             {data.upcoming.receivables.length > 0 ? (
               <div className="space-y-3">
@@ -349,10 +372,15 @@ export default function Dashboard() {
           </div>
 
           {/* Upcoming Expenses */}
-          <div className="bg-white border rounded-lg p-6">
-            <div className="flex items-center space-x-2 mb-4">
-              <span className="text-xl">💸</span>
-              <h2 className="text-xl font-bold">Próximas Despesas</h2>
+          <div className="bg-white border border-neutral-200 rounded-xl p-6 shadow-sm">
+            <div className="flex items-center space-x-3 mb-6">
+              <div className="w-10 h-10 bg-warning/10 rounded-full flex items-center justify-center">
+                <span className="text-xl">💸</span>
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-neutral-900">Próximas Despesas</h2>
+                <p className="text-sm text-neutral-500">Pagamentos programados</p>
+              </div>
             </div>
             {data.upcoming.expenses.length > 0 ? (
               <div className="space-y-3">
@@ -376,36 +404,59 @@ export default function Dashboard() {
         </div>
 
         {/* Monthly Trend Chart */}
-        <div className="bg-white border rounded-lg p-6 mb-8">
-          <div className="flex items-center space-x-2 mb-6">
-            <span className="text-xl">📊</span>
-            <h2 className="text-xl font-bold">Tendência dos Últimos 6 Meses</h2>
+        <div className="bg-white border border-neutral-200 rounded-xl p-6 mb-8 shadow-sm">
+          <div className="flex items-center space-x-3 mb-6">
+            <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+              <span className="text-xl">📊</span>
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-neutral-900">Tendência dos Últimos 6 Meses</h2>
+              <p className="text-sm text-neutral-500">Evolução do fluxo de caixa</p>
+            </div>
           </div>
           <SimpleChart data={data.monthlyTrend} />
         </div>
 
         {/* Quick Actions */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-          <div className="flex items-center space-x-2 mb-4">
-            <span className="text-xl">🚀</span>
-            <h2 className="text-xl font-bold text-blue-800">Ações Rápidas</h2>
+        <div className="bg-gradient-to-br from-primary-light to-primary/5 border border-primary/20 rounded-xl p-6 shadow-sm">
+          <div className="flex items-center space-x-3 mb-6">
+            <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+              <span className="text-xl">🚀</span>
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-primary">Ações Rápidas</h2>
+              <p className="text-sm text-primary/80">Acesse funcionalidades principais</p>
+            </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <Link href="/contracts" className="bg-white p-4 rounded-lg border hover:shadow-md transition-shadow">
-              <div className="text-2xl mb-2">📝</div>
-              <h3 className="font-medium">Novo Contrato</h3>
-              <p className="text-sm text-gray-600">Adicionar projeto</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Link href="/contracts" className="group bg-white p-6 rounded-xl border border-neutral-200 hover:border-primary/30 hover:shadow-md transition-all duration-200">
+              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+                <span className="text-2xl">📝</span>
+              </div>
+              <h3 className="font-semibold text-neutral-900 mb-1">Novo Contrato</h3>
+              <p className="text-sm text-neutral-500">Adicionar projeto</p>
             </Link>
-            <Link href="/receivables" className="bg-white p-4 rounded-lg border hover:shadow-md transition-shadow">
-              <div className="text-2xl mb-2">💰</div>
-              <h3 className="font-medium">Marcar Recebimento</h3>
-              <p className="text-sm text-gray-600">Registrar pagamento</p>
+            <Link href="/receivables" className="group bg-white p-6 rounded-xl border border-neutral-200 hover:border-success/30 hover:shadow-md transition-all duration-200">
+              <div className="w-12 h-12 bg-success/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-success/20 transition-colors">
+                <span className="text-2xl">💰</span>
+              </div>
+              <h3 className="font-semibold text-neutral-900 mb-1">Marcar Recebimento</h3>
+              <p className="text-sm text-neutral-500">Registrar pagamento</p>
             </Link>
-            <Link href="/expenses" className="bg-white p-4 rounded-lg border hover:shadow-md transition-shadow">
-              <div className="text-2xl mb-2">💸</div>
-              <h3 className="font-medium">Nova Despesa</h3>
-              <p className="text-sm text-gray-600">Adicionar custo</p>
+            <Link href="/expenses" className="group bg-white p-6 rounded-xl border border-neutral-200 hover:border-warning/30 hover:shadow-md transition-all duration-200">
+              <div className="w-12 h-12 bg-warning/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-warning/20 transition-colors">
+                <span className="text-2xl">💸</span>
+              </div>
+              <h3 className="font-semibold text-neutral-900 mb-1">Nova Despesa</h3>
+              <p className="text-sm text-neutral-500">Adicionar custo</p>
             </Link>
+            <div className="bg-white p-6 rounded-xl border border-neutral-200 hover:border-neutral-300 hover:shadow-md transition-all duration-200">
+              <div className="w-12 h-12 bg-neutral-100 rounded-lg flex items-center justify-center mb-4">
+                <span className="text-2xl">📊</span>
+              </div>
+              <h3 className="font-semibold text-neutral-900 mb-2">Exportar Dados</h3>
+              <ExportButtons />
+            </div>
           </div>
         </div>
       </div>
