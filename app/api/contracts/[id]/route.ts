@@ -16,13 +16,14 @@ const UpdateContractSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { teamId } = await requireAuth()
+    const { id } = await params
 
     const contract = await prisma.contract.findFirst({
-      where: { id: params.id, teamId },
+      where: { id, teamId },
       include: { receivables: true },
     })
 
@@ -41,10 +42,11 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { teamId } = await requireAuth()
+    const { id } = await params
 
     const body = await request.json()
     const validatedData = UpdateContractSchema.parse(body)
@@ -55,7 +57,7 @@ export async function PUT(
     }
 
     const contract = await prisma.contract.updateMany({
-      where: { id: params.id, teamId },
+      where: { id, teamId },
       data: updateData,
     })
 
@@ -64,7 +66,7 @@ export async function PUT(
     }
 
     const updatedContract = await prisma.contract.findFirst({
-      where: { id: params.id, teamId }
+      where: { id, teamId }
     })
 
     return NextResponse.json({
@@ -83,13 +85,14 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { teamId } = await requireAuth()
+    const { id } = await params
 
     const result = await prisma.contract.deleteMany({
-      where: { id: params.id, teamId },
+      where: { id, teamId },
     })
 
     if (result.count === 0) {

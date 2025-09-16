@@ -87,6 +87,7 @@ export async function POST(request: NextRequest) {
           ...pendingContract,
           teamId,
           signedDate: new Date(pendingContract.signedDate),
+          status: pendingContract.status || 'active',
         }
       })
 

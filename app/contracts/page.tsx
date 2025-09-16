@@ -107,7 +107,7 @@ function ContractsPageContent() {
       setContracts(data)
 
       // Extract unique categories for filter dropdown
-      const categories = [...new Set(data.map((c: any) => c.category).filter(Boolean))]
+      const categories = [...new Set(data.map((c: any) => c.category).filter(Boolean))] as string[]
       setUniqueCategories(categories)
     } catch (error) {
       console.error('Failed to fetch contracts:', error)
