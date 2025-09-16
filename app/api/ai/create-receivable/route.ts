@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { findContractMatches } from '@/lib/fuzzyMatch'
 import { supervisorValidateReceivable } from '@/lib/supervisor'
 import { z } from 'zod'
+import { requireAuth } from '@/lib/auth-utils'
 
 // Helper function for date display to avoid timezone conversion
 function formatDateForDisplay(date: string | Date): string {
@@ -47,6 +48,14 @@ function isAffirmativeResponse(message: string): boolean {
 
 export async function POST(request: NextRequest) {
   try {
+    const { user, teamId } = await requireAuth()
+    console.log('🔍 AI RECEIVABLE DEBUG:', {
+      userId: user.id,
+      userEmail: user.email,
+      teamId,
+      teamName: user.team?.name
+    })
+
     const body = await request.json()
     const { message, history, pendingReceivable, isConfirming } = AIReceivableSchema.parse(body)
 
@@ -96,7 +105,7 @@ export async function POST(request: NextRequest) {
       openAIApiKey: process.env.OPENAI_API_KEY,
     })
 
-    // Get existing contracts for reference
+    // Get existing contracts for reference - filtered by team
     const contracts = await prisma.contract.findMany({
       select: {
         id: true,
@@ -105,7 +114,9 @@ export async function POST(request: NextRequest) {
         category: true,
       },
       where: {
-        status: 'active'
+        teamId,
+        status: 'active',
+        NOT: { teamId: null }
       }
     })
 
@@ -273,6 +284,9 @@ Se NÃO ENCONTRAR contrato correspondente:
     }
   } catch (error) {
     console.error('AI Receivable creation error:', error)
+    if (error instanceof Error && error.message === "Unauthorized") {
+      return NextResponse.json({ error: 'Unauthorized - Authentication required' }, { status: 401 })
+    }
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: 'Invalid request format' }, { status: 400 })
     }

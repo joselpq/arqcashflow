@@ -75,10 +75,10 @@ function ReceivablesPageContent() {
   }, [])
 
   useEffect(() => {
-    if (contracts.length > 0) {
-      fetchReceivables()
-    }
-  }, [filters, contracts])
+    // Always fetch receivables when filters change, regardless of contracts
+    // This allows receivables to load even if there are no contracts
+    fetchReceivables()
+  }, [filters])
 
   // Handle auto-edit when URL parameter is present
   useEffect(() => {
@@ -427,7 +427,12 @@ function ReceivablesPageContent() {
           </div>
 
           {contracts.length === 0 ? (
-            <p className="text-gray-500">Por favor, crie um contrato primeiro</p>
+            <div className="bg-yellow-50 border border-yellow-200 p-4 rounded">
+              <p className="text-yellow-800">⚠️ Nenhum contrato disponível</p>
+              <p className="text-sm text-yellow-700 mt-1">
+                Para criar contas a receber, você precisa primeiro <a href="/contracts" className="underline">criar um contrato</a>.
+              </p>
+            </div>
           ) : showAISection ? (
             <div id="receivable-form">
               <h2 className="text-xl font-semibold mb-4">Adicionar Conta a Receber com IA</h2>

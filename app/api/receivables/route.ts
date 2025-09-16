@@ -18,7 +18,13 @@ const ReceivableSchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    const { teamId } = await requireAuth()
+    const { user, teamId } = await requireAuth()
+    console.log('🔍 RECEIVABLES FETCH DEBUG:', {
+      userId: user.id,
+      userEmail: user.email,
+      teamId,
+      teamName: user.team?.name
+    })
 
     const searchParams = request.nextUrl.searchParams
     const contractId = searchParams.get('contractId')
@@ -28,7 +34,10 @@ export async function GET(request: NextRequest) {
     const sortOrder = searchParams.get('sortOrder') || 'asc'
 
     const where: any = {
-      contract: { teamId }
+      contract: {
+        teamId,
+        NOT: { teamId: null }
+      }
     }
     if (contractId && contractId !== 'all') where.contractId = contractId
     if (status && status !== 'all') where.status = status
@@ -69,13 +78,24 @@ export async function GET(request: NextRequest) {
       return receivable
     })
 
+    console.log('💰 RECEIVABLES FOUND:', {
+      count: receivablesWithUpdatedStatus.length,
+      teamId,
+      receivableIds: receivablesWithUpdatedStatus.map(r => ({
+        id: r.id,
+        contractId: r.contractId,
+        contract: r.contract ? `${r.contract.clientName} - ${r.contract.projectName}` : 'No Contract',
+        amount: r.amount
+      }))
+    })
+
     return NextResponse.json(receivablesWithUpdatedStatus)
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized - User authentication required' }, { status: 401 })
     }
     console.error('Receivables fetch error:', error)
-    return NextResponse.json({ error: 'Failed to fetch receivables' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to fetch receivables', details: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 })
   }
 }
 

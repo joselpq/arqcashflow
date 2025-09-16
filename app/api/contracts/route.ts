@@ -17,7 +17,13 @@ const ContractSchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    const { teamId } = await requireAuth()
+    const { user, teamId } = await requireAuth()
+    console.log('🔍 CONTRACT FETCH DEBUG:', {
+      userId: user.id,
+      userEmail: user.email,
+      teamId,
+      teamName: user.team?.name
+    })
 
     const searchParams = request.nextUrl.searchParams
     const status = searchParams.get('status')
@@ -49,6 +55,13 @@ export async function GET(request: NextRequest) {
       },
       orderBy,
     })
+
+    console.log('📄 CONTRACTS FOUND:', {
+      count: contracts.length,
+      teamId,
+      contractIds: contracts.map(c => ({ id: c.id, teamId: c.teamId, client: c.clientName, project: c.projectName }))
+    })
+
     return NextResponse.json(contracts)
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") {
@@ -60,7 +73,13 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { teamId } = await requireAuth()
+    const { user, teamId } = await requireAuth()
+    console.log('🔍 CONTRACT CREATION DEBUG:', {
+      userId: user.id,
+      userEmail: user.email,
+      teamId,
+      teamName: user.team?.name
+    })
 
     const body = await request.json()
     const validatedData = ContractSchema.parse(body)
@@ -71,6 +90,13 @@ export async function POST(request: NextRequest) {
         teamId,
         signedDate: new Date(validatedData.signedDate + 'T00:00:00.000Z'),
       },
+    })
+
+    console.log('✅ CONTRACT CREATED:', {
+      contractId: contract.id,
+      assignedTeamId: contract.teamId,
+      clientName: contract.clientName,
+      projectName: contract.projectName
     })
 
     // Run supervisor validation after creating to get the contract ID

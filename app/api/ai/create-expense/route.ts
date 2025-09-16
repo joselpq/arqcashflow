@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import OpenAI from 'openai'
+import { requireAuth } from '@/lib/auth-utils'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -8,6 +9,14 @@ const openai = new OpenAI({
 
 export async function POST(request: NextRequest) {
   try {
+    const { user, teamId } = await requireAuth()
+    console.log('🔍 AI EXPENSE DEBUG:', {
+      userId: user.id,
+      userEmail: user.email,
+      teamId,
+      teamName: user.team?.name
+    })
+
     const { message, history = [], pendingExpense = null, isConfirming = false } = await request.json()
 
     if (!process.env.OPENAI_API_KEY) {
@@ -17,8 +26,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get existing expenses for context
+    // Get existing expenses for context - filtered by team
     const expenses = await prisma.expense.findMany({
+      where: {
+        teamId,
+        NOT: { teamId: null }
+      },
       orderBy: { createdAt: 'desc' },
       take: 20,
       include: {
@@ -31,8 +44,12 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    // Get contracts for linking expenses
+    // Get contracts for linking expenses - filtered by team
     const contracts = await prisma.contract.findMany({
+      where: {
+        teamId,
+        NOT: { teamId: null }
+      },
       select: {
         id: true,
         clientName: true,
@@ -129,6 +146,7 @@ Always respond with a JSON object in one of these formats:
 
           // Validate and format the pending expense data
           const expenseData = {
+            teamId,
             description: pendingExpense.description,
             amount: Number(pendingExpense.amount),
             dueDate: new Date(pendingExpense.dueDate),
@@ -188,6 +206,9 @@ Always respond with a JSON object in one of these formats:
 
   } catch (error) {
     console.error('AI expense creation error:', error)
+    if (error instanceof Error && error.message === "Unauthorized") {
+      return NextResponse.json({ error: 'Unauthorized - Authentication required' }, { status: 401 })
+    }
     return NextResponse.json(
       {
         action: 'error',

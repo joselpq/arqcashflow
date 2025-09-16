@@ -3,6 +3,7 @@ import { ChatOpenAI } from '@langchain/openai'
 import { prisma } from '@/lib/prisma'
 import { findBestMatches } from '@/lib/fuzzyMatch'
 import { z } from 'zod'
+import { requireAuth } from '@/lib/auth-utils'
 
 const AIContractSchema = z.object({
   message: z.string(),
@@ -24,9 +25,10 @@ const AIContractSchema = z.object({
 })
 
 // Helper function to generate unique project name
-async function generateUniqueProjectName(baseName: string, clientName: string): Promise<string> {
+async function generateUniqueProjectName(baseName: string, clientName: string, teamId: string): Promise<string> {
   const existingContracts = await prisma.contract.findMany({
     where: {
+      teamId,
       clientName: clientName,
       projectName: {
         startsWith: baseName
@@ -55,6 +57,14 @@ async function generateUniqueProjectName(baseName: string, clientName: string): 
 export async function POST(request: NextRequest) {
   console.log('=== AI Contract Route Called ===')
   try {
+    const { user, teamId } = await requireAuth()
+    console.log('🔍 AI CONTRACT DEBUG:', {
+      userId: user.id,
+      userEmail: user.email,
+      teamId,
+      teamName: user.team?.name
+    })
+
     const body = await request.json()
     console.log('Request body:', JSON.stringify(body, null, 2))
     const { message, history, pendingContract, isConfirming } = AIContractSchema.parse(body)
@@ -75,8 +85,16 @@ export async function POST(request: NextRequest) {
       const contract = await prisma.contract.create({
         data: {
           ...pendingContract,
+          teamId,
           signedDate: new Date(pendingContract.signedDate),
         }
+      })
+
+      console.log('✅ AI CONTRACT CREATED:', {
+        contractId: contract.id,
+        assignedTeamId: contract.teamId,
+        clientName: contract.clientName,
+        projectName: contract.projectName
       })
 
       return NextResponse.json({
@@ -100,7 +118,8 @@ export async function POST(request: NextRequest) {
           // Generate unique project name
           const uniqueProjectName = await generateUniqueProjectName(
             pendingContract.projectName,
-            pendingContract.clientName
+            pendingContract.clientName,
+            teamId
           )
 
           const updatedContract = { ...pendingContract, projectName: uniqueProjectName }
@@ -197,8 +216,12 @@ export async function POST(request: NextRequest) {
       openAIApiKey: process.env.OPENAI_API_KEY,
     })
 
-    // Get existing clients and projects for reference
+    // Get existing clients and projects for reference - filtered by team
     const existingContracts = await prisma.contract.findMany({
+      where: {
+        teamId,
+        NOT: { teamId: null }
+      },
       select: {
         id: true,
         clientName: true,
@@ -422,7 +445,10 @@ IMPORTANTE: Responda APENAS com JSON válido, sem texto adicional.`
       }
 
       const updatedContract = await prisma.contract.update({
-        where: { id: result.contractId },
+        where: {
+          id: result.contractId,
+          teamId // Ensure user can only edit contracts from their team
+        },
         data: updates
       })
 
@@ -452,6 +478,9 @@ IMPORTANTE: Responda APENAS com JSON válido, sem texto adicional.`
     }
   } catch (error) {
     console.error('AI Contract creation error:', error)
+    if (error instanceof Error && error.message === "Unauthorized") {
+      return NextResponse.json({ error: 'Unauthorized - Authentication required' }, { status: 401 })
+    }
     if (error instanceof z.ZodError) {
       console.log('Zod validation error:', error.errors)
       const errorResponse = { error: 'Invalid request format' }
