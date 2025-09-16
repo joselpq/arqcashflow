@@ -70,23 +70,31 @@ function formatDate(dateStr: string): string {
 
 function HealthIndicator({ status, message }: { status: string, message: string }) {
   const colors = {
-    good: 'bg-success-light text-success border-success/20 shadow-sm',
-    warning: 'bg-warning-light text-warning border-warning/20 shadow-sm',
-    critical: 'bg-danger-light text-danger border-danger/20 shadow-sm'
+    good: 'bg-green-50 text-green-900 border-green-200',
+    warning: 'bg-amber-50 text-amber-900 border-amber-200',
+    critical: 'bg-red-50 text-red-900 border-red-200'
   }
 
-  const icons = {
-    good: '✅',
-    warning: '⚠️',
-    critical: '🚨'
+  const indicators = {
+    good: '●',
+    warning: '●',
+    critical: '●'
+  }
+
+  const indicatorColors = {
+    good: 'text-green-500',
+    warning: 'text-amber-500',
+    critical: 'text-red-500'
   }
 
   return (
-    <div className={`p-6 rounded-xl border ${colors[status as keyof typeof colors] || colors.good}`}>
+    <div className={`p-6 rounded-lg border ${colors[status as keyof typeof colors] || colors.good}`}>
       <div className="flex items-center space-x-3">
-        <div className="text-2xl">{icons[status as keyof typeof icons] || icons.good}</div>
+        <div className={`text-lg ${indicatorColors[status as keyof typeof indicatorColors] || indicatorColors.good}`}>
+          {indicators[status as keyof typeof indicators] || indicators.good}
+        </div>
         <div>
-          <span className="font-semibold text-lg">{message}</span>
+          <span className="font-medium text-base">{message}</span>
         </div>
       </div>
     </div>
@@ -101,30 +109,36 @@ function MetricCard({ title, value, subtitle, trend, color = 'blue' }: {
   color?: 'blue' | 'green' | 'red' | 'yellow'
 }) {
   const colorClasses = {
-    blue: 'bg-white border-primary/20 hover:border-primary/30 hover:shadow-md',
-    green: 'bg-white border-success/20 hover:border-success/30 hover:shadow-md',
-    red: 'bg-white border-danger/20 hover:border-danger/30 hover:shadow-md',
-    yellow: 'bg-white border-warning/20 hover:border-warning/30 hover:shadow-md'
+    blue: 'bg-white border-neutral-200',
+    green: 'bg-white border-neutral-200',
+    red: 'bg-white border-neutral-200',
+    yellow: 'bg-white border-neutral-200'
   }
 
   const valueColors = {
-    blue: 'text-primary',
-    green: 'text-success',
-    red: 'text-danger',
-    yellow: 'text-warning'
+    blue: 'text-blue-600',
+    green: 'text-green-600',
+    red: 'text-red-600',
+    yellow: 'text-amber-600'
+  }
+
+  const trendIndicators = {
+    up: '↗',
+    down: '↘',
+    neutral: '→'
   }
 
   return (
-    <div className={`p-6 rounded-xl border shadow-sm transition-all duration-200 ${colorClasses[color]}`}>
-      <div className="flex items-center justify-between">
+    <div className={`p-6 rounded-lg border ${colorClasses[color]} hover:shadow-sm transition-shadow`}>
+      <div className="flex items-start justify-between">
         <div className="flex-1">
-          <p className="text-sm font-medium text-neutral-600 mb-2">{title}</p>
-          <p className={`text-3xl font-bold tracking-tight ${valueColors[color]}`}>{value}</p>
-          {subtitle && <p className="text-sm text-neutral-500 mt-2">{subtitle}</p>}
+          <p className="text-sm font-medium text-neutral-500 mb-1">{title}</p>
+          <p className={`text-2xl font-semibold ${valueColors[color]} mb-1`}>{value}</p>
+          {subtitle && <p className="text-xs text-neutral-400">{subtitle}</p>}
         </div>
         {trend && (
-          <div className="ml-4 text-3xl opacity-60">
-            {trend === 'up' ? '📈' : trend === 'down' ? '📉' : '➡️'}
+          <div className={`text-sm ${valueColors[color]} opacity-70`}>
+            {trendIndicators[trend]}
           </div>
         )}
       </div>
@@ -235,15 +249,15 @@ export default function Dashboard() {
                      data.metrics.thisMonthProfit < 0 ? 'down' : 'neutral'
 
   return (
-    <div className="min-h-screen bg-neutral-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
+    <div className="min-h-screen bg-white">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-12">
           <div>
-            <h1 className="text-4xl font-bold text-neutral-900 tracking-tight">Dashboard</h1>
-            <p className="text-neutral-600 mt-2">Visão geral do seu fluxo de caixa</p>
+            <h1 className="text-3xl font-light text-neutral-900 tracking-wide">Dashboard</h1>
+            <p className="text-neutral-500 mt-1 text-sm">Visão geral do fluxo de caixa</p>
           </div>
-          <div className="text-sm text-neutral-500 mt-4 sm:mt-0 bg-white px-3 py-2 rounded-lg border border-neutral-200">
-            <span className="text-neutral-400">📅</span> Atualizado em {new Date().toLocaleString('pt-BR')}
+          <div className="text-xs text-neutral-400 mt-4 sm:mt-0">
+            Atualizado em {new Date().toLocaleString('pt-BR')}
           </div>
         </div>
 
@@ -299,18 +313,13 @@ export default function Dashboard() {
 
         {/* Critical Alerts */}
         {data.alerts.overdueItems.length > 0 && (
-          <div className="mb-8">
-            <div className="bg-danger-light border border-danger/20 rounded-xl p-6 shadow-sm">
-              <div className="flex items-center space-x-3 mb-6">
-                <div className="w-10 h-10 bg-danger/10 rounded-full flex items-center justify-center">
-                  <span className="text-xl">🚨</span>
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-danger">
-                    Itens em Atraso
-                  </h2>
-                  <p className="text-sm text-danger/80">{data.alerts.overdueItems.length} itens precisam de atenção</p>
-                </div>
+          <div className="mb-12">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+              <div className="mb-4">
+                <h2 className="text-lg font-medium text-red-900 mb-1">
+                  Itens em Atraso
+                </h2>
+                <p className="text-sm text-red-700">{data.alerts.overdueItems.length} itens precisam de atenção</p>
               </div>
               <div className="space-y-3">
                 {data.alerts.overdueItems.slice(0, 5).map((item) => (
@@ -339,17 +348,12 @@ export default function Dashboard() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
           {/* Upcoming Receivables */}
-          <div className="bg-white border border-neutral-200 rounded-xl p-6 shadow-sm">
-            <div className="flex items-center space-x-3 mb-6">
-              <div className="w-10 h-10 bg-success/10 rounded-full flex items-center justify-center">
-                <span className="text-xl">💰</span>
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-neutral-900">Próximos Recebimentos</h2>
-                <p className="text-sm text-neutral-500">Valores esperados nos próximos dias</p>
-              </div>
+          <div className="bg-white border border-neutral-200 rounded-lg p-6">
+            <div className="mb-6">
+              <h2 className="text-lg font-medium text-neutral-900 mb-1">Próximos Recebimentos</h2>
+              <p className="text-sm text-neutral-500">Valores esperados</p>
             </div>
             {data.upcoming.receivables.length > 0 ? (
               <div className="space-y-3">
@@ -372,15 +376,10 @@ export default function Dashboard() {
           </div>
 
           {/* Upcoming Expenses */}
-          <div className="bg-white border border-neutral-200 rounded-xl p-6 shadow-sm">
-            <div className="flex items-center space-x-3 mb-6">
-              <div className="w-10 h-10 bg-warning/10 rounded-full flex items-center justify-center">
-                <span className="text-xl">💸</span>
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-neutral-900">Próximas Despesas</h2>
-                <p className="text-sm text-neutral-500">Pagamentos programados</p>
-              </div>
+          <div className="bg-white border border-neutral-200 rounded-lg p-6">
+            <div className="mb-6">
+              <h2 className="text-lg font-medium text-neutral-900 mb-1">Próximas Despesas</h2>
+              <p className="text-sm text-neutral-500">Pagamentos programados</p>
             </div>
             {data.upcoming.expenses.length > 0 ? (
               <div className="space-y-3">
@@ -404,57 +403,35 @@ export default function Dashboard() {
         </div>
 
         {/* Monthly Trend Chart */}
-        <div className="bg-white border border-neutral-200 rounded-xl p-6 mb-8 shadow-sm">
-          <div className="flex items-center space-x-3 mb-6">
-            <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-              <span className="text-xl">📊</span>
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-neutral-900">Tendência dos Últimos 6 Meses</h2>
-              <p className="text-sm text-neutral-500">Evolução do fluxo de caixa</p>
-            </div>
+        <div className="bg-white border border-neutral-200 rounded-lg p-6 mb-12">
+          <div className="mb-6">
+            <h2 className="text-lg font-medium text-neutral-900 mb-1">Tendência dos Últimos 6 Meses</h2>
+            <p className="text-sm text-neutral-500">Evolução do fluxo de caixa</p>
           </div>
           <SimpleChart data={data.monthlyTrend} />
         </div>
 
         {/* Quick Actions */}
-        <div className="bg-gradient-to-br from-primary-light to-primary/5 border border-primary/20 rounded-xl p-6 shadow-sm">
-          <div className="flex items-center space-x-3 mb-6">
-            <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-              <span className="text-xl">🚀</span>
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-primary">Ações Rápidas</h2>
-              <p className="text-sm text-primary/80">Acesse funcionalidades principais</p>
-            </div>
+        <div className="bg-neutral-50 border border-neutral-200 rounded-lg p-6">
+          <div className="mb-6">
+            <h2 className="text-lg font-medium text-neutral-900 mb-1">Ações Rápidas</h2>
+            <p className="text-sm text-neutral-500">Acesse funcionalidades principais</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Link href="/contracts" className="group bg-white p-6 rounded-xl border border-neutral-200 hover:border-primary/30 hover:shadow-md transition-all duration-200">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
-                <span className="text-2xl">📝</span>
-              </div>
-              <h3 className="font-semibold text-neutral-900 mb-1">Novo Contrato</h3>
+            <Link href="/contracts" className="group bg-white p-4 rounded-lg border border-neutral-200 hover:border-neutral-300 transition-colors">
+              <h3 className="font-medium text-neutral-900 mb-1">Novo Contrato</h3>
               <p className="text-sm text-neutral-500">Adicionar projeto</p>
             </Link>
-            <Link href="/receivables" className="group bg-white p-6 rounded-xl border border-neutral-200 hover:border-success/30 hover:shadow-md transition-all duration-200">
-              <div className="w-12 h-12 bg-success/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-success/20 transition-colors">
-                <span className="text-2xl">💰</span>
-              </div>
-              <h3 className="font-semibold text-neutral-900 mb-1">Marcar Recebimento</h3>
+            <Link href="/receivables" className="group bg-white p-4 rounded-lg border border-neutral-200 hover:border-neutral-300 transition-colors">
+              <h3 className="font-medium text-neutral-900 mb-1">Marcar Recebimento</h3>
               <p className="text-sm text-neutral-500">Registrar pagamento</p>
             </Link>
-            <Link href="/expenses" className="group bg-white p-6 rounded-xl border border-neutral-200 hover:border-warning/30 hover:shadow-md transition-all duration-200">
-              <div className="w-12 h-12 bg-warning/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-warning/20 transition-colors">
-                <span className="text-2xl">💸</span>
-              </div>
-              <h3 className="font-semibold text-neutral-900 mb-1">Nova Despesa</h3>
+            <Link href="/expenses" className="group bg-white p-4 rounded-lg border border-neutral-200 hover:border-neutral-300 transition-colors">
+              <h3 className="font-medium text-neutral-900 mb-1">Nova Despesa</h3>
               <p className="text-sm text-neutral-500">Adicionar custo</p>
             </Link>
-            <div className="bg-white p-6 rounded-xl border border-neutral-200 hover:border-neutral-300 hover:shadow-md transition-all duration-200">
-              <div className="w-12 h-12 bg-neutral-100 rounded-lg flex items-center justify-center mb-4">
-                <span className="text-2xl">📊</span>
-              </div>
-              <h3 className="font-semibold text-neutral-900 mb-2">Exportar Dados</h3>
+            <div className="bg-white p-4 rounded-lg border border-neutral-200">
+              <h3 className="font-medium text-neutral-900 mb-2">Exportar Dados</h3>
               <ExportButtons />
             </div>
           </div>
