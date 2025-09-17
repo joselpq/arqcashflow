@@ -452,10 +452,10 @@ export default function LandingPage() {
               <span className="text-lg font-semibold text-neutral-900">ArqCashflow</span>
             </div>
             <div className="flex space-x-6 text-sm text-neutral-500">
-              <Link href="/privacy" className="hover:text-neutral-700 transition-colors">
+              <Link href="/privacidade" className="hover:text-neutral-700 transition-colors">
                 Privacidade
               </Link>
-              <Link href="/terms" className="hover:text-neutral-700 transition-colors">
+              <Link href="/termos" className="hover:text-neutral-700 transition-colors">
                 Termos
               </Link>
               <Link href="/contact" className="hover:text-neutral-700 transition-colors">
@@ -464,7 +464,7 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="mt-8 pt-8 border-t border-neutral-200 text-center text-sm text-neutral-500">
-            © 2024 ArqCashflow. Feito com ❤️ para profissionais brasileiros.
+            © 2025 ArqCashflow. Feito com ❤️ para profissionais brasileiros.
           </div>
         </div>
       </footer>
