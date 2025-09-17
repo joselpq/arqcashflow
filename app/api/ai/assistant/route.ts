@@ -272,6 +272,61 @@ async function createExpenseFromData(data: any, teamId: string) {
   }
 }
 
+// Create receivable from extracted data
+async function createReceivableFromData(data: any, teamId: string) {
+  try {
+    // Find the contract by client name or project name
+    let contract = null
+    if (data.clientName || data.projectName) {
+      contract = await prisma.contract.findFirst({
+        where: {
+          teamId,
+          OR: [
+            { clientName: { contains: data.clientName, mode: 'insensitive' } },
+            { projectName: { contains: data.projectName, mode: 'insensitive' } }
+          ]
+        }
+      })
+    }
+
+    // If no contract found and we have client/project info, create a minimal contract
+    if (!contract && (data.clientName || data.projectName)) {
+      contract = await prisma.contract.create({
+        data: {
+          teamId,
+          clientName: data.clientName || 'Cliente',
+          projectName: data.projectName || 'Projeto',
+          totalValue: data.amount || 0,
+          signedDate: new Date(),
+          status: 'active',
+          description: 'Contrato criado automaticamente para recebível'
+        }
+      })
+    }
+
+    if (!contract) {
+      return { success: false, error: 'Contrato não encontrado. Forneça o nome do cliente ou projeto.' }
+    }
+
+    const receivable = await prisma.receivable.create({
+      data: {
+        contractId: contract.id,
+        expectedDate: data.date ? new Date(data.date) : new Date(),
+        amount: data.amount,
+        status: 'pending',
+        category: data.category || 'project work',
+        invoiceNumber: data.invoiceNumber || null,
+        notes: data.notes || null
+      }
+    })
+
+    return { success: true, receivable, contract }
+  } catch (error) {
+    console.error('Error creating receivable:', error)
+    return { success: false, error: 'Failed to create receivable' }
+  }
+}
+
 // Handle different intents
 async function handleIntent(intent: string, message: string, files: any[], teamId: string, history: any[] = [], pendingAction: any = null) {
   switch (intent) {
@@ -415,16 +470,17 @@ Use null for missing information. Return only the JSON object, no code blocks or
       const expensePrompt = `Extract expense information from this message: "${message}"
 
 Be smart about inferring information. Examples:
-- "despesa 2500, ontem, escritório" = {"description": "Despesa de escritório", "amount": 2500, "date": "yesterday", "category": "escritório"}
+- "despesa 2500, ontem, escritório" = {"description": "Despesa de escritório", "amount": 2500, "date": "ontem", "category": "escritório"}
+- "R$2000 escritório daqui a uma semana" = {"description": "Despesa de escritório", "amount": 2000, "date": "daqui a uma semana", "category": "escritório"}
 - "materiais 5000" = {"description": "Materiais", "amount": 5000, "category": "materiais"}
-- "aluguel" = {"description": "Aluguel", "category": "aluguel"}
+- "aluguel amanhã" = {"description": "Aluguel", "category": "aluguel", "date": "amanhã"}
 
 Return ONLY a valid JSON object (no markdown formatting):
 {
   "description": "expense description (infer from context if not explicit)",
   "amount": number (just the number if mentioned),
   "vendor": "vendor name if mentioned",
-  "date": "date in YYYY-MM-DD if mentioned, or 'yesterday', 'today' for relative dates",
+  "date": "date in YYYY-MM-DD if mentioned, or relative dates like 'ontem', 'hoje', 'amanhã', 'daqui a uma semana'",
   "category": "one of: materiais, mão-de-obra, equipamentos, transporte, escritório, software, utilidades, aluguel, seguro, marketing, serviços-profissionais, outros"
 }
 
@@ -441,12 +497,36 @@ Be intelligent about filling in description from category or context. Use null o
       // Handle relative dates
       if (expenseData.date) {
         const today = new Date()
-        if (expenseData.date === 'yesterday' || expenseData.date === 'ontem') {
+        const dateStr = expenseData.date.toLowerCase()
+
+        if (dateStr === 'yesterday' || dateStr === 'ontem') {
           const yesterday = new Date(today)
           yesterday.setDate(yesterday.getDate() - 1)
           expenseData.date = yesterday.toISOString().split('T')[0]
-        } else if (expenseData.date === 'today' || expenseData.date === 'hoje') {
+        } else if (dateStr === 'today' || dateStr === 'hoje') {
           expenseData.date = today.toISOString().split('T')[0]
+        } else if (dateStr === 'tomorrow' || dateStr === 'amanhã') {
+          const tomorrow = new Date(today)
+          tomorrow.setDate(tomorrow.getDate() + 1)
+          expenseData.date = tomorrow.toISOString().split('T')[0]
+        } else if (dateStr.includes('daqui a') || dateStr.includes('em ') || dateStr.includes('próxima') || dateStr.includes('next')) {
+          // Handle "daqui a uma semana", "em 3 dias", "próxima semana", etc.
+          if (dateStr.includes('semana') || dateStr.includes('week')) {
+            const futureDate = new Date(today)
+            futureDate.setDate(futureDate.getDate() + 7)
+            expenseData.date = futureDate.toISOString().split('T')[0]
+          } else if (dateStr.includes('dia') || dateStr.includes('day')) {
+            // Extract number of days
+            const daysMatch = dateStr.match(/(\d+)/)
+            const days = daysMatch ? parseInt(daysMatch[1]) : 1
+            const futureDate = new Date(today)
+            futureDate.setDate(futureDate.getDate() + days)
+            expenseData.date = futureDate.toISOString().split('T')[0]
+          } else if (dateStr.includes('mês') || dateStr.includes('month')) {
+            const futureDate = new Date(today)
+            futureDate.setMonth(futureDate.getMonth() + 1)
+            expenseData.date = futureDate.toISOString().split('T')[0]
+          }
         }
       }
 
@@ -481,10 +561,110 @@ Be intelligent about filling in description from category or context. Use null o
         }
       }
 
+    case 'create_receivable':
+      // Parse receivable info from natural language
+      const receivablePrompt = `Extract receivable information from this message: "${message}"
+
+Be smart about inferring information. Examples:
+- "RT projeto dina claire R$4600 amanhã" = {"description": "RT projeto dina claire", "amount": 4600, "date": "amanhã", "projectName": "dina claire"}
+- "recebível João Silva 5000 próxima semana" = {"description": "recebível João Silva", "amount": 5000, "date": "próxima semana", "clientName": "João Silva"}
+- "faturar Maria Santos 3000" = {"description": "faturar Maria Santos", "amount": 3000, "clientName": "Maria Santos"}
+
+Return ONLY a valid JSON object (no markdown formatting):
+{
+  "description": "receivable description (infer from context)",
+  "amount": number (just the number if mentioned),
+  "clientName": "client name if mentioned",
+  "projectName": "project name if mentioned",
+  "date": "date in YYYY-MM-DD if mentioned, or relative dates like 'hoje', 'amanhã', 'próxima semana'",
+  "category": "category if mentioned, default to 'project work'",
+  "invoiceNumber": "invoice number if mentioned"
+}
+
+Be intelligent about filling in information from context. Use null only when truly missing. Return only the JSON object, no code blocks or markdown.`
+
+      const receivableResponse = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [{ role: 'user', content: receivablePrompt }],
+        temperature: 0.1
+      })
+
+      const receivableData = safeJsonParse(receivableResponse.choices[0]?.message?.content || '{}')
+
+      // Handle relative dates (same logic as expenses)
+      if (receivableData.date) {
+        const today = new Date()
+        const dateStr = receivableData.date.toLowerCase()
+
+        if (dateStr === 'yesterday' || dateStr === 'ontem') {
+          const yesterday = new Date(today)
+          yesterday.setDate(yesterday.getDate() - 1)
+          receivableData.date = yesterday.toISOString().split('T')[0]
+        } else if (dateStr === 'today' || dateStr === 'hoje') {
+          receivableData.date = today.toISOString().split('T')[0]
+        } else if (dateStr === 'tomorrow' || dateStr === 'amanhã') {
+          const tomorrow = new Date(today)
+          tomorrow.setDate(tomorrow.getDate() + 1)
+          receivableData.date = tomorrow.toISOString().split('T')[0]
+        } else if (dateStr.includes('daqui a') || dateStr.includes('em ') || dateStr.includes('próxima') || dateStr.includes('next')) {
+          // Handle "daqui a uma semana", "em 3 dias", "próxima semana", etc.
+          if (dateStr.includes('semana') || dateStr.includes('week')) {
+            const futureDate = new Date(today)
+            futureDate.setDate(futureDate.getDate() + 7)
+            receivableData.date = futureDate.toISOString().split('T')[0]
+          } else if (dateStr.includes('dia') || dateStr.includes('day')) {
+            // Extract number of days
+            const daysMatch = dateStr.match(/(\d+)/)
+            const days = daysMatch ? parseInt(daysMatch[1]) : 1
+            const futureDate = new Date(today)
+            futureDate.setDate(futureDate.getDate() + days)
+            receivableData.date = futureDate.toISOString().split('T')[0]
+          } else if (dateStr.includes('mês') || dateStr.includes('month')) {
+            const futureDate = new Date(today)
+            futureDate.setMonth(futureDate.getMonth() + 1)
+            receivableData.date = futureDate.toISOString().split('T')[0]
+          }
+        }
+      }
+
+      // Set today's date if not provided
+      if (!receivableData.date) {
+        receivableData.date = new Date().toISOString().split('T')[0]
+      }
+
+      // Only require amount, auto-generate description if missing
+      if (receivableData.amount) {
+        // Auto-generate description if missing
+        if (!receivableData.description) {
+          if (receivableData.clientName && receivableData.projectName) {
+            receivableData.description = `Recebível - ${receivableData.clientName} - ${receivableData.projectName}`
+          } else if (receivableData.clientName) {
+            receivableData.description = `Recebível - ${receivableData.clientName}`
+          } else if (receivableData.projectName) {
+            receivableData.description = `Recebível - ${receivableData.projectName}`
+          } else {
+            receivableData.description = 'Recebível'
+          }
+        }
+
+        const result = await createReceivableFromData(receivableData, teamId)
+        return {
+          type: 'receivable_created',
+          response: result.success ?
+            `✅ Recebível criado: ${receivableData.description} - R$ ${receivableData.amount.toLocaleString('pt-BR')} para ${new Date(receivableData.date).toLocaleDateString('pt-BR')}` :
+            `❌ Erro ao criar recebível: ${result.error}`
+        }
+      } else {
+        return {
+          type: 'clarification',
+          response: `Para criar um recebível, preciso pelo menos do valor e referência ao cliente/projeto. Tente algo como:\n• "RT projeto Maria Santos 5000 amanhã"\n• "recebível João Silva 3000 próxima semana"\n• "faturar cliente X 4500"\n\nValor atual: ${receivableData.amount || 'não informado'}`
+        }
+      }
+
     default:
       return {
         type: 'general_response',
-        response: 'Posso ajudá-lo com:\n• 📊 Consultas sobre seus dados financeiros\n• 📄 Criação de contratos\n• 💰 Adição de despesas\n• 🧾 Processamento de documentos (recibos, contratos)\n\nComo posso ajudá-lo hoje?'
+        response: 'Posso ajudá-lo com:\n• 📊 Consultas sobre seus dados financeiros\n• 📄 Criação de contratos\n• 💰 Adição de despesas\n• 💵 Criação de recebíveis\n• 🧾 Processamento de documentos (recibos, contratos)\n\nComo posso ajudá-lo hoje?'
       }
   }
 }
