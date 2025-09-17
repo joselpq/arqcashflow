@@ -215,15 +215,31 @@ export default function OnboardingPage() {
 
                   <div>
                     <label className="block text-sm font-medium text-neutral-700 mb-2">
-                      O que a empresa faz?
+                      Qual o ramo da sua empresa?
                     </label>
-                    <input
-                      type="text"
+                    <select
                       value={profileData.companyActivity || ""}
                       onChange={(e) => setProfileData({ ...profileData, companyActivity: e.target.value })}
                       className="w-full px-4 py-3 border border-neutral-400 rounded-lg text-neutral-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Ex: Projetos arquitetônicos e design de interiores"
-                    />
+                    >
+                      <option value="">Selecione...</option>
+                      <option value="architecture">Arquitetura e Urbanismo</option>
+                      <option value="engineering">Engenharia</option>
+                      <option value="construction">Construção Civil</option>
+                      <option value="interior-design">Design de Interiores</option>
+                      <option value="landscaping">Paisagismo</option>
+                      <option value="consulting">Consultoria</option>
+                      <option value="legal">Serviços Jurídicos</option>
+                      <option value="healthcare">Saúde e Medicina</option>
+                      <option value="technology">Tecnologia</option>
+                      <option value="marketing">Marketing e Publicidade</option>
+                      <option value="accounting">Contabilidade</option>
+                      <option value="education">Educação</option>
+                      <option value="real-estate">Imobiliário</option>
+                      <option value="retail">Comércio</option>
+                      <option value="services">Prestação de Serviços</option>
+                      <option value="other">Outro</option>
+                    </select>
                   </div>
 
                   <div>
@@ -372,7 +388,7 @@ export default function OnboardingPage() {
                 </button>
               </div>
 
-              <p className="text-xs sm:text-sm text-center text-neutral-500 max-w-2xl mx-auto px-4">
+              <p className="text-xs sm:text-sm text-center text-neutral-500 w-full px-4">
                 Não se preocupe, você pode importar dados a qualquer momento depois
               </p>
             </div>
