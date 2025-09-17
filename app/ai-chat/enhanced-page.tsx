@@ -27,41 +27,76 @@ export default function EnhancedAIChatPage() {
 
   // Handle file upload
   const handleFiles = async (fileList: FileList) => {
-    const newFiles: FileData[] = []
+    try {
+      const newFiles: FileData[] = []
 
-    for (let i = 0; i < fileList.length; i++) {
-      const file = fileList[i]
+      for (let i = 0; i < fileList.length; i++) {
+        const file = fileList[i]
 
-      // Validate file type and size
-      if (!file.type.startsWith('image/') && file.type !== 'application/pdf') {
-        alert(`Arquivo ${file.name} não é suportado. Use imagens ou PDFs.`)
-        continue
-      }
+        console.log(`Processing file: ${file.name}, type: ${file.type}, size: ${file.size}`)
 
-      if (file.size > 10 * 1024 * 1024) { // 10MB limit
-        alert(`Arquivo ${file.name} é muito grande. Máximo: 10MB.`)
-        continue
-      }
-
-      // Convert to base64
-      const base64 = await new Promise<string>((resolve) => {
-        const reader = new FileReader()
-        reader.onload = () => {
-          const result = reader.result as string
-          resolve(result.split(',')[1]) // Remove data:type;base64, prefix
+        // Validate file type and size
+        if (!file.type.startsWith('image/') && file.type !== 'application/pdf') {
+          alert(`Arquivo ${file.name} não é suportado. Use imagens ou PDFs.`)
+          continue
         }
-        reader.readAsDataURL(file)
-      })
 
-      newFiles.push({
-        name: file.name,
-        type: file.type,
-        base64,
-        size: file.size
-      })
+        if (file.size > 10 * 1024 * 1024) { // 10MB limit
+          alert(`Arquivo ${file.name} é muito grande. Máximo: 10MB.`)
+          continue
+        }
+
+        try {
+          // Convert to base64 with better error handling
+          const base64 = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader()
+            reader.onload = () => {
+              try {
+                const result = reader.result as string
+                if (!result || typeof result !== 'string') {
+                  reject(new Error('Failed to read file'))
+                  return
+                }
+                resolve(result.split(',')[1]) // Remove data:type;base64, prefix
+              } catch (error) {
+                reject(error)
+              }
+            }
+            reader.onerror = () => reject(new Error('FileReader error'))
+            reader.readAsDataURL(file)
+          })
+
+          if (!base64) {
+            console.error(`Failed to convert ${file.name} to base64`)
+            alert(`Erro ao processar arquivo ${file.name}`)
+            continue
+          }
+
+          newFiles.push({
+            name: file.name,
+            type: file.type,
+            base64,
+            size: file.size
+          })
+
+          console.log(`Successfully processed file: ${file.name}, base64 length: ${base64.length}`)
+        } catch (fileError) {
+          console.error(`Error processing file ${file.name}:`, fileError)
+          alert(`Erro ao processar arquivo ${file.name}: ${fileError.message}`)
+        }
+      }
+
+      if (newFiles.length > 0) {
+        setFiles(prev => {
+          const updated = [...prev, ...newFiles]
+          console.log(`Updated files state:`, updated.map(f => ({ name: f.name, type: f.type, size: f.size })))
+          return updated
+        })
+      }
+    } catch (error) {
+      console.error('Error in handleFiles:', error)
+      alert('Erro ao processar arquivos')
     }
-
-    setFiles(prev => [...prev, ...newFiles])
   }
 
   // Drag and drop handlers
@@ -95,6 +130,12 @@ export default function EnhancedAIChatPage() {
     e.preventDefault()
     if (!message.trim() && files.length === 0) return
 
+    console.log('handleSubmit called:', {
+      message: message.trim(),
+      filesCount: files.length,
+      files: files.map(f => ({ name: f.name, type: f.type, hasBase64: !!f.base64 }))
+    })
+
     setLoading(true)
 
     // Create user message
@@ -111,22 +152,33 @@ export default function EnhancedAIChatPage() {
     setFiles([])
 
     try {
+      const requestBody = {
+        message: userMessage.content,
+        files: userMessage.files || [],
+        history: newMessages.slice(-10).map(m => ({
+          role: m.role,
+          content: m.content,
+          metadata: m.metadata
+        }))
+      }
+
+      console.log('Sending request to AI assistant:', {
+        message: requestBody.message,
+        filesCount: requestBody.files.length,
+        historyCount: requestBody.history.length
+      })
+
       const response = await fetch('/api/ai/assistant', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: userMessage.content,
-          files: userMessage.files || [],
-          history: newMessages.slice(-10).map(m => ({
-            role: m.role,
-            content: m.content,
-            metadata: m.metadata
-          }))
-        })
+        body: JSON.stringify(requestBody)
       })
+
+      console.log('Response status:', response.status)
 
       if (response.ok) {
         const result = await response.json()
+        console.log('AI assistant response:', result)
 
         const assistantMessage: Message = {
           role: 'assistant',
@@ -142,18 +194,29 @@ export default function EnhancedAIChatPage() {
 
         setMessages(prev => [...prev, assistantMessage])
       } else {
-        const error = await response.json()
-        setMessages(prev => [...prev, {
-          role: 'assistant',
-          content: `Erro: ${error.error}`,
-          timestamp: new Date()
-        }])
+        console.error('API error response:', response.status, response.statusText)
+        try {
+          const error = await response.json()
+          console.error('Error details:', error)
+          setMessages(prev => [...prev, {
+            role: 'assistant',
+            content: `Erro: ${error.error}`,
+            timestamp: new Date()
+          }])
+        } catch (jsonError) {
+          console.error('Failed to parse error JSON:', jsonError)
+          setMessages(prev => [...prev, {
+            role: 'assistant',
+            content: `Erro HTTP ${response.status}: ${response.statusText}`,
+            timestamp: new Date()
+          }])
+        }
       }
     } catch (error) {
-      console.error('Error:', error)
+      console.error('Request failed:', error)
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: 'Erro ao processar solicitação. Tente novamente.',
+        content: `Erro ao processar solicitação: ${error.message}. Tente novamente.`,
         timestamp: new Date()
       }])
     } finally {

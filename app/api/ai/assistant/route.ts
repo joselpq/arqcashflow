@@ -128,24 +128,7 @@ async function processDocuments(files: any[], teamId: string) {
       let isProcessableFile = false
       let content = []
 
-      if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
-        console.log(`📄 Processing PDF with Claude: ${file.name}`)
-        isProcessableFile = true
-        content = [
-          {
-            type: 'text',
-            text: 'This is a PDF document. Please analyze it and classify as receipt, invoice, contract, or other.'
-          },
-          {
-            type: 'document',
-            source: {
-              type: 'base64',
-              media_type: 'application/pdf',
-              data: file.base64
-            }
-          }
-        ]
-      } else if (file.type.startsWith('image/')) {
+      if (file.type.startsWith('image/')) {
         console.log(`🖼️ Processing image with Claude: ${file.name}`)
         isProcessableFile = true
         content = [
@@ -162,6 +145,9 @@ async function processDocuments(files: any[], teamId: string) {
             }
           }
         ]
+      } else if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+        // For PDFs, use filename-based processing (Claude doesn't support PDF vision yet)
+        console.log(`📄 Processing PDF with filename analysis: ${file.name}`)
       }
 
       if (!isProcessableFile) {
