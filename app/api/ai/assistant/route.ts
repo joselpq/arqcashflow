@@ -9,6 +9,38 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 })
 
+// Helper function to clean JSON response from AI (removes markdown code blocks)
+function cleanJsonResponse(response: string): string {
+  if (!response) return '{}'
+
+  // Remove markdown code blocks if present
+  let cleaned = response.trim()
+
+  // Remove ```json and ``` markers
+  if (cleaned.startsWith('```json')) {
+    cleaned = cleaned.replace(/^```json\s*/, '')
+  }
+  if (cleaned.startsWith('```')) {
+    cleaned = cleaned.replace(/^```\s*/, '')
+  }
+  if (cleaned.endsWith('```')) {
+    cleaned = cleaned.replace(/\s*```$/, '')
+  }
+
+  return cleaned.trim()
+}
+
+// Safe JSON parse with error handling
+function safeJsonParse(response: string, fallback: any = {}) {
+  try {
+    const cleaned = cleanJsonResponse(response)
+    return JSON.parse(cleaned)
+  } catch (error) {
+    console.error('JSON parse error:', error, 'Original response:', response)
+    return fallback
+  }
+}
+
 // Schema for incoming requests
 const AssistantRequestSchema = z.object({
   message: z.string().optional(),
@@ -107,7 +139,7 @@ Respond with ONLY the classification.`
       // Extract information based on document type
       let extractionPrompt = ''
       if (docType === 'receipt' || docType === 'invoice') {
-        extractionPrompt = `Extract expense information from this document. Return a JSON object with:
+        extractionPrompt = `Extract expense information from this document. Return ONLY a valid JSON object (no markdown formatting):
 {
   "description": "brief description of the expense",
   "amount": number (just the number, no currency),
@@ -117,9 +149,9 @@ Respond with ONLY the classification.`
   "invoiceNumber": "invoice/receipt number if visible"
 }
 
-If information is missing, use null. Be precise with amounts and dates.`
+If information is missing, use null. Be precise with amounts and dates. Return only the JSON object, no code blocks or markdown.`
       } else if (docType === 'contract') {
-        extractionPrompt = `Extract contract information from this document. Return a JSON object with:
+        extractionPrompt = `Extract contract information from this document. Return ONLY a valid JSON object (no markdown formatting):
 {
   "clientName": "client/customer name",
   "projectName": "project name or description",
@@ -129,10 +161,10 @@ If information is missing, use null. Be precise with amounts and dates.`
   "category": "one of: Residencial, Comercial, Restaurante, Loja"
 }
 
-If information is missing, use null. Be precise with amounts and dates.`
+If information is missing, use null. Be precise with amounts and dates. Return only the JSON object, no code blocks or markdown.`
       } else {
         extractionPrompt = `This document doesn't appear to be a receipt, invoice, or contract.
-Return a JSON object with:
+Return ONLY a valid JSON object (no markdown formatting):
 {
   "type": "other",
   "summary": "brief summary of what this document contains"
@@ -159,7 +191,7 @@ Return a JSON object with:
         max_tokens: 500
       })
 
-      const extractedData = JSON.parse(extractionResponse.choices[0]?.message?.content || '{}')
+      const extractedData = safeJsonParse(extractionResponse.choices[0]?.message?.content || '{}')
 
       results.push({
         fileName: file.name,
@@ -303,7 +335,7 @@ async function handleIntent(intent: string, message: string, files: any[], teamI
       // Parse contract info from natural language
       const contractPrompt = `Extract contract information from this message: "${message}"
 
-Return a JSON object with:
+Return ONLY a valid JSON object (no markdown formatting):
 {
   "clientName": "client name if mentioned",
   "projectName": "project name if mentioned",
@@ -313,7 +345,7 @@ Return a JSON object with:
   "category": "category if mentioned"
 }
 
-Use null for missing information.`
+Use null for missing information. Return only the JSON object, no code blocks or markdown.`
 
       const contractResponse = await openai.chat.completions.create({
         model: 'gpt-4o-mini',
@@ -321,7 +353,7 @@ Use null for missing information.`
         temperature: 0.1
       })
 
-      const contractData = JSON.parse(contractResponse.choices[0]?.message?.content || '{}')
+      const contractData = safeJsonParse(contractResponse.choices[0]?.message?.content || '{}')
 
       if (contractData.clientName && contractData.projectName && contractData.totalValue) {
         const result = await createContractFromData(contractData, teamId)
@@ -342,7 +374,7 @@ Use null for missing information.`
       // Parse expense info from natural language
       const expensePrompt = `Extract expense information from this message: "${message}"
 
-Return a JSON object with:
+Return ONLY a valid JSON object (no markdown formatting):
 {
   "description": "expense description",
   "amount": number (just the number if mentioned),
@@ -351,7 +383,7 @@ Return a JSON object with:
   "category": "one of: materiais, mão-de-obra, equipamentos, transporte, escritório, software, utilidades, aluguel, seguro, marketing, serviços-profissionais, outros"
 }
 
-Use null for missing information except date (use today's date if not specified).`
+Use null for missing information except date (use today's date if not specified). Return only the JSON object, no code blocks or markdown.`
 
       const expenseResponse = await openai.chat.completions.create({
         model: 'gpt-4o-mini',
@@ -359,7 +391,7 @@ Use null for missing information except date (use today's date if not specified)
         temperature: 0.1
       })
 
-      const expenseData = JSON.parse(expenseResponse.choices[0]?.message?.content || '{}')
+      const expenseData = safeJsonParse(expenseResponse.choices[0]?.message?.content || '{}')
 
       if (expenseData.description && expenseData.amount) {
         // Set today's date if not provided
