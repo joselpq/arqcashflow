@@ -27,7 +27,15 @@ export default function LoginPage() {
       if (result?.error) {
         setError("Email ou senha inválidos");
       } else {
-        router.push("/");
+        // Check if this is a new user (coming from registration)
+        const urlParams = new URLSearchParams(window.location.search);
+        const isNewUser = urlParams.get('registered') === 'true';
+
+        if (isNewUser) {
+          router.push("/onboarding");
+        } else {
+          router.push("/");
+        }
         router.refresh();
       }
     } catch (error) {

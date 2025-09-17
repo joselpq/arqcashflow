@@ -131,25 +131,32 @@ model RecurringExpense {
 }
 
 model Team {
-  id        String     @id @default(cuid())
-  name      String
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  budgets   Budget[]
-  contracts Contract[]
-  expenses  Expense[]
-  users     User[]
+  id              String     @id @default(cuid())
+  name            String
+  type            String     @default("individual") // "individual" or "company"
+  companyName     String?
+  companyActivity String?
+  employeeCount   String?    // "1", "2-5", "6-10", "11-20", "20+"
+  revenueTier     String?    // "0-100k", "100k-500k", "500k-1M", "1M+"
+  profession      String?    // For individuals
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  budgets         Budget[]
+  contracts       Contract[]
+  expenses        Expense[]
+  users           User[]
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  teamId    String
-  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  id                 String   @id @default(cuid())
+  email              String   @unique
+  name               String?
+  password           String
+  onboardingComplete Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  teamId             String
+  team               Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
   @@index([email])
   @@index([teamId])

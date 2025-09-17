@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 import LandingPage from './components/LandingPage'
 import Link from 'next/link'
 import ExportButtons from './components/ExportButtons'
@@ -197,6 +198,7 @@ function SimpleChart({ data }: { data: DashboardData['monthlyTrend'] }) {
 
 export default function Dashboard() {
   const { data: session, status } = useSession()
+  const router = useRouter()
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -204,8 +206,19 @@ export default function Dashboard() {
   useEffect(() => {
     // Only fetch dashboard data if user is authenticated
     if (session) {
-      async function fetchDashboard() {
+      async function checkOnboardingAndFetchDashboard() {
         try {
+          // Check onboarding status
+          const onboardingRes = await fetch('/api/onboarding/status')
+          if (onboardingRes.ok) {
+            const { onboardingComplete } = await onboardingRes.json()
+            if (!onboardingComplete) {
+              router.push('/onboarding')
+              return
+            }
+          }
+
+          // Fetch dashboard data
           const response = await fetch('/api/dashboard')
           if (!response.ok) throw new Error('Failed to fetch dashboard data')
           const dashboardData = await response.json()
@@ -217,12 +230,12 @@ export default function Dashboard() {
         }
       }
 
-      fetchDashboard()
+      checkOnboardingAndFetchDashboard()
     } else {
       // If not authenticated, stop loading immediately
       setLoading(false)
     }
-  }, [session])
+  }, [session, router])
 
   // Show loading state while checking authentication
   if (status === "loading") {

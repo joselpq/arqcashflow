@@ -12,6 +12,7 @@ export const config = {
     "/receivables",
     "/expenses",
     "/alerts",
-    "/ai-chat"
+    "/ai-chat",
+    "/onboarding"
   ]
 };
