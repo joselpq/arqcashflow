@@ -110,8 +110,8 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-neutral-50 to-blue-50 flex items-center justify-center p-4">
-      <div className="max-w-2xl w-full">
+    <div className="min-h-screen bg-gradient-to-br from-neutral-50 to-blue-50 flex items-center justify-center p-4 sm:p-6 lg:p-8">
+      <div className="max-w-4xl w-full">
         {/* Progress Indicator */}
         <div className="mb-8">
           <div className="flex items-center justify-center mb-4">
@@ -131,45 +131,45 @@ export default function OnboardingPage() {
 
         {/* Step 1: Profile Setup */}
         {currentStep === 1 && (
-          <div className="bg-white rounded-2xl shadow-xl p-8 border border-neutral-200">
-            <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold text-neutral-900 mb-2">
+          <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 lg:p-10 border border-neutral-200">
+            <div className="text-center mb-8 sm:mb-10">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-neutral-900 mb-3 sm:mb-4">
                 Bem-vindo ao ArqCashflow! 🎉
               </h2>
-              <p className="text-neutral-600">
+              <p className="text-base sm:text-lg lg:text-xl text-neutral-600 max-w-2xl mx-auto">
                 Vamos personalizar sua experiência em menos de 2 minutos
               </p>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-6 sm:space-y-8">
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-3">
+                <label className="block text-sm sm:text-base font-medium text-neutral-700 mb-4">
                   Você está usando como:
                 </label>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                   <button
                     onClick={() => setProfileData({ ...profileData, type: "individual" })}
-                    className={`p-4 rounded-lg border-2 transition-all ${
+                    className={`p-4 sm:p-6 rounded-lg border-2 transition-all text-center ${
                       profileData.type === "individual"
                         ? "border-blue-600 bg-blue-50"
                         : "border-neutral-200 hover:border-neutral-300"
                     }`}
                   >
-                    <div className="text-2xl mb-2">👤</div>
-                    <div className="font-medium text-neutral-900">Profissional Liberal</div>
-                    <div className="text-sm text-neutral-500">Autônomo, freelancer</div>
+                    <div className="text-3xl sm:text-4xl mb-3">👤</div>
+                    <div className="font-medium text-neutral-900 text-base sm:text-lg mb-1">Profissional Liberal</div>
+                    <div className="text-sm sm:text-base text-neutral-500">Autônomo, freelancer</div>
                   </button>
                   <button
                     onClick={() => setProfileData({ ...profileData, type: "company" })}
-                    className={`p-4 rounded-lg border-2 transition-all ${
+                    className={`p-4 sm:p-6 rounded-lg border-2 transition-all text-center ${
                       profileData.type === "company"
                         ? "border-blue-600 bg-blue-50"
                         : "border-neutral-200 hover:border-neutral-300"
                     }`}
                   >
-                    <div className="text-2xl mb-2">🏢</div>
-                    <div className="font-medium text-neutral-900">Empresa</div>
-                    <div className="text-sm text-neutral-500">Pessoa jurídica</div>
+                    <div className="text-3xl sm:text-4xl mb-3">🏢</div>
+                    <div className="font-medium text-neutral-900 text-base sm:text-lg mb-1">Empresa</div>
+                    <div className="text-sm sm:text-base text-neutral-500">Pessoa jurídica</div>
                   </button>
                 </div>
               </div>
@@ -282,21 +282,21 @@ export default function OnboardingPage() {
 
         {/* Step 2: Data Import */}
         {currentStep === 2 && (
-          <div className="bg-white rounded-2xl shadow-xl p-8 border border-neutral-200">
-            <div className="text-center mb-8">
-              <div className="text-4xl mb-4">🎯</div>
-              <h2 className="text-2xl font-bold text-neutral-900 mb-2">
+          <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 lg:p-10 border border-neutral-200">
+            <div className="text-center mb-8 sm:mb-10">
+              <div className="text-5xl sm:text-6xl mb-4">🎯</div>
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-neutral-900 mb-3 sm:mb-4">
                 Agora a mágica acontece!
               </h2>
-              <p className="text-neutral-600">
+              <p className="text-base sm:text-lg lg:text-xl text-neutral-600 max-w-2xl mx-auto">
                 Jogue seus arquivos aqui e organizamos tudo automaticamente
               </p>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-6 sm:space-y-8">
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-neutral-300 rounded-xl p-8 text-center hover:border-blue-500 hover:bg-blue-50 transition-all cursor-pointer"
+                className="border-2 border-dashed border-neutral-300 rounded-xl p-6 sm:p-8 lg:p-10 text-center hover:border-blue-500 hover:bg-blue-50 transition-all cursor-pointer"
               >
                 <input
                   ref={fileInputRef}
@@ -306,14 +306,14 @@ export default function OnboardingPage() {
                   onChange={handleFileUpload}
                   className="hidden"
                 />
-                <div className="text-4xl mb-4">📁</div>
-                <p className="text-neutral-900 font-medium mb-2">
+                <div className="text-5xl sm:text-6xl mb-4 sm:mb-6">📁</div>
+                <p className="text-base sm:text-lg lg:text-xl text-neutral-900 font-medium mb-2 sm:mb-3">
                   Clique para selecionar arquivos
                 </p>
-                <p className="text-sm text-neutral-500">
+                <p className="text-sm sm:text-base text-neutral-500 mb-2">
                   Planilhas Excel, PDFs, CSVs ou anotações em texto
                 </p>
-                <p className="text-xs text-neutral-400 mt-2">
+                <p className="text-xs sm:text-sm text-neutral-400">
                   Seus dados estão seguros e criptografados
                 </p>
               </div>
@@ -346,24 +346,24 @@ export default function OnboardingPage() {
                 </div>
               )}
 
-              <div className="flex space-x-4">
+              <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
                 <button
                   onClick={handleDataImport}
                   disabled={loading || files.length === 0}
-                  className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  className="flex-1 bg-blue-600 text-white py-3 sm:py-4 px-6 rounded-lg text-base sm:text-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50"
                 >
                   {loading ? "Processando..." : "Importar e Organizar"}
                 </button>
                 <button
                   onClick={handleSkip}
                   disabled={loading}
-                  className="px-6 py-3 border border-neutral-300 text-neutral-700 rounded-lg font-medium hover:bg-neutral-50 transition-colors disabled:opacity-50"
+                  className="px-6 py-3 sm:py-4 border border-neutral-300 text-neutral-700 rounded-lg text-base sm:text-lg font-medium hover:bg-neutral-50 transition-colors disabled:opacity-50"
                 >
                   Pular por agora
                 </button>
               </div>
 
-              <p className="text-xs text-center text-neutral-500">
+              <p className="text-xs sm:text-sm text-center text-neutral-500 max-w-md mx-auto">
                 Não se preocupe, você pode importar dados a qualquer momento depois
               </p>
             </div>
