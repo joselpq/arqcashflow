@@ -136,7 +136,7 @@ export default function OnboardingPage() {
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-neutral-900 mb-3 sm:mb-4">
                 Bem-vindo ao ArqCashflow! 🎉
               </h2>
-              <p className="text-base sm:text-lg lg:text-xl text-neutral-600 max-w-2xl mx-auto">
+              <p className="text-base sm:text-lg lg:text-xl text-neutral-600 max-w-4xl mx-auto px-4">
                 Vamos personalizar sua experiência em menos de 2 minutos
               </p>
             </div>
@@ -182,7 +182,7 @@ export default function OnboardingPage() {
                   <select
                     value={profileData.profession || ""}
                     onChange={(e) => setProfileData({ ...profileData, profession: e.target.value })}
-                    className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-3 border border-neutral-400 rounded-lg text-neutral-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="">Selecione...</option>
                     <option value="architect">Arquiteto(a)</option>
@@ -208,7 +208,7 @@ export default function OnboardingPage() {
                       type="text"
                       value={profileData.companyName || ""}
                       onChange={(e) => setProfileData({ ...profileData, companyName: e.target.value })}
-                      className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-4 py-3 border border-neutral-400 rounded-lg text-neutral-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       placeholder="Ex: Studio Arquitetura Ltda"
                     />
                   </div>
@@ -221,7 +221,7 @@ export default function OnboardingPage() {
                       type="text"
                       value={profileData.companyActivity || ""}
                       onChange={(e) => setProfileData({ ...profileData, companyActivity: e.target.value })}
-                      className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-4 py-3 border border-neutral-400 rounded-lg text-neutral-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       placeholder="Ex: Projetos arquitetônicos e design de interiores"
                     />
                   </div>
@@ -233,7 +233,7 @@ export default function OnboardingPage() {
                     <select
                       value={profileData.employeeCount || ""}
                       onChange={(e) => setProfileData({ ...profileData, employeeCount: e.target.value })}
-                      className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-4 py-3 border border-neutral-400 rounded-lg text-neutral-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="">Selecione...</option>
                       <option value="1">Apenas eu</option>
@@ -251,7 +251,7 @@ export default function OnboardingPage() {
                     <select
                       value={profileData.revenueTier || ""}
                       onChange={(e) => setProfileData({ ...profileData, revenueTier: e.target.value })}
-                      className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-4 py-3 border border-neutral-400 rounded-lg text-neutral-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="">Selecione...</option>
                       <option value="0-100k">Até R$ 100 mil</option>
@@ -269,13 +269,15 @@ export default function OnboardingPage() {
                 </div>
               )}
 
-              <button
-                onClick={handleProfileSubmit}
-                disabled={loading}
-                className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50"
-              >
-                {loading ? "Salvando..." : "Continuar"}
-              </button>
+              <div className="flex space-x-4">
+                <button
+                  onClick={handleProfileSubmit}
+                  disabled={loading}
+                  className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50"
+                >
+                  {loading ? "Salvando..." : "Continuar"}
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -288,7 +290,7 @@ export default function OnboardingPage() {
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-neutral-900 mb-3 sm:mb-4">
                 Agora a mágica acontece!
               </h2>
-              <p className="text-base sm:text-lg lg:text-xl text-neutral-600 max-w-2xl mx-auto">
+              <p className="text-base sm:text-lg lg:text-xl text-neutral-600 max-w-4xl mx-auto px-4">
                 Jogue seus arquivos aqui e organizamos tudo automaticamente
               </p>
             </div>
@@ -348,6 +350,13 @@ export default function OnboardingPage() {
 
               <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
                 <button
+                  onClick={() => setCurrentStep(1)}
+                  disabled={loading}
+                  className="px-6 py-3 sm:py-4 border border-neutral-300 text-neutral-700 rounded-lg text-base sm:text-lg font-medium hover:bg-neutral-50 transition-colors disabled:opacity-50"
+                >
+                  ← Voltar
+                </button>
+                <button
                   onClick={handleDataImport}
                   disabled={loading || files.length === 0}
                   className="flex-1 bg-blue-600 text-white py-3 sm:py-4 px-6 rounded-lg text-base sm:text-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50"
@@ -363,7 +372,7 @@ export default function OnboardingPage() {
                 </button>
               </div>
 
-              <p className="text-xs sm:text-sm text-center text-neutral-500 max-w-md mx-auto">
+              <p className="text-xs sm:text-sm text-center text-neutral-500 max-w-2xl mx-auto px-4">
                 Não se preocupe, você pode importar dados a qualquer momento depois
               </p>
             </div>
