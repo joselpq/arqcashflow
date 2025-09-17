@@ -43,18 +43,25 @@ A secure, multi-tenant cashflow management system designed for architects to tra
     - Intelligent date parsing ("amanhã", "daqui a uma semana", "em 3 dias", etc.)
     - Auto project naming from client names with duplicate handling
     - Superior file handling with automatic upload method selection
-14. **AI Supervisor System** - Intelligent data quality monitoring with real-time anomaly detection for data entry
-15. **Smart Alerts & Notifications** - Automated detection of duplicates, value anomalies, date inconsistencies, and business rule violations
-16. **Alert Action Integration** - Click alerts to directly edit the related items with auto-redirect functionality
-17. **Net Cashflow Analysis** - Complete financial picture with income vs expenses
-18. **SQLite Database** - Simple, file-based database (easily upgradeable to PostgreSQL)
-19. **Edit/Delete Functionality** - Full CRUD operations on all entities
-20. **Category System** - Organize contracts, receivables, and expenses by custom categories
-21. **Duplicate Detection** - Smart handling of duplicate client/project names with auto-increment
-22. **User Authentication** - Secure registration/login system with NextAuth.js
-23. **Team-based Data Segregation** - Multi-tenant architecture with isolated data per team
-24. **Route Protection** - Middleware-based authentication for all protected routes
-25. **Session Management** - JWT-based session handling with secure token validation
+14. **📊 AI Setup Assistant** - Bulk data import with intelligent processing:
+    - Excel/CSV file upload and automatic data extraction
+    - **Smart status mapping**: Portuguese → English ("Em andamento" → "active", "Finalizado" → "completed")
+    - Intelligent category classification for contracts and expenses
+    - Bulk creation of contracts, receivables, and expenses in one operation
+    - Preserves original Portuguese information in notes while standardizing system values
+    - Comprehensive error handling and validation reporting
+15. **AI Supervisor System** - Intelligent data quality monitoring with real-time anomaly detection for data entry
+16. **Smart Alerts & Notifications** - Automated detection of duplicates, value anomalies, date inconsistencies, and business rule violations
+17. **Alert Action Integration** - Click alerts to directly edit the related items with auto-redirect functionality
+18. **Net Cashflow Analysis** - Complete financial picture with income vs expenses
+19. **SQLite Database** - Simple, file-based database (easily upgradeable to PostgreSQL)
+20. **Edit/Delete Functionality** - Full CRUD operations on all entities
+21. **Category System** - Organize contracts, receivables, and expenses by custom categories
+22. **Duplicate Detection** - Smart handling of duplicate client/project names with auto-increment
+23. **User Authentication** - Secure registration/login system with NextAuth.js
+24. **Team-based Data Segregation** - Multi-tenant architecture with isolated data per team
+25. **Route Protection** - Middleware-based authentication for all protected routes
+26. **Session Management** - JWT-based session handling with secure token validation
 
 ## 🎨 Design System & UI/UX
 
@@ -103,6 +110,7 @@ ArqCashflow features a clean, professional design system specifically crafted fo
 - ✅ **Claude AI Integration**: Migrated from OpenAI to Claude for superior document processing and reliability
 - ✅ **Native PDF Processing**: Claude can now directly analyze PDF documents without filename-based fallbacks
 - ✅ **Enhanced File Support**: Improved support for images and documents with Claude's advanced vision capabilities
+- ✅ **AI Setup Assistant with Smart Status Mapping**: Portuguese→English status conversion ("Em andamento" → "active", "Finalizado" → "completed") fixes filtering issues
 - ✅ **Large File Upload Support**: Smart FormData/JSON strategy supports PDFs up to 32MB (bypasses Vercel 4MB limit)
 - ✅ **Automatic Upload Method Selection**: Files <3MB use JSON/base64, ≥3MB use FormData for optimal performance
 
