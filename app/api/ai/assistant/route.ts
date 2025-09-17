@@ -47,7 +47,9 @@ const AssistantRequestSchema = z.object({
   files: z.array(z.object({
     name: z.string(),
     type: z.string(),
-    base64: z.string()
+    base64: z.string().optional(), // Optional for blob URLs
+    url: z.string().optional(), // Blob URL for large files
+    size: z.number().optional()
   })).optional(),
   history: z.array(z.object({
     role: z.enum(['user', 'assistant']),
@@ -131,6 +133,26 @@ async function processDocuments(files: any[], teamId: string) {
       if (file.type.startsWith('image/')) {
         console.log(`🖼️ Processing image with Claude: ${file.name}`)
         isProcessableFile = true
+
+        // Handle both blob URLs and base64 data
+        let imageSource
+        if (file.url) {
+          console.log(`📎 Using blob URL for image: ${file.url}`)
+          imageSource = {
+            type: 'url',
+            url: file.url
+          }
+        } else if (file.base64) {
+          console.log(`📦 Using base64 data for image: ${file.name}`)
+          imageSource = {
+            type: 'base64',
+            media_type: file.type,
+            data: file.base64
+          }
+        } else {
+          throw new Error('No image data or URL provided')
+        }
+
         content = [
           {
             type: 'text',
@@ -138,16 +160,36 @@ async function processDocuments(files: any[], teamId: string) {
           },
           {
             type: 'image',
-            source: {
-              type: 'base64',
-              media_type: file.type,
-              data: file.base64
-            }
+            source: imageSource
           }
         ]
       } else if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
         console.log(`📄 Processing PDF with Claude: ${file.name}`)
         isProcessableFile = true
+
+        // For PDFs, Claude API expects base64 for documents
+        // If we have a blob URL, we need to fetch and convert to base64
+        let pdfData
+        if (file.url && !file.base64) {
+          console.log(`🔄 Fetching PDF from blob URL: ${file.url}`)
+          try {
+            const response = await fetch(file.url)
+            if (!response.ok) {
+              throw new Error(`Failed to fetch PDF: ${response.statusText}`)
+            }
+            const arrayBuffer = await response.arrayBuffer()
+            pdfData = Buffer.from(arrayBuffer).toString('base64')
+            console.log(`✅ PDF converted to base64: ${pdfData.length} characters`)
+          } catch (fetchError) {
+            console.error(`❌ Error fetching PDF from blob:`, fetchError)
+            throw new Error(`Cannot process PDF from blob URL: ${fetchError.message}`)
+          }
+        } else if (file.base64) {
+          pdfData = file.base64
+        } else {
+          throw new Error('No PDF data or URL provided')
+        }
+
         content = [
           {
             type: 'text',
@@ -158,7 +200,7 @@ async function processDocuments(files: any[], teamId: string) {
             source: {
               type: 'base64',
               media_type: 'application/pdf',
-              data: file.base64
+              data: pdfData
             }
           }
         ]
