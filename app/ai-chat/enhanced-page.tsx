@@ -24,6 +24,7 @@ export default function EnhancedAIChatPage() {
   const [loading, setLoading] = useState(false)
   const [files, setFiles] = useState<FileData[]>([])
   const [dragActive, setDragActive] = useState(false)
+  const [activeTab, setActiveTab] = useState<'chat' | 'setup'>('chat')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Handle file upload
@@ -320,15 +321,317 @@ export default function EnhancedAIChatPage() {
     }, 100)
   }
 
+  // Setup Assistant Component
+  const SetupAssistant = () => {
+    const [setupFile, setSetupFile] = useState<File | null>(null)
+    const [setupLoading, setSetupLoading] = useState(false)
+    const [setupResult, setSetupResult] = useState<any>(null)
+    const setupFileInputRef = useRef<HTMLInputElement>(null)
+
+    const handleSetupFile = (file: File) => {
+      // Validate file type
+      if (!file.name.endsWith('.csv') && !file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
+        alert('Por favor, selecione um arquivo CSV ou Excel (.xlsx, .xls)')
+        return
+      }
+
+      // Check file size (32MB limit)
+      if (file.size > 32 * 1024 * 1024) {
+        alert('Arquivo muito grande. Máximo permitido: 32MB')
+        return
+      }
+
+      setSetupFile(file)
+      setSetupResult(null)
+    }
+
+    const handleSetupDrop = (e: React.DragEvent) => {
+      e.preventDefault()
+      e.stopPropagation()
+
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        handleSetupFile(e.dataTransfer.files[0])
+      }
+    }
+
+    const processSetupFile = async () => {
+      if (!setupFile) return
+
+      setSetupLoading(true)
+
+      try {
+        const formData = new FormData()
+        formData.append('file', setupFile)
+
+        // Use direct Claude approach - simpler and more reliable
+        const response = await fetch('/api/ai/setup-assistant-direct', {
+          method: 'POST',
+          body: formData
+        })
+
+        if (response.ok) {
+          const result = await response.json()
+          setSetupResult(result)
+
+          // Clear the file after successful processing
+          setSetupFile(null)
+          if (setupFileInputRef.current) {
+            setupFileInputRef.current.value = ''
+          }
+        } else {
+          const error = await response.json()
+          setSetupResult({
+            error: true,
+            message: error.error || 'Erro ao processar arquivo'
+          })
+        }
+      } catch (error) {
+        console.error('Setup processing error:', error)
+        setSetupResult({
+          error: true,
+          message: 'Erro ao conectar com o servidor'
+        })
+      } finally {
+        setSetupLoading(false)
+      }
+    }
+
+    return (
+      <div className="space-y-6">
+        {/* Info Box */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <h3 className="text-lg font-bold text-blue-800 mb-2">📊 Assistente de Configuração</h3>
+          <p className="text-sm text-blue-700 mb-2">
+            Envie uma planilha CSV ou Excel com seus dados financeiros e deixe a IA criar automaticamente:
+          </p>
+          <ul className="text-sm text-blue-700 space-y-1 mb-3">
+            <li>• <strong>Contratos:</strong> clientes, projetos, valores, datas</li>
+            <li>• <strong>Recebíveis:</strong> valores a receber, datas esperadas</li>
+            <li>• <strong>Despesas:</strong> custos, fornecedores, vencimentos</li>
+          </ul>
+          <p className="text-xs text-blue-600">
+            ✨ A IA analisará automaticamente sua planilha e criará todos os registros de uma só vez!
+          </p>
+        </div>
+
+        {/* File Upload */}
+        <div className="bg-white border-2 border-neutral-300 rounded-lg p-6">
+          <div
+            className="border-2 border-dashed border-neutral-400 rounded-lg p-8 text-center"
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={handleSetupDrop}
+          >
+            <div className="text-4xl mb-4">📊</div>
+            <p className="text-lg font-medium text-neutral-800 mb-2">
+              Arraste sua planilha aqui ou clique para selecionar
+            </p>
+            <p className="text-sm text-neutral-600 mb-4">
+              Formatos suportados: CSV, Excel (.xlsx, .xls) • Máximo: 32MB
+            </p>
+
+            <button
+              onClick={() => setupFileInputRef.current?.click()}
+              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            >
+              Selecionar Arquivo
+            </button>
+
+            <input
+              ref={setupFileInputRef}
+              type="file"
+              accept=".csv,.xlsx,.xls"
+              onChange={(e) => e.target.files && handleSetupFile(e.target.files[0])}
+              className="hidden"
+            />
+          </div>
+
+          {/* Selected File */}
+          {setupFile && (
+            <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium text-green-800">📎 {setupFile.name}</p>
+                  <p className="text-sm text-green-600">
+                    {(setupFile.size / 1024 / 1024).toFixed(1)}MB
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setSetupFile(null)}
+                    className="text-red-600 hover:text-red-700 px-3 py-1 rounded"
+                  >
+                    Remover
+                  </button>
+                  <button
+                    onClick={processSetupFile}
+                    disabled={setupLoading}
+                    className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50 font-medium"
+                  >
+                    {setupLoading ? 'Processando...' : 'Processar Arquivo'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Loading State */}
+          {setupLoading && (
+            <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-600 mx-auto mb-2"></div>
+              <p className="text-yellow-800 font-medium">Analisando arquivo com IA...</p>
+              <p className="text-sm text-yellow-600">Isso pode levar alguns segundos</p>
+            </div>
+          )}
+
+          {/* Results */}
+          {setupResult && (
+            <div className="mt-4">
+              {setupResult.error ? (
+                <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <h4 className="font-bold text-red-800 mb-2">❌ Erro no Processamento</h4>
+                  <p className="text-red-700">{setupResult.message}</p>
+                </div>
+              ) : (
+                <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <h4 className="font-bold text-green-800 mb-3">✅ Processamento Concluído!</h4>
+
+                  {setupResult.analysis && (
+                    <div className="mb-4 p-3 bg-white border border-green-300 rounded">
+                      <h5 className="font-medium text-green-800 mb-1">📋 Análise da IA:</h5>
+                      <p className="text-sm text-green-700">{setupResult.analysis}</p>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-3 gap-4 mb-4">
+                    <div className="text-center p-3 bg-white border border-green-300 rounded">
+                      <div className="text-2xl font-bold text-green-700">
+                        {setupResult.summary?.contractsCreated || 0}
+                      </div>
+                      <div className="text-sm text-green-600">Contratos</div>
+                    </div>
+                    <div className="text-center p-3 bg-white border border-green-300 rounded">
+                      <div className="text-2xl font-bold text-blue-700">
+                        {setupResult.summary?.receivablesCreated || 0}
+                      </div>
+                      <div className="text-sm text-blue-600">Recebíveis</div>
+                    </div>
+                    <div className="text-center p-3 bg-white border border-green-300 rounded">
+                      <div className="text-2xl font-bold text-amber-700">
+                        {setupResult.summary?.expensesCreated || 0}
+                      </div>
+                      <div className="text-sm text-amber-600">Despesas</div>
+                    </div>
+                  </div>
+
+                  {setupResult.summary?.totalErrors > 0 && (
+                    <div className="p-3 bg-yellow-50 border border-yellow-300 rounded">
+                      <p className="text-sm text-yellow-800">
+                        ⚠️ {setupResult.summary.totalErrors} erro(s) encontrado(s).
+                        Verifique os dados criados e ajuste se necessário.
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="mt-4 flex gap-2">
+                    <a
+                      href="/contracts"
+                      className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm"
+                    >
+                      Ver Contratos
+                    </a>
+                    <a
+                      href="/receivables"
+                      className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 text-sm"
+                    >
+                      Ver Recebíveis
+                    </a>
+                    <a
+                      href="/expenses"
+                      className="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700 text-sm"
+                    >
+                      Ver Despesas
+                    </a>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Examples */}
+        <div className="bg-neutral-50 border border-neutral-200 rounded-lg p-4">
+          <h4 className="font-bold text-neutral-800 mb-3">💡 Exemplos de Colunas</h4>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            <div>
+              <h5 className="font-medium text-green-700 mb-2">📄 Contratos</h5>
+              <ul className="text-neutral-600 space-y-1">
+                <li>• Cliente, Projeto</li>
+                <li>• Valor Total, Data Assinatura</li>
+                <li>• Categoria, Descrição</li>
+              </ul>
+            </div>
+            <div>
+              <h5 className="font-medium text-blue-700 mb-2">💰 Recebíveis</h5>
+              <ul className="text-neutral-600 space-y-1">
+                <li>• Valor, Data Esperada</li>
+                <li>• Cliente, Projeto</li>
+                <li>• Nota Fiscal, Categoria</li>
+              </ul>
+            </div>
+            <div>
+              <h5 className="font-medium text-amber-700 mb-2">💸 Despesas</h5>
+              <ul className="text-neutral-600 space-y-1">
+                <li>• Descrição, Valor</li>
+                <li>• Data Vencimento, Categoria</li>
+                <li>• Fornecedor, Tipo</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-neutral-50 p-8">
       <div className="mb-4">
         <a href="/" className="text-blue-600 hover:underline">← Voltar ao Início</a>
       </div>
 
-      <h1 className="text-3xl font-bold mb-8 text-neutral-900">🤖 Assistente IA Avançado</h1>
+      <h1 className="text-3xl font-bold mb-8 text-neutral-900">🤖 Assistente IA</h1>
 
       <div className="max-w-4xl mx-auto">
+        {/* Tab Navigation */}
+        <div className="mb-6 border-b border-neutral-300">
+          <nav className="flex space-x-8">
+            <button
+              onClick={() => setActiveTab('chat')}
+              className={`py-3 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'chat'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300'
+              }`}
+            >
+              💬 Chat Inteligente
+            </button>
+            <button
+              onClick={() => setActiveTab('setup')}
+              className={`py-3 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'setup'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300'
+              }`}
+            >
+              📊 Configuração Rápida
+            </button>
+          </nav>
+        </div>
+
+        {/* Tab Content */}
+        {activeTab === 'setup' ? (
+          <SetupAssistant />
+        ) : (
+          <div>
         {/* Quick Actions */}
         <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
           <h3 className="text-sm font-bold text-blue-800 mb-3">Ações Rápidas:</h3>
@@ -534,6 +837,8 @@ export default function EnhancedAIChatPage() {
             <li>📁 <strong>Arquivos grandes:</strong> Suporte completo para PDFs até 32MB com upload automático via FormData</li>
           </ul>
         </div>
+          </div>
+        )}
       </div>
     </div>
   )
