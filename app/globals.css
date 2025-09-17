@@ -17,21 +17,22 @@
   --accent-red: #ef4444;
   --accent-red-light: #fef2f2;
 
-  /* Neutral Colors */
+  /* Neutral Colors - Enhanced for better readability */
   --neutral-50: #f9fafb;
   --neutral-100: #f3f4f6;
   --neutral-200: #e5e7eb;
   --neutral-300: #d1d5db;
-  --neutral-400: #9ca3af;
-  --neutral-500: #6b7280;
-  --neutral-600: #4b5563;
-  --neutral-700: #374151;
-  --neutral-800: #1f2937;
-  --neutral-900: #111827;
+  --neutral-400: #8b92a5;  /* Slightly darker for better secondary text */
+  --neutral-500: #5d6374;  /* Enhanced for labels and secondary elements */
+  --neutral-600: #424856;  /* Stronger for form labels */
+  --neutral-700: #2d3339;  /* Improved primary text contrast */
+  --neutral-800: #1a1d23;  /* Darker headings for better hierarchy */
+  --neutral-900: #0d0f12;  /* Maximum contrast for critical text */
 
-  /* Borders & Shadows */
-  --border: var(--neutral-200);
-  --border-hover: var(--neutral-300);
+  /* Borders & Shadows - Enhanced definition */
+  --border: var(--neutral-300);          /* Stronger default borders */
+  --border-hover: var(--neutral-400);    /* More noticeable hover states */
+  --border-focus: var(--primary);        /* Clear focus indication */
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
@@ -69,6 +70,7 @@
 
   --color-border: var(--border);
   --color-border-hover: var(--border-hover);
+  --color-border-focus: var(--border-focus);
 
   /* Typography Scale */
   --font-size-xs: 0.75rem;
