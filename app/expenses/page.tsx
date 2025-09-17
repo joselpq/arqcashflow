@@ -719,7 +719,7 @@ function ExpensesPageContent() {
             <select
               value={filters.status}
               onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-              className="border-2 border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white focus:border-blue-600 focus:outline-none"
+              className="border-2 border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
             >
               <option value="all">Todos os Status</option>
               {statusOptions.map(status => (
@@ -730,7 +730,7 @@ function ExpensesPageContent() {
             <select
               value={filters.category}
               onChange={(e) => setFilters({ ...filters, category: e.target.value })}
-              className="border-2 border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white focus:border-blue-600 focus:outline-none"
+              className="border-2 border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
             >
               <option value="all">Todas Categorias</option>
               {expenseCategories.map(cat => (
@@ -741,7 +741,7 @@ function ExpensesPageContent() {
             <select
               value={filters.type}
               onChange={(e) => setFilters({ ...filters, type: e.target.value })}
-              className="border-2 border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white focus:border-blue-600 focus:outline-none"
+              className="border-2 border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
             >
               <option value="all">Todos os Tipos</option>
               {expenseTypes.map(type => (
@@ -752,7 +752,7 @@ function ExpensesPageContent() {
             <select
               value={filters.sortBy}
               onChange={(e) => setFilters({ ...filters, sortBy: e.target.value })}
-              className="border-2 border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white focus:border-blue-600 focus:outline-none"
+              className="border-2 border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
             >
               <option value="dueDate">Data de Vencimento</option>
               <option value="amount">Valor</option>

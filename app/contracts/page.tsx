@@ -653,7 +653,7 @@ function ContractsPageContent() {
                       <div className="flex items-center gap-2 my-1">
                         <span className="text-sm font-medium text-neutral-900">Status:</span>
                         <select
-                          className="text-sm border-2 border-neutral-300 rounded-lg px-2 py-1 bg-white focus:border-blue-600 focus:outline-none"
+                          className="text-sm border-2 border-neutral-300 rounded-lg px-2 py-1 bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
                           value={contract.status}
                           onChange={async (e) => {
                             const newStatus = e.target.value
