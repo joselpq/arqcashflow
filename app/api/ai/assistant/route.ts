@@ -99,13 +99,82 @@ Respond with ONLY the category name (e.g., "query" or "create_expense").`
   }
 }
 
+// Helper to extract info from filename
+function extractInfoFromFilename(filename: string) {
+  // Remove extension
+  const nameWithoutExt = filename.replace(/\.[^/.]+$/, '')
+
+  // Try to extract client names (pattern: "name + name" or "name e name")
+  const clientMatch = nameWithoutExt.match(/([A-Za-zÀ-ÿ]+(?:\s+[eE]\s+|\s*\+\s*)[A-Za-zÀ-ÿ]+)/i)
+  const clientName = clientMatch ? clientMatch[1].replace(/\s*\+\s*/, ' e ').replace(/\s+[eE]\s+/, ' e ') : null
+
+  // Try to extract project info (after "Proposta" or "-")
+  const projectMatch = nameWithoutExt.match(/(?:Proposta|projeto|Project)\s+(.+)/i)
+  const projectName = projectMatch ? projectMatch[1].trim() : clientName
+
+  // Try to extract vendor info
+  const vendorMatch = nameWithoutExt.match(/^([^-]+)/i)
+  const vendor = vendorMatch ? vendorMatch[1].trim() : null
+
+  return { clientName, projectName, vendor }
+}
+
 // Process documents using OpenAI Vision API
 async function processDocuments(files: any[], teamId: string) {
   const results = []
 
   for (const file of files) {
     try {
-      // Classify document type first
+      // Check if it's a PDF - we need to handle PDFs differently
+      if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+        // For PDFs, we'll use a simpler approach based on filename
+        console.log(`📄 Processing PDF: ${file.name}`)
+
+        let docType = 'contract' // Default PDFs to contracts
+        const lowerName = file.name.toLowerCase()
+
+        if (lowerName.includes('recibo') || lowerName.includes('receipt') || lowerName.includes('nota')) {
+          docType = 'receipt'
+        } else if (lowerName.includes('fatura') || lowerName.includes('invoice') || lowerName.includes('boleto')) {
+          docType = 'invoice'
+        } else if (lowerName.includes('contrato') || lowerName.includes('proposta') || lowerName.includes('contract')) {
+          docType = 'contract'
+        }
+
+        // For PDFs, extract information from filename
+        const nameInfo = extractInfoFromFilename(file.name)
+
+        if (docType === 'contract') {
+          results.push({
+            fileName: file.name,
+            documentType: docType,
+            extractedData: {
+              clientName: nameInfo.clientName || 'Cliente do PDF',
+              projectName: nameInfo.projectName || nameInfo.clientName || 'Projeto do PDF',
+              totalValue: null,
+              signedDate: null,
+              description: `Contrato importado de PDF: ${file.name}`,
+              category: 'Residencial'
+            }
+          })
+        } else {
+          results.push({
+            fileName: file.name,
+            documentType: docType,
+            extractedData: {
+              description: `Documento importado: ${file.name}`,
+              amount: null,
+              vendor: nameInfo.vendor,
+              date: new Date().toISOString().split('T')[0],
+              category: 'outros'
+            }
+          })
+        }
+
+        continue // Skip to next file
+      }
+
+      // For images, use Vision API
       const classificationPrompt = `Analyze this document and classify it as one of:
 1. "receipt" - Purchase receipt, expense proof
 2. "invoice" - Bill to be paid, vendor invoice
@@ -228,11 +297,39 @@ Return ONLY a valid JSON object (no markdown formatting):
 // Create contract from extracted data
 async function createContractFromData(data: any, teamId: string) {
   try {
+    // Check for existing contracts with same project name
+    let projectName = data.projectName
+    const existingContracts = await prisma.contract.findMany({
+      where: {
+        teamId,
+        clientName: data.clientName,
+        projectName: {
+          startsWith: projectName
+        }
+      },
+      select: {
+        projectName: true
+      }
+    })
+
+    // If duplicates exist, append a number
+    if (existingContracts.length > 0) {
+      // Extract existing numbers from project names
+      const numbers = existingContracts.map(c => {
+        const match = c.projectName.match(/\s+(\d+)$/)
+        return match ? parseInt(match[1]) : 1
+      })
+
+      // Find the next available number
+      const nextNumber = Math.max(...numbers) + 1
+      projectName = `${projectName} ${nextNumber}`
+    }
+
     const contract = await prisma.contract.create({
       data: {
         teamId,
         clientName: data.clientName,
-        projectName: data.projectName,
+        projectName,
         totalValue: data.totalValue,
         signedDate: data.signedDate ? new Date(data.signedDate) : new Date(),
         description: data.description || null,
@@ -427,14 +524,27 @@ async function handleIntent(intent: string, message: string, files: any[], teamI
       }
 
     case 'create_contract':
+      // Build context from history - pass full history to AI for better understanding
+      let conversationContext = ''
+      if (history && history.length > 0) {
+        // Get recent conversation for context
+        const recentMessages = history.slice(-4)
+        conversationContext = 'Previous conversation:\n' +
+          recentMessages.map(msg => `${msg.role}: ${msg.content}`).join('\n')
+      }
+
       // Parse contract info from natural language
       const contractPrompt = `Extract contract information from this message: "${message}"
 
+${conversationContext}
+
+IMPORTANT: Consider the full conversation context. If the user previously mentioned contract details and is now providing missing information, combine ALL the information from the conversation.
+
 Return ONLY a valid JSON object (no markdown formatting):
 {
-  "clientName": "client name if mentioned",
-  "projectName": "project name if mentioned",
-  "totalValue": number (just the number if mentioned),
+  "clientName": "client name if mentioned in current message or context",
+  "projectName": "project name if mentioned (if user says to use client name as project, use the client name)",
+  "totalValue": number (just the number if mentioned in current message or context),
   "signedDate": "date in YYYY-MM-DD if mentioned",
   "description": "description if mentioned",
   "category": "category if mentioned"
@@ -449,6 +559,11 @@ Use null for missing information. Return only the JSON object, no code blocks or
       })
 
       const contractData = safeJsonParse(contractResponse.choices[0]?.message?.content || '{}')
+
+      // If no project name but has client name, use client name as project name
+      if (contractData.clientName && !contractData.projectName) {
+        contractData.projectName = contractData.clientName
+      }
 
       if (contractData.clientName && contractData.projectName && contractData.totalValue) {
         const result = await createContractFromData(contractData, teamId)

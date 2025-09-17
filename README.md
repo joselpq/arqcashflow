@@ -34,8 +34,14 @@ A secure, multi-tenant cashflow management system designed for architects to tra
 10. **Smart Default Filters** - Default views show only active contracts, pending receivables, and unpaid expenses
 11. **Excel Export** - Generate comprehensive cashflow reports with 4 detailed sheets (including expenses)
 12. **Google Sheets Export** - Create and share reports directly in Google Sheets with OAuth2 authentication
-13. **AI-Powered Analytics** - Ask natural language questions about your financial data using OpenAI (no internal IDs exposed)
-14. **🤖 AI Supervisor System** - Intelligent data quality monitoring with real-time anomaly detection for data entry
+13. **🤖 Enhanced AI Assistant** - Unified intelligent assistant with multiple capabilities:
+    - Natural language queries about financial data
+    - Smart entity creation (contracts, expenses, receivables) from text
+    - Document processing (supports images and PDFs with smart filename parsing)
+    - Context-aware conversations with full history retention
+    - Intelligent date parsing ("amanhã", "daqui a uma semana", "em 3 dias", etc.)
+    - Auto project naming from client names with duplicate handling
+14. **AI Supervisor System** - Intelligent data quality monitoring with real-time anomaly detection for data entry
 15. **Smart Alerts & Notifications** - Automated detection of duplicates, value anomalies, date inconsistencies, and business rule violations
 16. **Alert Action Integration** - Click alerts to directly edit the related items with auto-redirect functionality
 17. **Net Cashflow Analysis** - Complete financial picture with income vs expenses
@@ -86,6 +92,12 @@ ArqCashflow features a clean, professional design system specifically crafted fo
 - ✅ **AI Assistant Security**: No longer exposes internal IDs to users
 - ✅ **Quality Supervisor Fixes**: Resolved OpenAI JSON format errors that were causing 400 responses
 - ✅ **Team Data Filtering**: Fixed Quality Supervisor to properly filter by team for data validation
+- ✅ **AI Assistant Enhancement**: Complete overhaul with document processing, receivable creation, and context retention
+- ✅ **PDF Document Processing**: PDFs now properly handled with filename-based data extraction
+- ✅ **Smart Project Naming**: Auto-uses client name as project name when not specified, with duplicate numbering
+- ✅ **Context Retention**: AI now remembers previous messages in conversation for better understanding
+- ✅ **Receivable Creation**: Full support for creating receivables with smart contract matching
+- ✅ **Advanced Date Parsing**: Supports "daqui a uma semana", "em 3 dias", "próxima semana", etc.
 
 ### Critical Issues (High Priority):
 1. **Contract Team Assignment Bug**
