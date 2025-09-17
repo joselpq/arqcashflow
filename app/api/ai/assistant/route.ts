@@ -200,11 +200,25 @@ Return ONLY a valid JSON object (no markdown formatting):
       })
 
     } catch (error) {
-      console.error(`Error processing file ${file.name}:`, error)
-      results.push({
-        fileName: file.name,
-        error: 'Failed to process document'
-      })
+      console.error(`❌ Error processing file ${file.name}:`, error)
+
+      // Check if it's an OpenAI API error
+      if (error.code === 'invalid_request_error') {
+        results.push({
+          fileName: file.name,
+          error: 'Arquivo inválido ou muito grande. Use imagens (PNG, JPG) ou PDFs menores que 10MB.'
+        })
+      } else if (error.code === 'rate_limit_exceeded') {
+        results.push({
+          fileName: file.name,
+          error: 'Limite de API excedido. Tente novamente em alguns segundos.'
+        })
+      } else {
+        results.push({
+          fileName: file.name,
+          error: `Falha ao processar documento: ${error.message || 'Erro desconhecido'}`
+        })
+      }
     }
   }
 
@@ -278,13 +292,39 @@ async function handleIntent(intent: string, message: string, files: any[], teamI
         }
       }
 
-      const processedDocs = await processDocuments(files, teamId)
+      console.log('🔍 Processing documents:', files.map(f => ({ name: f.name, type: f.type, size: f.base64?.length })))
+
+      let processedDocs
+      try {
+        processedDocs = await processDocuments(files, teamId)
+        console.log('📄 Document processing results:', processedDocs)
+      } catch (docError) {
+        console.error('❌ Document processing failed:', docError)
+        return {
+          type: 'document_error',
+          response: `Erro ao processar documento: ${docError.message || 'Erro desconhecido'}. Verifique se o arquivo é uma imagem (PNG, JPG) ou PDF válido.`
+        }
+      }
+
+      // Check if all documents had errors
+      const hasErrors = processedDocs.every(doc => doc.error)
+      if (hasErrors) {
+        const errorMessages = processedDocs.map(doc => `• ${doc.fileName}: ${doc.error}`).join('\n')
+        return {
+          type: 'document_error',
+          response: `❌ Erro ao processar documentos:\n${errorMessages}`
+        }
+      }
 
       // Auto-create if extraction is clear, otherwise ask for confirmation
       const autoCreateResults = []
       const pendingConfirmations = []
 
       for (const doc of processedDocs) {
+        // Skip documents with errors
+        if (doc.error) {
+          continue
+        }
         if (doc.documentType === 'receipt' || doc.documentType === 'invoice') {
           if (doc.extractedData.description && doc.extractedData.amount) {
             // Auto-create expense if data is clear
@@ -374,16 +414,21 @@ Use null for missing information. Return only the JSON object, no code blocks or
       // Parse expense info from natural language
       const expensePrompt = `Extract expense information from this message: "${message}"
 
+Be smart about inferring information. Examples:
+- "despesa 2500, ontem, escritório" = {"description": "Despesa de escritório", "amount": 2500, "date": "yesterday", "category": "escritório"}
+- "materiais 5000" = {"description": "Materiais", "amount": 5000, "category": "materiais"}
+- "aluguel" = {"description": "Aluguel", "category": "aluguel"}
+
 Return ONLY a valid JSON object (no markdown formatting):
 {
-  "description": "expense description",
+  "description": "expense description (infer from context if not explicit)",
   "amount": number (just the number if mentioned),
   "vendor": "vendor name if mentioned",
-  "date": "date in YYYY-MM-DD if mentioned, otherwise today",
+  "date": "date in YYYY-MM-DD if mentioned, or 'yesterday', 'today' for relative dates",
   "category": "one of: materiais, mão-de-obra, equipamentos, transporte, escritório, software, utilidades, aluguel, seguro, marketing, serviços-profissionais, outros"
 }
 
-Use null for missing information except date (use today's date if not specified). Return only the JSON object, no code blocks or markdown.`
+Be intelligent about filling in description from category or context. Use null only when truly missing. Return only the JSON object, no code blocks or markdown.`
 
       const expenseResponse = await openai.chat.completions.create({
         model: 'gpt-4o-mini',
@@ -393,10 +438,33 @@ Use null for missing information except date (use today's date if not specified)
 
       const expenseData = safeJsonParse(expenseResponse.choices[0]?.message?.content || '{}')
 
-      if (expenseData.description && expenseData.amount) {
-        // Set today's date if not provided
-        if (!expenseData.date) {
-          expenseData.date = new Date().toISOString().split('T')[0]
+      // Handle relative dates
+      if (expenseData.date) {
+        const today = new Date()
+        if (expenseData.date === 'yesterday' || expenseData.date === 'ontem') {
+          const yesterday = new Date(today)
+          yesterday.setDate(yesterday.getDate() - 1)
+          expenseData.date = yesterday.toISOString().split('T')[0]
+        } else if (expenseData.date === 'today' || expenseData.date === 'hoje') {
+          expenseData.date = today.toISOString().split('T')[0]
+        }
+      }
+
+      // Set today's date if not provided
+      if (!expenseData.date) {
+        expenseData.date = new Date().toISOString().split('T')[0]
+      }
+
+      // Be more flexible - only require amount, auto-generate description if missing
+      if (expenseData.amount) {
+        // Auto-generate description if missing but category exists
+        if (!expenseData.description && expenseData.category) {
+          expenseData.description = `Despesa de ${expenseData.category}`
+        }
+
+        // If still no description, use a generic one
+        if (!expenseData.description) {
+          expenseData.description = 'Despesa'
         }
 
         const result = await createExpenseFromData(expenseData, teamId)
@@ -409,7 +477,7 @@ Use null for missing information except date (use today's date if not specified)
       } else {
         return {
           type: 'clarification',
-          response: `Para criar uma despesa, preciso de mais informações:\n• Descrição: ${expenseData.description || 'não informada'}\n• Valor: ${expenseData.amount || 'não informado'}\n• Vencimento: ${expenseData.date || 'não informado'}\n\nPor favor, forneça os dados em falta.`
+          response: `Para criar uma despesa, preciso pelo menos do valor. Tente algo como:\n• "despesa 2500 escritório"\n• "materiais 5000 reais"\n• "aluguel 3500 vencimento amanhã"\n\nValor atual: ${expenseData.amount || 'não informado'}`
         }
       }
 
