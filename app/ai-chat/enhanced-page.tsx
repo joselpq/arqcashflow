@@ -41,25 +41,21 @@ export default function EnhancedAIChatPage() {
           continue
         }
 
-        // Check if file is too large for Vercel serverless function (4.5MB limit)
+        // Calculate estimated payload size after base64 encoding
         const estimatedPayloadSize = file.size * 1.4 // 33% base64 overhead + other request data
-        const isLargeFile = estimatedPayloadSize > 4 * 1024 * 1024
 
-        if (file.size > 25 * 1024 * 1024) { // Claude's 32MB limit with some buffer
+        if (estimatedPayloadSize > 4 * 1024 * 1024) { // 4MB payload limit
+          const maxFileSize = Math.floor(4 * 1024 * 1024 / 1.4 / 1024 / 1024 * 10) / 10 // Calculate max file size in MB
           alert(`Arquivo ${file.name} é muito grande (${(file.size / 1024 / 1024).toFixed(1)}MB). ` +
-                `Máximo suportado pelo Claude: 25MB.\n\n` +
-                `Para arquivos muito grandes, considere:\n` +
+                `Máximo permitido: ${maxFileSize}MB para processamento via API.\n\n` +
+                `Para arquivos grandes, considere:\n` +
                 `• Comprimir o PDF\n` +
-                `• Dividir em múltiplos arquivos\n` +
-                `• Usar imagens das páginas principais`)
+                `• Usar imagens das páginas principais\n` +
+                `• Dividir em múltiplos arquivos menores`)
           continue
         }
 
-        console.log(`File ${file.name}: ${(file.size / 1024 / 1024).toFixed(1)}MB → ` +
-                   `${isLargeFile ? 'LARGE FILE - will use direct Claude API' : 'normal processing via Vercel function'}`)
-
-        // Flag large files for direct Claude processing
-        const isDirectClaudeProcessing = isLargeFile
+        console.log(`File ${file.name}: ${(file.size / 1024 / 1024).toFixed(1)}MB → estimated payload: ${(estimatedPayloadSize / 1024 / 1024).toFixed(1)}MB`)
 
         try {
           // Convert to base64 with better error handling
@@ -167,69 +163,33 @@ export default function EnhancedAIChatPage() {
     setFiles([])
 
     try {
-      // Check if we have large files that need direct Claude API processing
-      const hasLargeFiles = userMessage.files?.some(file => {
-        const estimatedPayloadSize = file.size * 1.4
-        return estimatedPayloadSize > 4 * 1024 * 1024
+      const requestBody = {
+        message: userMessage.content,
+        files: userMessage.files || [],
+        history: newMessages.slice(-10).map(m => ({
+          role: m.role,
+          content: m.content,
+          metadata: m.metadata
+        }))
+      }
+
+      console.log('Sending request to AI assistant:', {
+        message: requestBody.message,
+        filesCount: requestBody.files.length,
+        historyCount: requestBody.history.length
       })
 
-      let response: Response
+      const response = await fetch('/api/ai/assistant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody)
+      })
 
-      if (hasLargeFiles) {
-        console.log('Processing large files directly via Claude API to bypass Vercel 4.5MB limit')
+      console.log('Response status:', response.status)
 
-        // Process directly with Claude API for large files
-        response = await fetch('https://api.anthropic.com/v1/messages', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': process.env.NEXT_PUBLIC_CLAUDE_API_KEY || '',
-            'anthropic-version': '2023-06-01'
-          },
-          body: JSON.stringify({
-            model: 'claude-3-5-sonnet-20241022',
-            max_tokens: 4000,
-            messages: [
-              {
-                role: 'user',
-                content: [
-                  {
-                    type: 'text',
-                    text: `Você é um assistente IA especializado em gestão financeira para arquitetos.
-
-Contexto da conversa:
-${newMessages.slice(-10).map(m => `${m.role}: ${m.content}`).join('\n')}
-
-Mensagem atual: ${userMessage.content}
-
-Por favor, analise qualquer documento anexado e responda de forma útil.`
-                  },
-                  ...(userMessage.files?.map(file => ({
-                    type: file.type === 'application/pdf' ? 'document' : 'image',
-                    source: {
-                      type: 'base64',
-                      media_type: file.type,
-                      data: file.base64
-                    }
-                  })) || [])
-                ]
-              }
-            ]
-          })
-        })
-
-        if (!response.ok) {
-          throw new Error(`Claude API error: ${response.status} ${response.statusText}`)
-        }
-
-        const claudeResult = await response.json()
-
-        // Transform Claude response to match our expected format
-        const result = {
-          response: claudeResult.content[0].text,
-          intent: 'document_analysis',
-          type: 'analysis'
-        }
+      if (response.ok) {
+        const result = await response.json()
+        console.log('AI assistant response:', result)
 
         const assistantMessage: Message = {
           role: 'assistant',
@@ -237,73 +197,30 @@ Por favor, analise qualquer documento anexado e responda de forma útil.`
           metadata: {
             intent: result.intent,
             type: result.type,
-            directClaudeProcessing: true
+            sqlQuery: result.sqlQuery,
+            pendingActions: result.pendingActions
           },
           timestamp: new Date()
         }
 
         setMessages(prev => [...prev, assistantMessage])
       } else {
-        // Use normal Vercel API for smaller files
-        const requestBody = {
-          message: userMessage.content,
-          files: userMessage.files || [],
-          history: newMessages.slice(-10).map(m => ({
-            role: m.role,
-            content: m.content,
-            metadata: m.metadata
-          }))
-        }
-
-        console.log('Sending request to AI assistant:', {
-          message: requestBody.message,
-          filesCount: requestBody.files.length,
-          historyCount: requestBody.history.length
-        })
-
-        response = await fetch('/api/ai/assistant', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(requestBody)
-        })
-
-        console.log('Response status:', response.status)
-
-        if (response.ok) {
-          const result = await response.json()
-          console.log('AI assistant response:', result)
-
-          const assistantMessage: Message = {
+        console.error('API error response:', response.status, response.statusText)
+        try {
+          const error = await response.json()
+          console.error('Error details:', error)
+          setMessages(prev => [...prev, {
             role: 'assistant',
-            content: result.response,
-            metadata: {
-              intent: result.intent,
-              type: result.type,
-              sqlQuery: result.sqlQuery,
-              pendingActions: result.pendingActions
-            },
+            content: `Erro: ${error.error}`,
             timestamp: new Date()
-          }
-
-          setMessages(prev => [...prev, assistantMessage])
-        } else {
-          console.error('API error response:', response.status, response.statusText)
-          try {
-            const error = await response.json()
-            console.error('Error details:', error)
-            setMessages(prev => [...prev, {
-              role: 'assistant',
-              content: `Erro: ${error.error}`,
-              timestamp: new Date()
-            }])
-          } catch (jsonError) {
-            console.error('Failed to parse error JSON:', jsonError)
-            setMessages(prev => [...prev, {
-              role: 'assistant',
-              content: `Erro HTTP ${response.status}: ${response.statusText}`,
-              timestamp: new Date()
-            }])
-          }
+          }])
+        } catch (jsonError) {
+          console.error('Failed to parse error JSON:', jsonError)
+          setMessages(prev => [...prev, {
+            role: 'assistant',
+            content: `Erro HTTP ${response.status}: ${response.statusText}`,
+            timestamp: new Date()
+          }])
         }
       }
     } catch (error) {
@@ -485,10 +402,10 @@ Por favor, analise qualquer documento anexado e responda de forma útil.`
               📎 Arraste arquivos aqui ou clique para selecionar
             </p>
             <p className="text-xs text-neutral-500 mb-2">
-              Formatos: PNG, JPG, PDF • Máximo: 25MB por arquivo
+              Formatos: PNG, JPG, PDF • Máximo: ~2.8MB por arquivo
             </p>
-            <p className="text-xs text-green-600 mb-2">
-              ✅ Arquivos grandes (>4MB) usam processamento direto via Claude API
+            <p className="text-xs text-yellow-600 mb-2">
+              ⚠️ Arquivos grandes podem causar erro de tamanho de requisição
             </p>
             <button
               type="button"
@@ -536,7 +453,7 @@ Por favor, analise qualquer documento anexado e responda de forma útil.`
             <li>📄 <strong>Contratos:</strong> "Criar contrato de 50 mil com João Silva" ou envie documento</li>
             <li>💰 <strong>Despesas:</strong> "Adicionar despesa de materiais 5 mil" ou envie recibo</li>
             <li>🧾 <strong>Documentos:</strong> Envie recibos, notas fiscais ou contratos para processamento automático</li>
-            <li>📎 <strong>Arquivos grandes:</strong> PDFs até 25MB são processados automaticamente via Claude API</li>
+            <li>⚠️ <strong>Arquivos grandes:</strong> Para PDFs maiores que 2.8MB, descreva o conteúdo: "Contrato Maria Santos 85 mil residencial assinado ontem"</li>
           </ul>
         </div>
       </div>

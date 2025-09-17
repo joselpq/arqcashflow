@@ -102,8 +102,6 @@ ArqCashflow features a clean, professional design system specifically crafted fo
 - ✅ **Claude AI Integration**: Migrated from OpenAI to Claude for superior document processing and reliability
 - ✅ **Native PDF Processing**: Claude can now directly analyze PDF documents without filename-based fallbacks
 - ✅ **Enhanced File Support**: Improved support for images and documents with Claude's advanced vision capabilities
-- ✅ **Large File Processing**: Direct Claude API calls for files >4MB to bypass Vercel serverless function payload limits
-- ✅ **File Size Optimization**: Automatic detection and routing for optimal processing based on file size
 
 ### Critical Issues (High Priority):
 1. **Contract Team Assignment Bug**
@@ -159,7 +157,6 @@ DATABASE_URL="file:./dev.db"
 
 # AI Features (Updated to Claude)
 CLAUDE_API_KEY="your-claude-api-key-here"
-NEXT_PUBLIC_CLAUDE_API_KEY="your-claude-api-key-here"
 
 # Authentication (NextAuth.js)
 NEXTAUTH_SECRET="your-nextauth-secret-here"
