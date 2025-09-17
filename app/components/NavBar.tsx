@@ -16,7 +16,7 @@ export default function NavBar() {
     { href: "/receivables", label: "Recebíveis" },
     { href: "/expenses", label: "Despesas" },
     { href: "/alerts", label: "Alertas" },
-    { href: "/ai-chat", label: "Assistente IA" }
+    { href: "/ai-chat", label: "🤖 Assistente IA" }
   ];
 
   return (

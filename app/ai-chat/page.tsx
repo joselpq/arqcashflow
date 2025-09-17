@@ -1,8 +1,14 @@
 'use client'
 
 import { useState } from 'react'
+import EnhancedAIChatPage from './enhanced-page'
 
 export default function AIChatPage() {
+  return <EnhancedAIChatPage />
+}
+
+// Legacy simple chat component (kept for reference)
+function LegacyAIChatPage() {
   const [question, setQuestion] = useState('')
   const [loading, setLoading] = useState(false)
   const [history, setHistory] = useState<Array<{ question: string; answer: string; sqlQuery?: string }>>([])
