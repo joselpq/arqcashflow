@@ -805,8 +805,59 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const body = await request.json()
-    const { message = '', files = [], history = [], pendingAction = null } = AssistantRequestSchema.parse(body)
+    // Handle both JSON and multipart/form-data requests
+    let message = ''
+    let files: any[] = []
+    let history: any[] = []
+    let pendingAction = null
+
+    const contentType = request.headers.get('content-type') || ''
+
+    if (contentType.includes('multipart/form-data')) {
+      // Handle multipart form-data for large files
+      console.log('📦 Processing multipart form-data request')
+
+      const formData = await request.formData()
+      message = formData.get('message') as string || ''
+
+      // Parse history if provided
+      const historyStr = formData.get('history') as string
+      if (historyStr) {
+        try {
+          history = JSON.parse(historyStr)
+        } catch (e) {
+          console.warn('Failed to parse history from form data')
+        }
+      }
+
+      // Process uploaded files
+      const uploadedFiles = formData.getAll('files')
+      for (const file of uploadedFiles) {
+        if (file instanceof File) {
+          console.log(`📄 Processing uploaded file: ${file.name} (${(file.size / 1024 / 1024).toFixed(1)}MB)`)
+
+          // Convert file to base64 for Claude API
+          const arrayBuffer = await file.arrayBuffer()
+          const base64 = Buffer.from(arrayBuffer).toString('base64')
+
+          files.push({
+            name: file.name,
+            type: file.type,
+            base64,
+            size: file.size
+          })
+        }
+      }
+    } else {
+      // Handle traditional JSON requests for smaller files
+      console.log('📄 Processing JSON request')
+      const body = await request.json()
+      const parsedBody = AssistantRequestSchema.parse(body)
+      message = parsedBody.message || ''
+      files = parsedBody.files || []
+      history = parsedBody.history || []
+      pendingAction = parsedBody.pendingAction || null
+    }
 
     // Classify user intent
     const intent = await classifyIntent(message, files.length > 0, history)

@@ -13,7 +13,8 @@ interface Message {
 interface FileData {
   name: string
   type: string
-  base64: string
+  base64?: string // For small files
+  file?: File // For large files that will use FormData
   size: number
 }
 
@@ -41,56 +42,75 @@ export default function EnhancedAIChatPage() {
           continue
         }
 
-        // Calculate estimated payload size after base64 encoding
-        const estimatedPayloadSize = file.size * 1.4 // 33% base64 overhead + other request data
+        // Check file size limits - Claude API supports up to 32MB
+        const maxFileSize = 32 * 1024 * 1024 // 32MB limit
 
-        if (estimatedPayloadSize > 4 * 1024 * 1024) { // 4MB payload limit
-          const maxFileSize = Math.floor(4 * 1024 * 1024 / 1.4 / 1024 / 1024 * 10) / 10 // Calculate max file size in MB
+        if (file.size > maxFileSize) {
           alert(`Arquivo ${file.name} é muito grande (${(file.size / 1024 / 1024).toFixed(1)}MB). ` +
-                `Máximo permitido: ${maxFileSize}MB para processamento via API.\n\n` +
-                `Para arquivos grandes, considere:\n` +
+                `Máximo permitido: 32MB.\n\n` +
+                `Para arquivos maiores, considere:\n` +
                 `• Comprimir o PDF\n` +
                 `• Usar imagens das páginas principais\n` +
                 `• Dividir em múltiplos arquivos menores`)
           continue
         }
 
-        console.log(`File ${file.name}: ${(file.size / 1024 / 1024).toFixed(1)}MB → estimated payload: ${(estimatedPayloadSize / 1024 / 1024).toFixed(1)}MB`)
+        // Determine upload strategy: small files use base64, large files use FormData
+        const largeFileThreshold = 3 * 1024 * 1024 // 3MB threshold
+        const isLargeFile = file.size > largeFileThreshold
+
+        console.log(`File ${file.name}: ${(file.size / 1024 / 1024).toFixed(1)}MB → ${isLargeFile ? 'FormData' : 'base64'} strategy`)
 
         try {
-          // Convert to base64 with better error handling
-          const base64 = await new Promise<string>((resolve, reject) => {
-            const reader = new FileReader()
-            reader.onload = () => {
-              try {
-                const result = reader.result as string
-                if (!result || typeof result !== 'string') {
-                  reject(new Error('Failed to read file'))
-                  return
+          if (isLargeFile) {
+            // Large file: store File object for FormData upload
+            console.log(`📦 Storing large file for FormData upload: ${file.name}`)
+
+            newFiles.push({
+              name: file.name,
+              type: file.type,
+              file, // Store original File object
+              size: file.size
+            })
+
+            console.log(`✅ Large file queued: ${file.name}`)
+          } else {
+            // Small file: convert to base64 for JSON upload
+            console.log(`📄 Converting small file to base64: ${file.name}`)
+
+            const base64 = await new Promise<string>((resolve, reject) => {
+              const reader = new FileReader()
+              reader.onload = () => {
+                try {
+                  const result = reader.result as string
+                  if (!result || typeof result !== 'string') {
+                    reject(new Error('Failed to read file'))
+                    return
+                  }
+                  resolve(result.split(',')[1]) // Remove data:type;base64, prefix
+                } catch (error) {
+                  reject(error)
                 }
-                resolve(result.split(',')[1]) // Remove data:type;base64, prefix
-              } catch (error) {
-                reject(error)
               }
+              reader.onerror = () => reject(new Error('FileReader error'))
+              reader.readAsDataURL(file)
+            })
+
+            if (!base64) {
+              console.error(`Failed to convert ${file.name} to base64`)
+              alert(`Erro ao processar arquivo ${file.name}`)
+              continue
             }
-            reader.onerror = () => reject(new Error('FileReader error'))
-            reader.readAsDataURL(file)
-          })
 
-          if (!base64) {
-            console.error(`Failed to convert ${file.name} to base64`)
-            alert(`Erro ao processar arquivo ${file.name}`)
-            continue
+            newFiles.push({
+              name: file.name,
+              type: file.type,
+              base64,
+              size: file.size
+            })
+
+            console.log(`✅ Small file processed: ${file.name}, base64 length: ${base64.length}`)
           }
-
-          newFiles.push({
-            name: file.name,
-            type: file.type,
-            base64,
-            size: file.size
-          })
-
-          console.log(`Successfully processed file: ${file.name}, base64 length: ${base64.length}`)
         } catch (fileError) {
           console.error(`Error processing file ${file.name}:`, fileError)
           alert(`Erro ao processar arquivo ${file.name}: ${fileError.message}`)
@@ -141,10 +161,19 @@ export default function EnhancedAIChatPage() {
     e.preventDefault()
     if (!message.trim() && files.length === 0) return
 
+    // Check if we have any large files that need FormData
+    const hasLargeFiles = files.some(f => f.file)
+
     console.log('handleSubmit called:', {
       message: message.trim(),
       filesCount: files.length,
-      files: files.map(f => ({ name: f.name, type: f.type, hasBase64: !!f.base64 }))
+      hasLargeFiles,
+      files: files.map(f => ({
+        name: f.name,
+        type: f.type,
+        strategy: f.file ? 'FormData' : 'base64',
+        size: `${(f.size / 1024 / 1024).toFixed(1)}MB`
+      }))
     })
 
     setLoading(true)
@@ -153,7 +182,12 @@ export default function EnhancedAIChatPage() {
     const userMessage: Message = {
       role: 'user',
       content: message || 'Documento anexado',
-      files: files.length > 0 ? [...files] : undefined,
+      files: files.length > 0 ? files.map(f => ({
+        name: f.name,
+        type: f.type,
+        size: f.size,
+        base64: f.base64 // Only include base64 for display
+      })) : undefined,
       timestamp: new Date()
     }
 
@@ -163,27 +197,69 @@ export default function EnhancedAIChatPage() {
     setFiles([])
 
     try {
-      const requestBody = {
-        message: userMessage.content,
-        files: userMessage.files || [],
-        history: newMessages.slice(-10).map(m => ({
+      let response: Response
+
+      if (hasLargeFiles) {
+        // Use FormData for large files
+        console.log('🚚 Using FormData for large file upload')
+
+        const formData = new FormData()
+        formData.append('message', userMessage.content)
+
+        // Add history as JSON string
+        formData.append('history', JSON.stringify(newMessages.slice(-10).map(m => ({
           role: m.role,
           content: m.content,
           metadata: m.metadata
-        }))
+        }))))
+
+        // Add all files to FormData
+        files.forEach(file => {
+          if (file.file) {
+            // Large file: add File object
+            formData.append('files', file.file)
+          } else if (file.base64) {
+            // Small file: convert base64 back to Blob for consistency
+            const binaryString = atob(file.base64)
+            const bytes = new Uint8Array(binaryString.length)
+            for (let i = 0; i < binaryString.length; i++) {
+              bytes[i] = binaryString.charCodeAt(i)
+            }
+            const blob = new Blob([bytes], { type: file.type })
+            const reconstructedFile = new File([blob], file.name, { type: file.type })
+            formData.append('files', reconstructedFile)
+          }
+        })
+
+        response = await fetch('/api/ai/assistant', {
+          method: 'POST',
+          body: formData // No Content-Type header - let browser set it
+        })
+      } else {
+        // Use JSON for small files
+        console.log('📄 Using JSON for small file upload')
+
+        const requestBody = {
+          message: userMessage.content,
+          files: files.map(f => ({
+            name: f.name,
+            type: f.type,
+            base64: f.base64!,
+            size: f.size
+          })),
+          history: newMessages.slice(-10).map(m => ({
+            role: m.role,
+            content: m.content,
+            metadata: m.metadata
+          }))
+        }
+
+        response = await fetch('/api/ai/assistant', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody)
+        })
       }
-
-      console.log('Sending request to AI assistant:', {
-        message: requestBody.message,
-        filesCount: requestBody.files.length,
-        historyCount: requestBody.history.length
-      })
-
-      const response = await fetch('/api/ai/assistant', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody)
-      })
 
       console.log('Response status:', response.status)
 
@@ -371,6 +447,8 @@ export default function EnhancedAIChatPage() {
                   <span className="text-sm text-neutral-900">📎 {file.name}</span>
                   <span className="text-xs text-neutral-500">
                     ({(file.size / 1024 / 1024).toFixed(1)}MB)
+                    {file.file && <span className="text-blue-600 ml-1">• FormData</span>}
+                    {file.base64 && <span className="text-green-600 ml-1">• JSON</span>}
                   </span>
                   <button
                     onClick={() => removeFile(index)}
@@ -402,10 +480,10 @@ export default function EnhancedAIChatPage() {
               📎 Arraste arquivos aqui ou clique para selecionar
             </p>
             <p className="text-xs text-neutral-500 mb-2">
-              Formatos: PNG, JPG, PDF • Máximo: ~2.8MB por arquivo
+              Formatos: PNG, JPG, PDF • Máximo: 32MB por arquivo
             </p>
-            <p className="text-xs text-yellow-600 mb-2">
-              ⚠️ Arquivos grandes podem causar erro de tamanho de requisição
+            <p className="text-xs text-green-600 mb-2">
+              ✅ Pequenos (&lt;3MB): JSON • Grandes (≥3MB): FormData upload
             </p>
             <button
               type="button"
@@ -453,7 +531,7 @@ export default function EnhancedAIChatPage() {
             <li>📄 <strong>Contratos:</strong> "Criar contrato de 50 mil com João Silva" ou envie documento</li>
             <li>💰 <strong>Despesas:</strong> "Adicionar despesa de materiais 5 mil" ou envie recibo</li>
             <li>🧾 <strong>Documentos:</strong> Envie recibos, notas fiscais ou contratos para processamento automático</li>
-            <li>⚠️ <strong>Arquivos grandes:</strong> Para PDFs maiores que 2.8MB, descreva o conteúdo: "Contrato Maria Santos 85 mil residencial assinado ontem"</li>
+            <li>📁 <strong>Arquivos grandes:</strong> Suporte completo para PDFs até 32MB com upload automático via FormData</li>
           </ul>
         </div>
       </div>
