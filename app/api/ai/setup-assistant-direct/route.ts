@@ -215,14 +215,37 @@ IMPORTANT RULES:
    - "R$ 1.234,56" means 1234.56
    - Remove all formatting and return numbers only
 
-5. Detect data types by looking at the headers and content:
+5. STATUS AND CATEGORY STANDARDIZATION (VERY IMPORTANT):
+
+   For CONTRACT STATUS, map Portuguese status to these EXACT English values:
+   - "Em andamento", "Ativo", "Em progresso", "Andamento" → "active"
+   - "Finalizado", "Concluído", "Completo", "Terminado" → "completed"
+   - "Cancelado", "Cancelou", "Parado", "Suspenso" → "cancelled"
+   - If unclear or empty, use "active"
+
+   For EXPENSE TYPE, map to these EXACT English values:
+   - "Operacional", "Despesa geral", "Administrativo" → "operational"
+   - "Projeto", "Obra", "Cliente específico" → "project"
+   - "Administração", "Escritório", "RH" → "administrative"
+   - If unclear or empty, use "operational"
+
+   For CATEGORIES (both contracts and expenses), use intelligent classification:
+   - Residential projects → "Residencial"
+   - Commercial projects → "Comercial"
+   - Restaurant projects → "Restaurante"
+   - Store/retail projects → "Loja"
+   - For expenses: materials, labor, equipment, transport, office, software, etc.
+
+6. Detect data types by looking at the headers and content:
    - Contracts: have client/project names, total values, and dates
    - Receivables: have expected dates and amounts to receive
    - Expenses: have descriptions, amounts, due dates, and vendors
 
-6. If a CSV has multiple sections (like contracts section, then receivables section, then expenses section), detect ALL of them
+7. If a CSV has multiple sections (like contracts section, then receivables section, then expenses section), detect ALL of them
 
-7. EXTRACT ALL ROWS - if there are 37 contracts in the data, return all 37, not just a sample
+8. EXTRACT ALL ROWS - if there are 37 contracts in the data, return all 37, not just a sample
+
+9. Use the DESCRIPTION/NOTES fields to store any additional Portuguese information that doesn't fit the standardized fields
 
 FILE CONTENT:
 ${fileContent}
@@ -238,9 +261,9 @@ Return a JSON object with this EXACT structure (no markdown, just JSON):
         "description": "string or null",
         "totalValue": number,
         "signedDate": "YYYY-MM-DD",
-        "category": "string or null",
-        "status": "string or null",
-        "notes": "string or null"
+        "category": "string or null (e.g. 'Residencial', 'Comercial', 'Restaurante', 'Loja')",
+        "status": "active|completed|cancelled (REQUIRED - map from Portuguese)",
+        "notes": "string or null (use for additional Portuguese info)"
       }
     ],
     "receivables": [
@@ -259,10 +282,10 @@ Return a JSON object with this EXACT structure (no markdown, just JSON):
         "description": "string",
         "amount": number,
         "dueDate": "YYYY-MM-DD",
-        "category": "string",
+        "category": "string (e.g. 'materials', 'labor', 'equipment', 'transport', 'office')",
         "vendor": "string or null",
         "invoiceNumber": "string or null",
-        "type": "operational|project|administrative",
+        "type": "operational|project|administrative (REQUIRED - map intelligently)",
         "notes": "string or null"
       }
     ]
