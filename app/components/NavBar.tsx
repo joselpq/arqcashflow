@@ -8,6 +8,11 @@ export default function NavBar() {
   const { data: session } = useSession();
   const pathname = usePathname();
 
+  // Don't show navigation for landing page, login, or register pages
+  if (!session && (pathname === "/" || pathname === "/login" || pathname === "/register")) {
+    return null;
+  }
+
   if (!session) return null;
 
   const navItems = [

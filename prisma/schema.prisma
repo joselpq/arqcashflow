@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -12,39 +9,39 @@ datasource db {
 
 model Contract {
   id          String       @id @default(cuid())
-  teamId      String
-  team        Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
   clientName  String
   projectName String
   description String?
   totalValue  Float
   signedDate  DateTime
-  status      String       @default("active") // active, completed, cancelled
-  category    String?      // e.g., "construction visit", "project design", "consulting"
+  status      String       @default("active")
+  category    String?
   notes       String?
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
+  teamId      String
+  budgets     Budget[]
+  team        Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  expenses    Expense[]
   receivables Receivable[]
-  expenses    Expense[]    // Project-related expenses
-  budgets     Budget[]     // Project budgets
 
   @@index([teamId])
 }
 
 model Receivable {
-  id           String    @id @default(cuid())
-  contractId   String
-  contract     Contract  @relation(fields: [contractId], references: [id], onDelete: Cascade)
-  expectedDate DateTime
-  amount       Float
-  status       String    @default("pending") // pending, received, overdue, cancelled
-  receivedDate DateTime?
+  id             String    @id @default(cuid())
+  contractId     String
+  expectedDate   DateTime
+  amount         Float
+  status         String    @default("pending")
+  receivedDate   DateTime?
   receivedAmount Float?
-  invoiceNumber String?
-  category     String?   // e.g., "project work", "construction visit", "purchase commission"
-  notes        String?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  invoiceNumber  String?
+  category       String?
+  notes          String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  contract       Contract  @relation(fields: [contractId], references: [id], onDelete: Cascade)
 
   @@index([contractId])
   @@index([expectedDate])
@@ -54,44 +51,32 @@ model Receivable {
 model Category {
   id        String   @id @default(cuid())
   name      String   @unique
-  color     String?  // for UI visualization
+  color     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-// Cost Management Models
 model Expense {
-  id           String    @id @default(cuid())
-  teamId       String?
-  team         Team?     @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  contractId   String?   // Optional: link to specific project
-  contract     Contract? @relation(fields: [contractId], references: [id], onDelete: SetNull)
-
-  // Basic Info
-  description  String
-  amount       Float
-  dueDate      DateTime
-  category     String    // e.g., "materials", "labor", "equipment", "transport", "office", "software"
-
-  // Payment Status
-  status       String    @default("pending") // pending, paid, overdue, cancelled
-  paidDate     DateTime?
-  paidAmount   Float?
-
-  // Vendor/Supplier Info
-  vendor       String?   // Who to pay
+  id            String    @id @default(cuid())
+  contractId    String?
+  description   String
+  amount        Float
+  dueDate       DateTime
+  category      String
+  status        String    @default("pending")
+  paidDate      DateTime?
+  paidAmount    Float?
+  vendor        String?
   invoiceNumber String?
-
-  // Classification
-  type         String    @default("operational") // operational, project, administrative
-  isRecurring  Boolean   @default(false)
-
-  // Additional Info
-  notes        String?
-  receiptUrl   String?   // Link to receipt/invoice file
-
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  type          String    @default("operational")
+  isRecurring   Boolean   @default(false)
+  notes         String?
+  receiptUrl    String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  teamId        String?
+  contract      Contract? @relation(fields: [contractId], references: [id])
+  team          Team?     @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
   @@index([teamId])
   @@index([contractId])
@@ -101,28 +86,21 @@ model Expense {
 }
 
 model Budget {
-  id          String   @id @default(cuid())
-  teamId      String?
-  team        Team?    @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  contractId  String?  // Optional: project-specific budget
-  contract    Contract? @relation(fields: [contractId], references: [id], onDelete: SetNull)
-
-  // Budget Info
-  name        String   // e.g., "Q1 2024 Budget", "Project João Budget"
-  category    String   // expense category this budget covers
-  budgetAmount Float   // allocated amount
-  period      String   // "monthly", "quarterly", "project", "annual"
-
-  // Date Range
-  startDate   DateTime
-  endDate     DateTime
-
-  // Status
-  isActive    Boolean  @default(true)
-  notes       String?
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String    @id @default(cuid())
+  contractId   String?
+  name         String
+  category     String
+  budgetAmount Float
+  period       String
+  startDate    DateTime
+  endDate      DateTime
+  isActive     Boolean   @default(true)
+  notes        String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  teamId       String?
+  contract     Contract? @relation(fields: [contractId], references: [id])
+  team         Team?     @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
   @@index([teamId])
   @@index([contractId])
@@ -131,58 +109,47 @@ model Budget {
 }
 
 model RecurringExpense {
-  id              String   @id @default(cuid())
-
-  // Basic Info
-  description     String
-  amount          Float
-  category        String
-  vendor          String?
-
-  // Recurrence Pattern
-  frequency       String   // "weekly", "monthly", "quarterly", "annual"
-  interval        Int      @default(1) // every X periods (e.g., every 2 months)
-  dayOfMonth      Int?     // for monthly: which day (1-31)
-
-  // Date Range
-  startDate       DateTime
-  endDate         DateTime?
-
-  // Status
-  isActive        Boolean  @default(true)
-  lastGenerated   DateTime?
-  nextDue         DateTime
-
-  notes           String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id            String    @id @default(cuid())
+  description   String
+  amount        Float
+  category      String
+  vendor        String?
+  frequency     String
+  interval      Int       @default(1)
+  dayOfMonth    Int?
+  startDate     DateTime
+  endDate       DateTime?
+  isActive      Boolean   @default(true)
+  lastGenerated DateTime?
+  nextDue       DateTime
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   @@index([nextDue])
   @@index([isActive])
 }
 
 model Team {
-  id            String   @id @default(cuid())
-  name          String
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  // Relations
-  users         User[]
-  contracts     Contract[]
-  expenses      Expense[]
-  budgets       Budget[]
+  id        String     @id @default(cuid())
+  name      String
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  budgets   Budget[]
+  contracts Contract[]
+  expenses  Expense[]
+  users     User[]
 }
 
 model User {
-  id            String   @id @default(cuid())
-  email         String   @unique
-  name          String?
-  password      String   // Hashed password
-  teamId        String
-  team          Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
   @@index([email])
   @@index([teamId])

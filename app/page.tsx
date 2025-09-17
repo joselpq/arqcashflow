@@ -1,6 +1,8 @@
 "use client"
 
 import { useState, useEffect } from 'react'
+import { useSession } from 'next-auth/react'
+import LandingPage from './components/LandingPage'
 import Link from 'next/link'
 import ExportButtons from './components/ExportButtons'
 import { formatDateShort } from '@/lib/date-utils'
@@ -194,27 +196,52 @@ function SimpleChart({ data }: { data: DashboardData['monthlyTrend'] }) {
 }
 
 export default function Dashboard() {
+  const { data: session, status } = useSession()
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    async function fetchDashboard() {
-      try {
-        const response = await fetch('/api/dashboard')
-        if (!response.ok) throw new Error('Failed to fetch dashboard data')
-        const dashboardData = await response.json()
-        setData(dashboardData)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error')
-      } finally {
-        setLoading(false)
+    // Only fetch dashboard data if user is authenticated
+    if (session) {
+      async function fetchDashboard() {
+        try {
+          const response = await fetch('/api/dashboard')
+          if (!response.ok) throw new Error('Failed to fetch dashboard data')
+          const dashboardData = await response.json()
+          setData(dashboardData)
+        } catch (err) {
+          setError(err instanceof Error ? err.message : 'Unknown error')
+        } finally {
+          setLoading(false)
+        }
       }
+
+      fetchDashboard()
+    } else {
+      // If not authenticated, stop loading immediately
+      setLoading(false)
     }
+  }, [session])
 
-    fetchDashboard()
-  }, [])
+  // Show loading state while checking authentication
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-4xl mb-4">⏳</div>
+          <p>Carregando...</p>
+        </div>
+      </div>
+    )
+  }
 
+  // Show landing page if not authenticated
+  if (!session) {
+    return <LandingPage />
+  }
+
+  // Show loading state while fetching dashboard data
   if (loading) {
     return (
       <div className="min-h-screen p-8">

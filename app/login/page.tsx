@@ -25,42 +25,50 @@ export default function LoginPage() {
       });
 
       if (result?.error) {
-        setError("Invalid email or password");
+        setError("Email ou senha inválidos");
       } else {
         router.push("/");
         router.refresh();
       }
     } catch (error) {
-      setError("An error occurred. Please try again.");
+      setError("Ocorreu um erro. Tente novamente.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+    <div className="min-h-screen flex items-center justify-center bg-neutral-50 py-8 px-4 sm:py-12 sm:px-6 lg:px-8">
+      <div className="w-full max-w-sm sm:max-w-md md:max-w-lg space-y-8">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Sign in to ArqCashflow
+          <div className="flex justify-center mb-6">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-neutral-900 rounded flex items-center justify-center">
+                <span className="text-white font-semibold text-sm">A</span>
+              </div>
+              <h1 className="text-xl font-semibold text-neutral-900 tracking-tight">ArqCashflow</h1>
+            </div>
+          </div>
+          <h2 className="mt-4 sm:mt-6 text-center text-2xl sm:text-3xl font-bold text-neutral-900">
+            Entre na sua conta
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Or{" "}
+          <p className="mt-2 text-center text-xs sm:text-sm text-neutral-600">
+            Ou{" "}
             <Link href="/register" className="font-medium text-blue-600 hover:text-blue-500">
-              create a new account
+              crie uma nova conta
             </Link>
           </p>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <form className="mt-6 sm:mt-8 space-y-4 sm:space-y-6" onSubmit={handleSubmit}>
           {error && (
-            <div className="rounded-md bg-red-50 p-4">
-              <p className="text-sm text-red-800">{error}</p>
+            <div className="rounded-md bg-red-50 p-3 sm:p-4">
+              <p className="text-xs sm:text-sm text-red-800">{error}</p>
             </div>
           )}
-          <div className="rounded-md shadow-sm -space-y-px">
+          <div className="space-y-3 sm:space-y-4">
             <div>
-              <label htmlFor="email" className="sr-only">
-                Email address
+              <label htmlFor="email" className="block text-xs sm:text-sm font-medium text-neutral-700 mb-1.5 sm:mb-2">
+                Email
               </label>
               <input
                 id="email"
@@ -68,15 +76,15 @@ export default function LoginPage() {
                 type="email"
                 autoComplete="email"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Email address"
+                className="appearance-none relative block w-full px-3 py-2.5 sm:px-4 sm:py-3 border border-neutral-300 placeholder-neutral-500 text-neutral-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
+                placeholder="Endereço de email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
             <div>
-              <label htmlFor="password" className="sr-only">
-                Password
+              <label htmlFor="password" className="block text-xs sm:text-sm font-medium text-neutral-700 mb-1.5 sm:mb-2">
+                Senha
               </label>
               <input
                 id="password"
@@ -84,8 +92,8 @@ export default function LoginPage() {
                 type="password"
                 autoComplete="current-password"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Password"
+                className="appearance-none relative block w-full px-3 py-2.5 sm:px-4 sm:py-3 border border-neutral-300 placeholder-neutral-500 text-neutral-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
+                placeholder="Sua senha"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
@@ -96,10 +104,19 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="group relative w-full flex justify-center py-2.5 px-4 sm:py-3 border border-transparent text-sm sm:text-base font-semibold rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
             >
-              {loading ? "Signing in..." : "Sign in"}
+              {loading ? "Entrando..." : "Entrar"}
             </button>
+          </div>
+
+          <div className="text-center">
+            <Link
+              href="/"
+              className="text-xs sm:text-sm text-neutral-500 hover:text-neutral-700 transition-colors"
+            >
+              ← Voltar para página inicial
+            </Link>
           </div>
         </form>
       </div>
