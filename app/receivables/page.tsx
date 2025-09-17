@@ -361,12 +361,12 @@ function ReceivablesPageContent() {
   }
 
   return (
-    <div className="min-h-screen p-8">
+    <div className="min-h-screen bg-neutral-50 p-8">
       <div className="mb-4">
         <a href="/" className="text-blue-600 hover:underline">← Voltar ao Início</a>
       </div>
 
-      <h1 className="text-3xl font-bold mb-8">Gerenciamento de Contas a Receber</h1>
+      <h1 className="text-3xl font-bold mb-8 text-neutral-900">Gerenciamento de Contas a Receber</h1>
 
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -376,9 +376,9 @@ function ReceivablesPageContent() {
             <button
               type="button"
               onClick={() => setShowAISection(true)}
-              className={`px-4 py-2 rounded ${showAISection
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${showAISection
+                ? 'bg-blue-700 text-white'
+                : 'bg-neutral-100 text-neutral-900 hover:bg-neutral-200'
               }`}
             >
               🤖 Adicionar com IA
@@ -386,9 +386,9 @@ function ReceivablesPageContent() {
             <button
               type="button"
               onClick={() => setShowAISection(false)}
-              className={`px-4 py-2 rounded ${!showAISection
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${!showAISection
+                ? 'bg-blue-700 text-white'
+                : 'bg-neutral-100 text-neutral-900 hover:bg-neutral-200'
               }`}
             >
               ✏️ Adicionar Manual
@@ -404,10 +404,10 @@ function ReceivablesPageContent() {
             </div>
           ) : showAISection ? (
             <div id="receivable-form">
-              <h2 className="text-xl font-semibold mb-4">Adicionar Conta a Receber com IA</h2>
+              <h2 className="text-xl font-bold mb-4 text-neutral-900">Adicionar Conta a Receber com IA</h2>
 
               <div className="bg-green-50 border border-green-200 p-4 rounded mb-4">
-                <p className="text-sm text-green-800">
+                <p className="text-sm text-green-800 leading-relaxed">
                   💡 <strong>Exemplos:</strong>
                   <br />
                   <em>"2500 a receber 25/11 da loja Leo Madeiras, RT do projeto dina claire"</em>
@@ -430,10 +430,10 @@ function ReceivablesPageContent() {
                           : 'bg-green-50 border-green-200 mr-8'
                       }`}
                     >
-                      <p className="text-sm font-bold mb-1 text-gray-800">
+                      <p className="text-sm font-bold mb-1 text-neutral-900">
                         {msg.role === 'user' ? '👤 Você' : '🤖 Assistente'}
                       </p>
-                      <p className="text-sm text-gray-900 whitespace-pre-line">{msg.content}</p>
+                      <p className="text-sm text-neutral-900 whitespace-pre-line leading-relaxed">{msg.content}</p>
                     </div>
                   ))}
                 </div>
@@ -442,7 +442,7 @@ function ReceivablesPageContent() {
               <form onSubmit={handleAISubmit} className="space-y-4">
                 <div>
                   <textarea
-                    className="w-full border rounded px-3 py-2 h-24"
+                    className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 h-24 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-600"
                     placeholder="Descreva a conta a receber que deseja criar..."
                     value={aiMessage}
                     onChange={(e) => setAiMessage(e.target.value)}
@@ -452,7 +452,7 @@ function ReceivablesPageContent() {
                 <div className="flex gap-2">
                   <button
                     type="submit"
-                    className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 disabled:opacity-50"
+                    className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50 font-medium transition-colors"
                     disabled={aiLoading}
                   >
                     {aiLoading ? 'Processando...' : 'Enviar'}
@@ -461,7 +461,7 @@ function ReceivablesPageContent() {
                     <button
                       type="button"
                       onClick={() => setAiHistory([])}
-                      className="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700"
+                      className="bg-neutral-600 text-white px-6 py-2 rounded-lg hover:bg-neutral-700 font-medium transition-colors"
                     >
                       Limpar Conversa
                     </button>
@@ -471,7 +471,7 @@ function ReceivablesPageContent() {
             </div>
           ) : (
             <div>
-              <h2 className="text-xl font-semibold mb-4">
+              <h2 className="text-xl font-bold mb-4 text-neutral-900">
                 {editingReceivable ? 'Editar Conta a Receber' : 'Adicionar Manual'}
               </h2>
             </div>
@@ -480,10 +480,10 @@ function ReceivablesPageContent() {
           {contracts.length > 0 && !showAISection && (
             <form onSubmit={handleSubmit} className="space-y-4" id="receivable-form">
               <div>
-                <label className="block mb-1">Contrato *</label>
+                <label className="block mb-2 font-medium text-neutral-900">Contrato *</label>
                 <select
                   required
-                  className="w-full border rounded px-3 py-2"
+                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white"
                   value={formData.contractId || ''}
                   onChange={(e) => setFormData({ ...formData, contractId: e.target.value })}
                 >
@@ -497,63 +497,63 @@ function ReceivablesPageContent() {
               </div>
 
               <div>
-                <label className="block mb-1">Data Prevista *</label>
+                <label className="block mb-2 font-medium text-neutral-900">Data Prevista *</label>
                 <input
                   type="date"
                   required
-                  className="w-full border rounded px-3 py-2"
+                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white"
                   value={formData.expectedDate || ''}
                   onChange={(e) => setFormData({ ...formData, expectedDate: e.target.value })}
                 />
               </div>
 
               <div>
-                <label className="block mb-1">Valor *</label>
+                <label className="block mb-2 font-medium text-neutral-900">Valor *</label>
                 <input
                   type="number"
                   step="0.01"
                   required
-                  className="w-full border rounded px-3 py-2"
+                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white"
                   value={formData.amount || ''}
                   onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                 />
               </div>
 
               <div>
-                <label className="block mb-1">Número da Nota Fiscal</label>
+                <label className="block mb-2 font-medium text-neutral-900">Número da Nota Fiscal</label>
                 <input
                   type="text"
-                  className="w-full border rounded px-3 py-2"
+                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white"
                   value={formData.invoiceNumber || ''}
                   onChange={(e) => setFormData({ ...formData, invoiceNumber: e.target.value })}
                 />
               </div>
 
               <div>
-                <label className="block mb-1">Data de Recebimento</label>
+                <label className="block mb-2 font-medium text-neutral-900">Data de Recebimento</label>
                 <input
                   type="date"
-                  className="w-full border rounded px-3 py-2"
+                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white"
                   value={formData.receivedDate || ''}
                   onChange={(e) => setFormData({ ...formData, receivedDate: e.target.value })}
                 />
               </div>
 
               <div>
-                <label className="block mb-1">Valor Recebido</label>
+                <label className="block mb-2 font-medium text-neutral-900">Valor Recebido</label>
                 <input
                   type="number"
                   step="0.01"
-                  className="w-full border rounded px-3 py-2"
+                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white"
                   value={formData.receivedAmount || ''}
                   onChange={(e) => setFormData({ ...formData, receivedAmount: e.target.value })}
                 />
               </div>
 
               <div>
-                <label className="block mb-1">Categoria</label>
+                <label className="block mb-2 font-medium text-neutral-900">Categoria</label>
                 <select
-                  className="w-full border rounded px-3 py-2"
+                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white"
                   value={showCustomCategory ? 'custom' : (formData.category || '')}
                   onChange={(e) => {
                     const value = e.target.value
@@ -584,7 +584,7 @@ function ReceivablesPageContent() {
                 {showCustomCategory && (
                   <input
                     type="text"
-                    className="w-full border rounded px-3 py-2 mt-2"
+                    className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 mt-2 focus:border-blue-600 focus:outline-none bg-white"
                     placeholder="Inserir categoria personalizada"
                     value={customCategory || ''}
                     onChange={(e) => {
@@ -596,9 +596,9 @@ function ReceivablesPageContent() {
               </div>
 
               <div>
-                <label className="block mb-1">Observações</label>
+                <label className="block mb-2 font-medium text-neutral-900">Observações</label>
                 <textarea
-                  className="w-full border rounded px-3 py-2"
+                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white"
                   value={formData.notes || ''}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                 />
@@ -607,7 +607,7 @@ function ReceivablesPageContent() {
               <div className="flex gap-2">
                 <button
                   type="submit"
-                  className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
+                  className="bg-blue-700 text-white px-6 py-2 rounded-lg hover:bg-blue-800 font-medium transition-colors"
                 >
                   {editingReceivable ? 'Atualizar Conta a Receber' : 'Criar Conta a Receber'}
                 </button>
@@ -615,7 +615,7 @@ function ReceivablesPageContent() {
                   <button
                     type="button"
                     onClick={resetForm}
-                    className="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700"
+                    className="bg-neutral-600 text-white px-6 py-2 rounded-lg hover:bg-neutral-700 font-medium transition-colors"
                   >
                     Cancelar
                   </button>
@@ -626,15 +626,15 @@ function ReceivablesPageContent() {
         </div>
 
         <div>
-          <h2 className="text-xl font-semibold mb-4">Próximas Contas a Receber</h2>
+          <h2 className="text-xl font-bold mb-4 text-neutral-900">Próximas Contas a Receber</h2>
 
           {/* Filters and Sorting */}
-          <div className="mb-4 space-y-3 p-4 bg-gray-100 border border-gray-300 rounded">
+          <div className="mb-4 space-y-3 p-4 bg-white border-2 border-neutral-300 rounded-lg shadow-sm">
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Contrato</label>
+                <label className="block text-sm font-semibold text-neutral-900 mb-2">Contrato</label>
                 <select
-                  className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-white text-gray-900"
+                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
                   value={filters.contractId}
                   onChange={(e) => setFilters({ ...filters, contractId: e.target.value })}
                 >
@@ -648,9 +648,9 @@ function ReceivablesPageContent() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Status</label>
+                <label className="block text-sm font-semibold text-neutral-900 mb-2">Status</label>
                 <select
-                  className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-white text-gray-900"
+                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
                   value={filters.status}
                   onChange={(e) => setFilters({ ...filters, status: e.target.value })}
                 >
@@ -662,9 +662,9 @@ function ReceivablesPageContent() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Categoria</label>
+                <label className="block text-sm font-semibold text-neutral-900 mb-2">Categoria</label>
                 <select
-                  className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-white text-gray-900"
+                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
                   value={filters.category}
                   onChange={(e) => setFilters({ ...filters, category: e.target.value })}
                 >
@@ -676,9 +676,9 @@ function ReceivablesPageContent() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Ordenar Por</label>
+                <label className="block text-sm font-semibold text-neutral-900 mb-2">Ordenar Por</label>
                 <select
-                  className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-white text-gray-900"
+                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
                   value={filters.sortBy}
                   onChange={(e) => setFilters({ ...filters, sortBy: e.target.value })}
                 >
@@ -692,9 +692,9 @@ function ReceivablesPageContent() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Ordem</label>
+                <label className="block text-sm font-semibold text-neutral-900 mb-2">Ordem</label>
                 <select
-                  className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-white text-gray-900"
+                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
                   value={filters.sortOrder}
                   onChange={(e) => setFilters({ ...filters, sortOrder: e.target.value })}
                 >
@@ -707,23 +707,23 @@ function ReceivablesPageContent() {
           {loading ? (
             <p>Carregando...</p>
           ) : receivables.length === 0 ? (
-            <p className="text-gray-500">Nenhuma conta a receber ainda</p>
+            <p className="text-neutral-900 font-medium">Nenhuma conta a receber ainda</p>
           ) : (
             <div className="space-y-4 max-h-96 overflow-y-auto">
               {receivables.map((receivable: any) => (
-                <div key={receivable.id} className="border p-4 rounded">
+                <div key={receivable.id} className="bg-white border-2 border-neutral-300 p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow">
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
-                      <h3 className="font-semibold">{receivable.contract.projectName}</h3>
-                      <p className="text-sm text-gray-600">Cliente: {receivable.contract.clientName}</p>
-                      <p className="text-sm">
+                      <h3 className="font-bold text-lg text-neutral-900">{receivable.contract.projectName}</h3>
+                      <p className="text-sm text-neutral-900 font-medium">Cliente: {receivable.contract.clientName}</p>
+                      <p className="text-sm font-medium text-neutral-900">
                         Previsto: {formatDateForDisplay(receivable.expectedDate)}
                       </p>
-                      <p className="text-sm">Valor: R${receivable.amount.toLocaleString()}</p>
+                      <p className="text-sm font-semibold text-neutral-900">Valor: R${receivable.amount.toLocaleString()}</p>
                       {receivable.category && (
-                        <p className="text-sm">Categoria: {receivable.category}</p>
+                        <p className="text-sm font-medium text-neutral-900">Categoria: {receivable.category}</p>
                       )}
-                      <p className="text-sm">
+                      <p className="text-sm font-medium text-neutral-900">
                         Status: <span className={
                           receivable.status === 'received' ? 'text-green-600' :
                           receivable.status === 'overdue' ? 'text-red-600' :
@@ -740,13 +740,13 @@ function ReceivablesPageContent() {
                     <div className="flex gap-2 ml-4">
                       <button
                         onClick={() => editReceivable(receivable)}
-                        className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-sm font-medium transition-colors"
                       >
                         Editar
                       </button>
                       <button
                         onClick={() => deleteReceivable(receivable.id)}
-                        className="text-red-600 hover:text-red-800 text-sm font-medium"
+                        className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-sm font-medium transition-colors"
                       >
                         Excluir
                       </button>
@@ -756,7 +756,7 @@ function ReceivablesPageContent() {
                     {(receivable.status === 'pending' || receivable.status === 'overdue') && (
                       <button
                         onClick={() => markAsReceived(receivable.id, receivable.amount)}
-                        className="text-sm bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
+                        className="text-sm bg-green-600 text-white px-3 py-1 rounded-lg hover:bg-green-700 font-medium transition-colors"
                       >
                         Marcar como Recebido
                       </button>

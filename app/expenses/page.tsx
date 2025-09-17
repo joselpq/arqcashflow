@@ -85,7 +85,7 @@ function ExpensesPageContent() {
     { value: 'pending', label: 'Pendente', color: 'bg-yellow-100 text-yellow-800' },
     { value: 'paid', label: 'Pago', color: 'bg-green-100 text-green-800' },
     { value: 'overdue', label: 'Atrasado', color: 'bg-red-100 text-red-800' },
-    { value: 'cancelled', label: 'Cancelado', color: 'bg-gray-100 text-gray-800' },
+    { value: 'cancelled', label: 'Cancelado', color: 'bg-neutral-100 text-neutral-900' },
   ]
 
   useEffect(() => {
@@ -380,16 +380,16 @@ function ExpensesPageContent() {
     }
 
     const statusOption = statusOptions.find(s => s.value === status)
-    return statusOption || { label: status, color: 'bg-gray-100 text-gray-800' }
+    return statusOption || { label: status, color: 'bg-neutral-100 text-neutral-900' }
   }
 
   return (
-    <div className="min-h-screen p-8">
+    <div className="min-h-screen bg-neutral-50 p-8">
       <div className="mb-4">
         <a href="/" className="text-blue-600 hover:underline">← Voltar ao Início</a>
       </div>
 
-      <h1 className="text-3xl font-bold mb-8">Gerenciamento de Despesas</h1>
+      <h1 className="text-3xl font-bold mb-8 text-neutral-900">Gerenciamento de Despesas</h1>
 
       {/* Supervisor Alerts removed - clean slate for rebuild */}
 
@@ -430,9 +430,9 @@ function ExpensesPageContent() {
             <button
               type="button"
               onClick={() => setShowAISection(true)}
-              className={`px-4 py-2 rounded ${showAISection
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${showAISection
+                ? 'bg-blue-700 text-white'
+                : 'bg-neutral-100 text-neutral-900 hover:bg-neutral-200'
               }`}
             >
               🤖 Adicionar com IA
@@ -440,9 +440,9 @@ function ExpensesPageContent() {
             <button
               type="button"
               onClick={() => setShowAISection(false)}
-              className={`px-4 py-2 rounded ${!showAISection
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${!showAISection
+                ? 'bg-blue-700 text-white'
+                : 'bg-neutral-100 text-neutral-900 hover:bg-neutral-200'
               }`}
             >
               ✏️ Adicionar Manual
@@ -450,11 +450,11 @@ function ExpensesPageContent() {
           </div>
 
           {showAISection ? (
-            <div className="border p-6 rounded" id="expense-form">
-              <h2 className="text-xl font-semibold mb-4">Adicionar Despesa com IA</h2>
+            <div className="bg-white border-2 border-neutral-300 p-6 rounded-lg shadow-sm" id="expense-form">
+              <h2 className="text-xl font-bold mb-4 text-neutral-900">Adicionar Despesa com IA</h2>
 
               <div className="bg-blue-50 border border-blue-200 p-4 rounded mb-4">
-                <p className="text-sm text-blue-800">
+                <p className="text-sm text-blue-800 leading-relaxed">
                   💡 <strong>Dica:</strong> Descreva a despesa em linguagem natural. Exemplos:
                   <br />
                   <em>"Compra de materiais na Leroy Merlin, 5 mil reais, vencimento amanhã"</em>
@@ -490,10 +490,10 @@ function ExpensesPageContent() {
                           : 'bg-blue-50 border-blue-200 mr-8'
                       }`}
                     >
-                      <p className="text-sm font-bold mb-1 text-gray-800">
+                      <p className="text-sm font-bold mb-1 text-neutral-900">
                         {msg.role === 'user' ? '👤 Você' : '🤖 Assistente'}
                       </p>
-                      <p className="text-sm text-gray-900">{msg.content}</p>
+                      <p className="text-sm text-neutral-900 leading-relaxed">{msg.content}</p>
                     </div>
                   ))}
                 </div>
@@ -502,7 +502,7 @@ function ExpensesPageContent() {
               <form onSubmit={handleAISubmit} className="space-y-4">
                 <div>
                   <textarea
-                    className="w-full border rounded px-3 py-2 h-24"
+                    className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 h-24 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-600"
                     placeholder="Descreva a despesa que deseja criar..."
                     value={aiMessage}
                     onChange={(e) => setAiMessage(e.target.value)}
@@ -512,7 +512,7 @@ function ExpensesPageContent() {
                 <div className="flex gap-2">
                   <button
                     type="submit"
-                    className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+                    className="bg-blue-700 text-white px-6 py-2 rounded-lg hover:bg-blue-800 disabled:opacity-50 font-medium transition-colors"
                     disabled={aiLoading}
                   >
                     {aiLoading ? 'Processando...' : 'Enviar'}
@@ -524,7 +524,7 @@ function ExpensesPageContent() {
                         setAiHistory([])
                         setPendingExpense(null)
                       }}
-                      className="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700"
+                      className="bg-neutral-600 text-white px-6 py-2 rounded-lg hover:bg-neutral-700 font-medium transition-colors"
                     >
                       Limpar Conversa
                     </button>
@@ -533,52 +533,52 @@ function ExpensesPageContent() {
               </form>
             </div>
           ) : (
-            <div className="border p-6 rounded">
-              <h2 className="text-xl font-semibold mb-4">
+            <div className="bg-white border-2 border-neutral-300 p-6 rounded-lg shadow-sm">
+              <h2 className="text-xl font-bold mb-4 text-neutral-900">
                 {editingExpense ? 'Editar Despesa' : 'Adicionar Despesa Manual'}
               </h2>
 
               <form onSubmit={handleSubmit} className="space-y-4" id="expense-form">
                 <div>
-                  <label className="block text-sm font-medium mb-1">Descrição *</label>
+                  <label className="block text-sm font-medium mb-2 text-neutral-900">Descrição *</label>
                   <input
                     type="text"
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="w-full border rounded px-3 py-2"
+                    className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1">Valor *</label>
+                  <label className="block text-sm font-medium mb-2 text-neutral-900">Valor *</label>
                   <input
                     type="number"
                     step="0.01"
                     value={formData.amount}
                     onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                    className="w-full border rounded px-3 py-2"
+                    className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1">Data de Vencimento *</label>
+                  <label className="block text-sm font-medium mb-2 text-neutral-900">Data de Vencimento *</label>
                   <input
                     type="date"
                     value={formData.dueDate}
                     onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                    className="w-full border rounded px-3 py-2"
+                    className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1">Categoria *</label>
+                  <label className="block text-sm font-medium mb-2 text-neutral-900">Categoria *</label>
                   <select
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full border rounded px-3 py-2"
+                    className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white"
                     required
                   >
                     {expenseCategories.map(cat => (
@@ -588,11 +588,11 @@ function ExpensesPageContent() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1">Tipo</label>
+                  <label className="block text-sm font-medium mb-2 text-neutral-900">Tipo</label>
                   <select
                     value={formData.type}
                     onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                    className="w-full border rounded px-3 py-2"
+                    className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white"
                   >
                     {expenseTypes.map(type => (
                       <option key={type.value} value={type.value}>{type.label}</option>
@@ -601,11 +601,11 @@ function ExpensesPageContent() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1">Projeto</label>
+                  <label className="block text-sm font-medium mb-2 text-neutral-900">Projeto</label>
                   <select
                     value={formData.contractId}
                     onChange={(e) => setFormData({ ...formData, contractId: e.target.value })}
-                    className="w-full border rounded px-3 py-2"
+                    className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white"
                   >
                     <option value="">Nenhum projeto específico</option>
                     {contracts.map(contract => (
@@ -617,41 +617,41 @@ function ExpensesPageContent() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1">Fornecedor</label>
+                  <label className="block text-sm font-medium mb-2 text-neutral-900">Fornecedor</label>
                   <input
                     type="text"
                     value={formData.vendor}
                     onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
-                    className="w-full border rounded px-3 py-2"
+                    className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1">Número da Nota</label>
+                  <label className="block text-sm font-medium mb-2 text-neutral-900">Número da Nota</label>
                   <input
                     type="text"
                     value={formData.invoiceNumber}
                     onChange={(e) => setFormData({ ...formData, invoiceNumber: e.target.value })}
-                    className="w-full border rounded px-3 py-2"
+                    className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1">Observações</label>
+                  <label className="block text-sm font-medium mb-2 text-neutral-900">Observações</label>
                   <textarea
                     value={formData.notes}
                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    className="w-full border rounded px-3 py-2"
+                    className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white"
                     rows={3}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1">Status</label>
+                  <label className="block text-sm font-medium mb-2 text-neutral-900">Status</label>
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                    className="w-full border rounded px-3 py-2"
+                    className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white"
                   >
                     {statusOptions.map(status => (
                       <option key={status.value} value={status.value}>{status.label}</option>
@@ -662,23 +662,23 @@ function ExpensesPageContent() {
                 {(formData.status === 'paid' || editingExpense?.status === 'paid') && (
                   <>
                     <div>
-                      <label className="block text-sm font-medium mb-1">Data do Pagamento</label>
+                      <label className="block text-sm font-medium mb-2 text-neutral-900">Data do Pagamento</label>
                       <input
                         type="date"
                         value={formData.paidDate}
                         onChange={(e) => setFormData({ ...formData, paidDate: e.target.value })}
-                        className="w-full border rounded px-3 py-2"
+                        className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium mb-1">Valor Pago</label>
+                      <label className="block text-sm font-medium mb-2 text-neutral-900">Valor Pago</label>
                       <input
                         type="number"
                         step="0.01"
                         value={formData.paidAmount}
                         onChange={(e) => setFormData({ ...formData, paidAmount: e.target.value })}
-                        className="w-full border rounded px-3 py-2"
+                        className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white"
                         placeholder="Deixe vazio para usar o valor total"
                       />
                     </div>
@@ -688,7 +688,7 @@ function ExpensesPageContent() {
                 <div className="flex gap-2">
                   <button
                     type="submit"
-                    className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
+                    className="bg-blue-700 text-white px-6 py-2 rounded-lg hover:bg-blue-800 font-medium transition-colors"
                   >
                     {editingExpense ? 'Atualizar' : 'Criar'} Despesa
                   </button>
@@ -708,10 +708,10 @@ function ExpensesPageContent() {
         </div>
 
         {/* List Section */}
-        <div className="border p-6 rounded">
+        <div className="bg-white border-2 border-neutral-300 p-6 rounded-lg shadow-sm">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Lista de Despesas</h2>
-            {loading && <span className="text-blue-600">Carregando...</span>}
+            <h2 className="text-xl font-bold text-neutral-900">Lista de Despesas</h2>
+            {loading && <span className="text-blue-700 font-medium">Carregando...</span>}
           </div>
 
           {/* Filters */}
@@ -719,7 +719,7 @@ function ExpensesPageContent() {
             <select
               value={filters.status}
               onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-              className="border rounded px-3 py-2 text-sm"
+              className="border-2 border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white focus:border-blue-600 focus:outline-none"
             >
               <option value="all">Todos os Status</option>
               {statusOptions.map(status => (
@@ -730,7 +730,7 @@ function ExpensesPageContent() {
             <select
               value={filters.category}
               onChange={(e) => setFilters({ ...filters, category: e.target.value })}
-              className="border rounded px-3 py-2 text-sm"
+              className="border-2 border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white focus:border-blue-600 focus:outline-none"
             >
               <option value="all">Todas Categorias</option>
               {expenseCategories.map(cat => (
@@ -741,7 +741,7 @@ function ExpensesPageContent() {
             <select
               value={filters.type}
               onChange={(e) => setFilters({ ...filters, type: e.target.value })}
-              className="border rounded px-3 py-2 text-sm"
+              className="border-2 border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white focus:border-blue-600 focus:outline-none"
             >
               <option value="all">Todos os Tipos</option>
               {expenseTypes.map(type => (
@@ -752,7 +752,7 @@ function ExpensesPageContent() {
             <select
               value={filters.sortBy}
               onChange={(e) => setFilters({ ...filters, sortBy: e.target.value })}
-              className="border rounded px-3 py-2 text-sm"
+              className="border-2 border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white focus:border-blue-600 focus:outline-none"
             >
               <option value="dueDate">Data de Vencimento</option>
               <option value="amount">Valor</option>
@@ -767,17 +767,17 @@ function ExpensesPageContent() {
             {expenses.map(expense => {
               const statusDisplay = getStatusDisplay(expense)
               return (
-                <div key={expense.id} className="border rounded p-4 hover:bg-gray-50">
+                <div key={expense.id} className="bg-white border-2 border-neutral-300 rounded-lg p-6 hover:shadow-md transition-shadow">
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
-                        <h3 className="font-medium">{expense.description}</h3>
+                        <h3 className="font-bold text-lg text-neutral-900">{expense.description}</h3>
                         <span className={`px-2 py-1 rounded text-xs ${statusDisplay.color}`}>
                           {statusDisplay.label}
                         </span>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm text-gray-600">
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm text-neutral-900 font-medium">
                         <div>
                           <strong>Valor:</strong> R$ {expense.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </div>
@@ -795,13 +795,13 @@ function ExpensesPageContent() {
                       </div>
 
                       {expense.contract && (
-                        <div className="text-sm text-blue-600 mt-1">
+                        <div className="text-sm text-blue-700 mt-1 font-medium">
                           <strong>Projeto:</strong> {expense.contract.clientName} - {expense.contract.projectName}
                         </div>
                       )}
 
                       {expense.paidDate && (
-                        <div className="text-sm text-green-600 mt-1">
+                        <div className="text-sm text-green-700 mt-1 font-medium">
                           <strong>Pago em:</strong> {formatDateForDisplay(expense.paidDate)}
                           {expense.paidAmount && expense.paidAmount !== expense.amount && (
                             <span> - R$ {expense.paidAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
@@ -814,20 +814,20 @@ function ExpensesPageContent() {
                       {expense.status === 'pending' && (
                         <button
                           onClick={() => markAsPaid(expense)}
-                          className="text-xs bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
+                          className="text-xs bg-green-600 text-white px-3 py-1 rounded-lg hover:bg-green-700 font-medium transition-colors"
                         >
                           Marcar Pago
                         </button>
                       )}
                       <button
                         onClick={() => editExpense(expense)}
-                        className="text-xs bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
+                        className="text-xs bg-blue-600 text-white px-3 py-1 rounded-lg hover:bg-blue-700 font-medium transition-colors"
                       >
                         Editar
                       </button>
                       <button
                         onClick={() => deleteExpense(expense)}
-                        className="text-xs bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+                        className="text-xs bg-red-600 text-white px-3 py-1 rounded-lg hover:bg-red-700 font-medium transition-colors"
                       >
                         Excluir
                       </button>
@@ -838,7 +838,7 @@ function ExpensesPageContent() {
             })}
 
             {expenses.length === 0 && !loading && (
-              <div className="text-center text-gray-500 py-8">
+              <div className="text-center text-neutral-900 py-8 font-medium">
                 Nenhuma despesa encontrada
               </div>
             )}

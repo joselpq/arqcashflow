@@ -52,17 +52,17 @@ export default function AIChatPage() {
   }
 
   return (
-    <div className="min-h-screen p-8">
+    <div className="min-h-screen bg-neutral-50 p-8">
       <div className="mb-4">
         <a href="/" className="text-blue-600 hover:underline">← Voltar ao Início</a>
       </div>
 
-      <h1 className="text-3xl font-bold mb-8">Chat IA - Faça Perguntas Sobre Seu Fluxo de Caixa</h1>
+      <h1 className="text-3xl font-bold mb-8 text-neutral-900">Chat IA - Faça Perguntas Sobre Seu Fluxo de Caixa</h1>
 
 
       <div className="max-w-4xl mx-auto">
         <div className="bg-yellow-50 border border-yellow-200 p-4 rounded mb-6">
-          <p className="text-sm">
+          <p className="text-sm text-yellow-800 leading-relaxed">
             <strong>Nota:</strong> Certifique-se de configurar sua OPENAI_API_KEY no arquivo .env para usar este recurso.
           </p>
         </div>
@@ -71,7 +71,7 @@ export default function AIChatPage() {
           <div className="flex gap-2">
             <input
               type="text"
-              className="flex-1 border rounded px-4 py-2"
+              className="flex-1 border-2 border-neutral-300 rounded-lg px-4 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-600"
               placeholder="Faça uma pergunta sobre seu fluxo de caixa... (ex: Qual foi minha receita média mensal?)"
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
@@ -79,7 +79,7 @@ export default function AIChatPage() {
             />
             <button
               type="submit"
-              className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+              className="bg-blue-700 text-white px-6 py-2 rounded-lg hover:bg-blue-800 disabled:opacity-50 font-medium transition-colors"
               disabled={loading}
             >
               {loading ? 'Processando...' : 'Perguntar'}
@@ -88,8 +88,8 @@ export default function AIChatPage() {
         </form>
 
         <div className="space-y-6">
-          <h2 className="text-xl font-semibold">Perguntas de Exemplo:</h2>
-          <ul className="list-disc list-inside text-gray-600 space-y-1">
+          <h2 className="text-xl font-bold text-neutral-900">Perguntas de Exemplo:</h2>
+          <ul className="list-disc list-inside text-neutral-800 space-y-1 leading-relaxed">
             <li>Qual foi minha receita total no mês passado?</li>
             <li>Quantos contratos ativos eu tenho?</li>
             <li>Qual é o valor médio dos meus contratos?</li>
@@ -101,19 +101,19 @@ export default function AIChatPage() {
 
           {history.length > 0 && (
             <>
-              <h2 className="text-xl font-semibold mt-8">Histórico do Chat</h2>
+              <h2 className="text-xl font-bold mt-8 text-neutral-900">Histórico do Chat</h2>
               <div className="space-y-4">
                 {history.map((item, index) => (
-                  <div key={index} className="border p-4 rounded">
-                    <div className="mb-2">
+                  <div key={index} className="bg-white border-2 border-neutral-300 p-6 rounded-lg shadow-sm">
+                    <div className="mb-2 text-neutral-900">
                       <strong>P:</strong> {item.question}
                     </div>
-                    <div className="mb-2">
+                    <div className="mb-2 text-neutral-900">
                       <strong>R:</strong> {item.answer}
                     </div>
-                    <details className="text-sm text-gray-600">
-                      <summary className="cursor-pointer">Mostrar Consulta SQL</summary>
-                      <pre className="mt-2 p-2 bg-gray-100 rounded overflow-x-auto">
+                    <details className="text-sm text-neutral-700">
+                      <summary className="cursor-pointer font-medium">Mostrar Consulta SQL</summary>
+                      <pre className="mt-2 p-2 bg-neutral-100 rounded-lg overflow-x-auto text-neutral-900">
                         {item.sqlQuery}
                       </pre>
                     </details>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuth } from '@/lib/auth-utils'
+import { isDateBefore, isDateInRange } from '@/lib/date-utils'
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,6 +12,7 @@ export async function GET(request: NextRequest) {
     const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
     const currentMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59)
     const today = new Date()
+
 
     // Get contracts data
     const contracts = await prisma.contract.findMany({
@@ -39,8 +41,7 @@ export async function GET(request: NextRequest) {
     // Revenue calculations (actual received money)
     const thisMonthReceived = receivables
       .filter(r => r.status === 'received' && r.receivedDate &&
-        new Date(r.receivedDate) >= currentMonthStart &&
-        new Date(r.receivedDate) <= currentMonthEnd)
+        isDateInRange(r.receivedDate, currentMonthStart, currentMonthEnd))
       .reduce((sum, r) => sum + (r.receivedAmount || r.amount), 0)
 
     const totalReceived = receivables
@@ -50,8 +51,7 @@ export async function GET(request: NextRequest) {
     // Expense calculations (actual paid money)
     const thisMonthExpenses = expenses
       .filter(e => e.status === 'paid' && e.paidDate &&
-        new Date(e.paidDate) >= currentMonthStart &&
-        new Date(e.paidDate) <= currentMonthEnd)
+        isDateInRange(e.paidDate, currentMonthStart, currentMonthEnd))
       .reduce((sum, e) => sum + (e.paidAmount || e.amount), 0)
 
     const totalExpenses = expenses
@@ -73,11 +73,11 @@ export async function GET(request: NextRequest) {
 
     // Overdue items (critical alerts)
     const overdueReceivables = receivables.filter(r =>
-      r.status === 'pending' && new Date(r.expectedDate) < today
+      r.status === 'pending' && isDateBefore(r.expectedDate, today)
     )
 
     const overdueExpenses = expenses.filter(e =>
-      e.status === 'pending' && new Date(e.dueDate) < today
+      e.status === 'pending' && isDateBefore(e.dueDate, today)
     )
 
     // Upcoming items (next 7 days)
@@ -86,14 +86,14 @@ export async function GET(request: NextRequest) {
 
     const upcomingReceivables = receivables.filter(r =>
       r.status === 'pending' &&
-      new Date(r.expectedDate) >= today &&
-      new Date(r.expectedDate) <= nextWeek
+      !isDateBefore(r.expectedDate, today) &&
+      isDateInRange(r.expectedDate, today, nextWeek)
     ).sort((a, b) => new Date(a.expectedDate).getTime() - new Date(b.expectedDate).getTime())
 
     const upcomingExpenses = expenses.filter(e =>
       e.status === 'pending' &&
-      new Date(e.dueDate) >= today &&
-      new Date(e.dueDate) <= nextWeek
+      !isDateBefore(e.dueDate, today) &&
+      isDateInRange(e.dueDate, today, nextWeek)
     ).sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
 
     // Cash flow health assessment
@@ -120,14 +120,12 @@ export async function GET(request: NextRequest) {
 
       const monthReceived = receivables
         .filter(r => r.status === 'received' && r.receivedDate &&
-          new Date(r.receivedDate) >= monthStart &&
-          new Date(r.receivedDate) <= monthEnd)
+          isDateInRange(r.receivedDate, monthStart, monthEnd))
         .reduce((sum, r) => sum + (r.receivedAmount || r.amount), 0)
 
       const monthExpenses = expenses
         .filter(e => e.status === 'paid' && e.paidDate &&
-          new Date(e.paidDate) >= monthStart &&
-          new Date(e.paidDate) <= monthEnd)
+          isDateInRange(e.paidDate, monthStart, monthEnd))
         .reduce((sum, e) => sum + (e.paidAmount || e.amount), 0)
 
       monthlyData.push({

@@ -328,12 +328,12 @@ function ContractsPageContent() {
   }
 
   return (
-    <div className="min-h-screen p-8">
+    <div className="min-h-screen bg-neutral-50 p-8">
       <div className="mb-4">
-        <a href="/" className="text-blue-600 hover:underline">← Voltar ao Início</a>
+        <a href="/" className="text-blue-700 hover:text-blue-800 font-medium">← Dashboard</a>
       </div>
 
-      <h1 className="text-3xl font-bold mb-8">Gerenciamento de Contratos</h1>
+      <h1 className="text-3xl font-bold text-neutral-900 tracking-wide mb-8">Contratos</h1>
 
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -343,9 +343,9 @@ function ContractsPageContent() {
             <button
               type="button"
               onClick={() => setShowAISection(true)}
-              className={`px-4 py-2 rounded ${showAISection
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${showAISection
+                ? 'bg-blue-700 text-white'
+                : 'bg-neutral-100 text-neutral-900 hover:bg-neutral-200'
               }`}
             >
               🤖 Adicionar com IA
@@ -353,9 +353,9 @@ function ContractsPageContent() {
             <button
               type="button"
               onClick={() => setShowAISection(false)}
-              className={`px-4 py-2 rounded ${!showAISection
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${!showAISection
+                ? 'bg-blue-700 text-white'
+                : 'bg-neutral-100 text-neutral-900 hover:bg-neutral-200'
               }`}
             >
               ✏️ Adicionar Manual
@@ -364,9 +364,9 @@ function ContractsPageContent() {
 
           {showAISection ? (
             <div id="contract-form">
-              <h2 className="text-xl font-semibold mb-4">Adicionar Contrato com IA</h2>
+              <h2 className="text-xl font-bold mb-4 text-neutral-900">Adicionar Contrato com IA</h2>
 
-              <div className="bg-blue-50 border border-blue-200 p-4 rounded mb-4">
+              <div className="bg-blue-50/50 border border-blue-200/50 p-4 rounded-lg mb-4">
                 <p className="text-sm text-blue-800">
                   💡 <strong>Dica:</strong> Descreva o contrato em linguagem natural. Exemplo:
                   <br />
@@ -380,16 +380,16 @@ function ContractsPageContent() {
                   {aiHistory.map((msg, idx) => (
                     <div
                       key={idx}
-                      className={`p-3 rounded border ${
+                      className={`p-3 rounded-lg border ${
                         msg.role === 'user'
-                          ? 'bg-gray-100 border-gray-300 ml-8'
-                          : 'bg-blue-50 border-blue-200 mr-8'
+                          ? 'bg-neutral-100 border-neutral-200/60 ml-8'
+                          : 'bg-blue-50/50 border-blue-200/50 mr-8'
                       }`}
                     >
-                      <p className="text-sm font-bold mb-1 text-gray-800">
+                      <p className="text-sm font-bold mb-1 text-neutral-900">
                         {msg.role === 'user' ? '👤 Você' : '🤖 Assistente'}
                       </p>
-                      <p className="text-sm text-gray-900">{msg.content}</p>
+                      <p className="text-sm text-neutral-900 leading-relaxed">{msg.content}</p>
                     </div>
                   ))}
                 </div>
@@ -398,7 +398,7 @@ function ContractsPageContent() {
               <form onSubmit={handleAISubmit} className="space-y-4">
                 <div>
                   <textarea
-                    className="w-full border rounded px-3 py-2 h-24"
+                    className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 h-24 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-600"
                     placeholder="Descreva o contrato que deseja criar..."
                     value={aiMessage}
                     onChange={(e) => setAiMessage(e.target.value)}
@@ -408,7 +408,7 @@ function ContractsPageContent() {
                 <div className="flex gap-2">
                   <button
                     type="submit"
-                    className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+                    className="bg-blue-700 text-white px-6 py-2 rounded-lg hover:bg-blue-800 disabled:opacity-50 font-medium transition-colors"
                     disabled={aiLoading}
                   >
                     {aiLoading ? 'Processando...' : 'Enviar'}
@@ -417,7 +417,7 @@ function ContractsPageContent() {
                     <button
                       type="button"
                       onClick={() => setAiHistory([])}
-                      className="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700"
+                      className="bg-neutral-600 text-white px-6 py-2 rounded-lg hover:bg-neutral-700 font-medium transition-colors"
                     >
                       Limpar Conversa
                     </button>
@@ -427,68 +427,68 @@ function ContractsPageContent() {
             </div>
           ) : (
             <div>
-              <h2 className="text-xl font-semibold mb-4">
+              <h2 className="text-xl font-bold mb-4 text-neutral-900">
                 {editingContract ? 'Editar Contrato' : 'Adicionar Contrato Manual'}
               </h2>
               <form onSubmit={handleSubmit} className="space-y-4" id="contract-form">
             <div>
-              <label className="block mb-1">Nome do Cliente *</label>
+              <label className="block mb-2 font-medium text-neutral-900">Nome do Cliente *</label>
               <input
                 type="text"
                 required
-                className="w-full border rounded px-3 py-2"
+                className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white"
                 value={formData.clientName}
                 onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
               />
             </div>
 
             <div>
-              <label className="block mb-1">Nome do Projeto *</label>
+              <label className="block mb-2 font-medium text-neutral-900">Nome do Projeto *</label>
               <input
                 type="text"
                 required
-                className="w-full border rounded px-3 py-2"
+                className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white"
                 value={formData.projectName}
                 onChange={(e) => setFormData({ ...formData, projectName: e.target.value })}
               />
             </div>
 
             <div>
-              <label className="block mb-1">Descrição</label>
+              <label className="block mb-2 font-medium text-neutral-900">Descrição</label>
               <textarea
-                className="w-full border rounded px-3 py-2"
+                className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               />
             </div>
 
             <div>
-              <label className="block mb-1">Valor Total *</label>
+              <label className="block mb-2 font-medium text-neutral-900">Valor Total *</label>
               <input
                 type="number"
                 step="0.01"
                 required
-                className="w-full border rounded px-3 py-2"
+                className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white"
                 value={formData.totalValue}
                 onChange={(e) => setFormData({ ...formData, totalValue: e.target.value })}
               />
             </div>
 
             <div>
-              <label className="block mb-1">Data de Assinatura *</label>
+              <label className="block mb-2 font-medium text-neutral-900">Data de Assinatura *</label>
               <input
                 type="date"
                 required
-                className="w-full border rounded px-3 py-2"
+                className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white"
                 value={formData.signedDate}
                 onChange={(e) => setFormData({ ...formData, signedDate: e.target.value })}
               />
             </div>
 
             <div>
-              <label className="block mb-1">Status</label>
+              <label className="block mb-2 font-medium text-neutral-900">Status</label>
               <select
-                className="w-full border rounded px-3 py-2"
+                className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white"
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value })}
               >
@@ -499,9 +499,9 @@ function ContractsPageContent() {
             </div>
 
             <div>
-              <label className="block mb-1">Categoria</label>
+              <label className="block mb-2 font-medium text-neutral-900">Categoria</label>
               <select
-                className="w-full border rounded px-3 py-2"
+                className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white"
                 value={showCustomCategory ? 'custom' : formData.category}
                 onChange={(e) => {
                   const value = e.target.value
@@ -532,7 +532,7 @@ function ContractsPageContent() {
               {showCustomCategory && (
                 <input
                   type="text"
-                  className="w-full border rounded px-3 py-2 mt-2"
+                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 mt-2 focus:border-blue-600 focus:outline-none bg-white"
                   placeholder="Digite a categoria personalizada"
                   value={customCategory}
                   onChange={(e) => {
@@ -544,9 +544,9 @@ function ContractsPageContent() {
             </div>
 
             <div>
-              <label className="block mb-1">Observações</label>
+              <label className="block mb-2 font-medium text-neutral-900">Observações</label>
               <textarea
-                className="w-full border rounded px-3 py-2"
+                className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white"
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               />
@@ -555,7 +555,7 @@ function ContractsPageContent() {
             <div className="flex gap-2">
               <button
                 type="submit"
-                className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
+                className="bg-blue-700 text-white px-6 py-2 rounded-lg hover:bg-blue-800 font-medium transition-colors"
               >
                 {editingContract ? 'Atualizar Contrato' : 'Criar Contrato'}
               </button>
@@ -563,7 +563,7 @@ function ContractsPageContent() {
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700"
+                  className="bg-neutral-600 text-white px-6 py-2 rounded-lg hover:bg-neutral-700 font-medium transition-colors"
                 >
                   Cancelar
                 </button>
@@ -575,15 +575,15 @@ function ContractsPageContent() {
         </div>
 
         <div>
-          <h2 className="text-xl font-semibold mb-4">Contratos Existentes</h2>
+          <h2 className="text-xl font-bold mb-4 text-neutral-900">Contratos Existentes</h2>
 
           {/* Filters and Sorting */}
-          <div className="mb-4 space-y-3 p-4 bg-gray-100 border border-gray-300 rounded">
+          <div className="mb-4 space-y-3 p-4 bg-white border-2 border-neutral-300 rounded-lg shadow-sm">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Status</label>
+                <label className="block text-sm font-semibold text-neutral-900 mb-2">Status</label>
                 <select
-                  className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-white text-gray-900"
+                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
                   value={filters.status}
                   onChange={(e) => setFilters({ ...filters, status: e.target.value })}
                 >
@@ -595,9 +595,9 @@ function ContractsPageContent() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Categoria</label>
+                <label className="block text-sm font-semibold text-neutral-900 mb-2">Categoria</label>
                 <select
-                  className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-white text-gray-900"
+                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
                   value={filters.category}
                   onChange={(e) => setFilters({ ...filters, category: e.target.value })}
                 >
@@ -609,9 +609,9 @@ function ContractsPageContent() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Ordenar Por</label>
+                <label className="block text-sm font-semibold text-neutral-900 mb-2">Ordenar Por</label>
                 <select
-                  className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-white text-gray-900"
+                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
                   value={filters.sortBy}
                   onChange={(e) => setFilters({ ...filters, sortBy: e.target.value })}
                 >
@@ -625,9 +625,9 @@ function ContractsPageContent() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Ordem</label>
+                <label className="block text-sm font-semibold text-neutral-900 mb-2">Ordem</label>
                 <select
-                  className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-white text-gray-900"
+                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
                   value={filters.sortOrder}
                   onChange={(e) => setFilters({ ...filters, sortOrder: e.target.value })}
                 >
@@ -640,20 +640,20 @@ function ContractsPageContent() {
           {loading ? (
             <p>Carregando...</p>
           ) : contracts.length === 0 ? (
-            <p className="text-gray-500">Nenhum contrato ainda</p>
+            <p className="text-neutral-900 font-medium">Nenhum contrato ainda</p>
           ) : (
             <div className="space-y-4 max-h-96 overflow-y-auto">
               {contracts.map((contract: any) => (
-                <div key={contract.id} className="border p-4 rounded">
+                <div key={contract.id} className="bg-white border-2 border-neutral-300 p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow">
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
-                      <h3 className="font-semibold">{contract.projectName}</h3>
-                      <p className="text-sm text-gray-600">Cliente: {contract.clientName}</p>
-                      <p className="text-sm">Valor: R$ {contract.totalValue.toLocaleString('pt-BR')}</p>
+                      <h3 className="font-bold text-lg text-neutral-900">{contract.projectName}</h3>
+                      <p className="text-sm text-neutral-900 font-medium">Cliente: {contract.clientName}</p>
+                      <p className="text-sm font-semibold text-neutral-900">Valor: R$ {contract.totalValue.toLocaleString('pt-BR')}</p>
                       <div className="flex items-center gap-2 my-1">
-                        <span className="text-sm">Status:</span>
+                        <span className="text-sm font-medium text-neutral-900">Status:</span>
                         <select
-                          className="text-sm border border-gray-300 rounded px-2 py-1"
+                          className="text-sm border-2 border-neutral-300 rounded-lg px-2 py-1 bg-white focus:border-blue-600 focus:outline-none"
                           value={contract.status}
                           onChange={async (e) => {
                             const newStatus = e.target.value
@@ -681,21 +681,21 @@ function ContractsPageContent() {
                           <option value="cancelled">Cancelado</option>
                         </select>
                       </div>
-                      <p className="text-sm">Recebíveis: {contract.receivables.length}</p>
+                      <p className="text-sm font-medium text-neutral-900">Recebíveis: {contract.receivables.length}</p>
                       {contract.category && (
-                        <p className="text-sm">Categoria: {contract.category}</p>
+                        <p className="text-sm font-medium text-neutral-900">Categoria: {contract.category}</p>
                       )}
                     </div>
                     <div className="flex gap-2 ml-4">
                       <button
                         onClick={() => editContract(contract)}
-                        className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-sm font-medium transition-colors"
                       >
                         Editar
                       </button>
                       <button
                         onClick={() => deleteContract(contract.id)}
-                        className="text-red-600 hover:text-red-800 text-sm font-medium"
+                        className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-sm font-medium transition-colors"
                       >
                         Excluir
                       </button>

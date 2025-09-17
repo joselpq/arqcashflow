@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import ExportButtons from './components/ExportButtons'
+import { formatDateShort } from '@/lib/date-utils'
 
 interface DashboardData {
   metrics: {
@@ -62,17 +63,14 @@ function formatCurrency(amount: number): string {
 }
 
 function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('pt-BR', {
-    day: '2-digit',
-    month: '2-digit'
-  })
+  return formatDateShort(dateStr)
 }
 
 function HealthIndicator({ status, message }: { status: string, message: string }) {
   const colors = {
-    good: 'bg-green-50 text-green-900 border-green-200',
-    warning: 'bg-amber-50 text-amber-900 border-amber-200',
-    critical: 'bg-red-50 text-red-900 border-red-200'
+    good: 'bg-green-50/50 text-green-900 border-green-200/50',
+    warning: 'bg-amber-50/50 text-amber-900 border-amber-200/50',
+    critical: 'bg-red-50/50 text-red-900 border-red-200/50'
   }
 
   const indicators = {
@@ -82,9 +80,9 @@ function HealthIndicator({ status, message }: { status: string, message: string 
   }
 
   const indicatorColors = {
-    good: 'text-green-500',
-    warning: 'text-amber-500',
-    critical: 'text-red-500'
+    good: 'text-green-600',
+    warning: 'text-amber-600',
+    critical: 'text-red-600'
   }
 
   return (
@@ -109,17 +107,17 @@ function MetricCard({ title, value, subtitle, trend, color = 'blue' }: {
   color?: 'blue' | 'green' | 'red' | 'yellow'
 }) {
   const colorClasses = {
-    blue: 'bg-white border-neutral-200',
-    green: 'bg-white border-neutral-200',
-    red: 'bg-white border-neutral-200',
-    yellow: 'bg-white border-neutral-200'
+    blue: 'bg-white border-neutral-200/60',
+    green: 'bg-white border-neutral-200/60',
+    red: 'bg-white border-neutral-200/60',
+    yellow: 'bg-white border-neutral-200/60'
   }
 
   const valueColors = {
-    blue: 'text-blue-600',
-    green: 'text-green-600',
+    blue: 'text-blue-700',
+    green: 'text-green-700',
     red: 'text-red-600',
-    yellow: 'text-amber-600'
+    yellow: 'text-amber-700'
   }
 
   const trendIndicators = {
@@ -249,7 +247,7 @@ export default function Dashboard() {
                      data.metrics.thisMonthProfit < 0 ? 'down' : 'neutral'
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-neutral-50">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-12">
           <div>

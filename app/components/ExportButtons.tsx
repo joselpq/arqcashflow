@@ -20,7 +20,7 @@ export default function ExportButtons() {
       </a>
 
       {/* Instructions for Google Sheets */}
-      <div className="text-xs text-gray-600 mt-3 p-3 bg-neutral-50 border border-neutral-200 rounded">
+      <div className="text-xs text-neutral-800 mt-3 p-3 bg-neutral-50 border border-neutral-200 rounded">
         <div className="font-medium mb-2 text-neutral-700">Como importar nas Planilhas Google:</div>
         <ol className="ml-4 list-decimal space-y-1">
           <li>Clique em "Baixar CSV para Planilhas Google" acima</li>

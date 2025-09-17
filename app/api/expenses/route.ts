@@ -104,7 +104,12 @@ export async function GET(request: NextRequest) {
     const overdue = expenses
       .filter(expense => {
         if (expense.status !== 'pending') return false
-        return new Date(expense.dueDate) < new Date()
+        // Safe date comparison without timezone issues
+        const dueDate = new Date(expense.dueDate)
+        const today = new Date()
+        const dueDateOnly = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate())
+        const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+        return dueDateOnly < todayOnly
       })
       .reduce((sum, expense) => sum + expense.amount, 0)
 
