@@ -159,7 +159,7 @@ export default function LandingPage() {
               Você se identifica com isso?
             </h2>
             <p className="text-xl text-neutral-600 max-w-3xl mx-auto">
-              A maioria dos profissionais liberais vive esses problemas diariamente
+              A maioria das pequenas empresas e profissionais liberais vivem esses problemas diariamente
             </p>
           </div>
 
