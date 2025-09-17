@@ -41,10 +41,21 @@ export default function EnhancedAIChatPage() {
           continue
         }
 
-        if (file.size > 10 * 1024 * 1024) { // 10MB limit
-          alert(`Arquivo ${file.name} é muito grande. Máximo: 10MB.`)
+        // Calculate estimated payload size after base64 encoding
+        const estimatedPayloadSize = file.size * 1.4 // 33% base64 overhead + other request data
+
+        if (estimatedPayloadSize > 4 * 1024 * 1024) { // 4MB payload limit
+          const maxFileSize = Math.floor(4 * 1024 * 1024 / 1.4 / 1024 / 1024 * 10) / 10 // Calculate max file size in MB
+          alert(`Arquivo ${file.name} é muito grande (${(file.size / 1024 / 1024).toFixed(1)}MB). ` +
+                `Máximo permitido: ${maxFileSize}MB para processamento via API.\n\n` +
+                `Para arquivos grandes, considere:\n` +
+                `• Comprimir o PDF\n` +
+                `• Usar imagens das páginas principais\n` +
+                `• Dividir em múltiplos arquivos menores`)
           continue
         }
+
+        console.log(`File ${file.name}: ${(file.size / 1024 / 1024).toFixed(1)}MB → estimated payload: ${(estimatedPayloadSize / 1024 / 1024).toFixed(1)}MB`)
 
         try {
           // Convert to base64 with better error handling
@@ -391,7 +402,10 @@ export default function EnhancedAIChatPage() {
               📎 Arraste arquivos aqui ou clique para selecionar
             </p>
             <p className="text-xs text-neutral-500 mb-2">
-              Formatos: PNG, JPG, PDF • Máximo: 10MB por arquivo
+              Formatos: PNG, JPG, PDF • Máximo: ~2.8MB por arquivo
+            </p>
+            <p className="text-xs text-yellow-600 mb-2">
+              ⚠️ Arquivos grandes podem causar erro de tamanho de requisição
             </p>
             <button
               type="button"
@@ -439,6 +453,7 @@ export default function EnhancedAIChatPage() {
             <li>📄 <strong>Contratos:</strong> "Criar contrato de 50 mil com João Silva" ou envie documento</li>
             <li>💰 <strong>Despesas:</strong> "Adicionar despesa de materiais 5 mil" ou envie recibo</li>
             <li>🧾 <strong>Documentos:</strong> Envie recibos, notas fiscais ou contratos para processamento automático</li>
+            <li>⚠️ <strong>Arquivos grandes:</strong> Para PDFs maiores que 2.8MB, descreva o conteúdo: "Contrato Maria Santos 85 mil residencial assinado ontem"</li>
           </ul>
         </div>
       </div>
