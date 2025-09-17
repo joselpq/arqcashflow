@@ -45,3 +45,8 @@ prisma/dev.db
 *.db
 
 /app/generated/prisma
+
+# Test and debug files
+Testando.xlsx
+test*.csv
+debug-*.js
