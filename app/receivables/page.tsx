@@ -483,7 +483,7 @@ function ReceivablesPageContent() {
                 <label className="block mb-2 font-medium text-neutral-900">Contrato *</label>
                 <select
                   required
-                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white"
+                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
                   value={formData.contractId || ''}
                   onChange={(e) => setFormData({ ...formData, contractId: e.target.value })}
                 >
@@ -501,7 +501,7 @@ function ReceivablesPageContent() {
                 <input
                   type="date"
                   required
-                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white"
+                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
                   value={formData.expectedDate || ''}
                   onChange={(e) => setFormData({ ...formData, expectedDate: e.target.value })}
                 />
@@ -513,7 +513,7 @@ function ReceivablesPageContent() {
                   type="number"
                   step="0.01"
                   required
-                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white"
+                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
                   value={formData.amount || ''}
                   onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                 />
@@ -523,7 +523,7 @@ function ReceivablesPageContent() {
                 <label className="block mb-2 font-medium text-neutral-900">Número da Nota Fiscal</label>
                 <input
                   type="text"
-                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white"
+                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
                   value={formData.invoiceNumber || ''}
                   onChange={(e) => setFormData({ ...formData, invoiceNumber: e.target.value })}
                 />
@@ -533,7 +533,7 @@ function ReceivablesPageContent() {
                 <label className="block mb-2 font-medium text-neutral-900">Data de Recebimento</label>
                 <input
                   type="date"
-                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white"
+                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
                   value={formData.receivedDate || ''}
                   onChange={(e) => setFormData({ ...formData, receivedDate: e.target.value })}
                 />
@@ -544,7 +544,7 @@ function ReceivablesPageContent() {
                 <input
                   type="number"
                   step="0.01"
-                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white"
+                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
                   value={formData.receivedAmount || ''}
                   onChange={(e) => setFormData({ ...formData, receivedAmount: e.target.value })}
                 />
@@ -553,7 +553,7 @@ function ReceivablesPageContent() {
               <div>
                 <label className="block mb-2 font-medium text-neutral-900">Categoria</label>
                 <select
-                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white"
+                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
                   value={showCustomCategory ? 'custom' : (formData.category || '')}
                   onChange={(e) => {
                     const value = e.target.value
@@ -584,7 +584,7 @@ function ReceivablesPageContent() {
                 {showCustomCategory && (
                   <input
                     type="text"
-                    className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 mt-2 focus:border-blue-600 focus:outline-none bg-white"
+                    className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 mt-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
                     placeholder="Inserir categoria personalizada"
                     value={customCategory || ''}
                     onChange={(e) => {
@@ -598,7 +598,7 @@ function ReceivablesPageContent() {
               <div>
                 <label className="block mb-2 font-medium text-neutral-900">Observações</label>
                 <textarea
-                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white"
+                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
                   value={formData.notes || ''}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                 />

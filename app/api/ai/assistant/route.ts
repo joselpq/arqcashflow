@@ -256,7 +256,7 @@ Be thorough in extracting information. Use null for missing values. Return ONLY 
       ]
 
       const analysisResponse = await claude.messages.create({
-        model: 'claude-3-5-sonnet-20241022',
+        model: 'claude-3-5-sonnet-20241022', // Latest stable Sonnet for document analysis
         max_tokens: 800,
         messages: [
           {

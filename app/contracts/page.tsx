@@ -436,7 +436,7 @@ function ContractsPageContent() {
               <input
                 type="text"
                 required
-                className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white"
+                className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
                 value={formData.clientName}
                 onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
               />
@@ -447,7 +447,7 @@ function ContractsPageContent() {
               <input
                 type="text"
                 required
-                className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white"
+                className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
                 value={formData.projectName}
                 onChange={(e) => setFormData({ ...formData, projectName: e.target.value })}
               />
@@ -456,7 +456,7 @@ function ContractsPageContent() {
             <div>
               <label className="block mb-2 font-medium text-neutral-900">Descrição</label>
               <textarea
-                className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white"
+                className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               />
@@ -468,7 +468,7 @@ function ContractsPageContent() {
                 type="number"
                 step="0.01"
                 required
-                className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white"
+                className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
                 value={formData.totalValue}
                 onChange={(e) => setFormData({ ...formData, totalValue: e.target.value })}
               />
@@ -479,7 +479,7 @@ function ContractsPageContent() {
               <input
                 type="date"
                 required
-                className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white"
+                className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
                 value={formData.signedDate}
                 onChange={(e) => setFormData({ ...formData, signedDate: e.target.value })}
               />
@@ -488,7 +488,7 @@ function ContractsPageContent() {
             <div>
               <label className="block mb-2 font-medium text-neutral-900">Status</label>
               <select
-                className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white"
+                className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value })}
               >
@@ -501,7 +501,7 @@ function ContractsPageContent() {
             <div>
               <label className="block mb-2 font-medium text-neutral-900">Categoria</label>
               <select
-                className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white"
+                className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
                 value={showCustomCategory ? 'custom' : formData.category}
                 onChange={(e) => {
                   const value = e.target.value
@@ -546,7 +546,7 @@ function ContractsPageContent() {
             <div>
               <label className="block mb-2 font-medium text-neutral-900">Observações</label>
               <textarea
-                className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white"
+                className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               />
