@@ -51,7 +51,7 @@ function LegacyAIChatPage() {
         alert('Erro: ' + error.error)
       }
     } catch (error) {
-      alert('Falha ao processar consulta. Certifique-se de que OPENAI_API_KEY está configurada no .env')
+      alert('Falha ao processar consulta. Certifique-se de que CLAUDE_API_KEY está configurada no .env')
     } finally {
       setLoading(false)
     }
@@ -69,7 +69,7 @@ function LegacyAIChatPage() {
       <div className="max-w-4xl mx-auto">
         <div className="bg-yellow-50 border border-yellow-200 p-4 rounded mb-6">
           <p className="text-sm text-yellow-800 leading-relaxed">
-            <strong>Nota:</strong> Certifique-se de configurar sua OPENAI_API_KEY no arquivo .env para usar este recurso.
+            <strong>Nota:</strong> Certifique-se de configurar sua CLAUDE_API_KEY no arquivo .env para usar este recurso.
           </p>
         </div>
 

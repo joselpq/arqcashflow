@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import OpenAI from 'openai'
+import Anthropic from '@anthropic-ai/sdk'
 import { requireAuth } from '@/lib/auth-utils'
 import { prisma } from '@/lib/prisma'
 import { queryDatabase } from '@/lib/langchain'
 import { z } from 'zod'
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+const claude = new Anthropic({
+  apiKey: process.env.CLAUDE_API_KEY,
 })
 
 // Helper function to clean JSON response from AI (removes markdown code blocks)
@@ -60,7 +60,7 @@ const AssistantRequestSchema = z.object({
   }).optional()
 })
 
-// Intent classification using AI
+// Intent classification using Claude
 async function classifyIntent(message: string, hasFiles: boolean, history: any[] = []) {
   const systemPrompt = `You are an AI assistant for a cashflow management system. Classify the user's intent into one of these categories:
 
@@ -81,17 +81,16 @@ USER MESSAGE: "${message}"
 Respond with ONLY the category name (e.g., "query" or "create_expense").`
 
   try {
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+    const response = await claude.messages.create({
+      model: 'claude-3-5-haiku-20241022',
+      max_tokens: 50,
+      system: systemPrompt,
       messages: [
-        { role: 'system', content: systemPrompt },
         { role: 'user', content: message }
       ],
-      temperature: 0.1,
-      max_tokens: 50
     })
 
-    const intent = response.choices[0]?.message?.content?.trim().toLowerCase()
+    const intent = response.content[0]?.text?.trim().toLowerCase()
     return intent || 'general'
   } catch (error) {
     console.error('Intent classification error:', error)
@@ -125,12 +124,51 @@ async function processDocuments(files: any[], teamId: string) {
 
   for (const file of files) {
     try {
-      // Check if it's a PDF - we need to handle PDFs differently
-      if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
-        // For PDFs, we'll use a simpler approach based on filename
-        console.log(`📄 Processing PDF: ${file.name}`)
+      // Claude can handle PDFs directly! Let's try that first
+      let isProcessableFile = false
+      let content = []
 
-        let docType = 'contract' // Default PDFs to contracts
+      if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+        console.log(`📄 Processing PDF with Claude: ${file.name}`)
+        isProcessableFile = true
+        content = [
+          {
+            type: 'text',
+            text: 'This is a PDF document. Please analyze it and classify as receipt, invoice, contract, or other.'
+          },
+          {
+            type: 'document',
+            source: {
+              type: 'base64',
+              media_type: 'application/pdf',
+              data: file.base64
+            }
+          }
+        ]
+      } else if (file.type.startsWith('image/')) {
+        console.log(`🖼️ Processing image with Claude: ${file.name}`)
+        isProcessableFile = true
+        content = [
+          {
+            type: 'text',
+            text: 'This is an image document. Please analyze it and classify as receipt, invoice, contract, or other.'
+          },
+          {
+            type: 'image',
+            source: {
+              type: 'base64',
+              media_type: file.type,
+              data: file.base64
+            }
+          }
+        ]
+      }
+
+      if (!isProcessableFile) {
+        // Fallback to filename-based processing for unsupported file types
+        console.log(`📄 Using filename-based processing for: ${file.name}`)
+
+        let docType = 'contract' // Default to contracts
         const lowerName = file.name.toLowerCase()
 
         if (lowerName.includes('recibo') || lowerName.includes('receipt') || lowerName.includes('nota')) {
@@ -141,7 +179,7 @@ async function processDocuments(files: any[], teamId: string) {
           docType = 'contract'
         }
 
-        // For PDFs, extract information from filename
+        // Extract information from filename
         const nameInfo = extractInfoFromFilename(file.name)
 
         if (docType === 'contract') {
@@ -149,11 +187,11 @@ async function processDocuments(files: any[], teamId: string) {
             fileName: file.name,
             documentType: docType,
             extractedData: {
-              clientName: nameInfo.clientName || 'Cliente do PDF',
-              projectName: nameInfo.projectName || nameInfo.clientName || 'Projeto do PDF',
+              clientName: nameInfo.clientName || 'Cliente do arquivo',
+              projectName: nameInfo.projectName || nameInfo.clientName || 'Projeto do arquivo',
               totalValue: null,
               signedDate: null,
-              description: `Contrato importado de PDF: ${file.name}`,
+              description: `Contrato importado de arquivo: ${file.name}`,
               category: 'Residencial'
             }
           })
@@ -174,7 +212,7 @@ async function processDocuments(files: any[], teamId: string) {
         continue // Skip to next file
       }
 
-      // For images, use Vision API
+      // Use Claude for document processing (works for both PDFs and images!)
       const classificationPrompt = `Analyze this document and classify it as one of:
 1. "receipt" - Purchase receipt, expense proof
 2. "invoice" - Bill to be paid, vendor invoice
@@ -183,27 +221,27 @@ async function processDocuments(files: any[], teamId: string) {
 
 Respond with ONLY the classification.`
 
-      const classificationResponse = await openai.chat.completions.create({
-        model: 'gpt-4o',
+      // Add the classification prompt to the content
+      const classificationContent = [
+        {
+          type: 'text',
+          text: classificationPrompt
+        },
+        ...content.slice(1) // Skip the first text item, use our classification prompt
+      ]
+
+      const classificationResponse = await claude.messages.create({
+        model: 'claude-3-5-sonnet-20241022',
+        max_tokens: 50,
         messages: [
           {
             role: 'user',
-            content: [
-              { type: 'text', text: classificationPrompt },
-              {
-                type: 'image_url',
-                image_url: {
-                  url: `data:${file.type};base64,${file.base64}`
-                }
-              }
-            ]
+            content: classificationContent
           }
         ],
-        temperature: 0.1,
-        max_tokens: 50
       })
 
-      const docType = classificationResponse.choices[0]?.message?.content?.trim().toLowerCase()
+      const docType = classificationResponse.content[0]?.text?.trim().toLowerCase()
 
       // Extract information based on document type
       let extractionPrompt = ''
@@ -240,27 +278,27 @@ Return ONLY a valid JSON object (no markdown formatting):
 }`
       }
 
-      const extractionResponse = await openai.chat.completions.create({
-        model: 'gpt-4o',
+      // Create extraction content with the document
+      const extractionContent = [
+        {
+          type: 'text',
+          text: extractionPrompt
+        },
+        ...content.slice(1) // Use the same document content
+      ]
+
+      const extractionResponse = await claude.messages.create({
+        model: 'claude-3-5-sonnet-20241022',
+        max_tokens: 500,
         messages: [
           {
             role: 'user',
-            content: [
-              { type: 'text', text: extractionPrompt },
-              {
-                type: 'image_url',
-                image_url: {
-                  url: `data:${file.type};base64,${file.base64}`
-                }
-              }
-            ]
+            content: extractionContent
           }
         ],
-        temperature: 0.1,
-        max_tokens: 500
       })
 
-      const extractedData = safeJsonParse(extractionResponse.choices[0]?.message?.content || '{}')
+      const extractedData = safeJsonParse(extractionResponse.content[0]?.text || '{}')
 
       results.push({
         fileName: file.name,
@@ -552,13 +590,13 @@ Return ONLY a valid JSON object (no markdown formatting):
 
 Use null for missing information. Return only the JSON object, no code blocks or markdown.`
 
-      const contractResponse = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
+      const contractResponse = await claude.messages.create({
+        model: 'claude-3-5-haiku-20241022',
+        max_tokens: 300,
         messages: [{ role: 'user', content: contractPrompt }],
-        temperature: 0.1
       })
 
-      const contractData = safeJsonParse(contractResponse.choices[0]?.message?.content || '{}')
+      const contractData = safeJsonParse(contractResponse.content[0]?.text || '{}')
 
       // If no project name but has client name, use client name as project name
       if (contractData.clientName && !contractData.projectName) {
@@ -601,13 +639,13 @@ Return ONLY a valid JSON object (no markdown formatting):
 
 Be intelligent about filling in description from category or context. Use null only when truly missing. Return only the JSON object, no code blocks or markdown.`
 
-      const expenseResponse = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
+      const expenseResponse = await claude.messages.create({
+        model: 'claude-3-5-haiku-20241022',
+        max_tokens: 300,
         messages: [{ role: 'user', content: expensePrompt }],
-        temperature: 0.1
       })
 
-      const expenseData = safeJsonParse(expenseResponse.choices[0]?.message?.content || '{}')
+      const expenseData = safeJsonParse(expenseResponse.content[0]?.text || '{}')
 
       // Handle relative dates
       if (expenseData.date) {
@@ -698,13 +736,13 @@ Return ONLY a valid JSON object (no markdown formatting):
 
 Be intelligent about filling in information from context. Use null only when truly missing. Return only the JSON object, no code blocks or markdown.`
 
-      const receivableResponse = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
+      const receivableResponse = await claude.messages.create({
+        model: 'claude-3-5-haiku-20241022',
+        max_tokens: 300,
         messages: [{ role: 'user', content: receivablePrompt }],
-        temperature: 0.1
       })
 
-      const receivableData = safeJsonParse(receivableResponse.choices[0]?.message?.content || '{}')
+      const receivableData = safeJsonParse(receivableResponse.content[0]?.text || '{}')
 
       // Handle relative dates (same logic as expenses)
       if (receivableData.date) {
@@ -788,9 +826,9 @@ export async function POST(request: NextRequest) {
   try {
     const { teamId } = await requireAuth()
 
-    if (!process.env.OPENAI_API_KEY) {
+    if (!process.env.CLAUDE_API_KEY) {
       return NextResponse.json(
-        { error: 'OpenAI API key not configured' },
+        { error: 'Claude API key not configured' },
         { status: 500 }
       )
     }

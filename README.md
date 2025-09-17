@@ -34,13 +34,14 @@ A secure, multi-tenant cashflow management system designed for architects to tra
 10. **Smart Default Filters** - Default views show only active contracts, pending receivables, and unpaid expenses
 11. **Excel Export** - Generate comprehensive cashflow reports with 4 detailed sheets (including expenses)
 12. **Google Sheets Export** - Create and share reports directly in Google Sheets with OAuth2 authentication
-13. **🤖 Enhanced AI Assistant** - Unified intelligent assistant with multiple capabilities:
+13. **🤖 Enhanced AI Assistant (Claude-Powered)** - Unified intelligent assistant with multiple capabilities:
     - Natural language queries about financial data
     - Smart entity creation (contracts, expenses, receivables) from text
-    - Document processing (supports images and PDFs with smart filename parsing)
+    - Advanced document processing (direct PDF and image analysis using Claude's vision capabilities)
     - Context-aware conversations with full history retention
     - Intelligent date parsing ("amanhã", "daqui a uma semana", "em 3 dias", etc.)
     - Auto project naming from client names with duplicate handling
+    - Superior file handling compared to OpenAI (native PDF support)
 14. **AI Supervisor System** - Intelligent data quality monitoring with real-time anomaly detection for data entry
 15. **Smart Alerts & Notifications** - Automated detection of duplicates, value anomalies, date inconsistencies, and business rule violations
 16. **Alert Action Integration** - Click alerts to directly edit the related items with auto-redirect functionality
@@ -98,6 +99,9 @@ ArqCashflow features a clean, professional design system specifically crafted fo
 - ✅ **Context Retention**: AI now remembers previous messages in conversation for better understanding
 - ✅ **Receivable Creation**: Full support for creating receivables with smart contract matching
 - ✅ **Advanced Date Parsing**: Supports "daqui a uma semana", "em 3 dias", "próxima semana", etc.
+- ✅ **Claude AI Integration**: Migrated from OpenAI to Claude for superior document processing and reliability
+- ✅ **Native PDF Processing**: Claude can now directly analyze PDF documents without filename-based fallbacks
+- ✅ **Enhanced File Support**: Improved support for images and documents with Claude's advanced vision capabilities
 
 ### Critical Issues (High Priority):
 1. **Contract Team Assignment Bug**
@@ -151,8 +155,8 @@ Create a `.env` file in the root directory:
 # Database
 DATABASE_URL="file:./dev.db"
 
-# AI Features
-OPENAI_API_KEY="your-openai-api-key-here"
+# AI Features (Updated to Claude)
+CLAUDE_API_KEY="your-claude-api-key-here"
 
 # Authentication (NextAuth.js)
 NEXTAUTH_SECRET="your-nextauth-secret-here"
@@ -1053,7 +1057,7 @@ The application is deployed using **Vercel** for hosting and **Neon** for Postgr
 
 4. **Configure Environment Variables**
    Required environment variables in Vercel dashboard:
-   - `OPENAI_API_KEY` - Your OpenAI API key for AI features
+   - `CLAUDE_API_KEY` - Your Claude API key for AI features (replaces OPENAI_API_KEY)
    - `DATABASE_URL` - Automatically set by Neon integration
    - `DATABASE_HOST`, `DATABASE_USERNAME`, etc. - Automatically set by Neon
 
@@ -1085,7 +1089,7 @@ datasource db {
 #### **Environment Variables Reference:**
 ```env
 # Production (Vercel + Neon)
-OPENAI_API_KEY=sk-proj-...
+CLAUDE_API_KEY=sk-ant-...
 DATABASE_URL=postgresql://user:password@host/database
 DATABASE_HOST=host.neon.tech
 DATABASE_USERNAME=username
@@ -1094,7 +1098,7 @@ DATABASE_NAME=database_name
 
 # Development (Local)
 DATABASE_URL="file:./dev.db"
-OPENAI_API_KEY=sk-proj-...
+CLAUDE_API_KEY=sk-ant-...
 ```
 
 #### **Post-Deployment Setup:**
