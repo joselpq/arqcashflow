@@ -124,7 +124,7 @@ async function processDocuments(files: any[], teamId: string) {
 
   for (const file of files) {
     try {
-      // Claude can handle PDFs directly! Let's try that first
+      // Claude can process both images and PDFs directly!
       let isProcessableFile = false
       let content = []
 
@@ -134,7 +134,7 @@ async function processDocuments(files: any[], teamId: string) {
         content = [
           {
             type: 'text',
-            text: 'This is an image document. Please analyze it and classify as receipt, invoice, contract, or other.'
+            text: 'Please analyze this image document and classify it as: receipt, invoice, contract, or other.'
           },
           {
             type: 'image',
@@ -146,8 +146,22 @@ async function processDocuments(files: any[], teamId: string) {
           }
         ]
       } else if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
-        // For PDFs, use filename-based processing (Claude doesn't support PDF vision yet)
-        console.log(`📄 Processing PDF with filename analysis: ${file.name}`)
+        console.log(`📄 Processing PDF with Claude: ${file.name}`)
+        isProcessableFile = true
+        content = [
+          {
+            type: 'text',
+            text: 'Please analyze this PDF document and classify it as: receipt, invoice, contract, or other.'
+          },
+          {
+            type: 'document',
+            source: {
+              type: 'base64',
+              media_type: 'application/pdf',
+              data: file.base64
+            }
+          }
+        ]
       }
 
       if (!isProcessableFile) {
@@ -198,93 +212,65 @@ async function processDocuments(files: any[], teamId: string) {
         continue // Skip to next file
       }
 
-      // Use Claude for document processing (works for both PDFs and images!)
-      const classificationPrompt = `Analyze this document and classify it as one of:
+      // Use Claude for comprehensive document analysis (works for both PDFs and images!)
+      const analysisPrompt = `Analyze this document and extract relevant information for a cashflow management system.
+
+First, classify the document as one of:
 1. "receipt" - Purchase receipt, expense proof
 2. "invoice" - Bill to be paid, vendor invoice
 3. "contract" - Contract document, agreement
 4. "other" - Other document type
 
-Respond with ONLY the classification.`
+Then extract ALL relevant information and return a JSON response with this structure:
 
-      // Add the classification prompt to the content
-      const classificationContent = [
+{
+  "documentType": "receipt|invoice|contract|other",
+  "extractedData": {
+    // For contracts:
+    "clientName": "client name if found",
+    "projectName": "project name if found",
+    "totalValue": number_value_if_found,
+    "signedDate": "YYYY-MM-DD if found",
+    "description": "brief description",
+    "category": "Residencial|Comercial|Restaurante|Loja if applicable",
+
+    // For receipts/invoices:
+    "description": "expense description",
+    "amount": number_value_if_found,
+    "vendor": "vendor name if found",
+    "date": "YYYY-MM-DD if found",
+    "category": "materiais|mão-de-obra|equipamentos|transporte|escritório|software|utilidades|aluguel|seguro|marketing|serviços-profissionais|outros",
+    "invoiceNumber": "invoice number if found"
+  }
+}
+
+Be thorough in extracting information. Use null for missing values. Return ONLY the JSON object, no markdown formatting.`
+
+      // Add the comprehensive analysis prompt to the content
+      const analysisContent = [
         {
           type: 'text',
-          text: classificationPrompt
+          text: analysisPrompt
         },
-        ...content.slice(1) // Skip the first text item, use our classification prompt
+        ...content.slice(1) // Skip the first text item, use our analysis prompt
       ]
 
-      const classificationResponse = await claude.messages.create({
+      const analysisResponse = await claude.messages.create({
         model: 'claude-3-5-sonnet-20241022',
-        max_tokens: 50,
+        max_tokens: 800,
         messages: [
           {
             role: 'user',
-            content: classificationContent
+            content: analysisContent
           }
         ],
       })
 
-      const docType = classificationResponse.content[0]?.text?.trim().toLowerCase()
+      const analysisResult = safeJsonParse(analysisResponse.content[0]?.text || '{}')
+      const docType = analysisResult.documentType?.toLowerCase() || 'other'
+      const extractedData = analysisResult.extractedData || {}
 
-      // Extract information based on document type
-      let extractionPrompt = ''
-      if (docType === 'receipt' || docType === 'invoice') {
-        extractionPrompt = `Extract expense information from this document. Return ONLY a valid JSON object (no markdown formatting):
-{
-  "description": "brief description of the expense",
-  "amount": number (just the number, no currency),
-  "vendor": "vendor/store name if visible",
-  "date": "date in YYYY-MM-DD format if visible",
-  "category": "one of: materiais, mão-de-obra, equipamentos, transporte, escritório, software, utilidades, aluguel, seguro, marketing, serviços-profissionais, outros",
-  "invoiceNumber": "invoice/receipt number if visible"
-}
-
-If information is missing, use null. Be precise with amounts and dates. Return only the JSON object, no code blocks or markdown.`
-      } else if (docType === 'contract') {
-        extractionPrompt = `Extract contract information from this document. Return ONLY a valid JSON object (no markdown formatting):
-{
-  "clientName": "client/customer name",
-  "projectName": "project name or description",
-  "totalValue": number (just the number, no currency),
-  "signedDate": "date in YYYY-MM-DD format if visible",
-  "description": "brief description of the contract",
-  "category": "one of: Residencial, Comercial, Restaurante, Loja"
-}
-
-If information is missing, use null. Be precise with amounts and dates. Return only the JSON object, no code blocks or markdown.`
-      } else {
-        extractionPrompt = `This document doesn't appear to be a receipt, invoice, or contract.
-Return ONLY a valid JSON object (no markdown formatting):
-{
-  "type": "other",
-  "summary": "brief summary of what this document contains"
-}`
-      }
-
-      // Create extraction content with the document
-      const extractionContent = [
-        {
-          type: 'text',
-          text: extractionPrompt
-        },
-        ...content.slice(1) // Use the same document content
-      ]
-
-      const extractionResponse = await claude.messages.create({
-        model: 'claude-3-5-sonnet-20241022',
-        max_tokens: 500,
-        messages: [
-          {
-            role: 'user',
-            content: extractionContent
-          }
-        ],
-      })
-
-      const extractedData = safeJsonParse(extractionResponse.content[0]?.text || '{}')
+      console.log(`📄 Claude analysis result for ${file.name}:`, { docType, extractedData })
 
       results.push({
         fileName: file.name,
