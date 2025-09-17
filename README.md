@@ -38,10 +38,11 @@ A secure, multi-tenant cashflow management system designed for architects to tra
     - Natural language queries about financial data
     - Smart entity creation (contracts, expenses, receivables) from text
     - Advanced document processing (direct PDF and image analysis using Claude's vision capabilities)
+    - **Large file support**: PDFs up to 32MB with smart FormData/JSON upload strategy
     - Context-aware conversations with full history retention
     - Intelligent date parsing ("amanhã", "daqui a uma semana", "em 3 dias", etc.)
     - Auto project naming from client names with duplicate handling
-    - Superior file handling compared to OpenAI (native PDF support)
+    - Superior file handling with automatic upload method selection
 14. **AI Supervisor System** - Intelligent data quality monitoring with real-time anomaly detection for data entry
 15. **Smart Alerts & Notifications** - Automated detection of duplicates, value anomalies, date inconsistencies, and business rule violations
 16. **Alert Action Integration** - Click alerts to directly edit the related items with auto-redirect functionality
@@ -102,6 +103,8 @@ ArqCashflow features a clean, professional design system specifically crafted fo
 - ✅ **Claude AI Integration**: Migrated from OpenAI to Claude for superior document processing and reliability
 - ✅ **Native PDF Processing**: Claude can now directly analyze PDF documents without filename-based fallbacks
 - ✅ **Enhanced File Support**: Improved support for images and documents with Claude's advanced vision capabilities
+- ✅ **Large File Upload Support**: Smart FormData/JSON strategy supports PDFs up to 32MB (bypasses Vercel 4MB limit)
+- ✅ **Automatic Upload Method Selection**: Files <3MB use JSON/base64, ≥3MB use FormData for optimal performance
 
 ### Critical Issues (High Priority):
 1. **Contract Team Assignment Bug**
@@ -1231,7 +1234,13 @@ arqcashflow/
   - Database introspection for accurate query generation
   - Error handling for malformed queries and API failures
 
-- **AI Contract Creation** (`app/api/ai/create-contract/`)
+- **Enhanced AI Assistant** (`app/api/ai/assistant/`)
+  - **Smart Upload Strategy**: Automatic method selection based on file size
+    - Files <3MB: JSON + base64 encoding (fast, efficient)
+    - Files ≥3MB: multipart/form-data (bypasses Vercel 4MB body limit)
+  - **Document Processing**: Direct PDF and image analysis up to 32MB
+  - **Intent Classification**: Claude Haiku 3.5 for fast categorization
+  - **Document Analysis**: Claude Sonnet 3.5 for advanced reasoning
   - Natural language parsing in Portuguese
   - Intelligent date parsing: "01/Abril", "1 de maio", "15/03"
   - Value parsing: "17k" → 17000, "2.5 mil" → 2500
@@ -1250,7 +1259,7 @@ arqcashflow/
 - **PostgreSQL** - Production database (Railway/Vercel)
 - **Tailwind CSS** - Utility-first CSS framework for styling
 - **ExcelJS** - Excel file generation with charts and formatting
-- **Langchain + OpenAI** - AI-powered natural language queries
+- **Claude API** - AI-powered document processing and natural language queries
 - **Zod** - Runtime type validation and parsing
 
 ## For LLM Agents & Developers
@@ -1283,9 +1292,47 @@ Receivable (id, contractId→Contract.id, expectedDate, amount, status, category
 Category (id, name, color) -- Currently unused in UI, future enhancement
 ```
 
+### Large File Upload Architecture
+
+**Problem Solved**: Vercel serverless functions have a 4.5MB body size limit, which prevented uploading large PDFs for Claude API processing.
+
+**Solution**: Smart dual upload strategy that automatically selects the optimal method:
+
+#### Upload Strategy Selection
+```typescript
+const largeFileThreshold = 3 * 1024 * 1024 // 3MB
+const isLargeFile = file.size > largeFileThreshold
+
+if (isLargeFile) {
+  // Use multipart/form-data - bypasses JSON body size limits
+  // Files sent as native File objects to /api/ai/assistant
+} else {
+  // Use JSON + base64 - faster for small files
+  // Existing efficient workflow maintained
+}
+```
+
+#### Backend Processing
+```typescript
+// Automatic content-type detection
+if (contentType.includes('multipart/form-data')) {
+  // Process FormData, convert File objects to base64 in Node.js
+  const arrayBuffer = await file.arrayBuffer()
+  const base64 = Buffer.from(arrayBuffer).toString('base64')
+} else {
+  // Process JSON with pre-encoded base64 data
+  const files = await request.json().files
+}
+```
+
+#### Benefits
+- **32MB PDF Support**: Up from ~2.8MB effective limit
+- **No External Dependencies**: Uses standard web APIs, no storage tokens
+- **Automatic Selection**: Users don't need to know about the strategy
+- **Memory Efficient**: Large file base64 conversion happens server-side
+- **Backward Compatible**: Existing small file workflow unchanged
+
 ### Current Limitations & TODOs
-- No authentication (single-user system)
-- No real-time updates (manual refresh needed)
 - Limited error messaging (generic alerts)
 - No data validation beyond type checking
 - Excel export could include charts/visualizations
@@ -1294,9 +1341,15 @@ Category (id, name, color) -- Currently unused in UI, future enhancement
 
 ### Testing Strategy
 1. **API testing**: Create contract → add receivables → test filters → export Excel → test AI queries
-2. **Edge cases**: Empty states, invalid dates, large numbers, special characters in names
-3. **Validation**: Try submitting empty forms, invalid data, non-existent IDs
-4. **AI testing**: Ask complex questions, test edge cases, verify SQL generation
+2. **Large File Testing**:
+   - Upload PDFs <3MB (should use JSON strategy)
+   - Upload PDFs 3-32MB (should use FormData strategy)
+   - Verify both strategies process correctly through Claude API
+   - Test mixed file sizes in single upload
+3. **Edge cases**: Empty states, invalid dates, large numbers, special characters in names
+4. **Validation**: Try submitting empty forms, invalid data, non-existent IDs
+5. **AI testing**: Ask complex questions, test edge cases, verify SQL generation
+6. **Upload Strategy Verification**: Check browser DevTools to confirm correct Content-Type headers
 
 ## License
 
