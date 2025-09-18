@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 
 // Import the existing components (we'll create these next)
@@ -8,7 +8,7 @@ import ContractsTab from './components/ContractsTab'
 import ReceivablesTab from './components/ReceivablesTab'
 import ExpensesTab from './components/ExpensesTab'
 
-export default function ProjetosPage() {
+function ProjetosContent() {
   const searchParams = useSearchParams()
   const [activeTab, setActiveTab] = useState<'contratos' | 'recebiveis' | 'despesas'>('contratos')
 
@@ -73,5 +73,23 @@ export default function ProjetosPage() {
         {activeTab === 'despesas' && <ExpensesTab />}
       </div>
     </div>
+  )
+}
+
+export default function ProjetosPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-neutral-50 p-8">
+        <div className="mb-4">
+          <a href="/" className="text-blue-700 hover:text-blue-800 font-medium">← Dashboard</a>
+        </div>
+        <h1 className="text-3xl font-bold text-neutral-900 tracking-wide mb-8">🏗️ Projetos</h1>
+        <div className="text-center py-12">
+          <div className="animate-pulse text-neutral-500">Carregando...</div>
+        </div>
+      </div>
+    }>
+      <ProjetosContent />
+    </Suspense>
   )
 }
