@@ -36,7 +36,8 @@ function safeJsonParse(response: string, fallback: any = {}) {
     const cleaned = cleanJsonResponse(response)
     return JSON.parse(cleaned)
   } catch (error) {
-    console.error('JSON parse error:', error, 'Original response:', response)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    console.error('JSON parse error:', errorMessage, 'Original response:', response)
     return fallback
   }
 }
@@ -90,10 +91,12 @@ Respond with ONLY the category name (e.g., "query" or "create_expense").`
       ],
     })
 
-    const intent = response.content[0]?.text?.trim().toLowerCase()
+    const firstBlock = response.content[0]
+    const intent = (firstBlock?.type === 'text' ? firstBlock.text : '').trim().toLowerCase()
     return intent || 'general'
   } catch (error) {
-    console.error('Intent classification error:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    console.error('Intent classification error:', errorMessage)
     return 'general'
   }
 }
@@ -126,7 +129,7 @@ async function processDocuments(files: any[], teamId: string) {
     try {
       // Claude can process both images and PDFs directly!
       let isProcessableFile = false
-      let content = []
+      let content: any[] = []
 
       if (file.type.startsWith('image/')) {
         console.log(`🖼️ Processing image with Claude: ${file.name}`)
@@ -247,7 +250,7 @@ Then extract ALL relevant information and return a JSON response with this struc
 Be thorough in extracting information. Use null for missing values. Return ONLY the JSON object, no markdown formatting.`
 
       // Add the comprehensive analysis prompt to the content
-      const analysisContent = [
+      const analysisContent: any[] = [
         {
           type: 'text',
           text: analysisPrompt
@@ -266,7 +269,8 @@ Be thorough in extracting information. Use null for missing values. Return ONLY 
         ],
       })
 
-      const analysisResult = safeJsonParse(analysisResponse.content[0]?.text || '{}')
+      const analysisBlock = analysisResponse.content[0]
+      const analysisResult = safeJsonParse((analysisBlock?.type === 'text' ? analysisBlock.text : '{}'))
       const docType = analysisResult.documentType?.toLowerCase() || 'other'
       const extractedData = analysisResult.extractedData || {}
 
@@ -279,15 +283,16 @@ Be thorough in extracting information. Use null for missing values. Return ONLY 
       })
 
     } catch (error) {
-      console.error(`❌ Error processing file ${file.name}:`, error)
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      console.error(`❌ Error processing file ${file.name}:`, errorMessage)
 
-      // Check if it's an OpenAI API error
-      if (error.code === 'invalid_request_error') {
+      // Check if it's an API error
+      if (error && typeof error === 'object' && 'code' in error && error.code === 'invalid_request_error') {
         results.push({
           fileName: file.name,
           error: 'Arquivo inválido ou muito grande. Use imagens (PNG, JPG) ou PDFs menores que 10MB.'
         })
-      } else if (error.code === 'rate_limit_exceeded') {
+      } else if (error && typeof error === 'object' && 'code' in error && error.code === 'rate_limit_exceeded') {
         results.push({
           fileName: file.name,
           error: 'Limite de API excedido. Tente novamente em alguns segundos.'
@@ -295,7 +300,7 @@ Be thorough in extracting information. Use null for missing values. Return ONLY 
       } else {
         results.push({
           fileName: file.name,
-          error: `Falha ao processar documento: ${error.message || 'Erro desconhecido'}`
+          error: `Falha ao processar documento: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
         })
       }
     }
@@ -350,7 +355,8 @@ async function createContractFromData(data: any, teamId: string) {
 
     return { success: true, contract }
   } catch (error) {
-    console.error('Error creating contract:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    console.error('Error creating contract:', errorMessage)
     return { success: false, error: 'Failed to create contract' }
   }
 }
@@ -374,7 +380,8 @@ async function createExpenseFromData(data: any, teamId: string) {
 
     return { success: true, expense }
   } catch (error) {
-    console.error('Error creating expense:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    console.error('Error creating expense:', errorMessage)
     return { success: false, error: 'Failed to create expense' }
   }
 }
@@ -429,7 +436,8 @@ async function createReceivableFromData(data: any, teamId: string) {
 
     return { success: true, receivable, contract }
   } catch (error) {
-    console.error('Error creating receivable:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    console.error('Error creating receivable:', errorMessage)
     return { success: false, error: 'Failed to create receivable' }
   }
 }
@@ -464,7 +472,7 @@ async function handleIntent(intent: string, message: string, files: any[], teamI
         console.error('❌ Document processing failed:', docError)
         return {
           type: 'document_error',
-          response: `Erro ao processar documento: ${docError.message || 'Erro desconhecido'}. Verifique se o arquivo é uma imagem (PNG, JPG) ou PDF válido.`
+          response: `Erro ao processar documento: ${docError instanceof Error ? docError.message : 'Erro desconhecido'}. Verifique se o arquivo é uma imagem (PNG, JPG) ou PDF válido.`
         }
       }
 
@@ -568,7 +576,8 @@ Use null for missing information. Return only the JSON object, no code blocks or
         messages: [{ role: 'user', content: contractPrompt }],
       })
 
-      const contractData = safeJsonParse(contractResponse.content[0]?.text || '{}')
+      const contractBlock = contractResponse.content[0]
+      const contractData = safeJsonParse((contractBlock?.type === 'text' ? contractBlock.text : '{}'))
 
       // If no project name but has client name, use client name as project name
       if (contractData.clientName && !contractData.projectName) {
@@ -617,7 +626,8 @@ Be intelligent about filling in description from category or context. Use null o
         messages: [{ role: 'user', content: expensePrompt }],
       })
 
-      const expenseData = safeJsonParse(expenseResponse.content[0]?.text || '{}')
+      const expenseBlock = expenseResponse.content[0]
+      const expenseData = safeJsonParse((expenseBlock?.type === 'text' ? expenseBlock.text : '{}'))
 
       // Handle relative dates
       if (expenseData.date) {
@@ -714,7 +724,8 @@ Be intelligent about filling in information from context. Use null only when tru
         messages: [{ role: 'user', content: receivablePrompt }],
       })
 
-      const receivableData = safeJsonParse(receivableResponse.content[0]?.text || '{}')
+      const receivableBlock = receivableResponse.content[0]
+      const receivableData = safeJsonParse((receivableBlock?.type === 'text' ? receivableBlock.text : '{}'))
 
       // Handle relative dates (same logic as expenses)
       if (receivableData.date) {
@@ -877,7 +888,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid request format' }, { status: 400 })
     }
 
-    console.error('AI Assistant error:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    console.error('AI Assistant error:', errorMessage)
     return NextResponse.json(
       { error: 'Failed to process request. Please try again.' },
       { status: 500 }
