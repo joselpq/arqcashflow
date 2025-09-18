@@ -67,15 +67,16 @@ A secure, multi-tenant cashflow management system designed for architects to tra
 29. **LGPD-Compliant Legal Framework** - Complete Privacy Policy and Terms of Service in Portuguese
 30. **Enhanced Design System** - Improved color contrast and accessibility for professional use
 31. **🎯 WOW Onboarding Experience** - Multi-step guided setup that hooks users immediately:
-    - **Step 1: Profile Setup** - Individual vs company selection with tailored form fields
-    - **Step 2: Data Import** - Drag-and-drop interface for spreadsheets/PDFs with AI processing
-    - **Smart Navigation** - Back button support and progress indicators
-    - **Responsive Design** - Beautiful layout across all devices
-    - **Focused Experience** - Clean interface without distracting navigation elements
-    - **Personalized Setup** - Collects user type, profession, company details, employee count, revenue tier
-    - **AI-Powered Import** - Automatic data extraction and organization from existing documents
-    - **Skip Option** - Users can complete onboarding later if preferred
-    - **Completion Tracking** - Prevents access to main app until onboarding is finished
+    - **Step 1: Profile Setup** - Individual vs company selection with tailored form fields and dropdown options
+    - **Step 2: Data Import** - Working drag-and-drop interface with AI processing for Excel/CSV files
+    - **File Support** - Excel (.xlsx, .xls) and CSV files with intelligent data extraction
+    - **Smart Navigation** - Back button support and progress indicators with responsive design
+    - **Focused Experience** - Hidden navigation during onboarding to eliminate distractions
+    - **Personalized Setup** - Collects user type, profession, company activity from dropdown, employee count, revenue tier
+    - **AI-Powered Processing** - Uses proven setup assistant logic with Brazilian data parsing
+    - **Skip Option** - Users can complete onboarding later or proceed with empty state
+    - **Completion Tracking** - Database-tracked completion prevents main app access until finished
+    - **Error Handling** - Comprehensive file validation and user-friendly error messages
 
 ## 🎨 Design System & UI/UX
 
@@ -123,9 +124,11 @@ ArqCashflow features a clean, professional design system specifically crafted fo
 ## 🚨 Known Bugs & Issues
 
 ### Recent Fixes (September 2025):
+- ✅ **Working Onboarding File Upload**: Fixed API compatibility issues with Excel/CSV processing
+- ✅ **File Type Validation**: Client-side validation for supported formats with clear error messages
 - ✅ **WOW Onboarding Experience**: Complete multi-step onboarding flow implementation with personalized setup
 - ✅ **Profile Data Collection**: Individual vs company setup with tailored form fields and dropdown selections
-- ✅ **Data Import Integration**: Seamless AI-powered document processing during onboarding
+- ✅ **Data Import Integration**: Seamless AI-powered document processing during onboarding using proven setup assistant
 - ✅ **Focused User Experience**: Hidden navigation during onboarding to eliminate distractions
 - ✅ **Responsive Onboarding Design**: Beautiful layout across all devices with proper text spacing
 - ✅ **Back Navigation**: Users can navigate between onboarding steps to correct mistakes
@@ -299,7 +302,7 @@ All API endpoints return JSON responses and support CORS for cross-origin reques
 {
   "type": "individual|company",
   "companyName": "string (optional)",
-  "companyActivity": "string (optional)",
+  "companyActivity": "string (optional) - dropdown selection from predefined business categories",
   "employeeCount": "string (optional)",
   "revenueTier": "string (optional)",
   "profession": "string (optional)"
@@ -342,6 +345,14 @@ curl -X POST "https://arqcashflow.vercel.app/api/onboarding/profile" \
   "success": true
 }
 ```
+
+#### **Data Import During Onboarding**
+The onboarding flow uses the existing `/api/ai/setup-assistant-direct` endpoint for file processing:
+
+**Supported File Types**: Excel (.xlsx, .xls) and CSV files
+**Processing**: Uses Claude AI to extract contracts, receivables, and expenses
+**File Size**: Up to 32MB (same as main app setup assistant)
+**Validation**: Client-side file type validation with user-friendly error messages
 
 ---
 
@@ -1247,9 +1258,10 @@ After successful deployment:
    - Continue to step 2
 
 3. **Step 2: Data Import**
-   - Upload sample spreadsheet/PDF with financial data
-   - Or skip to test empty state
-   - Complete onboarding and redirect to dashboard
+   - Upload Excel (.xlsx, .xls) or CSV file with financial data
+   - AI processes and extracts contracts, receivables, and expenses
+   - Or skip to test empty state functionality
+   - Complete onboarding and redirect to dashboard with imported data
 
 #### **2. Core Functionality Testing**
 
