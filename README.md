@@ -43,11 +43,15 @@ A secure, multi-tenant cashflow management system designed for architects to tra
     - Intelligent date parsing ("amanhã", "daqui a uma semana", "em 3 dias", etc.)
     - Auto project naming from client names with duplicate handling
     - Superior file handling with automatic upload method selection
-14. **📊 AI Setup Assistant** - Bulk data import with intelligent processing:
-    - Excel/CSV file upload and automatic data extraction
+14. **📊 AI Setup Assistant** - Advanced bulk data import with multimodal document processing:
+    - **File Support**: Excel/CSV, PDF documents, and images (JPG, PNG, etc.)
+    - **Multimodal Processing**: Uses Claude's document and vision APIs for comprehensive analysis
+    - **Smart Document Classification**: Automatically identifies proposals, contracts, invoices, receipts
+    - **Proposal Intelligence**: Extracts contracts + receivables from proposals with payment terms
+    - **Brazilian Format Handling**: Dates (DD/MM/YYYY), currency (R$ format), payment terms
     - **Smart status mapping**: Portuguese → English ("Em andamento" → "active", "Finalizado" → "completed")
-    - Intelligent category classification for contracts and expenses
-    - Bulk creation of contracts, receivables, and expenses in one operation
+    - **Consistent Processing**: Enhanced prompts ensure reliable extraction across document types
+    - **Bulk Creation**: Creates contracts, receivables, and expenses in one operation with data validation
     - Preserves original Portuguese information in notes while standardizing system values
     - Comprehensive error handling and validation reporting
 15. **AI Supervisor System** - Intelligent data quality monitoring with real-time anomaly detection for data entry
@@ -153,7 +157,12 @@ ArqCashflow features a clean, professional design system specifically crafted fo
 - ✅ **Claude AI Integration**: Migrated from OpenAI to Claude for superior document processing and reliability
 - ✅ **Native PDF Processing**: Claude can now directly analyze PDF documents without filename-based fallbacks
 - ✅ **Enhanced File Support**: Improved support for images and documents with Claude's advanced vision capabilities
-- ✅ **AI Setup Assistant with Smart Status Mapping**: Portuguese→English status conversion ("Em andamento" → "active", "Finalizado" → "completed") fixes filtering issues
+- ✅ **Multimodal AI Setup Assistant**: Complete overhaul with PDF and image processing capabilities
+- ✅ **Claude Document API Integration**: Native PDF processing using Claude's document API
+- ✅ **Smart Document Classification**: Automatically distinguishes proposals, contracts, invoices, receipts
+- ✅ **Enhanced Proposal Processing**: Intelligent extraction of contracts + receivables from proposals with payment terms
+- ✅ **Improved Prompt Engineering**: Specific rules for consistent document processing across different types
+- ✅ **Brazilian Business Format Support**: Enhanced handling of DD/MM/YYYY dates, R$ currency, payment terms
 - ✅ **Large File Upload Support**: Smart FormData/JSON strategy supports PDFs up to 32MB (bypasses Vercel 4MB limit)
 - ✅ **Automatic Upload Method Selection**: Files <3MB use JSON/base64, ≥3MB use FormData for optimal performance
 - ✅ **Responsive Authentication Forms**: Complete responsive design overhaul for login and registration pages
@@ -349,9 +358,12 @@ curl -X POST "https://arqcashflow.vercel.app/api/onboarding/profile" \
 #### **Data Import During Onboarding**
 The onboarding flow uses the existing `/api/ai/setup-assistant-direct` endpoint for file processing:
 
-**Supported File Types**: Excel (.xlsx, .xls) and CSV files
-**Processing**: Uses Claude AI to extract contracts, receivables, and expenses
-**File Size**: Up to 32MB (same as main app setup assistant)
+**Supported File Types**: Excel (.xlsx, .xls), CSV files, PDF documents, and images (JPG, PNG, etc.)
+**Processing**: Uses Claude AI with multimodal document processing capabilities
+**Document Classification**: Automatically identifies proposals, contracts, invoices, receipts
+**Proposal Intelligence**: Extracts contracts + receivables from proposals with payment terms
+**File Size**: Up to 32MB for all file types
+**Brazilian Format Support**: Handles DD/MM/YYYY dates, R$ currency, payment terms
 **Validation**: Client-side file type validation with user-friendly error messages
 
 ---
