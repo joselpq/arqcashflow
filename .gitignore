@@ -50,3 +50,5 @@ prisma/dev.db
 Testando.xlsx
 test*.csv
 debug-*.js
+sample_data.csv
+teste_pdf.pdf
