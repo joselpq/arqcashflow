@@ -66,6 +66,16 @@ A secure, multi-tenant cashflow management system designed for architects to tra
 28. **Responsive Authentication** - Mobile-optimized login and registration forms with enhanced UX
 29. **LGPD-Compliant Legal Framework** - Complete Privacy Policy and Terms of Service in Portuguese
 30. **Enhanced Design System** - Improved color contrast and accessibility for professional use
+31. **🎯 WOW Onboarding Experience** - Multi-step guided setup that hooks users immediately:
+    - **Step 1: Profile Setup** - Individual vs company selection with tailored form fields
+    - **Step 2: Data Import** - Drag-and-drop interface for spreadsheets/PDFs with AI processing
+    - **Smart Navigation** - Back button support and progress indicators
+    - **Responsive Design** - Beautiful layout across all devices
+    - **Focused Experience** - Clean interface without distracting navigation elements
+    - **Personalized Setup** - Collects user type, profession, company details, employee count, revenue tier
+    - **AI-Powered Import** - Automatic data extraction and organization from existing documents
+    - **Skip Option** - Users can complete onboarding later if preferred
+    - **Completion Tracking** - Prevents access to main app until onboarding is finished
 
 ## 🎨 Design System & UI/UX
 
@@ -113,6 +123,14 @@ ArqCashflow features a clean, professional design system specifically crafted fo
 ## 🚨 Known Bugs & Issues
 
 ### Recent Fixes (September 2025):
+- ✅ **WOW Onboarding Experience**: Complete multi-step onboarding flow implementation with personalized setup
+- ✅ **Profile Data Collection**: Individual vs company setup with tailored form fields and dropdown selections
+- ✅ **Data Import Integration**: Seamless AI-powered document processing during onboarding
+- ✅ **Focused User Experience**: Hidden navigation during onboarding to eliminate distractions
+- ✅ **Responsive Onboarding Design**: Beautiful layout across all devices with proper text spacing
+- ✅ **Back Navigation**: Users can navigate between onboarding steps to correct mistakes
+- ✅ **Input Field Contrast**: Enhanced readability with improved border and text colors
+- ✅ **Onboarding Completion Tracking**: Prevents main app access until setup is finished
 - ✅ **UI/UX Professional Redesign**: Complete visual overhaul with architect-focused aesthetics
 - ✅ **Contrast & Readability**: Fixed poor contrast issues throughout dashboard
 - ✅ **Navigation Enhancement**: Clean, minimal navigation with proper typography
@@ -266,6 +284,64 @@ All API endpoints return JSON responses and support CORS for cross-origin reques
 - **POST** `/api/auth/signin` - User login
 - **POST** `/api/auth/signout` - User logout
 - **GET** `/api/auth/session` - Get current session info
+
+### 🎯 Onboarding API
+
+**Purpose**: Manage the multi-step onboarding experience for new users
+
+#### **POST /api/onboarding/profile** - Save Profile Data
+**Purpose**: Save user profile information during step 1 of onboarding
+
+**Authentication**: Required
+
+**Request Body:**
+```json
+{
+  "type": "individual|company",
+  "companyName": "string (optional)",
+  "companyActivity": "string (optional)",
+  "employeeCount": "string (optional)",
+  "revenueTier": "string (optional)",
+  "profession": "string (optional)"
+}
+```
+
+**Example Request:**
+```bash
+curl -X POST "https://arqcashflow.vercel.app/api/onboarding/profile" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "company",
+    "companyName": "Studio Arquitetura Ltda",
+    "companyActivity": "architecture",
+    "employeeCount": "2-5",
+    "revenueTier": "100k-500k"
+  }'
+```
+
+#### **GET /api/onboarding/status** - Check Onboarding Status
+**Purpose**: Check if user has completed onboarding
+
+**Authentication**: Required
+
+**Response:**
+```json
+{
+  "onboardingComplete": true
+}
+```
+
+#### **POST /api/onboarding/complete** - Mark Onboarding Complete
+**Purpose**: Mark user's onboarding as completed and allow access to main app
+
+**Authentication**: Required
+
+**Response:**
+```json
+{
+  "success": true
+}
+```
 
 ---
 
@@ -1155,7 +1231,27 @@ After successful deployment:
 
 ## Testing the System
 
-### Quick Test Flow
+### 🎯 Complete User Journey Test
+
+#### **1. Onboarding Experience (New Users)**
+1. **Landing Page to Registration**
+   - Visit the landing page
+   - Click any CTA button ("Começar Grátis")
+   - Complete registration form
+   - Auto-redirect to onboarding
+
+2. **Step 1: Profile Setup**
+   - Choose "Individual" or "Company"
+   - Fill profile details (profession/company info)
+   - Navigate using back button to test navigation
+   - Continue to step 2
+
+3. **Step 2: Data Import**
+   - Upload sample spreadsheet/PDF with financial data
+   - Or skip to test empty state
+   - Complete onboarding and redirect to dashboard
+
+#### **2. Core Functionality Testing**
 
 1. **Create a Contract with AI**
    - Go to /contracts
@@ -1185,6 +1281,13 @@ After successful deployment:
      - "What is my total contract value?"
      - "How many pending receivables do I have?"
      - "Show me all contracts from this month"
+
+#### **3. Onboarding Flow Validation**
+- **Navigation Bar**: Verify it's hidden during onboarding
+- **Back Button**: Test step navigation works properly
+- **Responsive Design**: Test on mobile, tablet, desktop
+- **Data Persistence**: Profile data should be saved between steps
+- **Skip Functionality**: Users can skip data import and access dashboard
 
 ## Open Questions & Future Enhancements
 
