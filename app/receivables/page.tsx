@@ -281,7 +281,7 @@ function ReceivablesPageContent() {
             <div className="bg-yellow-50 border border-yellow-200 p-4 rounded">
               <p className="text-yellow-800">⚠️ Nenhum contrato disponível</p>
               <p className="text-sm text-yellow-700 mt-1">
-                Para criar contas a receber, você precisa primeiro <a href="/contracts" className="underline">criar um contrato</a>.
+                Para criar contas a receber, você precisa primeiro <a href="/projetos?tab=contratos" className="underline">criar um contrato</a>.
               </p>
             </div>
           ) : (

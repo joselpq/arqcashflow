@@ -46,9 +46,7 @@ export default function NavBar() {
 
   const navItems = [
     { href: "/", label: "Dashboard" },
-    { href: "/contracts", label: "Contratos" },
-    { href: "/receivables", label: "Recebíveis" },
-    { href: "/expenses", label: "Despesas" },
+    { href: "/projetos", label: "🏗️ Projetos" },
     { href: "/ai-chat", label: "🤖 Assistente IA" }
   ];
 
@@ -66,19 +64,26 @@ export default function NavBar() {
               </div>
             </div>
             <div className="hidden lg:ml-12 lg:flex lg:space-x-8">
-              {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors ${
-                    pathname === item.href
-                      ? "border-neutral-900 text-neutral-900"
-                      : "border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300"
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              ))}
+              {navItems.map((item) => {
+                const isActive = item.href === "/"
+                  ? pathname === "/"
+                  : pathname.startsWith(item.href) ||
+                    (item.href === "/projetos" && ["/contracts", "/receivables", "/expenses"].includes(pathname))
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors ${
+                      isActive
+                        ? "border-neutral-900 text-neutral-900"
+                        : "border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300"
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+                )
+              })}
             </div>
           </div>
           <div className="flex items-center">
@@ -116,20 +121,27 @@ export default function NavBar() {
       {isMobileMenuOpen && (
         <div className="lg:hidden border-t border-neutral-200/60 bg-white animate-in slide-in-from-top-2 duration-200">
           <div className="px-2 pt-2 pb-3 space-y-1">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setIsMobileMenuOpen(false)} // Close menu when item is clicked
-                className={`block px-3 py-2 text-sm font-medium transition-colors ${
-                  pathname === item.href
-                    ? "text-neutral-900 bg-neutral-100"
-                    : "text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50"
-                }`}
-              >
-                {item.label}
-              </Link>
-            ))}
+            {navItems.map((item) => {
+              const isActive = item.href === "/"
+                ? pathname === "/"
+                : pathname.startsWith(item.href) ||
+                  (item.href === "/projetos" && ["/contracts", "/receivables", "/expenses"].includes(pathname))
+
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`block px-3 py-2 text-sm font-medium transition-colors ${
+                    isActive
+                      ? "text-neutral-900 bg-neutral-100"
+                      : "text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50"
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              )
+            })}
             {/* Mobile user info and logout */}
             <div className="border-t border-neutral-200/60 pt-4 pb-3">
               <div className="px-3">

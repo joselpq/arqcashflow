@@ -117,11 +117,17 @@ export async function POST(request: NextRequest) {
     }
 
     const createData: any = {
-      ...validatedData,
+      contractId: validatedData.contractId,
       expectedDate: new Date(validatedData.expectedDate + 'T00:00:00.000Z'),
+      amount: validatedData.amount,
+      status: validatedData.status || 'pending',
+      receivedAmount: validatedData.receivedAmount || null,
+      invoiceNumber: validatedData.invoiceNumber || null,
+      category: validatedData.category || null,
+      notes: validatedData.notes || null,
     }
 
-    if (validatedData.receivedDate) {
+    if (validatedData.receivedDate && validatedData.receivedDate.trim() !== '') {
       createData.receivedDate = new Date(validatedData.receivedDate + 'T00:00:00.000Z')
     }
 

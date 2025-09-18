@@ -456,15 +456,15 @@ export default function Dashboard() {
             <p className="text-sm text-neutral-500">Acesse funcionalidades principais</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Link href="/contracts" className="group bg-white p-4 rounded-lg border border-neutral-200 hover:border-neutral-300 transition-colors">
+            <Link href="/projetos?tab=contratos" className="group bg-white p-4 rounded-lg border border-neutral-200 hover:border-neutral-300 transition-colors">
               <h3 className="font-medium text-neutral-900 mb-1">Novo Contrato</h3>
               <p className="text-sm text-neutral-500">Adicionar projeto</p>
             </Link>
-            <Link href="/receivables" className="group bg-white p-4 rounded-lg border border-neutral-200 hover:border-neutral-300 transition-colors">
+            <Link href="/projetos?tab=recebiveis" className="group bg-white p-4 rounded-lg border border-neutral-200 hover:border-neutral-300 transition-colors">
               <h3 className="font-medium text-neutral-900 mb-1">Marcar Recebimento</h3>
               <p className="text-sm text-neutral-500">Registrar pagamento</p>
             </Link>
-            <Link href="/expenses" className="group bg-white p-4 rounded-lg border border-neutral-200 hover:border-neutral-300 transition-colors">
+            <Link href="/projetos?tab=despesas" className="group bg-white p-4 rounded-lg border border-neutral-200 hover:border-neutral-300 transition-colors">
               <h3 className="font-medium text-neutral-900 mb-1">Nova Despesa</h3>
               <p className="text-sm text-neutral-500">Adicionar custo</p>
             </Link>

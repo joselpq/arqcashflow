@@ -541,19 +541,19 @@ export default function EnhancedAIChatPage() {
 
                   <div className="mt-4 flex gap-2">
                     <a
-                      href="/contracts"
+                      href="/projetos?tab=contratos"
                       className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm"
                     >
                       Ver Contratos
                     </a>
                     <a
-                      href="/receivables"
+                      href="/projetos?tab=recebiveis"
                       className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 text-sm"
                     >
                       Ver Recebíveis
                     </a>
                     <a
-                      href="/expenses"
+                      href="/projetos?tab=despesas"
                       className="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700 text-sm"
                     >
                       Ver Despesas
