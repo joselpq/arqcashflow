@@ -1,0 +1,229 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { format } from 'date-fns'
+
+// Helper functions for date conversion with UTC handling
+function formatDateForInput(date: string | Date): string {
+  if (!date) return ''
+  if (typeof date === 'string' && date.includes('T')) {
+    return date.split('T')[0]
+  }
+  const d = new Date(date)
+  return format(d, 'yyyy-MM-dd')
+}
+
+interface ContractFormProps {
+  contract?: any
+  onSubmit: (contractData: any) => Promise<void>
+  onCancel: () => void
+  loading?: boolean
+}
+
+export default function ContractForm({ contract, onSubmit, onCancel, loading = false }: ContractFormProps) {
+  const [customCategory, setCustomCategory] = useState('')
+  const [showCustomCategory, setShowCustomCategory] = useState(false)
+  const [predefinedCategories, setPredefinedCategories] = useState([
+    'Residencial',
+    'Comercial',
+    'Restaurante',
+    'Loja'
+  ])
+  const [formData, setFormData] = useState({
+    clientName: '',
+    projectName: '',
+    description: '',
+    totalValue: '',
+    signedDate: '',
+    category: '',
+    notes: ''
+  })
+
+  // Initialize form data when contract changes
+  useEffect(() => {
+    if (contract) {
+      const category = contract.category || ''
+
+      // Check if category is in predefined list
+      if (category && !predefinedCategories.includes(category)) {
+        setCustomCategory(category)
+        setShowCustomCategory(true)
+      } else {
+        setCustomCategory('')
+        setShowCustomCategory(false)
+      }
+
+      setFormData({
+        clientName: contract.clientName || '',
+        projectName: contract.projectName || '',
+        description: contract.description || '',
+        totalValue: contract.totalValue ? contract.totalValue.toString() : '',
+        signedDate: contract.signedDate ? formatDateForInput(contract.signedDate) : '',
+        category: category,
+        notes: contract.notes || ''
+      })
+    } else {
+      // Reset form for new contract
+      setFormData({
+        clientName: '',
+        projectName: '',
+        description: '',
+        totalValue: '',
+        signedDate: '',
+        category: '',
+        notes: ''
+      })
+      setCustomCategory('')
+      setShowCustomCategory(false)
+    }
+  }, [contract, predefinedCategories])
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+
+    const totalValue = parseFloat(formData.totalValue)
+    if (isNaN(totalValue)) {
+      alert('Total value must be a valid number')
+      return
+    }
+
+    await onSubmit({
+      ...formData,
+      totalValue
+    })
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label className="block mb-2 font-medium text-neutral-900">Nome do Cliente *</label>
+        <input
+          type="text"
+          required
+          className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
+          value={formData.clientName}
+          onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
+          disabled={loading}
+        />
+      </div>
+
+      <div>
+        <label className="block mb-2 font-medium text-neutral-900">Nome do Projeto *</label>
+        <input
+          type="text"
+          required
+          className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
+          value={formData.projectName}
+          onChange={(e) => setFormData({ ...formData, projectName: e.target.value })}
+          disabled={loading}
+        />
+      </div>
+
+      <div>
+        <label className="block mb-2 font-medium text-neutral-900">Descrição</label>
+        <textarea
+          className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
+          rows={3}
+          value={formData.description}
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          disabled={loading}
+        />
+      </div>
+
+      <div>
+        <label className="block mb-2 font-medium text-neutral-900">Valor Total *</label>
+        <input
+          type="number"
+          step="0.01"
+          required
+          className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
+          value={formData.totalValue}
+          onChange={(e) => setFormData({ ...formData, totalValue: e.target.value })}
+          disabled={loading}
+        />
+      </div>
+
+      <div>
+        <label className="block mb-2 font-medium text-neutral-900">Data de Assinatura *</label>
+        <input
+          type="date"
+          required
+          className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900"
+          value={formData.signedDate}
+          onChange={(e) => setFormData({ ...formData, signedDate: e.target.value })}
+          disabled={loading}
+        />
+      </div>
+
+      <div>
+        <label className="block mb-2 font-medium text-neutral-900">Categoria</label>
+        <select
+          className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900"
+          value={showCustomCategory ? 'custom' : formData.category}
+          onChange={(e) => {
+            if (e.target.value === 'custom') {
+              setShowCustomCategory(true)
+              setFormData({ ...formData, category: customCategory })
+            } else {
+              setShowCustomCategory(false)
+              setFormData({ ...formData, category: e.target.value })
+            }
+          }}
+          disabled={loading}
+        >
+          <option value="">Selecione uma categoria</option>
+          {predefinedCategories.map(cat => (
+            <option key={cat} value={cat}>{cat}</option>
+          ))}
+          <option value="custom">+ Nova categoria</option>
+        </select>
+      </div>
+
+      {showCustomCategory && (
+        <div>
+          <label className="block mb-2 font-medium text-neutral-900">Nova Categoria</label>
+          <input
+            type="text"
+            className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
+            value={customCategory}
+            onChange={(e) => {
+              setCustomCategory(e.target.value)
+              setFormData({ ...formData, category: e.target.value })
+            }}
+            placeholder="Digite o nome da nova categoria"
+            disabled={loading}
+          />
+        </div>
+      )}
+
+      <div>
+        <label className="block mb-2 font-medium text-neutral-900">Observações</label>
+        <textarea
+          className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
+          rows={3}
+          value={formData.notes}
+          onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+          disabled={loading}
+        />
+      </div>
+
+      <div className="flex gap-2 pt-4">
+        <button
+          type="submit"
+          disabled={loading}
+          className="bg-blue-700 text-white px-6 py-2 rounded-lg hover:bg-blue-800 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {loading ? 'Salvando...' : (contract ? 'Atualizar' : 'Adicionar')}
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={loading}
+          className="bg-neutral-600 text-white px-6 py-2 rounded-lg hover:bg-neutral-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Cancelar
+        </button>
+      </div>
+    </form>
+  )
+}

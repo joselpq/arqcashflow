@@ -3,17 +3,10 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { format } from 'date-fns'
+import Modal from '../../components/Modal'
+import ExpenseForm from '../../components/forms/ExpenseForm'
 
-// Helper functions for date conversion with UTC handling
-function formatDateForInput(date: string | Date): string {
-  if (!date) return ''
-  if (typeof date === 'string' && date.includes('T')) {
-    return date.split('T')[0]
-  }
-  const d = new Date(date)
-  return format(d, 'yyyy-MM-dd')
-}
-
+// Helper function for date display
 function formatDateForDisplay(date: string | Date): string {
   if (!date) return ''
   if (typeof date === 'string' && date.includes('T')) {
@@ -33,6 +26,8 @@ export default function ExpensesTab() {
   const [contracts, setContracts] = useState([])
   const [summary, setSummary] = useState({ total: 0, paid: 0, pending: 0, overdue: 0, count: 0 })
   const [loading, setLoading] = useState(false)
+  const [formLoading, setFormLoading] = useState(false)
+  const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingExpense, setEditingExpense] = useState(null)
 
   const [filters, setFilters] = useState({
@@ -42,21 +37,6 @@ export default function ExpensesTab() {
     type: 'all',
     sortBy: 'dueDate',
     sortOrder: 'asc',
-  })
-
-  const [formData, setFormData] = useState({
-    description: '',
-    amount: '',
-    dueDate: '',
-    category: 'materiais',
-    contractId: '',
-    vendor: '',
-    invoiceNumber: '',
-    type: 'operational',
-    notes: '',
-    status: 'pending',
-    paidDate: '',
-    paidAmount: '',
   })
 
   const expenseCategories = [
@@ -86,10 +66,7 @@ export default function ExpensesTab() {
     if (editId && expenses.length > 0) {
       const expenseToEdit = expenses.find((e: any) => e.id === editId)
       if (expenseToEdit) {
-        editExpense(expenseToEdit)
-        setTimeout(() => {
-          document.getElementById('expense-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-        }, 100)
+        openEditModal(expenseToEdit)
       }
     }
   }, [editId, expenses])
@@ -98,24 +75,21 @@ export default function ExpensesTab() {
     setLoading(true)
     try {
       const params = new URLSearchParams(filters)
-      const response = await fetch(`/api/expenses?${params}`)
 
-      if (!response.ok) {
-        if (response.status === 401) {
+      const res = await fetch(`/api/expenses?${params.toString()}`)
+      if (!res.ok) {
+        if (res.status === 401) {
           window.location.href = '/login'
           return
         }
-        throw new Error(`Failed to fetch expenses: ${response.status}`)
+        throw new Error(`Failed to fetch expenses: ${res.status}`)
       }
-
-      const data = await response.json()
+      const data = await res.json()
       setExpenses(data.expenses || [])
       setSummary(data.summary || { total: 0, paid: 0, pending: 0, overdue: 0, count: 0 })
     } catch (error) {
-      console.error('Error fetching expenses:', error)
-      alert('Erro ao carregar despesas')
+      console.error('Falha ao buscar despesas:', error)
       setExpenses([])
-      setSummary({ total: 0, paid: 0, pending: 0, overdue: 0, count: 0 })
     } finally {
       setLoading(false)
     }
@@ -123,513 +97,334 @@ export default function ExpensesTab() {
 
   async function fetchContracts() {
     try {
-      const response = await fetch('/api/contracts')
-
-      if (!response.ok) {
-        if (response.status === 401) {
+      const res = await fetch('/api/contracts')
+      if (!res.ok) {
+        if (res.status === 401) {
           window.location.href = '/login'
           return
         }
-        throw new Error(`Failed to fetch contracts: ${response.status}`)
+        throw new Error(`Failed to fetch contracts: ${res.status}`)
       }
-
-      const data = await response.json()
-      setContracts(data || [])
+      const data = await res.json()
+      setContracts(data)
     } catch (error) {
-      console.error('Error fetching contracts:', error)
+      console.error('Falha ao buscar contratos:', error)
       setContracts([])
     }
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
+  function openAddModal() {
+    setEditingExpense(null)
+    setIsModalOpen(true)
+  }
+
+  function openEditModal(expense: any) {
+    setEditingExpense(expense)
+    setIsModalOpen(true)
+  }
+
+  function closeModal() {
+    setIsModalOpen(false)
+    setEditingExpense(null)
+  }
+
+  async function handleFormSubmit(expenseData: any) {
+    setFormLoading(true)
     try {
       const url = editingExpense ? `/api/expenses/${editingExpense.id}` : '/api/expenses'
       const method = editingExpense ? 'PUT' : 'POST'
 
-      const amount = parseFloat(formData.amount)
-      if (isNaN(amount) || amount <= 0) {
-        alert('Por favor, insira um valor válido maior que zero')
-        return
-      }
-
-      let paidAmount = null
-      if (formData.paidAmount && formData.paidAmount.trim() !== '') {
-        paidAmount = parseFloat(formData.paidAmount)
-        if (isNaN(paidAmount) || paidAmount < 0) {
-          alert('Por favor, insira um valor pago válido')
-          return
-        }
-      }
-
-      const expenseData = {
-        description: formData.description,
-        amount: amount,
-        dueDate: formData.dueDate,
-        category: formData.category,
-        type: formData.type,
-        status: formData.status,
-        contractId: formData.contractId || null,
-        vendor: formData.vendor || null,
-        invoiceNumber: formData.invoiceNumber || null,
-        notes: formData.notes || null,
-        ...(paidAmount !== null && { paidAmount }),
-        ...(formData.paidDate && { paidDate: formData.paidDate }),
-        ...(formData.status === 'paid' && !formData.paidDate && { paidDate: new Date().toISOString().split('T')[0] }),
-      }
-
-      const response = await fetch(url, {
+      const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(expenseData),
+        body: JSON.stringify(expenseData)
       })
 
-      if (response.ok) {
-        alert(editingExpense ? 'Despesa atualizada com sucesso!' : 'Despesa criada com sucesso!')
-        resetForm()
-        fetchExpenses()
+      if (res.ok) {
+        closeModal()
+        await fetchExpenses()
       } else {
-        const error = await response.json()
-        alert(`Erro: ${error.error}`)
+        alert('Error saving expense')
       }
     } catch (error) {
-      console.error('Error saving expense:', error)
-      alert('Erro ao salvar despesa')
+      console.error('Error:', error)
+      alert('Error saving expense')
+    } finally {
+      setFormLoading(false)
     }
   }
 
-  function resetForm() {
-    setFormData({
-      description: '',
-      amount: '',
-      dueDate: '',
-      category: 'materiais',
-      contractId: '',
-      vendor: '',
-      invoiceNumber: '',
-      type: 'operational',
-      notes: '',
-      status: 'pending',
-      paidDate: '',
-      paidAmount: '',
-    })
-    setEditingExpense(null)
-  }
+  async function deleteExpense(id: string) {
+    if (!confirm('Are you sure you want to delete this expense?')) {
+      return
+    }
 
-  async function editExpense(expense: any) {
-    setEditingExpense(expense)
-    setFormData({
-      description: expense.description,
-      amount: expense.amount.toString(),
-      dueDate: formatDateForInput(expense.dueDate),
-      category: expense.category,
-      contractId: expense.contractId || '',
-      vendor: expense.vendor || '',
-      invoiceNumber: expense.invoiceNumber || '',
-      type: expense.type,
-      notes: expense.notes || '',
-      status: expense.status || 'pending',
-      paidDate: expense.paidDate ? formatDateForInput(expense.paidDate) : '',
-      paidAmount: expense.paidAmount ? expense.paidAmount.toString() : '',
-    })
+    try {
+      const res = await fetch(`/api/expenses/${id}`, {
+        method: 'DELETE'
+      })
+
+      if (res.ok) {
+        await fetchExpenses()
+      } else {
+        alert('Failed to delete expense')
+      }
+    } catch (error) {
+      console.error('Delete error:', error)
+      alert('Failed to delete expense')
+    }
   }
 
   async function markAsPaid(expense: any) {
+    if (!confirm('Mark this expense as paid?')) {
+      return
+    }
+
     try {
-      const response = await fetch(`/api/expenses/${expense.id}`, {
+      const res = await fetch(`/api/expenses/${expense.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          ...expense,
           status: 'paid',
-          paidDate: new Date().toISOString(),
-          paidAmount: expense.amount,
-        }),
+          paidDate: new Date().toISOString().split('T')[0],
+          paidAmount: expense.amount
+        })
       })
 
-      if (response.ok) {
-        fetchExpenses()
-        alert('Despesa marcada como paga!')
+      if (res.ok) {
+        await fetchExpenses()
+      } else {
+        alert('Failed to update expense')
       }
     } catch (error) {
-      console.error('Error marking as paid:', error)
-      alert('Erro ao marcar como paga')
+      console.error('Update error:', error)
+      alert('Failed to update expense')
     }
-  }
-
-  async function deleteExpense(expense: any) {
-    if (!confirm(`Excluir despesa "${expense.description}"?`)) return
-
-    try {
-      const response = await fetch(`/api/expenses/${expense.id}`, {
-        method: 'DELETE',
-      })
-
-      if (response.ok) {
-        fetchExpenses()
-        alert('Despesa excluída!')
-      }
-    } catch (error) {
-      console.error('Error deleting expense:', error)
-      alert('Erro ao excluir despesa')
-    }
-  }
-
-  function getStatusDisplay(expense: any) {
-    let status = expense.status
-
-    if (status === 'pending' && new Date(expense.dueDate) < new Date()) {
-      status = 'overdue'
-    }
-
-    const statusOption = statusOptions.find(s => s.value === status)
-    return statusOption || { label: status, color: 'bg-neutral-100 text-neutral-900' }
   }
 
   return (
     <div>
+      {/* Header with Add Button */}
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-xl font-bold text-neutral-900">Despesas</h2>
+        <button
+          onClick={openAddModal}
+          className="bg-blue-700 text-white px-4 py-2 rounded-lg hover:bg-blue-800 font-medium transition-colors flex items-center gap-2"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          Adicionar Despesa
+        </button>
+      </div>
+
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-blue-50 border border-blue-200 p-4 rounded">
-          <h3 className="text-sm font-medium text-blue-700">Total Despesas</h3>
-          <p className="text-2xl font-bold text-blue-900">
-            R$ {summary.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-          </p>
-          <p className="text-sm text-blue-600">{summary.count} despesas</p>
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+        <div className="bg-white border-2 border-neutral-300 p-4 rounded-lg">
+          <p className="text-sm font-medium text-neutral-900">Total</p>
+          <p className="text-xl font-bold text-neutral-900">R$ {summary.total.toLocaleString('pt-BR')}</p>
         </div>
-        <div className="bg-green-50 border border-green-200 p-4 rounded">
-          <h3 className="text-sm font-medium text-green-700">Pagas</h3>
-          <p className="text-2xl font-bold text-green-900">
-            R$ {summary.paid.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-          </p>
+        <div className="bg-white border-2 border-neutral-300 p-4 rounded-lg">
+          <p className="text-sm font-medium text-neutral-900">Pendente</p>
+          <p className="text-xl font-bold text-yellow-700">R$ {summary.pending.toLocaleString('pt-BR')}</p>
         </div>
-        <div className="bg-yellow-50 border border-yellow-200 p-4 rounded">
-          <h3 className="text-sm font-medium text-yellow-700">Pendentes</h3>
-          <p className="text-2xl font-bold text-yellow-900">
-            R$ {summary.pending.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-          </p>
+        <div className="bg-white border-2 border-neutral-300 p-4 rounded-lg">
+          <p className="text-sm font-medium text-neutral-900">Pago</p>
+          <p className="text-xl font-bold text-green-700">R$ {summary.paid.toLocaleString('pt-BR')}</p>
         </div>
-        <div className="bg-red-50 border border-red-200 p-4 rounded">
-          <h3 className="text-sm font-medium text-red-700">Atrasadas</h3>
-          <p className="text-2xl font-bold text-red-900">
-            R$ {summary.overdue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-          </p>
+        <div className="bg-white border-2 border-neutral-300 p-4 rounded-lg">
+          <p className="text-sm font-medium text-neutral-900">Atrasado</p>
+          <p className="text-xl font-bold text-red-700">R$ {summary.overdue.toLocaleString('pt-BR')}</p>
+        </div>
+        <div className="bg-white border-2 border-neutral-300 p-4 rounded-lg">
+          <p className="text-sm font-medium text-neutral-900">Qtd</p>
+          <p className="text-xl font-bold text-neutral-900">{summary.count}</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Form Section */}
+      {/* Filters */}
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-2 mb-6">
         <div>
-          <div className="bg-white border-2 border-neutral-300 p-6 rounded-lg shadow-sm">
-            <h2 className="text-xl font-bold mb-4 text-neutral-900">
-              {editingExpense ? 'Editar Despesa' : 'Adicionar Despesa'}
-            </h2>
-
-            <form onSubmit={handleSubmit} className="space-y-4" id="expense-form">
-              <div>
-                <label className="block text-sm font-medium mb-2 text-neutral-900">Descrição *</label>
-                <input
-                  type="text"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2 text-neutral-900">Valor *</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={formData.amount}
-                  onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2 text-neutral-900">Data de Vencimento *</label>
-                <input
-                  type="date"
-                  value={formData.dueDate}
-                  onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2 text-neutral-900">Categoria *</label>
-                <select
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
-                  required
-                >
-                  {expenseCategories.map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2 text-neutral-900">Tipo</label>
-                <select
-                  value={formData.type}
-                  onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
-                >
-                  {expenseTypes.map(type => (
-                    <option key={type.value} value={type.value}>{type.label}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2 text-neutral-900">Projeto</label>
-                <select
-                  value={formData.contractId}
-                  onChange={(e) => setFormData({ ...formData, contractId: e.target.value })}
-                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
-                >
-                  <option value="">Nenhum projeto específico</option>
-                  {contracts.map((contract: any) => (
-                    <option key={contract.id} value={contract.id}>
-                      {contract.clientName} - {contract.projectName}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2 text-neutral-900">Fornecedor</label>
-                <input
-                  type="text"
-                  value={formData.vendor}
-                  onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
-                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2 text-neutral-900">Número da Nota</label>
-                <input
-                  type="text"
-                  value={formData.invoiceNumber}
-                  onChange={(e) => setFormData({ ...formData, invoiceNumber: e.target.value })}
-                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2 text-neutral-900">Observações</label>
-                <textarea
-                  value={formData.notes}
-                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
-                  rows={3}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2 text-neutral-900">Status</label>
-                <select
-                  value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
-                >
-                  {statusOptions.map(status => (
-                    <option key={status.value} value={status.value}>{status.label}</option>
-                  ))}
-                </select>
-              </div>
-
-              {(formData.status === 'paid' || editingExpense?.status === 'paid') && (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium mb-2 text-neutral-900">Data do Pagamento</label>
-                    <input
-                      type="date"
-                      value={formData.paidDate}
-                      onChange={(e) => setFormData({ ...formData, paidDate: e.target.value })}
-                      className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-2 text-neutral-900">Valor Pago</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={formData.paidAmount}
-                      onChange={(e) => setFormData({ ...formData, paidAmount: e.target.value })}
-                      className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
-                      placeholder="Deixe vazio para usar o valor total"
-                    />
-                  </div>
-                </>
-              )}
-
-              <div className="flex gap-2">
-                <button
-                  type="submit"
-                  className="bg-blue-700 text-white px-6 py-2 rounded-lg hover:bg-blue-800 font-medium transition-colors"
-                >
-                  {editingExpense ? 'Atualizar' : 'Criar'} Despesa
-                </button>
-                {editingExpense && (
-                  <button
-                    type="button"
-                    onClick={resetForm}
-                    className="px-6 py-2 border border-gray-300 rounded hover:bg-gray-50"
-                  >
-                    Cancelar
-                  </button>
-                )}
-              </div>
-            </form>
-          </div>
+          <label className="block text-sm font-semibold text-neutral-900 mb-2">Projeto</label>
+          <select
+            className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
+            value={filters.contractId}
+            onChange={(e) => setFilters({ ...filters, contractId: e.target.value })}
+          >
+            <option value="all">Todos os projetos</option>
+            {contracts.map((contract: any) => (
+              <option key={contract.id} value={contract.id}>
+                {contract.clientName} - {contract.projectName}
+              </option>
+            ))}
+          </select>
         </div>
 
-        {/* List Section */}
-        <div className="bg-white border-2 border-neutral-300 p-6 rounded-lg shadow-sm">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold text-neutral-900">Lista de Despesas</h2>
-            {loading && <span className="text-blue-700 font-medium">Carregando...</span>}
-          </div>
+        <div>
+          <label className="block text-sm font-semibold text-neutral-900 mb-2">Status</label>
+          <select
+            className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
+            value={filters.status}
+            onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+          >
+            <option value="all">Todos</option>
+            {statusOptions.map(status => (
+              <option key={status.value} value={status.value}>
+                {status.label}
+              </option>
+            ))}
+          </select>
+        </div>
 
-          {/* Filters */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-6">
-            <select
-              value={filters.status}
-              onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-              className="border-2 border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
-            >
-              <option value="all">Todos os Status</option>
-              {statusOptions.map(status => (
-                <option key={status.value} value={status.value}>{status.label}</option>
-              ))}
-            </select>
+        <div>
+          <label className="block text-sm font-semibold text-neutral-900 mb-2">Categoria</label>
+          <select
+            className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
+            value={filters.category}
+            onChange={(e) => setFilters({ ...filters, category: e.target.value })}
+          >
+            <option value="all">Todas</option>
+            {expenseCategories.map(category => (
+              <option key={category} value={category}>
+                {category.charAt(0).toUpperCase() + category.slice(1)}
+              </option>
+            ))}
+          </select>
+        </div>
 
-            <select
-              value={filters.category}
-              onChange={(e) => setFilters({ ...filters, category: e.target.value })}
-              className="border-2 border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
-            >
-              <option value="all">Todas Categorias</option>
-              {expenseCategories.map(cat => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
+        <div>
+          <label className="block text-sm font-semibold text-neutral-900 mb-2">Tipo</label>
+          <select
+            className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
+            value={filters.type}
+            onChange={(e) => setFilters({ ...filters, type: e.target.value })}
+          >
+            <option value="all">Todos</option>
+            {expenseTypes.map(type => (
+              <option key={type.value} value={type.value}>
+                {type.label}
+              </option>
+            ))}
+          </select>
+        </div>
 
-            <select
-              value={filters.type}
-              onChange={(e) => setFilters({ ...filters, type: e.target.value })}
-              className="border-2 border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
-            >
-              <option value="all">Todos os Tipos</option>
-              {expenseTypes.map(type => (
-                <option key={type.value} value={type.value}>{type.label}</option>
-              ))}
-            </select>
+        <div>
+          <label className="block text-sm font-semibold text-neutral-900 mb-2">Ordenar Por</label>
+          <select
+            className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
+            value={filters.sortBy}
+            onChange={(e) => setFilters({ ...filters, sortBy: e.target.value })}
+          >
+            <option value="dueDate">Data de Vencimento</option>
+            <option value="amount">Valor</option>
+            <option value="status">Status</option>
+            <option value="category">Categoria</option>
+            <option value="vendor">Fornecedor</option>
+            <option value="createdAt">Data de Criação</option>
+          </select>
+        </div>
 
-            <select
-              value={filters.sortBy}
-              onChange={(e) => setFilters({ ...filters, sortBy: e.target.value })}
-              className="border-2 border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
-            >
-              <option value="dueDate">Data de Vencimento</option>
-              <option value="amount">Valor</option>
-              <option value="description">Descrição</option>
-              <option value="vendor">Fornecedor</option>
-              <option value="createdAt">Data de Criação</option>
-            </select>
-          </div>
-
-          {/* Expenses List */}
-          <div className="space-y-3 max-h-[600px] overflow-y-auto">
-            {expenses.map((expense: any) => {
-              const statusDisplay = getStatusDisplay(expense)
-              return (
-                <div key={expense.id} className="bg-white border-2 border-neutral-300 rounded-lg p-6 hover:shadow-md transition-shadow">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h3 className="font-bold text-lg text-neutral-900">{expense.description}</h3>
-                        <span className={`px-2 py-1 rounded text-xs ${statusDisplay.color}`}>
-                          {statusDisplay.label}
-                        </span>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm text-neutral-900 font-medium">
-                        <div>
-                          <strong>Valor:</strong> R$ {expense.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </div>
-                        <div>
-                          <strong>Vencimento:</strong> {formatDateForDisplay(expense.dueDate)}
-                        </div>
-                        {expense.vendor && (
-                          <div>
-                            <strong>Fornecedor:</strong> {expense.vendor}
-                          </div>
-                        )}
-                        <div>
-                          <strong>Categoria:</strong> {expense.category}
-                        </div>
-                      </div>
-
-                      {expense.contract && (
-                        <div className="text-sm text-blue-700 mt-1 font-medium">
-                          <strong>Projeto:</strong> {expense.contract.clientName} - {expense.contract.projectName}
-                        </div>
-                      )}
-
-                      {expense.paidDate && (
-                        <div className="text-sm text-green-700 mt-1 font-medium">
-                          <strong>Pago em:</strong> {formatDateForDisplay(expense.paidDate)}
-                          {expense.paidAmount && expense.paidAmount !== expense.amount && (
-                            <span> - R$ {expense.paidAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                          )}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex flex-col gap-1 ml-4">
-                      {expense.status === 'pending' && (
-                        <button
-                          onClick={() => markAsPaid(expense)}
-                          className="text-xs bg-green-600 text-white px-3 py-1 rounded-lg hover:bg-green-700 font-medium transition-colors"
-                        >
-                          Marcar Pago
-                        </button>
-                      )}
-                      <button
-                        onClick={() => editExpense(expense)}
-                        className="text-xs bg-blue-600 text-white px-3 py-1 rounded-lg hover:bg-blue-700 font-medium transition-colors"
-                      >
-                        Editar
-                      </button>
-                      <button
-                        onClick={() => deleteExpense(expense)}
-                        className="text-xs bg-red-600 text-white px-3 py-1 rounded-lg hover:bg-red-700 font-medium transition-colors"
-                      >
-                        Excluir
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
-
-            {expenses.length === 0 && !loading && (
-              <div className="text-center text-neutral-900 py-8 font-medium">
-                Nenhuma despesa encontrada
-              </div>
-            )}
-          </div>
+        <div>
+          <label className="block text-sm font-semibold text-neutral-900 mb-2">Ordem</label>
+          <select
+            className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
+            value={filters.sortOrder}
+            onChange={(e) => setFilters({ ...filters, sortOrder: e.target.value })}
+          >
+            <option value="asc">Crescente</option>
+            <option value="desc">Decrescente</option>
+          </select>
         </div>
       </div>
+
+      {/* Expenses List */}
+      {loading ? (
+        <p>Carregando...</p>
+      ) : expenses.length === 0 ? (
+        <p className="text-neutral-900 font-medium">Nenhuma despesa ainda</p>
+      ) : (
+        <div className="space-y-4">
+          {expenses.map((expense: any) => (
+            <div key={expense.id} className="bg-white border-2 border-neutral-300 p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex justify-between items-start">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <h3 className="font-bold text-lg text-neutral-900">{expense.description}</h3>
+                    <span className={`px-2 py-1 rounded text-xs font-medium ${
+                      statusOptions.find(s => s.value === expense.status)?.color || 'bg-neutral-100 text-neutral-900'
+                    }`}>
+                      {statusOptions.find(s => s.value === expense.status)?.label || expense.status}
+                    </span>
+                  </div>
+                  <p className="text-sm font-semibold text-neutral-900">Valor: R$ {expense.amount.toLocaleString('pt-BR')}</p>
+                  <p className="text-sm text-neutral-900">Vencimento: {formatDateForDisplay(expense.dueDate)}</p>
+                  {expense.paidDate && (
+                    <p className="text-sm text-green-700">
+                      Pago em: {formatDateForDisplay(expense.paidDate)}
+                      {expense.paidAmount && expense.paidAmount !== expense.amount &&
+                        ` - R$ ${expense.paidAmount.toLocaleString('pt-BR')}`}
+                    </p>
+                  )}
+                  <p className="text-sm text-neutral-900">Categoria: {expense.category}</p>
+                  <p className="text-sm text-neutral-900">
+                    Tipo: {expenseTypes.find(t => t.value === expense.type)?.label || expense.type}
+                  </p>
+                  {expense.contract && (
+                    <p className="text-sm text-neutral-900">
+                      Projeto: {expense.contract.clientName} - {expense.contract.projectName}
+                    </p>
+                  )}
+                  {expense.vendor && (
+                    <p className="text-sm text-neutral-900">Fornecedor: {expense.vendor}</p>
+                  )}
+                  {expense.invoiceNumber && (
+                    <p className="text-sm text-neutral-900">Fatura: {expense.invoiceNumber}</p>
+                  )}
+                </div>
+                <div className="flex flex-col gap-2 ml-4">
+                  {(expense.status === 'pending' || expense.status === 'overdue') && (
+                    <button
+                      onClick={() => markAsPaid(expense)}
+                      className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 font-medium transition-colors"
+                    >
+                      Marcar como Pago
+                    </button>
+                  )}
+                  <button
+                    onClick={() => openEditModal(expense)}
+                    className="bg-blue-700 text-white px-3 py-1 rounded text-sm hover:bg-blue-800 font-medium transition-colors"
+                  >
+                    Editar
+                  </button>
+                  <button
+                    onClick={() => deleteExpense(expense.id)}
+                    className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 font-medium transition-colors"
+                  >
+                    Excluir
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Modal */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        title={editingExpense ? 'Editar Despesa' : 'Adicionar Despesa'}
+        size="lg"
+      >
+        <ExpenseForm
+          expense={editingExpense}
+          contracts={contracts}
+          onSubmit={handleFormSubmit}
+          onCancel={closeModal}
+          loading={formLoading}
+        />
+      </Modal>
     </div>
   )
 }

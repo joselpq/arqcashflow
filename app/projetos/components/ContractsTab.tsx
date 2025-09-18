@@ -3,17 +3,10 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { format } from 'date-fns'
+import Modal from '../../components/Modal'
+import ContractForm from '../../components/forms/ContractForm'
 
-// Helper functions for date conversion with UTC handling
-function formatDateForInput(date: string | Date): string {
-  if (!date) return ''
-  if (typeof date === 'string' && date.includes('T')) {
-    return date.split('T')[0]
-  }
-  const d = new Date(date)
-  return format(d, 'yyyy-MM-dd')
-}
-
+// Helper function for date display
 function formatDateForDisplay(date: string | Date): string {
   if (!date) return ''
   if (typeof date === 'string' && date.includes('T')) {
@@ -31,31 +24,16 @@ export default function ContractsTab() {
 
   const [contracts, setContracts] = useState([])
   const [loading, setLoading] = useState(true)
-  const [editingContract, setEditingContract] = useState<any>(null)
+  const [formLoading, setFormLoading] = useState(false)
   const [uniqueCategories, setUniqueCategories] = useState<string[]>([])
   const [uniqueStatuses] = useState(['active', 'completed', 'cancelled'])
-  const [customCategory, setCustomCategory] = useState('')
-  const [showCustomCategory, setShowCustomCategory] = useState(false)
-  const [predefinedCategories, setPredefinedCategories] = useState([
-    'Residencial',
-    'Comercial',
-    'Restaurante',
-    'Loja'
-  ])
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [editingContract, setEditingContract] = useState<any>(null)
   const [filters, setFilters] = useState({
     status: 'active',
     category: 'all',
     sortBy: 'createdAt',
     sortOrder: 'desc',
-  })
-  const [formData, setFormData] = useState({
-    clientName: '',
-    projectName: '',
-    description: '',
-    totalValue: '',
-    signedDate: '',
-    category: '',
-    notes: ''
   })
 
   useEffect(() => {
@@ -66,7 +44,7 @@ export default function ContractsTab() {
     if (editId) {
       const contract = contracts.find((c: any) => c.id === editId)
       if (contract) {
-        editContract(contract)
+        openEditModal(contract)
       }
     }
   }, [editId, contracts])
@@ -93,30 +71,35 @@ export default function ContractsTab() {
     }
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
+  function openAddModal() {
+    setEditingContract(null)
+    setIsModalOpen(true)
+  }
 
+  function openEditModal(contract: any) {
+    setEditingContract(contract)
+    setIsModalOpen(true)
+  }
+
+  function closeModal() {
+    setIsModalOpen(false)
+    setEditingContract(null)
+  }
+
+  async function handleFormSubmit(contractData: any) {
+    setFormLoading(true)
     try {
-      const totalValue = parseFloat(formData.totalValue)
-      if (isNaN(totalValue)) {
-        alert('Total value must be a valid number')
-        return
-      }
-
       const url = editingContract ? `/api/contracts/${editingContract.id}` : '/api/contracts'
       const method = editingContract ? 'PUT' : 'POST'
 
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData,
-          totalValue
-        })
+        body: JSON.stringify(contractData)
       })
 
       if (res.ok) {
-        resetForm()
+        closeModal()
         fetchContracts()
       } else {
         alert('Error saving contract')
@@ -124,6 +107,8 @@ export default function ContractsTab() {
     } catch (error) {
       console.error('Error:', error)
       alert('Error saving contract')
+    } finally {
+      setFormLoading(false)
     }
   }
 
@@ -148,183 +133,25 @@ export default function ContractsTab() {
     }
   }
 
-  function resetForm() {
-    setFormData({
-      clientName: '',
-      projectName: '',
-      description: '',
-      totalValue: '',
-      signedDate: '',
-      category: '',
-      notes: ''
-    })
-    setEditingContract(null)
-    setCustomCategory('')
-    setShowCustomCategory(false)
-  }
-
-  function editContract(contract: any) {
-    setEditingContract(contract)
-    const category = contract.category || ''
-
-    // Check if category is in predefined list
-    if (category && !predefinedCategories.includes(category)) {
-      setCustomCategory(category)
-      setShowCustomCategory(true)
-    } else {
-      setCustomCategory('')
-      setShowCustomCategory(false)
-    }
-
-    setFormData({
-      clientName: contract.clientName || '',
-      projectName: contract.projectName || '',
-      description: contract.description || '',
-      totalValue: contract.totalValue ? contract.totalValue.toString() : '',
-      signedDate: contract.signedDate ? formatDateForInput(contract.signedDate) : '',
-      category: category,
-      notes: contract.notes || ''
-    })
-  }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-      <div>
-        <div>
-          <h2 className="text-xl font-bold mb-4 text-neutral-900">
-            {editingContract ? 'Editar Contrato' : 'Adicionar Contrato'}
-          </h2>
-          <form onSubmit={handleSubmit} className="space-y-4" id="contract-form">
-            <div>
-              <label className="block mb-2 font-medium text-neutral-900">Nome do Cliente *</label>
-              <input
-                type="text"
-                required
-                className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
-                value={formData.clientName}
-                onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
-              />
-            </div>
-
-            <div>
-              <label className="block mb-2 font-medium text-neutral-900">Nome do Projeto *</label>
-              <input
-                type="text"
-                required
-                className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
-                value={formData.projectName}
-                onChange={(e) => setFormData({ ...formData, projectName: e.target.value })}
-              />
-            </div>
-
-            <div>
-              <label className="block mb-2 font-medium text-neutral-900">Descrição</label>
-              <textarea
-                className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
-                rows={3}
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              />
-            </div>
-
-            <div>
-              <label className="block mb-2 font-medium text-neutral-900">Valor Total *</label>
-              <input
-                type="number"
-                step="0.01"
-                required
-                className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
-                value={formData.totalValue}
-                onChange={(e) => setFormData({ ...formData, totalValue: e.target.value })}
-              />
-            </div>
-
-            <div>
-              <label className="block mb-2 font-medium text-neutral-900">Data de Assinatura *</label>
-              <input
-                type="date"
-                required
-                className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900"
-                value={formData.signedDate}
-                onChange={(e) => setFormData({ ...formData, signedDate: e.target.value })}
-              />
-            </div>
-
-            <div>
-              <label className="block mb-2 font-medium text-neutral-900">Categoria</label>
-              <select
-                className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900"
-                value={showCustomCategory ? 'custom' : formData.category}
-                onChange={(e) => {
-                  if (e.target.value === 'custom') {
-                    setShowCustomCategory(true)
-                    setFormData({ ...formData, category: customCategory })
-                  } else {
-                    setShowCustomCategory(false)
-                    setFormData({ ...formData, category: e.target.value })
-                  }
-                }}
-              >
-                <option value="">Selecione uma categoria</option>
-                {predefinedCategories.map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-                <option value="custom">+ Nova categoria</option>
-              </select>
-            </div>
-
-            {showCustomCategory && (
-              <div>
-                <label className="block mb-2 font-medium text-neutral-900">Nova Categoria</label>
-                <input
-                  type="text"
-                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
-                  value={customCategory}
-                  onChange={(e) => {
-                    setCustomCategory(e.target.value)
-                    setFormData({ ...formData, category: e.target.value })
-                  }}
-                  placeholder="Digite o nome da nova categoria"
-                />
-              </div>
-            )}
-
-            <div>
-              <label className="block mb-2 font-medium text-neutral-900">Observações</label>
-              <textarea
-                className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
-                rows={3}
-                value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              />
-            </div>
-
-            <div className="flex gap-2">
-              <button
-                type="submit"
-                className="bg-blue-700 text-white px-6 py-2 rounded-lg hover:bg-blue-800 font-medium transition-colors"
-              >
-                {editingContract ? 'Atualizar' : 'Adicionar'}
-              </button>
-              {editingContract && (
-                <button
-                  type="button"
-                  onClick={resetForm}
-                  className="bg-neutral-600 text-white px-6 py-2 rounded-lg hover:bg-neutral-700 font-medium transition-colors"
-                >
-                  Cancelar
-                </button>
-              )}
-            </div>
-          </form>
-        </div>
+    <div>
+      {/* Header with Add Button */}
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-xl font-bold text-neutral-900">Contratos</h2>
+        <button
+          onClick={openAddModal}
+          className="bg-blue-700 text-white px-4 py-2 rounded-lg hover:bg-blue-800 font-medium transition-colors flex items-center gap-2"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          Adicionar Contrato
+        </button>
       </div>
 
-      <div>
-        <h2 className="text-xl font-bold mb-4 text-neutral-900">Contratos Existentes</h2>
-
-        {/* Filters */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-6">
+      {/* Filters */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-6">
           <div>
             <label className="block text-sm font-semibold text-neutral-900 mb-2">Status</label>
             <select
@@ -415,7 +242,7 @@ export default function ContractsTab() {
                   </div>
                   <div className="flex flex-col gap-2 ml-4">
                     <button
-                      onClick={() => editContract(contract)}
+                      onClick={() => openEditModal(contract)}
                       className="bg-blue-700 text-white px-3 py-1 rounded text-sm hover:bg-blue-800 font-medium transition-colors"
                     >
                       Editar
@@ -432,7 +259,21 @@ export default function ContractsTab() {
             ))}
           </div>
         )}
-      </div>
+
+      {/* Modal */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        title={editingContract ? 'Editar Contrato' : 'Adicionar Contrato'}
+        size="lg"
+      >
+        <ContractForm
+          contract={editingContract}
+          onSubmit={handleFormSubmit}
+          onCancel={closeModal}
+          loading={formLoading}
+        />
+      </Modal>
     </div>
   )
 }
