@@ -44,11 +44,6 @@ function ContractsPageContent() {
     'Restaurante',
     'Loja'
   ])
-  const [showAISection, setShowAISection] = useState(true)
-  const [aiMessage, setAiMessage] = useState('')
-  const [aiLoading, setAiLoading] = useState(false)
-  const [aiHistory, setAiHistory] = useState<Array<{role: 'user' | 'assistant', content: string}>>([])
-  const [pendingContract, setPendingContract] = useState<any>(null)
   const [filters, setFilters] = useState({
     status: 'active',
     category: 'all',
@@ -165,9 +160,6 @@ function ContractsPageContent() {
   }
 
   function editContract(contract: any) {
-    // Switch to manual mode when editing
-    setShowAISection(false)
-
     setEditingContract(contract)
     const category = contract.category || ''
 
@@ -212,120 +204,6 @@ function ContractsPageContent() {
     }
   }
 
-  async function handleAISubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!aiMessage.trim()) return
-
-    setAiLoading(true)
-    const userMessage = aiMessage
-    setAiMessage('')
-
-    // Add user message to history
-    const newHistory = [...aiHistory, { role: 'user' as const, content: userMessage }]
-    setAiHistory(newHistory)
-
-    // Check if user is confirming a pending contract
-    const isConfirming = pendingContract && (
-      userMessage.toLowerCase().includes('confirmar') ||
-      userMessage.toLowerCase().includes('sim') ||
-      userMessage.toLowerCase().includes('ok') ||
-      userMessage.toLowerCase().includes('certo')
-    )
-
-    try {
-      const requestBody: any = {
-        message: userMessage,
-        history: aiHistory
-      }
-
-      // Only include these fields if they're not null
-      if (pendingContract !== null) {
-        requestBody.pendingContract = pendingContract
-      }
-      if (isConfirming !== null) {
-        requestBody.isConfirming = isConfirming
-      }
-
-      const res = await fetch('/api/ai/create-contract', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody),
-      })
-
-      const result = await res.json()
-
-      console.log('=== AI Response Debug ===')
-      console.log('Response status:', res.status)
-      console.log('Response ok:', res.ok)
-      console.log('Result received:', JSON.stringify(result, null, 2))
-      console.log('Result.action:', result.action)
-      console.log('Type of result:', typeof result)
-
-      if (result.action === 'created') {
-
-        // Contract was created successfully
-        setAiHistory([...newHistory, {
-          role: 'assistant' as const,
-          content: result.confirmation || 'Contrato criado com sucesso!'
-        }])
-        setPendingContract(null) // Clear pending contract
-        fetchContracts()
-        // Clear history after successful creation
-        setTimeout(() => {
-          setAiHistory([])
-          setPendingContract(null)
-        }, 3000)
-      } else if (result.action === 'edited') {
-
-        // Contract was edited successfully
-        setAiHistory([...newHistory, {
-          role: 'assistant' as const,
-          content: result.confirmation || 'Contrato atualizado com sucesso!'
-        }])
-        fetchContracts()
-        // Clear history after successful edit
-        setTimeout(() => {
-          setAiHistory([])
-        }, 3000)
-      } else if (result.action === 'confirm') {
-        // AI is asking for confirmation
-        setPendingContract(result.contract)
-        // Only show the confirmation message, not the inferences
-        const confirmMessage = result.confirmation || 'Pode confirmar se os dados estão corretos?'
-        setAiHistory([...newHistory, {
-          role: 'assistant' as const,
-          content: confirmMessage
-        }])
-      } else if (result.action === 'clarify') {
-        // AI needs more information
-        setAiHistory([...newHistory, {
-          role: 'assistant' as const,
-          content: result.question
-        }])
-      } else if (result.action === 'edit_suggestion') {
-        // AI detected edit intention
-        setAiHistory([...newHistory, {
-          role: 'assistant' as const,
-          content: result.message
-        }])
-      } else {
-        console.error('Unknown action:', result)
-        setAiHistory([...newHistory, {
-          role: 'assistant' as const,
-          content: `Resposta inesperada da IA. Ação: ${result?.action || 'indefinida'}`
-        }])
-      }
-    } catch (error) {
-      console.error('AI error:', error)
-      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido'
-      setAiHistory([...newHistory, {
-        role: 'assistant' as const,
-        content: `Erro ao processar solicitação: ${errorMessage}`
-      }])
-    } finally {
-      setAiLoading(false)
-    }
-  }
 
   return (
     <div className="min-h-screen bg-neutral-50 p-8">
@@ -338,98 +216,10 @@ function ContractsPageContent() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div>
-          {/* Toggle between AI and Manual */}
-          <div className="flex gap-2 mb-4">
-            <button
-              type="button"
-              onClick={() => setShowAISection(true)}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${showAISection
-                ? 'bg-blue-700 text-white'
-                : 'bg-neutral-100 text-neutral-900 hover:bg-neutral-200'
-              }`}
-            >
-              🤖 Adicionar com IA
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowAISection(false)}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${!showAISection
-                ? 'bg-blue-700 text-white'
-                : 'bg-neutral-100 text-neutral-900 hover:bg-neutral-200'
-              }`}
-            >
-              ✏️ Adicionar Manual
-            </button>
-          </div>
-
-          {showAISection ? (
-            <div id="contract-form">
-              <h2 className="text-xl font-bold mb-4 text-neutral-900">Adicionar Contrato com IA</h2>
-
-              <div className="bg-blue-50/50 border border-blue-200/50 p-4 rounded-lg mb-4">
-                <p className="text-sm text-blue-800">
-                  💡 <strong>Dica:</strong> Descreva o contrato em linguagem natural. Exemplo:
-                  <br />
-                  <em>"Contrato de 50 mil com João Silva para projeto residencial na Vila Madalena, assinado ontem"</em>
-                </p>
-              </div>
-
-              {/* AI Chat History */}
-              {aiHistory.length > 0 && (
-                <div className="mb-4 space-y-2 max-h-60 overflow-y-auto">
-                  {aiHistory.map((msg, idx) => (
-                    <div
-                      key={idx}
-                      className={`p-3 rounded-lg border ${
-                        msg.role === 'user'
-                          ? 'bg-neutral-100 border-neutral-200/60 ml-8'
-                          : 'bg-blue-50/50 border-blue-200/50 mr-8'
-                      }`}
-                    >
-                      <p className="text-sm font-bold mb-1 text-neutral-900">
-                        {msg.role === 'user' ? '👤 Você' : '🤖 Assistente'}
-                      </p>
-                      <p className="text-sm text-neutral-900 leading-relaxed">{msg.content}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <form onSubmit={handleAISubmit} className="space-y-4">
-                <div>
-                  <textarea
-                    className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 h-24 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-600"
-                    placeholder="Descreva o contrato que deseja criar..."
-                    value={aiMessage}
-                    onChange={(e) => setAiMessage(e.target.value)}
-                    disabled={aiLoading}
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    type="submit"
-                    className="bg-blue-700 text-white px-6 py-2 rounded-lg hover:bg-blue-800 disabled:opacity-50 font-medium transition-colors"
-                    disabled={aiLoading}
-                  >
-                    {aiLoading ? 'Processando...' : 'Enviar'}
-                  </button>
-                  {aiHistory.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setAiHistory([])}
-                      className="bg-neutral-600 text-white px-6 py-2 rounded-lg hover:bg-neutral-700 font-medium transition-colors"
-                    >
-                      Limpar Conversa
-                    </button>
-                  )}
-                </div>
-              </form>
-            </div>
-          ) : (
-            <div>
-              <h2 className="text-xl font-bold mb-4 text-neutral-900">
-                {editingContract ? 'Editar Contrato' : 'Adicionar Contrato Manual'}
-              </h2>
+          <div>
+            <h2 className="text-xl font-bold mb-4 text-neutral-900">
+              {editingContract ? 'Editar Contrato' : 'Adicionar Contrato'}
+            </h2>
               <form onSubmit={handleSubmit} className="space-y-4" id="contract-form">
             <div>
               <label className="block mb-2 font-medium text-neutral-900">Nome do Cliente *</label>
@@ -570,8 +360,7 @@ function ContractsPageContent() {
               )}
             </div>
           </form>
-            </div>
-          )}
+          </div>
         </div>
 
         <div>

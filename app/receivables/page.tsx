@@ -61,11 +61,6 @@ function ReceivablesPageContent() {
     'obra',
     'RT'
   ])
-  const [showAISection, setShowAISection] = useState(true)
-  const [aiMessage, setAiMessage] = useState('')
-  const [aiLoading, setAiLoading] = useState(false)
-  const [aiHistory, setAiHistory] = useState<Array<{role: 'user' | 'assistant', content: string}>>([])
-  const [pendingReceivable, setPendingReceivable] = useState<any>(null)
 
   useEffect(() => {
     fetchContracts()
@@ -198,9 +193,6 @@ function ReceivablesPageContent() {
   }
 
   function editReceivable(receivable: any) {
-    // Switch to manual mode when editing
-    setShowAISection(false)
-
     setEditingReceivable(receivable)
     const category = receivable.category || ''
 
@@ -245,94 +237,6 @@ function ReceivablesPageContent() {
     }
   }
 
-  async function handleAISubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!aiMessage.trim()) return
-
-    setAiLoading(true)
-    const userMessage = aiMessage
-    setAiMessage('')
-
-    // Add user message to history
-    const newHistory = [...aiHistory, { role: 'user' as const, content: userMessage }]
-    setAiHistory(newHistory)
-
-    try {
-      const res = await fetch('/api/ai/create-receivable', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: userMessage,
-          history: aiHistory,
-          pendingReceivable,
-          isConfirming: pendingReceivable !== null
-        }),
-      })
-
-      const result = await res.json()
-
-      if (result.action === 'created') {
-
-        // Receivable created successfully
-        setAiHistory([...newHistory, {
-          role: 'assistant' as const,
-          content: `${result.message}\n📋 Conta a receber criada com sucesso!`
-        }])
-        setPendingReceivable(null)
-        fetchData()
-        // Clear history after successful creation
-        setTimeout(() => {
-          setAiHistory([])
-          setPendingReceivable(null)
-        }, 3000)
-      } else if (result.action === 'clarify') {
-        // AI needs more information
-        let response = result.question
-        if (result.suggestions && Array.isArray(result.suggestions) && result.suggestions.length > 0) {
-          response += '\n\nOpções disponíveis:\n' + result.suggestions.map((s: string, i: number) => `${i + 1}. ${s}`).join('\n')
-        }
-        setAiHistory([...newHistory, {
-          role: 'assistant' as const,
-          content: response
-        }])
-      } else if (result.action === 'no_contract') {
-        let response = result.message
-        if (result.suggestions && Array.isArray(result.suggestions) && result.suggestions.length > 0) {
-          response += '\n\nContratos similares:\n' + result.suggestions.join('\n')
-        }
-        setAiHistory([...newHistory, {
-          role: 'assistant' as const,
-          content: response
-        }])
-      } else if (result.action === 'confirm') {
-        // AI needs confirmation before creating
-        setPendingReceivable(result.pendingReceivable)
-        setAiHistory([...newHistory, {
-          role: 'assistant' as const,
-          content: result.question
-        }])
-      } else if (result.action === 'edit_suggestion') {
-        // AI detected edit intention
-        setAiHistory([...newHistory, {
-          role: 'assistant' as const,
-          content: result.message
-        }])
-      } else {
-        setAiHistory([...newHistory, {
-          role: 'assistant' as const,
-          content: 'Desculpe, não consegui processar sua solicitação.'
-        }])
-      }
-    } catch (error) {
-      console.error('AI error:', error)
-      setAiHistory([...newHistory, {
-        role: 'assistant' as const,
-        content: 'Erro ao processar solicitação. Verifique se a API está configurada.'
-      }])
-    } finally {
-      setAiLoading(false)
-    }
-  }
 
   async function markAsReceived(id: string, amount: number) {
     const receivedDate = prompt('Insira a data de recebimento (AAAA-MM-DD):')
@@ -372,28 +276,6 @@ function ReceivablesPageContent() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div>
           {/* Toggle between AI and Manual */}
-          <div className="flex gap-2 mb-4">
-            <button
-              type="button"
-              onClick={() => setShowAISection(true)}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${showAISection
-                ? 'bg-blue-700 text-white'
-                : 'bg-neutral-100 text-neutral-900 hover:bg-neutral-200'
-              }`}
-            >
-              🤖 Adicionar com IA
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowAISection(false)}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${!showAISection
-                ? 'bg-blue-700 text-white'
-                : 'bg-neutral-100 text-neutral-900 hover:bg-neutral-200'
-              }`}
-            >
-              ✏️ Adicionar Manual
-            </button>
-          </div>
 
           {contracts.length === 0 ? (
             <div className="bg-yellow-50 border border-yellow-200 p-4 rounded">
@@ -402,82 +284,15 @@ function ReceivablesPageContent() {
                 Para criar contas a receber, você precisa primeiro <a href="/contracts" className="underline">criar um contrato</a>.
               </p>
             </div>
-          ) : showAISection ? (
-            <div id="receivable-form">
-              <h2 className="text-xl font-bold mb-4 text-neutral-900">Adicionar Conta a Receber com IA</h2>
-
-              <div className="bg-green-50 border border-green-200 p-4 rounded mb-4">
-                <p className="text-sm text-green-800 leading-relaxed">
-                  💡 <strong>Exemplos:</strong>
-                  <br />
-                  <em>"2500 a receber 25/11 da loja Leo Madeiras, RT do projeto dina claire"</em>
-                  <br />
-                  <em>"Receber 5000 dia 15 do próximo mês do João Silva, projeto residencial"</em>
-                  <br />
-                  <em>"3 parcelas de 1000 do restaurante Sabor, primeira dia 10"</em>
-                </p>
-              </div>
-
-              {/* AI Chat History */}
-              {aiHistory && Array.isArray(aiHistory) && aiHistory.length > 0 && (
-                <div className="mb-4 space-y-2 max-h-60 overflow-y-auto">
-                  {aiHistory.map((msg, idx) => (
-                    <div
-                      key={idx}
-                      className={`p-3 rounded border ${
-                        msg.role === 'user'
-                          ? 'bg-gray-100 border-gray-300 ml-8'
-                          : 'bg-green-50 border-green-200 mr-8'
-                      }`}
-                    >
-                      <p className="text-sm font-bold mb-1 text-neutral-900">
-                        {msg.role === 'user' ? '👤 Você' : '🤖 Assistente'}
-                      </p>
-                      <p className="text-sm text-neutral-900 whitespace-pre-line leading-relaxed">{msg.content}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <form onSubmit={handleAISubmit} className="space-y-4">
-                <div>
-                  <textarea
-                    className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 h-24 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-600"
-                    placeholder="Descreva a conta a receber que deseja criar..."
-                    value={aiMessage}
-                    onChange={(e) => setAiMessage(e.target.value)}
-                    disabled={aiLoading}
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    type="submit"
-                    className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50 font-medium transition-colors"
-                    disabled={aiLoading}
-                  >
-                    {aiLoading ? 'Processando...' : 'Enviar'}
-                  </button>
-                  {aiHistory && Array.isArray(aiHistory) && aiHistory.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setAiHistory([])}
-                      className="bg-neutral-600 text-white px-6 py-2 rounded-lg hover:bg-neutral-700 font-medium transition-colors"
-                    >
-                      Limpar Conversa
-                    </button>
-                  )}
-                </div>
-              </form>
-            </div>
           ) : (
             <div>
               <h2 className="text-xl font-bold mb-4 text-neutral-900">
-                {editingReceivable ? 'Editar Conta a Receber' : 'Adicionar Manual'}
+                {editingReceivable ? 'Editar Conta a Receber' : 'Adicionar Conta a Receber'}
               </h2>
             </div>
           )}
 
-          {contracts.length > 0 && !showAISection && (
+          {contracts.length > 0 && (
             <form onSubmit={handleSubmit} className="space-y-4" id="receivable-form">
               <div>
                 <label className="block mb-2 font-medium text-neutral-900">Contrato *</label>

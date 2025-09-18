@@ -37,11 +37,6 @@ function ExpensesPageContent() {
   const [summary, setSummary] = useState({ total: 0, paid: 0, pending: 0, overdue: 0, count: 0 })
   const [loading, setLoading] = useState(false)
   const [editingExpense, setEditingExpense] = useState(null)
-  const [showAISection, setShowAISection] = useState(true)
-  const [aiMessage, setAiMessage] = useState('')
-  const [aiLoading, setAiLoading] = useState(false)
-  const [aiHistory, setAiHistory] = useState<Array<{role: 'user' | 'assistant', content: string}>>([])
-  const [pendingExpense, setPendingExpense] = useState<any>(null)
   // Supervisor state removed - clean slate for rebuild
 
   // Filters
@@ -219,79 +214,6 @@ function ExpensesPageContent() {
     }
   }
 
-  async function handleAISubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!aiMessage.trim()) return
-
-    setAiLoading(true)
-    const newHistory = [...aiHistory, { role: 'user' as const, content: aiMessage }]
-    setAiHistory(newHistory)
-    setAiMessage('')
-
-    try {
-      const res = await fetch('/api/ai/create-expense', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: aiMessage,
-          history: aiHistory,
-          pendingExpense,
-          isConfirming: pendingExpense !== null
-        })
-      })
-
-      const result = await res.json()
-
-      if (result.action === 'created') {
-        // Supervisor alert handling removed - clean slate for rebuild
-
-        setAiHistory([...newHistory, {
-          role: 'assistant' as const,
-          content: result.confirmation || 'Despesa criada com sucesso!'
-        }])
-        setPendingExpense(null)
-        fetchExpenses()
-        setTimeout(() => {
-          setAiHistory([])
-          setPendingExpense(null)
-        }, 3000)
-      } else if (result.action === 'confirm') {
-        setPendingExpense(result.expense)
-        setAiHistory([...newHistory, {
-          role: 'assistant' as const,
-          content: result.confirmation || 'Pode confirmar se os dados estão corretos?'
-        }])
-      } else if (result.action === 'clarify') {
-        // Clear pending expense when asking for clarification to avoid confusion
-        setPendingExpense(null)
-        setAiHistory([...newHistory, {
-          role: 'assistant' as const,
-          content: result.question
-        }])
-      } else if (result.action === 'error') {
-        // Clear pending expense on error
-        setPendingExpense(null)
-        setAiHistory([...newHistory, {
-          role: 'assistant' as const,
-          content: result.message
-        }])
-      } else {
-        // Handle unexpected responses
-        setAiHistory([...newHistory, {
-          role: 'assistant' as const,
-          content: 'Resposta inesperada. Tente novamente ou use o modo manual.'
-        }])
-      }
-    } catch (error) {
-      console.error('AI error:', error)
-      setAiHistory([...newHistory, {
-        role: 'assistant' as const,
-        content: 'Erro ao processar solicitação. Tente novamente.'
-      }])
-    } finally {
-      setAiLoading(false)
-    }
-  }
 
   function resetForm() {
     setFormData({
@@ -309,7 +231,6 @@ function ExpensesPageContent() {
       paidAmount: '',
     })
     setEditingExpense(null)
-    setShowAISection(false) // Switch to manual mode after editing
   }
 
   async function editExpense(expense) {
@@ -328,7 +249,6 @@ function ExpensesPageContent() {
       paidDate: expense.paidDate ? formatDateForInput(expense.paidDate) : '',
       paidAmount: expense.paidAmount ? expense.paidAmount.toString() : '',
     })
-    setShowAISection(false) // Switch to manual mode for editing
   }
 
   async function markAsPaid(expense) {
@@ -426,116 +346,10 @@ function ExpensesPageContent() {
         {/* Form Section */}
         <div>
           {/* Toggle between AI and Manual */}
-          <div className="flex gap-2 mb-4">
-            <button
-              type="button"
-              onClick={() => setShowAISection(true)}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${showAISection
-                ? 'bg-blue-700 text-white'
-                : 'bg-neutral-100 text-neutral-900 hover:bg-neutral-200'
-              }`}
-            >
-              🤖 Adicionar com IA
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowAISection(false)}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${!showAISection
-                ? 'bg-blue-700 text-white'
-                : 'bg-neutral-100 text-neutral-900 hover:bg-neutral-200'
-              }`}
-            >
-              ✏️ Adicionar Manual
-            </button>
-          </div>
 
-          {showAISection ? (
-            <div className="bg-white border-2 border-neutral-300 p-6 rounded-lg shadow-sm" id="expense-form">
-              <h2 className="text-xl font-bold mb-4 text-neutral-900">Adicionar Despesa com IA</h2>
-
-              <div className="bg-blue-50 border border-blue-200 p-4 rounded mb-4">
-                <p className="text-sm text-blue-800 leading-relaxed">
-                  💡 <strong>Dica:</strong> Descreva a despesa em linguagem natural. Exemplos:
-                  <br />
-                  <em>"Compra de materiais na Leroy Merlin, 5 mil reais, vencimento amanhã"</em>
-                  <br />
-                  <em>"Aluguel do escritório 3500 vencimento dia 10"</em>
-                </p>
-              </div>
-
-              {/* Pending Expense Indicator */}
-              {pendingExpense && (
-                <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded">
-                  <h3 className="text-sm font-bold text-yellow-800 mb-2">⏳ Despesa Pendente de Confirmação:</h3>
-                  <div className="text-sm text-yellow-700">
-                    <p><strong>Descrição:</strong> {pendingExpense.description}</p>
-                    <p><strong>Valor:</strong> R$ {Number(pendingExpense.amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                    <p><strong>Vencimento:</strong> {new Date(pendingExpense.dueDate).toLocaleDateString('pt-BR')}</p>
-                    <p><strong>Categoria:</strong> {pendingExpense.category}</p>
-                    {pendingExpense.vendor && <p><strong>Fornecedor:</strong> {pendingExpense.vendor}</p>}
-                  </div>
-                  <p className="text-xs text-yellow-600 mt-2">Digite "sim" ou "confirmar" para criar a despesa</p>
-                </div>
-              )}
-
-              {/* AI Chat History */}
-              {aiHistory.length > 0 && (
-                <div className="mb-4 space-y-2 max-h-60 overflow-y-auto">
-                  {aiHistory.map((msg, idx) => (
-                    <div
-                      key={idx}
-                      className={`p-3 rounded border ${
-                        msg.role === 'user'
-                          ? 'bg-gray-100 border-gray-300 ml-8'
-                          : 'bg-blue-50 border-blue-200 mr-8'
-                      }`}
-                    >
-                      <p className="text-sm font-bold mb-1 text-neutral-900">
-                        {msg.role === 'user' ? '👤 Você' : '🤖 Assistente'}
-                      </p>
-                      <p className="text-sm text-neutral-900 leading-relaxed">{msg.content}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <form onSubmit={handleAISubmit} className="space-y-4">
-                <div>
-                  <textarea
-                    className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 h-24 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-600"
-                    placeholder="Descreva a despesa que deseja criar..."
-                    value={aiMessage}
-                    onChange={(e) => setAiMessage(e.target.value)}
-                    disabled={aiLoading}
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    type="submit"
-                    className="bg-blue-700 text-white px-6 py-2 rounded-lg hover:bg-blue-800 disabled:opacity-50 font-medium transition-colors"
-                    disabled={aiLoading}
-                  >
-                    {aiLoading ? 'Processando...' : 'Enviar'}
-                  </button>
-                  {aiHistory.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setAiHistory([])
-                        setPendingExpense(null)
-                      }}
-                      className="bg-neutral-600 text-white px-6 py-2 rounded-lg hover:bg-neutral-700 font-medium transition-colors"
-                    >
-                      Limpar Conversa
-                    </button>
-                  )}
-                </div>
-              </form>
-            </div>
-          ) : (
-            <div className="bg-white border-2 border-neutral-300 p-6 rounded-lg shadow-sm">
-              <h2 className="text-xl font-bold mb-4 text-neutral-900">
-                {editingExpense ? 'Editar Despesa' : 'Adicionar Despesa Manual'}
+          <div className="bg-white border-2 border-neutral-300 p-6 rounded-lg shadow-sm">
+            <h2 className="text-xl font-bold mb-4 text-neutral-900">
+              {editingExpense ? 'Editar Despesa' : 'Adicionar Despesa'}
               </h2>
 
               <form onSubmit={handleSubmit} className="space-y-4" id="expense-form">
@@ -703,8 +517,7 @@ function ExpensesPageContent() {
                   )}
                 </div>
               </form>
-            </div>
-          )}
+          </div>
         </div>
 
         {/* List Section */}
