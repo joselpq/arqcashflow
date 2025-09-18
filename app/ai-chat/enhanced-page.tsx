@@ -329,9 +329,16 @@ export default function EnhancedAIChatPage() {
     const setupFileInputRef = useRef<HTMLInputElement>(null)
 
     const handleSetupFile = (file: File) => {
-      // Validate file type
-      if (!file.name.endsWith('.csv') && !file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
-        alert('Por favor, selecione um arquivo CSV ou Excel (.xlsx, .xls)')
+      // Validate file type - now supports CSV, Excel, PDF, and images
+      const fileName = file.name.toLowerCase()
+      const fileType = file.type.toLowerCase()
+
+      const isSpreadsheet = fileName.endsWith('.csv') || fileName.endsWith('.xlsx') || fileName.endsWith('.xls')
+      const isPDF = fileType === 'application/pdf' || fileName.endsWith('.pdf')
+      const isImage = fileType.startsWith('image/') || fileName.match(/\.(jpg|jpeg|png|gif|webp|bmp)$/)
+
+      if (!isSpreadsheet && !isPDF && !isImage) {
+        alert('Por favor, selecione um arquivo CSV, Excel, PDF ou imagem (JPG, PNG, etc.)')
         return
       }
 
@@ -402,7 +409,7 @@ export default function EnhancedAIChatPage() {
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <h3 className="text-lg font-bold text-blue-800 mb-2">📊 Assistente de Configuração</h3>
           <p className="text-sm text-blue-700 mb-2">
-            Envie uma planilha CSV ou Excel com seus dados financeiros e deixe a IA criar automaticamente:
+            Envie planilhas, PDFs, ou imagens com seus dados financeiros e deixe a IA criar automaticamente:
           </p>
           <ul className="text-sm text-blue-700 space-y-1 mb-3">
             <li>• <strong>Contratos:</strong> clientes, projetos, valores, datas</li>
@@ -410,7 +417,7 @@ export default function EnhancedAIChatPage() {
             <li>• <strong>Despesas:</strong> custos, fornecedores, vencimentos</li>
           </ul>
           <p className="text-xs text-blue-600">
-            ✨ A IA analisará automaticamente sua planilha e criará todos os registros de uma só vez!
+            ✨ A IA agora processa planilhas (CSV/Excel), documentos PDF e imagens! Pode extrair dados de notas fiscais, contratos, recibos e muito mais.
           </p>
         </div>
 
@@ -423,10 +430,10 @@ export default function EnhancedAIChatPage() {
           >
             <div className="text-4xl mb-4">📊</div>
             <p className="text-lg font-medium text-neutral-800 mb-2">
-              Arraste sua planilha aqui ou clique para selecionar
+              Arraste seu arquivo aqui ou clique para selecionar
             </p>
             <p className="text-sm text-neutral-600 mb-4">
-              Formatos suportados: CSV, Excel (.xlsx, .xls) • Máximo: 32MB
+              Formatos suportados: CSV, Excel, PDF, Imagens (JPG, PNG) • Máximo: 32MB
             </p>
 
             <button
@@ -439,7 +446,7 @@ export default function EnhancedAIChatPage() {
             <input
               ref={setupFileInputRef}
               type="file"
-              accept=".csv,.xlsx,.xls"
+              accept=".csv,.xlsx,.xls,.pdf,image/*"
               onChange={(e) => e.target.files && handleSetupFile(e.target.files[0])}
               className="hidden"
             />

@@ -173,25 +173,101 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'No file provided' }, { status: 400 })
       }
 
-      console.log('📁 Processing file with DIRECT Claude approach:', file.name)
+      console.log('📁 Processing file with DIRECT Claude approach:', file.name, 'Type:', file.type)
 
-      // Convert file to text content for Claude
+      // Convert file based on type
       const buffer = Buffer.from(await file.arrayBuffer())
-      let fileContent = ''
+      let fileContent: string | undefined
+      let fileBase64: string | undefined
+      let isVisualDocument = false
 
-      if (file.name.endsWith('.csv')) {
-        fileContent = buffer.toString('utf-8')
-      } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+      // Check file type by MIME type and extension
+      const fileType = file.type.toLowerCase()
+      const fileName = file.name.toLowerCase()
+
+      if (fileName.endsWith('.csv')) {
+        // CSV files - keep original buffer for document attachment
+        fileContent = buffer.toString('utf-8') // For logging only
+      } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+        // Excel files - keep original buffer for document attachment
         const workbook = XLSX.read(buffer, { type: 'buffer' })
         const sheetName = workbook.SheetNames[0]
         const worksheet = workbook.Sheets[sheetName]
-        fileContent = XLSX.utils.sheet_to_csv(worksheet)
+        fileContent = XLSX.utils.sheet_to_csv(worksheet) // For logging only
+      } else if (fileType === 'application/pdf' || fileName.endsWith('.pdf')) {
+        // PDF files - send as base64 for Claude to process
+        fileBase64 = buffer.toString('base64')
+        isVisualDocument = true
+        console.log('📄 Processing PDF document')
+      } else if (fileType.startsWith('image/') ||
+                 fileName.match(/\.(jpg|jpeg|png|gif|webp|bmp)$/)) {
+        // Image files - send as base64 for Claude to process
+        fileBase64 = buffer.toString('base64')
+        isVisualDocument = true
+        console.log('🖼️ Processing image document')
       } else {
-        return NextResponse.json({ error: 'Unsupported file type' }, { status: 400 })
+        return NextResponse.json({
+          error: 'Unsupported file type. Please upload CSV, Excel, PDF, or image files.'
+        }, { status: 400 })
       }
 
-      // Direct Claude prompt - let Claude do ALL the work
-      const prompt = `You are a data extraction expert for a Brazilian architecture firm's cashflow system.
+      // Different prompts for different document types
+      let prompt: string
+
+      if (isVisualDocument) {
+        // Prompt for PDFs and images
+        prompt = `You are a data extraction expert for a Brazilian architecture firm's cashflow system.
+
+Analyze this document (PDF or image) and extract financial data according to these STRICT RULES:
+
+DOCUMENT TYPE IDENTIFICATION:
+1. **PROPOSAL/ORÇAMENTO**: Contains future project pricing, "proposta", breakdown of services with values
+   → Extract as: 1 CONTRACT + RECEIVABLES (only if payment terms are specified)
+   → DO NOT create expenses from proposals - these are future income, not costs
+
+2. **INVOICE/NOTA FISCAL**: Contains charges for services/products already delivered
+   → Extract as: 1 EXPENSE (what you need to pay)
+
+3. **RECEIPT/RECIBO**: Contains proof of payment already made
+   → Extract as: 1 EXPENSE with status "paid"
+
+4. **CONTRACT/CONTRATO**: Contains agreed project terms and total value
+   → Extract as: 1 CONTRACT + RECEIVABLES (only if payment terms are specified)
+
+CONTRACT AND PROPOSAL PROCESSING RULES:
+When you see a PROPOSAL or CONTRACT document:
+
+A) ALWAYS CREATE ONE CONTRACT with:
+   - clientName: Extract client name from document
+   - projectName: Create from project description (e.g. "Projeto Arquitetura Residencial")
+   - totalValue: The MAIN total value (exclude optional services like "acompanhamento")
+   - signedDate: Use proposal/contract date as signed date
+   - category: "Residencial", "Comercial", "Restaurante", etc.
+   - notes: Include any optional services with rates (e.g. "Acompanhamento de projeto: R$ 350/visita")
+
+B) CREATE RECEIVABLES only if payment terms are mentioned:
+   - If "25% na assinatura" + 4 installments → Create 5 receivables:
+     * 25% of total value on signed date
+     * 4 equal installments of remaining 75% at 30, 60, 90, 120 days after signed date
+   - If different payment terms mentioned, follow those exactly
+   - If NO payment terms specified, create NO receivables
+   - Use client name and project name for receivables
+
+C) DO NOT CREATE EXPENSES from proposals or contracts (common mistake!)
+
+BRAZILIAN FORMATS:
+- Dates: "13/11/2024" or "13.11.24" → "2024-11-13"
+- Currency: "R$ 30.575" → 30575 (number only)
+- Payment terms: "30/60/90/120" means installments at 30, 60, 90, 120 days
+
+VALIDATION RULES:
+- Proposals should NEVER generate expenses
+- Contract total value should match the sum of all receivables
+- Receivable dates should be properly calculated from base date
+- Optional services (like visits) go in contract notes, not separate line items`
+      } else {
+        // Prompt for spreadsheets (CSV/Excel)
+        prompt = `You are a data extraction expert for a Brazilian architecture firm's cashflow system.
 
 Analyze this spreadsheet data and extract ALL contracts, receivables, and expenses you can find.
 IMPORTANT: Extract EVERY SINGLE ROW that looks like a contract, receivable, or expense. Do not limit or truncate the results.
@@ -248,7 +324,11 @@ IMPORTANT RULES:
 9. Use the DESCRIPTION/NOTES fields to store any additional Portuguese information that doesn't fit the standardized fields
 
 FILE CONTENT:
-${fileContent}
+${fileContent}`
+      }
+
+      // Add the JSON structure to both prompts
+      prompt += `
 
 Return a JSON object with this EXACT structure (no markdown, just JSON):
 {
@@ -293,17 +373,84 @@ Return a JSON object with this EXACT structure (no markdown, just JSON):
 }`
 
       try {
-        console.log('🤖 Calling Claude directly with full file content')
-        console.log(`📏 Content size: ${fileContent.length} characters`)
+        console.log('🤖 Calling Claude directly')
 
-        const response = await anthropic.messages.create({
-          model: 'claude-3-5-sonnet-20241022',
-          max_tokens: 8192, // Maximum allowed
-          messages: [{
-            role: 'user',
-            content: prompt
-          }]
-        })
+        let messageContent: any
+
+        if (isVisualDocument && fileBase64) {
+          // For visual documents, send the image/PDF and text prompt
+          console.log(`📄 Processing visual document: ${file.type}`)
+          console.log(`📏 Base64 size: ${fileBase64.length} characters`)
+
+          if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+            // PDF handling - Claude expects document format, not image format
+            messageContent = [
+              {
+                type: "text",
+                text: prompt
+              },
+              {
+                type: "document",
+                source: {
+                  type: "base64",
+                  media_type: "application/pdf",
+                  data: fileBase64
+                }
+              }
+            ]
+          } else {
+            // Image handling
+            messageContent = [
+              {
+                type: "text",
+                text: prompt
+              },
+              {
+                type: "image",
+                source: {
+                  type: "base64",
+                  media_type: file.type,
+                  data: fileBase64
+                }
+              }
+            ]
+          }
+        } else {
+          // For text documents (CSV/Excel), send as text content in prompt
+          console.log(`📄 Processing text document`)
+          console.log(`📏 Content size: ${fileContent?.length || 0} characters`)
+
+          // Simple approach - just replace the placeholder with the file content
+          messageContent = prompt.replace('${fileContent}', fileContent || '')
+        }
+
+        // Simple retry mechanism for rate limiting
+        let response
+        let retries = 0
+        const maxRetries = 2
+
+        while (retries <= maxRetries) {
+          try {
+            response = await anthropic.messages.create({
+              model: 'claude-3-5-sonnet-20241022', // Using latest available model
+              max_tokens: 8192,
+              messages: [{
+                role: 'user',
+                content: messageContent
+              }]
+            })
+            break // Success, exit retry loop
+          } catch (error: any) {
+            if (error.status === 429 && retries < maxRetries) {
+              retries++
+              const waitTime = retries * 2000 // 2s, 4s
+              console.log(`Rate limited, waiting ${waitTime}ms before retry ${retries}/${maxRetries}`)
+              await new Promise(resolve => setTimeout(resolve, waitTime))
+            } else {
+              throw error // Re-throw if not rate limit or max retries reached
+            }
+          }
+        }
 
         console.log('✅ Claude response received')
         console.log(`📏 Response length: ${JSON.stringify(response).length} characters`)
