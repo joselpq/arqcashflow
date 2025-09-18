@@ -11,7 +11,6 @@ export const config = {
     "/contracts",
     "/receivables",
     "/expenses",
-    "/alerts",
     "/ai-chat",
     "/onboarding"
   ]
