@@ -7,6 +7,9 @@ import LandingPage from './components/LandingPage'
 import Link from 'next/link'
 import ExportButtons from './components/ExportButtons'
 import { formatDateShort } from '@/lib/date-utils'
+import Modal from './components/Modal'
+import ReceivableForm from './components/forms/ReceivableForm'
+import ExpenseForm from './components/forms/ExpenseForm'
 
 interface DashboardData {
   metrics: {
@@ -32,7 +35,9 @@ interface DashboardData {
       description: string
       dueDate: string
       amount: number
-      editUrl: string
+      entityType: 'receivable' | 'expense'
+      entityId: string
+      entityData?: any
     }>
   }
   upcoming: {
@@ -42,7 +47,8 @@ interface DashboardData {
       project: string
       amount: number
       expectedDate: string
-      editUrl: string
+      entityType: 'receivable'
+      entityId: string
     }>
     expenses: Array<{
       id: string
@@ -50,7 +56,8 @@ interface DashboardData {
       vendor: string | null
       amount: number
       dueDate: string
-      editUrl: string
+      entityType: 'expense'
+      entityId: string
     }>
   }
   monthlyTrend: Array<{
@@ -203,6 +210,32 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  // Modal state
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [modalType, setModalType] = useState<'receivable' | 'expense' | null>(null)
+  const [editingEntity, setEditingEntity] = useState<any>(null)
+  const [formLoading, setFormLoading] = useState(false)
+  const [contracts, setContracts] = useState([])
+
+  // Fetch contracts for forms
+  useEffect(() => {
+    if (session) {
+      fetchContracts()
+    }
+  }, [session])
+
+  async function fetchContracts() {
+    try {
+      const res = await fetch('/api/contracts')
+      if (res.ok) {
+        const data = await res.json()
+        setContracts(data)
+      }
+    } catch (error) {
+      console.error('Failed to fetch contracts:', error)
+    }
+  }
+
   useEffect(() => {
     // Only fetch dashboard data if user is authenticated
     if (session) {
@@ -236,6 +269,73 @@ export default function Dashboard() {
       setLoading(false)
     }
   }, [session, router])
+
+  // Modal handlers
+  function openModal(type: 'receivable' | 'expense', entity?: any) {
+    setModalType(type)
+    setEditingEntity(entity)
+    setIsModalOpen(true)
+  }
+
+  function closeModal() {
+    setIsModalOpen(false)
+    setModalType(null)
+    setEditingEntity(null)
+  }
+
+  async function handleReceivableSubmit(receivableData: any) {
+    setFormLoading(true)
+    try {
+      const url = editingEntity ? `/api/receivables/${editingEntity.id}` : '/api/receivables'
+      const method = editingEntity ? 'PUT' : 'POST'
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(receivableData)
+      })
+
+      if (res.ok) {
+        closeModal()
+        // Refresh dashboard data
+        window.location.reload()
+      } else {
+        alert('Error saving receivable')
+      }
+    } catch (error) {
+      console.error('Error:', error)
+      alert('Error saving receivable')
+    } finally {
+      setFormLoading(false)
+    }
+  }
+
+  async function handleExpenseSubmit(expenseData: any) {
+    setFormLoading(true)
+    try {
+      const url = editingEntity ? `/api/expenses/${editingEntity.id}` : '/api/expenses'
+      const method = editingEntity ? 'PUT' : 'POST'
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(expenseData)
+      })
+
+      if (res.ok) {
+        closeModal()
+        // Refresh dashboard data
+        window.location.reload()
+      } else {
+        alert('Error saving expense')
+      }
+    } catch (error) {
+      console.error('Error:', error)
+      alert('Error saving expense')
+    } finally {
+      setFormLoading(false)
+    }
+  }
 
   // Show loading state while checking authentication
   if (status === "loading") {
@@ -368,12 +468,12 @@ export default function Dashboard() {
                         Venceu em {formatDate(item.dueDate)}
                       </p>
                     </div>
-                    <Link
-                      href={item.editUrl}
+                    <button
+                      onClick={() => openModal(item.entityType, item.entityData)}
                       className="mt-2 sm:mt-0 bg-red-600 text-white px-4 py-2 rounded text-sm hover:bg-red-700 transition-colors"
                     >
                       Resolver
-                    </Link>
+                    </button>
                   </div>
                 ))}
                 {data.alerts.overdueItems.length > 5 && (
@@ -475,6 +575,41 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Modals */}
+      {modalType === 'receivable' && (
+        <Modal
+          isOpen={isModalOpen}
+          onClose={closeModal}
+          title={editingEntity ? 'Editar Recebível' : 'Adicionar Recebível'}
+          size="lg"
+        >
+          <ReceivableForm
+            receivable={editingEntity}
+            contracts={contracts}
+            onSubmit={handleReceivableSubmit}
+            onCancel={closeModal}
+            loading={formLoading}
+          />
+        </Modal>
+      )}
+
+      {modalType === 'expense' && (
+        <Modal
+          isOpen={isModalOpen}
+          onClose={closeModal}
+          title={editingEntity ? 'Editar Despesa' : 'Adicionar Despesa'}
+          size="lg"
+        >
+          <ExpenseForm
+            expense={editingEntity}
+            contracts={contracts}
+            onSubmit={handleExpenseSubmit}
+            onCancel={closeModal}
+            loading={formLoading}
+          />
+        </Modal>
+      )}
     </div>
   )
 }

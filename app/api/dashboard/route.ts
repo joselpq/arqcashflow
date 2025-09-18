@@ -160,19 +160,23 @@ export async function GET(request: NextRequest) {
         overdueReceivables: overdueReceivables.length,
         overdueExpenses: overdueExpenses.length,
         overdueItems: [...overdueReceivables.map(r => ({
-          type: 'receivable',
+          type: 'receivable' as const,
           id: r.id,
           description: `Receber R$${r.amount.toLocaleString('pt-BR')} de ${r.contract.clientName}`,
           dueDate: r.expectedDate,
           amount: r.amount,
-          editUrl: `/receivables?edit=${r.id}`
+          entityType: 'receivable' as const,
+          entityId: r.id,
+          entityData: r
         })), ...overdueExpenses.map(e => ({
-          type: 'expense',
+          type: 'expense' as const,
           id: e.id,
           description: `Pagar R$${e.amount.toLocaleString('pt-BR')} - ${e.description}`,
           dueDate: e.dueDate,
           amount: e.amount,
-          editUrl: `/expenses?edit=${e.id}`
+          entityType: 'expense' as const,
+          entityId: e.id,
+          entityData: e
         }))]
       },
 
@@ -184,7 +188,8 @@ export async function GET(request: NextRequest) {
           project: r.contract.projectName,
           amount: r.amount,
           expectedDate: r.expectedDate,
-          editUrl: `/receivables?edit=${r.id}`
+          entityType: 'receivable' as const,
+          entityId: r.id
         })),
         expenses: upcomingExpenses.slice(0, 5).map(e => ({
           id: e.id,
@@ -192,7 +197,8 @@ export async function GET(request: NextRequest) {
           vendor: e.vendor,
           amount: e.amount,
           dueDate: e.dueDate,
-          editUrl: `/expenses?edit=${e.id}`
+          entityType: 'expense' as const,
+          entityId: e.id
         }))
       },
 
