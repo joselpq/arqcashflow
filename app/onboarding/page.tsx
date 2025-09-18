@@ -69,18 +69,33 @@ export default function OnboardingPage() {
 
     try {
       const formData = new FormData();
-      files.forEach(file => formData.append("files", file));
+      // For now, process only the first file (Excel/CSV support)
+      const firstFile = files[0];
+
+      // Check if it's a supported file type
+      const supportedTypes = ['.xlsx', '.xls', '.csv'];
+      const isSupported = supportedTypes.some(type => firstFile.name.toLowerCase().endsWith(type));
+
+      if (!isSupported) {
+        setError("Por favor, envie apenas arquivos Excel (.xlsx, .xls) ou CSV. Suporte para PDFs será adicionado em breve.");
+        return;
+      }
+
+      formData.append("file", firstFile);
 
       const response = await fetch("/api/ai/setup-assistant-direct", {
         method: "POST",
         body: formData,
       });
 
-      if (!response.ok) throw new Error("Failed to process files");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.details || "Failed to process files");
+      }
 
       const result = await response.json();
 
-      setUploadProgress(`Criados: ${result.contractsCreated} contratos, ${result.receivablesCreated} recebíveis, ${result.expensesCreated} despesas`);
+      setUploadProgress(`Criados: ${result.summary?.contractsCreated || 0} contratos, ${result.summary?.receivablesCreated || 0} recebíveis, ${result.summary?.expensesCreated || 0} despesas`);
 
       // Mark onboarding as complete
       await fetch("/api/onboarding/complete", { method: "POST" });
@@ -320,7 +335,7 @@ export default function OnboardingPage() {
                   ref={fileInputRef}
                   type="file"
                   multiple
-                  accept=".xlsx,.xls,.csv,.pdf,.txt"
+                  accept=".xlsx,.xls,.csv"
                   onChange={handleFileUpload}
                   className="hidden"
                 />
@@ -329,7 +344,7 @@ export default function OnboardingPage() {
                   Clique para selecionar arquivos
                 </p>
                 <p className="text-sm sm:text-base text-neutral-500 mb-2">
-                  Planilhas Excel, PDFs, CSVs ou anotações em texto
+                  Planilhas Excel (.xlsx, .xls) ou arquivos CSV
                 </p>
                 <p className="text-xs sm:text-sm text-neutral-400">
                   Seus dados estão seguros e criptografados
