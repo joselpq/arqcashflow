@@ -43,7 +43,16 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md' }:
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Backdrop */}
-      <div className="fixed inset-0 bg-white bg-opacity-20 backdrop-blur-sm transition-all duration-300" onClick={onClose} />
+      <div
+        className="fixed inset-0 transition-all duration-300"
+        style={{
+          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+          backdropFilter: 'blur(8px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(8px) saturate(180%)',
+          border: '1px solid rgba(255, 255, 255, 0.1)'
+        }}
+        onClick={onClose}
+      />
 
       {/* Modal container */}
       <div className="flex min-h-full items-center justify-center p-4">
