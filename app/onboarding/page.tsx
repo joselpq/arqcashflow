@@ -302,12 +302,12 @@ export default function OnboardingPage() {
         {currentStep === 2 && (
           <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 lg:p-10 border border-neutral-200">
             <div className="text-center mb-8 sm:mb-10">
-              <div className="text-5xl sm:text-6xl mb-4">🎯</div>
+              <div className="text-5xl sm:text-6xl mb-4">📂</div>
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-neutral-900 mb-3 sm:mb-4">
-                Agora a mágica acontece!
+                Importe seus dados existentes
               </h2>
               <p className="text-base sm:text-lg lg:text-xl text-neutral-600 max-w-4xl mx-auto px-4">
-                Jogue seus arquivos aqui e organizamos tudo automaticamente
+                Envie planilhas, PDFs ou documentos que você já tem e organizaremos para você
               </p>
             </div>
 
