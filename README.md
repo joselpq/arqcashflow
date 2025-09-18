@@ -23,12 +23,12 @@ A secure, multi-tenant cashflow management system designed for architects to tra
    - Upcoming receivables and expenses with clear typography
    - Quick action buttons with professional styling
    - Export functionality with Brazilian Portuguese labels
-2. **Contract Management** - Create, edit, delete, and manage client contracts with categories
-3. **AI Contract Creation** - Create contracts using natural language (Portuguese) with intelligent parsing
-4. **Receivables Tracking** - Track expected and received payments with categories and filtering
-5. **Payment Recording** - Record actual payment dates and amounts for receivables (supports partial payments)
-6. **Expense Management** - Complete cost tracking with vendors, categories, and payment status
-7. **AI Expense Creation** - Create expenses using natural language (Portuguese)
+2. **🏗️ Unified Projetos Management** - Consolidated project management with clean sub-tab navigation:
+   - **📝 Contratos**: Complete contract management with categories and status tracking
+   - **💰 Recebíveis**: Track expected and received payments with categories and filtering
+   - **💸 Despesas**: Cost tracking with vendors, categories, and payment status
+3. **Smart Navigation** - Intuitive tab structure following architect workflow patterns
+4. **Backward Compatibility** - Automatic URL redirects maintain existing bookmarks and links
 8. **Budget Management** - Set and monitor spending budgets by category or project
 9. **Advanced Filtering & Sorting** - Filter and sort contracts, receivables, and expenses by multiple criteria
 10. **Smart Default Filters** - Default views show only active contracts, pending receivables, and unpaid expenses

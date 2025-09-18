@@ -101,11 +101,6 @@ const results = await prisma.model.findMany({
 - Calculates actual spend vs budgeted amounts
 - Returns budgets with expense aggregations
 
-### `/app/api/ai/create-expense/route.ts`
-- AI-powered expense creation endpoint
-- Processes natural language input in Portuguese
-- Extracts expense information using GPT-4o-mini
-- Supports Portuguese date/amount parsing ("hoje", "5k", etc.)
 
 ### `/app/api/export/excel/route.ts`
 - Generates Excel files using ExcelJS
@@ -185,34 +180,45 @@ model Budget {
 
 ## UI Component Standards
 
-### Page Layout Pattern
-All pages follow this consistent structure:
+### Projetos Page Structure
+The main management interface is organized in a unified tab structure:
 ```typescript
-// Header with navigation
-<h1 className="text-3xl font-bold mb-6">[Page Title]</h1>
-<Link href="/" className="text-blue-600 hover:underline mb-4 inline-block">
-  ← Voltar ao início
-</Link>
+// /app/projetos/page.tsx - Main page with tab navigation
+export default function ProjetosPage() {
+  const [activeTab, setActiveTab] = useState<'contratos' | 'recebiveis' | 'despesas'>('contratos')
 
-// AI/Manual toggle (where applicable)
-<div className="mb-6">
-  <button
-    onClick={() => setShowAISection(!showAISection)}
-    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-  >
-    {showAISection ? 'Adicionar Manual' : 'Adicionar com IA'}
-  </button>
+  // Tab switching with URL parameter support
+  // Renders ContractsTab, ReceivablesTab, or ExpensesTab based on activeTab
+}
+
+// Individual tab components in /app/projetos/components/
+// Each follows the same pattern:
+// - Header with title
+// - Form section for adding new items
+// - Filters section
+// - Data table with CRUD actions
+```
+
+### Component Layout Pattern
+All tab components follow this consistent structure:
+```typescript
+// Header
+<h2 className="text-2xl font-bold mb-6">[Tab Title]</h2>
+
+// Form section with required field indicators
+<div className="bg-white p-6 rounded-lg shadow mb-6">
+  // Manual form with asterisks for required fields
 </div>
 
-// Form section with conditional rendering
-{showAISection ? (
-  // AI interface
-) : (
-  // Manual form with asterisks for required fields
-)}
-
 // Filters section
+<div className="bg-white p-4 rounded-lg shadow mb-6">
+  // Filter controls (status, category, sorting)
+</div>
+
 // Data table with actions
+<div className="bg-white rounded-lg shadow">
+  // Table with edit/delete actions
+</div>
 ```
 
 ### Form Field Standards
@@ -336,11 +342,11 @@ useEffect(() => { fetchData() }, [filters])
 7. Test edit/delete operations across all entities
 8. Test Excel export with complete data
 9. Test Google Sheets export (requires OAuth setup)
-10. Test AI expense creation with Portuguese input
-11. Test AI queries with various question types
-12. Test mandatory field validation with asterisk indicators
-13. Test navigation links ("Voltar ao início")
-14. Test AI/Manual toggle on expenses page
+10. Test AI queries with various question types
+11. Test mandatory field validation with asterisk indicators
+12. Test tab navigation within Projetos page
+13. Test URL parameter support for deep linking to tabs
+14. Test middleware redirects from old URLs
 15. Test error cases (invalid data, network issues)
 
 ### API Testing with curl
@@ -364,10 +370,6 @@ curl -X POST http://localhost:3001/api/ai/query \
   -H "Content-Type: application/json" \
   -d '{"question":"How many active contracts do I have?"}'
 
-# Test AI expense creation
-curl -X POST http://localhost:3001/api/ai/create-expense \
-  -H "Content-Type: application/json" \
-  -d '{"message":"Comprei material de construção por 2.5k para vencer em 15 dias"}'
 ```
 
 ## Deployment Notes

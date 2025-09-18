@@ -42,23 +42,15 @@ ArqCashflow embodies the same design principles that architects apply to their w
 - **Priority**: Alert cards > Key metrics > Trends > Lists
 - **User Journey**: Scan health → Address urgent items → Plan next actions
 
-#### Contracts (Revenue Pipeline)
-- **Hottest**: Active contracts list, "New Contract" button
-- **Purpose**: Manage revenue pipeline and client relationships
-- **Priority**: Contract list > Add new > Search/filter > Details
-- **User Journey**: Review active contracts → Create new → Track progress
-
-#### Receivables (Cash Flow Tracking)
-- **Hottest**: Pending receivables, payment recording
-- **Purpose**: Track and optimize cash flow timing
-- **Priority**: Pending list > Record payment > Expected vs actual > Analytics
-- **User Journey**: Check pending → Record payments → Analyze patterns
-
-#### Expenses (Cost Control)
-- **Hottest**: Unpaid expenses, budget status
-- **Purpose**: Control costs and manage vendor payments
-- **Priority**: Unpaid expenses > Budget alerts > Add expense > Reports
-- **User Journey**: Review obligations → Pay expenses → Track budgets
+#### Projetos (Unified Project Management)
+- **Hottest**: Active tab content, primary action buttons
+- **Purpose**: Centralized management of contracts, receivables, and expenses
+- **Priority**: Current tab content > Tab navigation > Add new items > Search/filter
+- **User Journey**: Navigate to relevant tab → Review items → Take action → Switch context as needed
+- **Sub-tabs**:
+  - **Contratos**: Manage revenue pipeline and client relationships
+  - **Recebíveis**: Track and optimize cash flow timing
+  - **Despesas**: Control costs and manage vendor payments
 
 ---
 
@@ -338,32 +330,23 @@ Navigation should be **persistent, predictable, and purposeful**. Users should a
 4. Upcoming items (next 30 days)
 5. Quick action buttons
 
-#### Contracts (Revenue Pipeline)
-**Purpose**: Manage client relationships and revenue pipeline
-**Primary Goal**: Track and grow revenue sources
+#### Projetos (Unified Management Hub)
+**Purpose**: Centralized project and financial management
+**Primary Goal**: Streamlined workflow across all project-related activities
+**Navigation Structure**: Tab-based interface with URL parameter support
 **Content Priority**:
-1. Active contracts list (main content)
-2. New contract creation (prominent CTA)
-3. Contract search and filtering
-4. Revenue analytics and projections
+1. Active tab content (main focus area)
+2. Tab navigation (context switching)
+3. Add new items (context-specific CTAs)
+4. Search, filtering, and actions
 
-#### Receivables (Cash Flow Management)
-**Purpose**: Track and optimize cash flow timing
-**Primary Goal**: Ensure timely payment collection
-**Content Priority**:
-1. Pending receivables (require action)
-2. Payment recording interface
-3. Overdue items (urgent attention)
-4. Cash flow projections
-
-#### Expenses (Cost Control)
-**Purpose**: Control costs and manage vendor relationships
-**Primary Goal**: Maintain healthy profit margins
-**Content Priority**:
-1. Unpaid expenses (immediate obligations)
-2. Budget status and alerts
-3. Expense entry (quick add)
-4. Category analysis and trends
+**Sub-tab Details**:
+- **Contratos Tab**: Revenue pipeline and client relationship management
+  - Active contracts list, new contract creation, search/filtering
+- **Recebíveis Tab**: Cash flow tracking and payment management
+  - Pending receivables, payment recording, overdue alerts
+- **Despesas Tab**: Cost control and vendor management
+  - Unpaid expenses, budget alerts, expense entry
 
 ### Interaction Patterns
 
