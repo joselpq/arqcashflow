@@ -33,7 +33,7 @@ export default function ContractForm({ contract, onSubmit, onCancel, loading = f
     clientName: '',
     projectName: '',
     totalValue: '',
-    signedDate: '',
+    signedDate: new Date().toISOString().split('T')[0],
     category: '',
     notes: '',
     status: 'active'
@@ -68,7 +68,7 @@ export default function ContractForm({ contract, onSubmit, onCancel, loading = f
         clientName: '',
         projectName: '',
         totalValue: '',
-        signedDate: '',
+        signedDate: new Date().toISOString().split('T')[0],
         category: '',
         notes: '',
         status: 'active'

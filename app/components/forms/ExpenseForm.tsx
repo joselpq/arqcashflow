@@ -25,7 +25,7 @@ export default function ExpenseForm({ expense, contracts, onSubmit, onCancel, lo
   const [formData, setFormData] = useState({
     description: '',
     amount: '',
-    dueDate: '',
+    dueDate: new Date().toISOString().split('T')[0],
     category: 'materiais',
     contractId: '',
     vendor: '',
@@ -77,7 +77,7 @@ export default function ExpenseForm({ expense, contracts, onSubmit, onCancel, lo
       setFormData({
         description: '',
         amount: '',
-        dueDate: '',
+        dueDate: new Date().toISOString().split('T')[0],
         category: 'materiais',
         contractId: '',
         vendor: '',
@@ -243,7 +243,32 @@ export default function ExpenseForm({ expense, contracts, onSubmit, onCancel, lo
       {/* Payment recording section for editing existing expenses */}
       {expense && (
         <div className="border-t border-neutral-200 pt-4">
-          <h4 className="font-medium text-neutral-900 mb-3">Registrar Pagamento</h4>
+          <div className="flex justify-between items-center mb-3">
+            <h4 className="font-medium text-neutral-900">Registrar Pagamento</h4>
+            {(expense.status === 'pending' || expense.status === 'overdue') && (
+              <button
+                type="button"
+                onClick={() => {
+                  setFormData({
+                    ...formData,
+                    paidDate: new Date().toISOString().split('T')[0],
+                    paidAmount: formData.amount,
+                    status: 'paid'
+                  })
+                }}
+                className={`px-3 py-1 rounded text-sm font-medium transition-colors flex items-center gap-1 ${
+                  formData.amount ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-neutral-300 text-neutral-500 cursor-not-allowed'
+                }`}
+                disabled={loading || !formData.amount}
+                title={formData.amount ? "Preencher com data de hoje e valor esperado" : "Preencha o valor primeiro"}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                Marcar como pago
+              </button>
+            )}
+          </div>
 
           <div>
             <label className="block mb-2 font-medium text-neutral-900">Status</label>

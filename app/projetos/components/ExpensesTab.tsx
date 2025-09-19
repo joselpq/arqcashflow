@@ -29,6 +29,12 @@ export default function ExpensesTab() {
   const [formLoading, setFormLoading] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingExpense, setEditingExpense] = useState(null)
+  const [isMarkPaidModalOpen, setIsMarkPaidModalOpen] = useState(false)
+  const [expenseToMark, setExpenseToMark] = useState<any>(null)
+  const [markPaidData, setMarkPaidData] = useState({
+    paidDate: '',
+    paidAmount: ''
+  })
 
   const [filters, setFilters] = useState({
     contractId: 'all',
@@ -194,26 +200,44 @@ export default function ExpensesTab() {
     }
   }
 
-  async function markAsPaid(expense: any) {
-    if (!confirm('Mark this expense as paid?')) {
-      return
-    }
+  function openMarkPaidModal(expense: any) {
+    setExpenseToMark(expense)
+    setMarkPaidData({
+      paidDate: new Date().toISOString().split('T')[0],
+      paidAmount: expense.amount.toString()
+    })
+    setIsMarkPaidModalOpen(true)
+  }
+
+  function closeMarkPaidModal() {
+    setIsMarkPaidModalOpen(false)
+    setExpenseToMark(null)
+    setMarkPaidData({
+      paidDate: '',
+      paidAmount: ''
+    })
+  }
+
+  async function confirmMarkAsPaid() {
+    if (!expenseToMark) return
 
     try {
-      const res = await fetch(`/api/expenses/${expense.id}`, {
+      const res = await fetch(`/api/expenses/${expenseToMark.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...expense,
           status: 'paid',
-          paidDate: new Date().toISOString().split('T')[0],
-          paidAmount: expense.amount
+          paidDate: markPaidData.paidDate,
+          paidAmount: parseFloat(markPaidData.paidAmount)
         })
       })
 
       if (res.ok) {
+        closeMarkPaidModal()
         await fetchExpenses()
       } else {
+        const errorData = await res.json()
+        console.error('API error:', errorData)
         alert('Failed to update expense')
       }
     } catch (error) {
@@ -473,7 +497,7 @@ export default function ExpensesTab() {
                       <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                         {(expense.status === 'pending' || expense.status === 'overdue') && (
                           <button
-                            onClick={() => markAsPaid(expense)}
+                            onClick={() => openMarkPaidModal(expense)}
                             className="bg-green-600 text-white px-2 py-1 rounded text-xs hover:bg-green-700 font-medium transition-colors"
                             title="Marcar como pago"
                           >
@@ -519,6 +543,74 @@ export default function ExpensesTab() {
           onCancel={closeModal}
           loading={formLoading}
         />
+      </Modal>
+
+      {/* Mark as Paid Modal */}
+      <Modal
+        isOpen={isMarkPaidModalOpen}
+        onClose={closeMarkPaidModal}
+        title="Marcar como Pago"
+        size="md"
+      >
+        <div className="space-y-4">
+          {expenseToMark && (
+            <div className="bg-neutral-50 p-4 rounded-lg">
+              <h3 className="font-semibold text-neutral-900">
+                {expenseToMark.description}
+              </h3>
+              <p className="text-sm text-neutral-600">
+                Valor esperado: R$ {expenseToMark.amount.toLocaleString('pt-BR')}
+              </p>
+              {expenseToMark.contract && (
+                <p className="text-sm text-neutral-600">
+                  Projeto: {expenseToMark.contract.projectName} - {expenseToMark.contract.clientName}
+                </p>
+              )}
+            </div>
+          )}
+
+          <div>
+            <label className="block mb-2 font-medium text-neutral-900">Data de Pagamento *</label>
+            <input
+              type="date"
+              required
+              className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900"
+              value={markPaidData.paidDate}
+              onChange={(e) => setMarkPaidData({ ...markPaidData, paidDate: e.target.value })}
+            />
+          </div>
+
+          <div>
+            <label className="block mb-2 font-medium text-neutral-900">Valor Pago *</label>
+            <input
+              type="number"
+              step="0.01"
+              required
+              className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
+              value={markPaidData.paidAmount}
+              onChange={(e) => setMarkPaidData({ ...markPaidData, paidAmount: e.target.value })}
+              placeholder="0,00"
+            />
+          </div>
+
+          <div className="flex gap-2 pt-4">
+            <button
+              onClick={confirmMarkAsPaid}
+              className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 font-medium transition-colors flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              Confirmar Pagamento
+            </button>
+            <button
+              onClick={closeMarkPaidModal}
+              className="bg-neutral-600 text-white px-6 py-2 rounded-lg hover:bg-neutral-700 font-medium transition-colors"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
       </Modal>
     </div>
   )

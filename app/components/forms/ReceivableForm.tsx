@@ -31,7 +31,7 @@ export default function ReceivableForm({ receivable, contracts, onSubmit, onCanc
   ])
   const [formData, setFormData] = useState({
     contractId: '',
-    expectedDate: '',
+    expectedDate: new Date().toISOString().split('T')[0],
     amount: '',
     invoiceNumber: '',
     category: '',
@@ -68,7 +68,7 @@ export default function ReceivableForm({ receivable, contracts, onSubmit, onCanc
       // Reset form for new receivable
       setFormData({
         contractId: '',
-        expectedDate: '',
+        expectedDate: new Date().toISOString().split('T')[0],
         amount: '',
         invoiceNumber: '',
         category: '',
@@ -218,18 +218,21 @@ export default function ReceivableForm({ receivable, contracts, onSubmit, onCanc
       <div className="border-t border-neutral-200 pt-4">
         <div className="flex justify-between items-center mb-3">
           <h4 className="font-medium text-neutral-900">Registrar Pagamento (Opcional)</h4>
-          {receivable && (receivable.status === 'pending' || receivable.status === 'overdue') && (
+          {(!receivable || receivable.status === 'pending' || receivable.status === 'overdue') && (
             <button
               type="button"
               onClick={() => {
                 setFormData({
                   ...formData,
                   receivedDate: new Date().toISOString().split('T')[0],
-                  receivedAmount: formData.amount
+                  receivedAmount: formData.amount || ''
                 })
               }}
-              className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 font-medium transition-colors flex items-center gap-1"
-              disabled={loading}
+              className={`px-3 py-1 rounded text-sm font-medium transition-colors flex items-center gap-1 ${
+                formData.amount ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-neutral-300 text-neutral-500 cursor-not-allowed'
+              }`}
+              disabled={loading || !formData.amount}
+              title={formData.amount ? "Preencher com data de hoje e valor esperado" : "Preencha o valor esperado primeiro"}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
