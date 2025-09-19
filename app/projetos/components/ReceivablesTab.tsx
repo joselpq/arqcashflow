@@ -26,6 +26,7 @@ export default function ReceivablesTab() {
   const [filteredReceivables, setFilteredReceivables] = useState([])
   const [contracts, setContracts] = useState([])
   const [loading, setLoading] = useState(true)
+  const [contractsLoading, setContractsLoading] = useState(true)
   const [formLoading, setFormLoading] = useState(false)
   const [uniqueCategories, setUniqueCategories] = useState<string[]>([])
   const [uniqueStatuses] = useState(['pending', 'received', 'overdue', 'cancelled'])
@@ -89,6 +90,8 @@ export default function ReceivablesTab() {
     } catch (error) {
       console.error('Falha ao buscar contratos:', error)
       setContracts([])
+    } finally {
+      setContractsLoading(false)
     }
   }
 
@@ -219,8 +222,7 @@ export default function ReceivablesTab() {
         <h2 className="text-xl font-bold text-neutral-900">Recebíveis</h2>
         <button
           onClick={openAddModal}
-          disabled={contracts.length === 0}
-          className="bg-blue-700 text-white px-4 py-2 rounded-lg hover:bg-blue-800 font-medium transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="bg-blue-700 text-white px-4 py-2 rounded-lg hover:bg-blue-800 font-medium transition-colors flex items-center gap-2"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -229,7 +231,7 @@ export default function ReceivablesTab() {
         </button>
       </div>
 
-      {contracts.length === 0 && (
+      {!contractsLoading && contracts.length === 0 && (
         <div className="bg-yellow-50 border border-yellow-200 p-4 rounded mb-6">
           <p className="text-yellow-800">⚠️ Nenhum contrato disponível</p>
           <p className="text-sm text-yellow-700 mt-1">
