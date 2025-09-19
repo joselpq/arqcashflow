@@ -32,11 +32,11 @@ export default function ContractForm({ contract, onSubmit, onCancel, loading = f
   const [formData, setFormData] = useState({
     clientName: '',
     projectName: '',
-    description: '',
     totalValue: '',
     signedDate: '',
     category: '',
-    notes: ''
+    notes: '',
+    status: 'active'
   })
 
   // Initialize form data when contract changes
@@ -56,22 +56,22 @@ export default function ContractForm({ contract, onSubmit, onCancel, loading = f
       setFormData({
         clientName: contract.clientName || '',
         projectName: contract.projectName || '',
-        description: contract.description || '',
         totalValue: contract.totalValue ? contract.totalValue.toString() : '',
         signedDate: contract.signedDate ? formatDateForInput(contract.signedDate) : '',
         category: category,
-        notes: contract.notes || ''
+        notes: contract.notes || '',
+        status: contract.status || 'active'
       })
     } else {
       // Reset form for new contract
       setFormData({
         clientName: '',
         projectName: '',
-        description: '',
         totalValue: '',
         signedDate: '',
         category: '',
-        notes: ''
+        notes: '',
+        status: 'active'
       })
       setCustomCategory('')
       setShowCustomCategory(false)
@@ -120,17 +120,6 @@ export default function ContractForm({ contract, onSubmit, onCancel, loading = f
       </div>
 
       <div>
-        <label className="block mb-2 font-medium text-neutral-900">Descrição</label>
-        <textarea
-          className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
-          rows={3}
-          value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          disabled={loading}
-        />
-      </div>
-
-      <div>
         <label className="block mb-2 font-medium text-neutral-900">Valor Total *</label>
         <input
           type="number"
@@ -144,7 +133,7 @@ export default function ContractForm({ contract, onSubmit, onCancel, loading = f
       </div>
 
       <div>
-        <label className="block mb-2 font-medium text-neutral-900">Data de Assinatura *</label>
+        <label className="block mb-2 font-medium text-neutral-900">Data de Criação *</label>
         <input
           type="date"
           required
@@ -195,6 +184,21 @@ export default function ContractForm({ contract, onSubmit, onCancel, loading = f
           />
         </div>
       )}
+
+      <div>
+        <label className="block mb-2 font-medium text-neutral-900">Status *</label>
+        <select
+          className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900"
+          value={formData.status}
+          onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+          disabled={loading}
+          required
+        >
+          <option value="active">Ativo</option>
+          <option value="completed">Concluído</option>
+          <option value="cancelled">Cancelado</option>
+        </select>
+      </div>
 
       <div>
         <label className="block mb-2 font-medium text-neutral-900">Observações</label>

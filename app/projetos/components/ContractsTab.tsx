@@ -30,6 +30,7 @@ export default function ContractsTab() {
   const [uniqueStatuses] = useState(['active', 'completed', 'cancelled'])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingContract, setEditingContract] = useState<any>(null)
+  const [statusDropdownOpen, setStatusDropdownOpen] = useState<string | null>(null)
   const [filters, setFilters] = useState({
     status: 'active',
     category: 'all',
@@ -41,6 +42,21 @@ export default function ContractsTab() {
   useEffect(() => {
     fetchContracts()
   }, [filters, searchQuery])
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      const target = event.target as HTMLElement
+      if (statusDropdownOpen && !target.closest('[data-status-dropdown]')) {
+        setStatusDropdownOpen(null)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [statusDropdownOpen])
 
   useEffect(() => {
     if (editId) {
@@ -151,6 +167,34 @@ export default function ContractsTab() {
     }
   }
 
+  async function updateContractStatus(contractId: string, newStatus: string) {
+    try {
+      const res = await fetch(`/api/contracts/${contractId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: newStatus
+        })
+      })
+
+      if (res.ok) {
+        setStatusDropdownOpen(null)
+        fetchContracts()
+      } else {
+        const errorData = await res.json()
+        console.error('API error:', errorData)
+        alert('Failed to update status')
+      }
+    } catch (error) {
+      console.error('Status update error:', error)
+      alert('Failed to update status')
+    }
+  }
+
+  function toggleStatusDropdown(contractId: string) {
+    setStatusDropdownOpen(statusDropdownOpen === contractId ? null : contractId)
+  }
+
 
   return (
     <div>
@@ -233,8 +277,7 @@ export default function ContractsTab() {
             value={filters.sortBy}
             onChange={(e) => setFilters({ ...filters, sortBy: e.target.value })}
           >
-            <option value="createdAt">Data de Criação</option>
-            <option value="signedDate">Data de Assinatura</option>
+            <option value="signedDate">Data de Criação</option>
             <option value="clientName">Cliente</option>
             <option value="projectName">Projeto</option>
             <option value="totalValue">Valor</option>
@@ -313,20 +356,70 @@ export default function ContractsTab() {
                           R$ {contract.totalValue.toLocaleString('pt-BR')}
                         </div>
                       </td>
-                      <td className="px-4 py-4">
-                        <div className="flex items-center gap-2">
-                          <div className={`w-3 h-3 rounded-full ${
-                            contract.status === 'active' ? 'bg-green-500' :
-                            contract.status === 'completed' ? 'bg-blue-500' :
-                            'bg-red-500'
-                          }`}></div>
-                          <span className={`px-2 py-1 rounded-md text-xs font-medium ${
-                            contract.status === 'active' ? 'bg-green-100 text-green-800' :
-                            contract.status === 'completed' ? 'bg-blue-100 text-blue-800' :
-                            'bg-red-100 text-red-800'
-                          }`}>
-                            {contract.status === 'active' ? 'Ativo' : contract.status === 'completed' ? 'Finalizado' : 'Cancelado'}
-                          </span>
+                      <td className="px-4 py-4 relative">
+                        <div data-status-dropdown>
+                          <button
+                            onClick={() => toggleStatusDropdown(contract.id)}
+                            className="flex items-center gap-2 hover:bg-neutral-100 rounded-md p-1 transition-colors cursor-pointer"
+                            title="Clique para alterar status"
+                          >
+                            <div className={`w-3 h-3 rounded-full ${
+                              contract.status === 'active' ? 'bg-green-500' :
+                              contract.status === 'completed' ? 'bg-blue-500' :
+                              'bg-red-500'
+                            }`}></div>
+                            <span className={`px-2 py-1 rounded-md text-xs font-medium ${
+                              contract.status === 'active' ? 'bg-green-100 text-green-800' :
+                              contract.status === 'completed' ? 'bg-blue-100 text-blue-800' :
+                              'bg-red-100 text-red-800'
+                            }`}>
+                              {contract.status === 'active' ? 'Ativo' : contract.status === 'completed' ? 'Concluído' : 'Cancelado'}
+                            </span>
+                            <svg className="w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </button>
+
+                          {statusDropdownOpen === contract.id && (
+                            <div className="absolute top-0 left-0 w-32 bg-white border border-neutral-200 rounded-md shadow-lg z-50">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  updateContractStatus(contract.id, 'active')
+                                }}
+                                className={`w-full text-left px-3 py-2 text-sm hover:bg-neutral-50 flex items-center gap-2 rounded-t-md ${
+                                  contract.status === 'active' ? 'bg-green-50 text-green-800' : 'text-neutral-700'
+                                }`}
+                              >
+                                <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                                Ativo
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  updateContractStatus(contract.id, 'completed')
+                                }}
+                                className={`w-full text-left px-3 py-2 text-sm hover:bg-neutral-50 flex items-center gap-2 ${
+                                  contract.status === 'completed' ? 'bg-blue-50 text-blue-800' : 'text-neutral-700'
+                                }`}
+                              >
+                                <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                                Concluído
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  updateContractStatus(contract.id, 'cancelled')
+                                }}
+                                className={`w-full text-left px-3 py-2 text-sm hover:bg-neutral-50 flex items-center gap-2 rounded-b-md ${
+                                  contract.status === 'cancelled' ? 'bg-red-50 text-red-800' : 'text-neutral-700'
+                                }`}
+                              >
+                                <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                                Cancelado
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </td>
                       <td className="px-4 py-4 text-sm text-neutral-900">
