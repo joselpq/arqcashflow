@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { requireAuth } from '@/lib/auth-utils'
+import { createAuditContextFromAPI, auditUpdate, auditDelete, safeAudit, captureEntityState } from '@/lib/audit-middleware'
 
 const UpdateContractSchema = z.object({
   clientName: z.string().optional(),
@@ -45,11 +46,17 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { teamId } = await requireAuth()
+    const { user, teamId } = await requireAuth()
     const { id } = await params
 
     const body = await request.json()
     const validatedData = UpdateContractSchema.parse(body)
+
+    // Capture state before update for audit
+    const beforeState = await captureEntityState('contract', id, prisma)
+    if (!beforeState || beforeState.teamId !== teamId) {
+      return NextResponse.json({ error: 'Contract not found' }, { status: 404 })
+    }
 
     const updateData: any = { ...validatedData }
     if (validatedData.signedDate) {
@@ -66,7 +73,18 @@ export async function PUT(
     }
 
     const updatedContract = await prisma.contract.findFirst({
-      where: { id, teamId }
+      where: { id, teamId },
+      include: { receivables: true }
+    })
+
+    // Log audit entry for contract update
+    await safeAudit(async () => {
+      const auditContext = createAuditContextFromAPI(user, teamId, request, {
+        action: 'contract_update',
+        source: 'api',
+        statusChanged: beforeState.status !== (validatedData.status || beforeState.status)
+      })
+      await auditUpdate(auditContext, 'contract', id, beforeState, validatedData, updatedContract)
     })
 
     return NextResponse.json({
@@ -88,8 +106,14 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { teamId } = await requireAuth()
+    const { user, teamId } = await requireAuth()
     const { id } = await params
+
+    // Capture state before deletion for audit
+    const beforeState = await captureEntityState('contract', id, prisma)
+    if (!beforeState || beforeState.teamId !== teamId) {
+      return NextResponse.json({ error: 'Contract not found' }, { status: 404 })
+    }
 
     const result = await prisma.contract.deleteMany({
       where: { id, teamId },
@@ -98,6 +122,16 @@ export async function DELETE(
     if (result.count === 0) {
       return NextResponse.json({ error: 'Contract not found' }, { status: 404 })
     }
+
+    // Log audit entry for contract deletion
+    await safeAudit(async () => {
+      const auditContext = createAuditContextFromAPI(user, teamId, request, {
+        action: 'contract_deletion',
+        source: 'api',
+        cascadeDelete: true // Note that this will delete associated receivables
+      })
+      await auditDelete(auditContext, 'contract', id, beforeState)
+    })
 
     return NextResponse.json({ message: 'Contract deleted successfully' })
   } catch (error) {

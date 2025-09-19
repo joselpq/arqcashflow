@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { requireAuth } from '@/lib/auth-utils'
+import { createAuditContextFromAPI, auditCreate, safeAudit } from '@/lib/audit-middleware'
 
 const ExpenseSchema = z.object({
   description: z.string().min(1, 'Description is required'),
@@ -132,7 +133,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { teamId } = await requireAuth()
+    const { user, teamId } = await requireAuth()
 
     const body = await request.json()
     const validatedData = ExpenseSchema.parse(body)
@@ -151,6 +152,18 @@ export async function POST(request: NextRequest) {
           },
         },
       },
+    })
+
+    // Log audit entry for expense creation
+    await safeAudit(async () => {
+      const auditContext = createAuditContextFromAPI(user, teamId, request, {
+        action: 'expense_creation',
+        source: 'api',
+        contractId: expense.contractId,
+        category: expense.category,
+        type: expense.type
+      })
+      await auditCreate(auditContext, 'expense', expense.id, expense)
     })
 
     return NextResponse.json({

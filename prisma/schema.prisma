@@ -135,6 +135,42 @@ model RecurringExpense {
   @@index([isActive])
 }
 
+model AuditLog {
+  id          String   @id @default(cuid())
+  timestamp   DateTime @default(now())
+
+  // Who made the change
+  userId      String
+  userEmail   String   // Cached for resilience if user is deleted
+  teamId      String
+
+  // What entity was changed
+  entityType  String   // "contract", "receivable", "expense"
+  entityId    String   // The ID of the changed entity
+
+  // What kind of change
+  action      String   // "created", "updated", "deleted"
+
+  // What changed (for updates)
+  changes     Json     // { "status": { "from": "pending", "to": "received" } }
+
+  // Complete state snapshot (optional, for critical changes)
+  snapshot    Json?    // Full entity state after change
+
+  // Context
+  metadata    Json?    // { "api_endpoint": "/api/contracts", "ip": "...", "user_agent": "..." }
+
+  // Relations
+  user        User     @relation(fields: [userId], references: [id])
+  team        Team     @relation(fields: [teamId], references: [id])
+
+  @@index([entityType, entityId]) // Query by entity
+  @@index([userId])               // Query by user
+  @@index([teamId])               // Query by team
+  @@index([timestamp])            // Query by time
+  @@index([action])               // Query by action type
+}
+
 model Team {
   id              String       @id @default(cuid())
   name            String
@@ -151,18 +187,20 @@ model Team {
   expenses        Expense[]
   receivables     Receivable[]
   users           User[]
+  auditLogs       AuditLog[]   // New: Audit logs for this team
 }
 
 model User {
-  id                 String   @id @default(cuid())
-  email              String   @unique
+  id                 String     @id @default(cuid())
+  email              String     @unique
   name               String?
   password           String
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
   teamId             String
-  onboardingComplete Boolean  @default(false)
-  team               Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  onboardingComplete Boolean    @default(false)
+  team               Team       @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  auditLogs          AuditLog[] // New: Audit logs created by this user
 
   @@index([email])
   @@index([teamId])

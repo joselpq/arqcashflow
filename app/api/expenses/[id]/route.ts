@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
+import { requireAuth } from '@/lib/auth-utils'
+import { createAuditContextFromAPI, auditUpdate, auditDelete, safeAudit, captureEntityState } from '@/lib/audit-middleware'
 
 const UpdateExpenseSchema = z.object({
   description: z.string().min(1).optional(),
@@ -57,9 +59,21 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { user, teamId } = await requireAuth()
     const { id } = await params
     const body = await request.json()
     const validatedData = UpdateExpenseSchema.parse(body)
+
+    // Capture state before update for audit
+    const beforeState = await captureEntityState('expense', id, prisma)
+    if (!beforeState) {
+      return NextResponse.json({ error: 'Expense not found' }, { status: 404 })
+    }
+
+    // Verify team ownership
+    if (beforeState.teamId !== teamId) {
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 })
+    }
 
     // If marking as paid and no paidDate/paidAmount provided, set defaults
     if (validatedData.status === 'paid') {
@@ -68,13 +82,7 @@ export async function PUT(
       }
       // If no paidAmount specified, use the full amount
       if (!validatedData.paidAmount) {
-        const currentExpense = await prisma.expense.findUnique({
-          where: { id },
-          select: { amount: true }
-        })
-        if (currentExpense) {
-          validatedData.paidAmount = currentExpense.amount
-        }
+        validatedData.paidAmount = beforeState.amount
       }
     }
 
@@ -92,8 +100,24 @@ export async function PUT(
       },
     })
 
+    // Log audit entry for expense update
+    await safeAudit(async () => {
+      const auditContext = createAuditContextFromAPI(user, teamId, request, {
+        action: 'expense_update',
+        source: 'api',
+        contractId: expense.contractId,
+        category: expense.category,
+        type: expense.type,
+        statusChanged: beforeState.status !== expense.status
+      })
+      await auditUpdate(auditContext, 'expense', id, beforeState, validatedData, expense)
+    })
+
     return NextResponse.json(expense)
   } catch (error) {
+    if (error instanceof Error && error.message === "Unauthorized") {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
     if (error instanceof z.ZodError) {
       console.error('Expense update validation error:', error.errors)
       return NextResponse.json(
@@ -112,13 +136,41 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { user, teamId } = await requireAuth()
     const { id } = await params
+
+    // Capture state before deletion for audit
+    const beforeState = await captureEntityState('expense', id, prisma)
+    if (!beforeState) {
+      return NextResponse.json({ error: 'Expense not found' }, { status: 404 })
+    }
+
+    // Verify team ownership
+    if (beforeState.teamId !== teamId) {
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 })
+    }
+
     await prisma.expense.delete({
       where: { id },
     })
 
+    // Log audit entry for expense deletion
+    await safeAudit(async () => {
+      const auditContext = createAuditContextFromAPI(user, teamId, request, {
+        action: 'expense_deletion',
+        source: 'api',
+        contractId: beforeState.contractId,
+        category: beforeState.category,
+        type: beforeState.type
+      })
+      await auditDelete(auditContext, 'expense', id, beforeState)
+    })
+
     return NextResponse.json({ message: 'Expense deleted successfully' })
   } catch (error) {
+    if (error instanceof Error && error.message === "Unauthorized") {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
     console.error('Expense deletion error:', error)
     return NextResponse.json({ error: 'Failed to delete expense' }, { status: 500 })
   }

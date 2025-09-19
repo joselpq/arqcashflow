@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { requireAuth } from '@/lib/auth-utils'
+import { createAuditContextFromAPI, auditCreate, safeAudit } from '@/lib/audit-middleware'
 
 const ContractSchema = z.object({
   clientName: z.string(),
@@ -96,6 +97,15 @@ export async function POST(request: NextRequest) {
       assignedTeamId: contract.teamId,
       clientName: contract.clientName,
       projectName: contract.projectName
+    })
+
+    // Log audit entry for contract creation
+    await safeAudit(async () => {
+      const auditContext = createAuditContextFromAPI(user, teamId, request, {
+        action: 'contract_creation',
+        source: 'api'
+      })
+      await auditCreate(auditContext, 'contract', contract.id, contract)
     })
 
     return NextResponse.json({

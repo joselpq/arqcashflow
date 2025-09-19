@@ -91,6 +91,17 @@ A secure, multi-tenant cashflow management system designed for architects to tra
     - **Skip Option** - Users can complete onboarding later or proceed with empty state
     - **Completion Tracking** - Database-tracked completion prevents main app access until finished
     - **Error Handling** - Comprehensive file validation and user-friendly error messages
+33. **🔍 Comprehensive Audit Trail System** - Complete change tracking for resilience and compliance:
+    - **Full Entity Tracking** - Tracks all changes to contracts, receivables, and expenses
+    - **User Attribution** - Records who made each change with user ID and email (cached for resilience)
+    - **Timestamp Precision** - Exact timestamps for all operations (create, update, delete)
+    - **Field-Level Changes** - Tracks what specific fields changed with before/after values
+    - **Complete Snapshots** - Stores full entity state for critical operations
+    - **Context Metadata** - IP addresses, user agents, API endpoints, and additional context
+    - **Team Isolation** - Audit logs respect team boundaries for multi-tenant security
+    - **Fail-Safe Design** - Audit failures never break main operations
+    - **Status Change Tracking** - Special handling for status changes across all entities
+    - **Query APIs** - Retrieve audit history for entities, users, or teams
 
 ## 🎨 Design System & UI/UX
 
@@ -953,6 +964,89 @@ The AI Supervisor monitors all data inputs in real-time and provides intelligent
   - Links expenses to projects when mentioned
   - Asks for missing required information
 
+---
+
+### 🔍 Audit Trail APIs
+
+**Purpose**: Track and query all changes to entities for compliance, debugging, and accountability
+
+#### **GET /api/audit** - Query Audit Logs
+**Purpose**: Retrieve audit trail history with filtering options
+
+**Query Parameters:**
+- `entityType` (string): Filter by entity type
+  - Values: `contract`, `receivable`, `expense`
+- `entityId` (string): Filter by specific entity ID
+- `userId` (string): Filter by user who made changes
+- `action` (string): Filter by operation type
+  - Values: `created`, `updated`, `deleted`
+- `startDate` (string): Filter from date (ISO format)
+- `endDate` (string): Filter to date (ISO format)
+- `limit` (number): Maximum results (default: 50, max: 100)
+- `offset` (number): Pagination offset (default: 0)
+
+**Example Request:**
+```bash
+curl "https://arqcashflow.vercel.app/api/audit?entityType=contract&action=updated&limit=20"
+```
+
+**Response:**
+```json
+{
+  "logs": [
+    {
+      "id": "audit_123abc",
+      "timestamp": "2024-09-19T15:30:00.000Z",
+      "userId": "user_456def",
+      "userEmail": "architect@example.com",
+      "teamId": "team_789ghi",
+      "entityType": "contract",
+      "entityId": "contract_123",
+      "action": "updated",
+      "changes": {
+        "status": {"from": "active", "to": "completed"}
+      },
+      "metadata": {
+        "ipAddress": "192.168.1.100",
+        "apiEndpoint": "PUT /api/contracts/123",
+        "statusChanged": true
+      },
+      "user": {
+        "id": "user_456def",
+        "name": "Architect Name",
+        "email": "architect@example.com"
+      }
+    }
+  ],
+  "total": 1,
+  "hasMore": false
+}
+```
+
+#### **GET /api/audit/entity/[entityType]/[entityId]** - Entity History
+**Purpose**: Get complete audit history for a specific entity
+
+**Example Request:**
+```bash
+curl "https://arqcashflow.vercel.app/api/audit/entity/contract/contract_123"
+```
+
+#### **GET /api/audit/user/[userId]** - User Activity
+**Purpose**: Get audit history for a specific user's actions
+
+**Query Parameters:**
+- `limit` (number): Maximum results (default: 20)
+- `startDate` (string): Filter from date
+
+#### **GET /api/audit/team/[teamId]/activity** - Team Activity Summary
+**Purpose**: Get recent activity overview for a team
+
+**Response includes:**
+- Recent changes by all team members
+- Activity breakdown by entity type
+- Most active users
+- Change frequency patterns
+
 ## UI Pages
 
 1. **/** - **Smart Dashboard** - Comprehensive financial overview designed for users with basic finance knowledge
@@ -1189,6 +1283,53 @@ The AI Supervisor monitors all data inputs in real-time and provides intelligent
 - `quarterly`: Every 3 months
 - `annual`: Every year
 
+---
+
+### 🔍 AuditLog Model
+**Purpose**: Tracks all changes to entities for compliance and accountability
+
+| Field | Type | Required | Description | Example Values |
+|-------|------|----------|-------------|----------------|
+| `id` | String (CUID) | ✅ | Unique identifier | `audit_abc123` |
+| `timestamp` | DateTime | ✅ | When change occurred | `"2024-09-19T15:30:00.000Z"` |
+| `userId` | String | ✅ | User who made change | `user_456def` |
+| `userEmail` | String | ✅ | User email (cached) | `"architect@example.com"` |
+| `teamId` | String | ✅ | Team context | `team_789ghi` |
+| `entityType` | String | ✅ | Type of entity changed | `"contract"`, `"receivable"`, `"expense"` |
+| `entityId` | String | ✅ | ID of changed entity | `contract_123abc` |
+| `action` | String | ✅ | Type of operation | `"created"`, `"updated"`, `"deleted"` |
+| `changes` | JSON | ✅ | Field-level changes | `{"status": {"from": "pending", "to": "received"}}` |
+| `snapshot` | JSON | ❌ | Complete entity state | Full entity object after change |
+| `metadata` | JSON | ❌ | Additional context | `{"ipAddress": "192.168.1.1", "apiEndpoint": "PUT /api/contracts/123"}` |
+| `user` | User | - | User relation | User who made the change |
+| `team` | Team | - | Team relation | Team context for the change |
+
+**Action Types:**
+- `created`: New entity creation
+- `updated`: Entity modification
+- `deleted`: Entity removal
+
+**Example Changes Object:**
+```json
+{
+  "status": {"from": "pending", "to": "received"},
+  "amount": {"from": 5000.00, "to": 5250.00},
+  "receivedDate": {"from": null, "to": "2024-09-19T00:00:00.000Z"}
+}
+```
+
+**Example Metadata Object:**
+```json
+{
+  "ipAddress": "192.168.1.100",
+  "userAgent": "Mozilla/5.0...",
+  "apiEndpoint": "PUT /api/receivables/123",
+  "contractId": "contract_456",
+  "statusChanged": true,
+  "source": "api"
+}
+```
+
 ## Deployment
 
 ### 🚀 Live Production Application
@@ -1199,10 +1340,12 @@ The application is deployed using **Vercel** for hosting and **Neon** for Postgr
 
 #### **Current Production Status:**
 - ✅ **Application**: Deployed and running
-- ✅ **Database**: PostgreSQL tables created and connected
+- ✅ **Database**: PostgreSQL tables created and connected (including AuditLog)
 - ✅ **API**: All endpoints functional and tested
-- ✅ **AI Features**: OpenAI integration active
+- ✅ **AI Features**: Claude integration active
 - ✅ **Export**: Excel/Google Sheets functionality available
+- ✅ **Audit Trail**: Complete change tracking system operational
+- ✅ **Security**: Multi-tenant with comprehensive audit logging
 
 ### Production Deployment (Vercel + Neon)
 

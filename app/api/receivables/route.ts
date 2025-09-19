@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { requireAuth } from '@/lib/auth-utils'
+import { createAuditContextFromAPI, auditCreate, safeAudit } from '@/lib/audit-middleware'
 
 const ReceivableSchema = z.object({
   contractId: z.string().optional().nullable().transform(val => val === '' ? null : val),
@@ -142,7 +143,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { teamId } = await requireAuth()
+    const { user, teamId } = await requireAuth()
 
     const body = await request.json()
     const validatedData = ReceivableSchema.parse(body)
@@ -183,6 +184,16 @@ export async function POST(request: NextRequest) {
     const receivable = await prisma.receivable.create({
       data: createData,
       include: { contract: true }
+    })
+
+    // Log audit entry for receivable creation
+    await safeAudit(async () => {
+      const auditContext = createAuditContextFromAPI(user, teamId, request, {
+        action: 'receivable_creation',
+        source: 'api',
+        contractId: receivable.contractId
+      })
+      await auditCreate(auditContext, 'receivable', receivable.id, receivable)
     })
 
     return NextResponse.json({
