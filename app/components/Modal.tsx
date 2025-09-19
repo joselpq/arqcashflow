@@ -34,10 +34,10 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md' }:
   if (!isOpen) return null
 
   const sizeClasses = {
-    sm: 'max-w-md',
-    md: 'max-w-2xl',
-    lg: 'max-w-4xl',
-    xl: 'max-w-6xl'
+    sm: 'max-w-md min-w-[320px]',
+    md: 'max-w-2xl min-w-[480px]',
+    lg: 'max-w-4xl min-w-[640px]',
+    xl: 'max-w-6xl min-w-[768px]'
   }
 
   return (
@@ -56,7 +56,7 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md' }:
 
       {/* Modal container */}
       <div className="flex min-h-full items-center justify-center p-4">
-        <div className={`relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all w-full mx-4 ${sizeClasses[size]}`}>
+        <div className={`relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all w-full ${sizeClasses[size]}`}>
           {/* Header */}
           <div className="bg-white px-6 py-4 border-b border-neutral-200">
             <div className="flex items-center justify-between">
@@ -75,7 +75,7 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md' }:
           </div>
 
           {/* Content */}
-          <div className="bg-white px-4 sm:px-6 py-4 sm:py-6 max-h-[calc(100vh-180px)] overflow-y-auto">
+          <div className="bg-white px-6 py-6 max-h-[calc(100vh-180px)] overflow-y-auto">
             {children}
           </div>
         </div>

@@ -216,7 +216,28 @@ export default function ReceivableForm({ receivable, contracts, onSubmit, onCanc
 
       {/* Payment recording section */}
       <div className="border-t border-neutral-200 pt-4">
-        <h4 className="font-medium text-neutral-900 mb-3">Registrar Pagamento (Opcional)</h4>
+        <div className="flex justify-between items-center mb-3">
+          <h4 className="font-medium text-neutral-900">Registrar Pagamento (Opcional)</h4>
+          {receivable && (receivable.status === 'pending' || receivable.status === 'overdue') && (
+            <button
+              type="button"
+              onClick={() => {
+                setFormData({
+                  ...formData,
+                  receivedDate: new Date().toISOString().split('T')[0],
+                  receivedAmount: formData.amount
+                })
+              }}
+              className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 font-medium transition-colors flex items-center gap-1"
+              disabled={loading}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              Marcar como recebido
+            </button>
+          )}
+        </div>
 
         <div>
           <label className="block mb-2 font-medium text-neutral-900">Data de Recebimento</label>

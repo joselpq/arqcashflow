@@ -32,6 +32,12 @@ export default function ReceivablesTab() {
   const [uniqueStatuses] = useState(['pending', 'received', 'overdue', 'cancelled'])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingReceivable, setEditingReceivable] = useState<any>(null)
+  const [isMarkReceivedModalOpen, setIsMarkReceivedModalOpen] = useState(false)
+  const [receivableToMark, setReceivableToMark] = useState<any>(null)
+  const [markReceivedData, setMarkReceivedData] = useState({
+    receivedDate: '',
+    receivedAmount: ''
+  })
   const [filters, setFilters] = useState({
     contractId: 'all',
     status: 'pending',
@@ -187,26 +193,44 @@ export default function ReceivablesTab() {
     }
   }
 
-  async function markAsReceived(receivable: any) {
-    if (!confirm('Mark this receivable as received?')) {
-      return
-    }
+  function openMarkReceivedModal(receivable: any) {
+    setReceivableToMark(receivable)
+    setMarkReceivedData({
+      receivedDate: new Date().toISOString().split('T')[0],
+      receivedAmount: receivable.amount.toString()
+    })
+    setIsMarkReceivedModalOpen(true)
+  }
+
+  function closeMarkReceivedModal() {
+    setIsMarkReceivedModalOpen(false)
+    setReceivableToMark(null)
+    setMarkReceivedData({
+      receivedDate: '',
+      receivedAmount: ''
+    })
+  }
+
+  async function confirmMarkAsReceived() {
+    if (!receivableToMark) return
 
     try {
-      const res = await fetch(`/api/receivables/${receivable.id}`, {
+      const res = await fetch(`/api/receivables/${receivableToMark.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...receivable,
           status: 'received',
-          receivedDate: new Date().toISOString().split('T')[0],
-          receivedAmount: receivable.amount
+          receivedDate: markReceivedData.receivedDate,
+          receivedAmount: parseFloat(markReceivedData.receivedAmount)
         })
       })
 
       if (res.ok) {
+        closeMarkReceivedModal()
         await fetchReceivables()
       } else {
+        const errorData = await res.json()
+        console.error('API error:', errorData)
         alert('Failed to update receivable')
       }
     } catch (error) {
@@ -454,7 +478,7 @@ export default function ReceivablesTab() {
                       <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                         {(receivable.status === 'pending' || receivable.status === 'overdue') && (
                           <button
-                            onClick={() => markAsReceived(receivable)}
+                            onClick={() => openMarkReceivedModal(receivable)}
                             className="bg-green-600 text-white px-2 py-1 rounded text-xs hover:bg-green-700 font-medium transition-colors"
                             title="Marcar como recebido"
                           >
@@ -500,6 +524,69 @@ export default function ReceivablesTab() {
           onCancel={closeModal}
           loading={formLoading}
         />
+      </Modal>
+
+      {/* Mark as Received Modal */}
+      <Modal
+        isOpen={isMarkReceivedModalOpen}
+        onClose={closeMarkReceivedModal}
+        title="Marcar como Recebido"
+        size="md"
+      >
+        <div className="space-y-4">
+          {receivableToMark && (
+            <div className="bg-neutral-50 p-4 rounded-lg">
+              <h3 className="font-semibold text-neutral-900">
+                {receivableToMark.contract?.projectName} - {receivableToMark.contract?.clientName}
+              </h3>
+              <p className="text-sm text-neutral-600">
+                Valor esperado: R$ {receivableToMark.amount.toLocaleString('pt-BR')}
+              </p>
+            </div>
+          )}
+
+          <div>
+            <label className="block mb-2 font-medium text-neutral-900">Data de Recebimento *</label>
+            <input
+              type="date"
+              required
+              className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900"
+              value={markReceivedData.receivedDate}
+              onChange={(e) => setMarkReceivedData({ ...markReceivedData, receivedDate: e.target.value })}
+            />
+          </div>
+
+          <div>
+            <label className="block mb-2 font-medium text-neutral-900">Valor Recebido *</label>
+            <input
+              type="number"
+              step="0.01"
+              required
+              className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
+              value={markReceivedData.receivedAmount}
+              onChange={(e) => setMarkReceivedData({ ...markReceivedData, receivedAmount: e.target.value })}
+              placeholder="0,00"
+            />
+          </div>
+
+          <div className="flex gap-2 pt-4">
+            <button
+              onClick={confirmMarkAsReceived}
+              className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 font-medium transition-colors flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              Confirmar Recebimento
+            </button>
+            <button
+              onClick={closeMarkReceivedModal}
+              className="bg-neutral-600 text-white px-6 py-2 rounded-lg hover:bg-neutral-700 font-medium transition-colors"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
       </Modal>
     </div>
   )
