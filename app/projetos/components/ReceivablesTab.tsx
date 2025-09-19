@@ -73,6 +73,8 @@ export default function ReceivablesTab() {
       const filtered = receivables.filter((receivable: any) =>
         receivable.contract?.clientName?.toLowerCase().includes(query) ||
         receivable.contract?.projectName?.toLowerCase().includes(query) ||
+        receivable.clientName?.toLowerCase().includes(query) ||
+        receivable.description?.toLowerCase().includes(query) ||
         receivable.category?.toLowerCase().includes(query) ||
         receivable.invoiceNumber?.toLowerCase().includes(query) ||
         receivable.notes?.toLowerCase().includes(query)
@@ -121,7 +123,7 @@ export default function ReceivablesTab() {
       const data = await res.json()
       setReceivables(data)
 
-      const categories = [...new Set(data.map((receivable: any) => receivable.category).filter(Boolean))]
+      const categories = [...new Set(data.map((receivable: any) => receivable.category).filter(Boolean))] as string[]
       setUniqueCategories(categories)
     } catch (error) {
       console.error('Falha ao buscar recebíveis:', error)
@@ -256,10 +258,10 @@ export default function ReceivablesTab() {
       </div>
 
       {!contractsLoading && contracts.length === 0 && (
-        <div className="bg-yellow-50 border border-yellow-200 p-4 rounded mb-6">
-          <p className="text-yellow-800">⚠️ Nenhum contrato disponível</p>
-          <p className="text-sm text-yellow-700 mt-1">
-            Para criar contas a receber, você precisa primeiro <a href="/projetos" className="underline">criar um contrato</a>.
+        <div className="bg-blue-50 border border-blue-200 p-4 rounded mb-6">
+          <p className="text-blue-800">💡 Nenhum contrato disponível</p>
+          <p className="text-sm text-blue-700 mt-1">
+            Você pode criar recebíveis independentes (vendas, reembolsos, etc.) ou <a href="/projetos" className="underline">criar um contrato</a> primeiro.
           </p>
         </div>
       )}
@@ -300,6 +302,7 @@ export default function ReceivablesTab() {
             onChange={(e) => setFilters({ ...filters, contractId: e.target.value })}
           >
             <option value="all">Todos os contratos</option>
+            <option value="none">Sem contrato</option>
             {contracts.map((contract: any) => (
               <option key={contract.id} value={contract.id}>
                 {contract.clientName} - {contract.projectName}
@@ -423,11 +426,22 @@ export default function ReceivablesTab() {
                     <td className="px-4 py-4">
                       <div>
                         <div className="font-semibold text-neutral-900">
-                          {receivable.contract?.projectName || 'Projeto'}
+                          {receivable.contract ?
+                            receivable.contract.projectName :
+                            receivable.description || 'Recebível'
+                          }
                         </div>
                         <div className="text-sm text-neutral-600">
-                          {receivable.contract?.clientName || 'Cliente'}
+                          {receivable.contract ?
+                            receivable.contract.clientName :
+                            receivable.clientName || 'Cliente'
+                          }
                         </div>
+                        {!receivable.contract && (
+                          <div className="text-xs text-blue-600 mt-1">
+                            Sem contrato
+                          </div>
+                        )}
                       </div>
                     </td>
                     <td className="px-4 py-4 text-right">
@@ -537,11 +551,19 @@ export default function ReceivablesTab() {
           {receivableToMark && (
             <div className="bg-neutral-50 p-4 rounded-lg">
               <h3 className="font-semibold text-neutral-900">
-                {receivableToMark.contract?.projectName} - {receivableToMark.contract?.clientName}
+                {receivableToMark.contract ?
+                  `${receivableToMark.contract.projectName} - ${receivableToMark.contract.clientName}` :
+                  `${receivableToMark.description || 'Recebível'} - ${receivableToMark.clientName || 'Cliente'}`
+                }
               </h3>
               <p className="text-sm text-neutral-600">
                 Valor esperado: R$ {receivableToMark.amount.toLocaleString('pt-BR')}
               </p>
+              {!receivableToMark.contract && (
+                <p className="text-xs text-blue-600 mt-1">
+                  Recebível sem contrato
+                </p>
+              )}
             </div>
           )}
 

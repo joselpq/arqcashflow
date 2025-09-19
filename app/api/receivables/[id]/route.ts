@@ -11,6 +11,9 @@ const UpdateReceivableSchema = z.object({
   invoiceNumber: z.string().optional().nullable(),
   category: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
+  // New fields for non-contract receivables
+  clientName: z.string().optional().nullable().transform(val => val === '' ? null : val),
+  description: z.string().optional().nullable().transform(val => val === '' ? null : val),
 })
 
 export async function PUT(

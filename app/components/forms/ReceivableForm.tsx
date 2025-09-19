@@ -24,6 +24,7 @@ interface ReceivableFormProps {
 export default function ReceivableForm({ receivable, contracts, onSubmit, onCancel, loading = false }: ReceivableFormProps) {
   const [customCategory, setCustomCategory] = useState('')
   const [showCustomCategory, setShowCustomCategory] = useState(false)
+  const [isContractBased, setIsContractBased] = useState(true)
   const [predefinedCategories, setPredefinedCategories] = useState([
     'projeto',
     'obra',
@@ -38,6 +39,9 @@ export default function ReceivableForm({ receivable, contracts, onSubmit, onCanc
     notes: '',
     receivedDate: '',
     receivedAmount: '',
+    // New fields for non-contract receivables
+    clientName: '',
+    description: '',
   })
 
   // Initialize form data when receivable changes
@@ -63,7 +67,10 @@ export default function ReceivableForm({ receivable, contracts, onSubmit, onCanc
         notes: receivable.notes || '',
         receivedDate: receivable.receivedDate ? formatDateForInput(receivable.receivedDate) : '',
         receivedAmount: receivable.receivedAmount ? receivable.receivedAmount.toString() : '',
+        clientName: receivable.clientName || '',
+        description: receivable.description || '',
       })
+      setIsContractBased(!!receivable.contractId)
     } else {
       // Reset form for new receivable
       setFormData({
@@ -75,7 +82,10 @@ export default function ReceivableForm({ receivable, contracts, onSubmit, onCanc
         notes: '',
         receivedDate: '',
         receivedAmount: '',
+        clientName: '',
+        description: '',
       })
+      setIsContractBased(true)
       setCustomCategory('')
       setShowCustomCategory(false)
     }
@@ -108,23 +118,80 @@ export default function ReceivableForm({ receivable, contracts, onSubmit, onCanc
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label className="block mb-2 font-medium text-neutral-900">Contrato *</label>
-        <select
-          required
-          className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900"
-          value={formData.contractId}
-          onChange={(e) => setFormData({ ...formData, contractId: e.target.value })}
-          disabled={loading}
-        >
-          <option value="">Selecione um contrato</option>
-          {contracts.map(contract => (
-            <option key={contract.id} value={contract.id}>
-              {contract.clientName} - {contract.projectName}
-            </option>
-          ))}
-        </select>
+      {/* Contract Association Checkbox */}
+      <div className="border-b border-neutral-200 pb-4">
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={isContractBased}
+            onChange={(e) => {
+              setIsContractBased(e.target.checked)
+              if (!e.target.checked) {
+                setFormData({ ...formData, contractId: '' })
+              } else {
+                setFormData({ ...formData, clientName: '', description: '' })
+              }
+            }}
+            className="rounded border-neutral-300 text-blue-600 focus:ring-blue-500"
+            disabled={loading}
+          />
+          <span className="font-medium text-neutral-900">Associar a um contrato</span>
+        </label>
+        <p className="text-sm text-neutral-600 mt-1">
+          {isContractBased ?
+            'Este recebível está relacionado a um contrato existente' :
+            'Este recebível não está vinculado a nenhum contrato (ex: venda de equipamento, reembolsos, etc.)'
+          }
+        </p>
       </div>
+
+      {isContractBased ? (
+        <div>
+          <label className="block mb-2 font-medium text-neutral-900">Contrato *</label>
+          <select
+            required
+            className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900"
+            value={formData.contractId}
+            onChange={(e) => setFormData({ ...formData, contractId: e.target.value })}
+            disabled={loading}
+          >
+            <option value="">Selecione um contrato</option>
+            {contracts.map(contract => (
+              <option key={contract.id} value={contract.id}>
+                {contract.clientName} - {contract.projectName}
+              </option>
+            ))}
+          </select>
+        </div>
+      ) : (
+        <>
+          <div>
+            <label className="block mb-2 font-medium text-neutral-900">Cliente/Origem *</label>
+            <input
+              type="text"
+              required
+              className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
+              value={formData.clientName}
+              onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
+              placeholder="Ex: João Silva, Receita Federal, Empresa XYZ..."
+              disabled={loading}
+            />
+          </div>
+
+          <div>
+            <label className="block mb-2 font-medium text-neutral-900">Descrição *</label>
+            <input
+              type="text"
+              required
+              className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="Ex: Venda de laptop, Reembolso de impostos, Restituição..."
+              disabled={loading}
+            />
+          </div>
+        </>
+      )}
 
       <div>
         <label className="block mb-2 font-medium text-neutral-900">Data Esperada *</label>

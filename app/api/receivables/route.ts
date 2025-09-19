@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { requireAuth } from '@/lib/auth-utils'
 
 const ReceivableSchema = z.object({
-  contractId: z.string(),
+  contractId: z.string().optional().nullable().transform(val => val === '' ? null : val),
   expectedDate: z.string(),
   amount: z.number(),
   status: z.string().optional(),
@@ -13,6 +13,9 @@ const ReceivableSchema = z.object({
   invoiceNumber: z.string().optional().nullable(),
   category: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
+  // New fields for non-contract receivables
+  clientName: z.string().optional().nullable().transform(val => val === '' ? null : val),
+  description: z.string().optional().nullable().transform(val => val === '' ? null : val),
 })
 
 export async function GET(request: NextRequest) {
@@ -33,11 +36,51 @@ export async function GET(request: NextRequest) {
     const sortOrder = searchParams.get('sortOrder') || 'asc'
 
     const where: any = {
-      contract: {
-        teamId
+      OR: [
+        // Contract-based receivables
+        {
+          contract: {
+            teamId
+          }
+        },
+        // Non-contract receivables
+        {
+          teamId: teamId
+        }
+      ]
+    }
+
+    if (contractId && contractId !== 'all') {
+      if (contractId === 'none') {
+        // Only non-contract receivables - maintain team filtering
+        where.AND = [
+          { teamId: teamId },
+          { contractId: null }
+        ]
+        delete where.OR // Remove the OR condition when filtering for none
+      } else {
+        // Specific contract - ensure it belongs to the team
+        where.AND = [
+          {
+            OR: [
+              // Contract-based receivables
+              {
+                contract: {
+                  teamId
+                }
+              },
+              // Non-contract receivables
+              {
+                teamId: teamId
+              }
+            ]
+          },
+          { contractId: contractId }
+        ]
+        delete where.OR // Remove the top-level OR when filtering by specific contract
       }
     }
-    if (contractId && contractId !== 'all') where.contractId = contractId
+
     if (status && status !== 'all') where.status = status
     if (category && category !== 'all') where.category = category
 
@@ -104,16 +147,18 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const validatedData = ReceivableSchema.parse(body)
 
-    // Verify that the contract belongs to the user's team
-    const contract = await prisma.contract.findFirst({
-      where: {
-        id: validatedData.contractId,
-        teamId
-      }
-    })
+    // If contractId is provided, verify that the contract belongs to the user's team
+    if (validatedData.contractId) {
+      const contract = await prisma.contract.findFirst({
+        where: {
+          id: validatedData.contractId,
+          teamId
+        }
+      })
 
-    if (!contract) {
-      return NextResponse.json({ error: 'Contract not found or access denied' }, { status: 404 })
+      if (!contract) {
+        return NextResponse.json({ error: 'Contract not found or access denied' }, { status: 404 })
+      }
     }
 
     const createData: any = {
@@ -125,6 +170,10 @@ export async function POST(request: NextRequest) {
       invoiceNumber: validatedData.invoiceNumber || null,
       category: validatedData.category || null,
       notes: validatedData.notes || null,
+      // New fields for non-contract receivables
+      clientName: validatedData.clientName || null,
+      description: validatedData.description || null,
+      teamId: teamId, // Always set teamId for proper data isolation
     }
 
     if (validatedData.receivedDate && validatedData.receivedDate.trim() !== '') {

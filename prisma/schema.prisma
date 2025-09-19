@@ -30,7 +30,7 @@ model Contract {
 
 model Receivable {
   id             String    @id @default(cuid())
-  contractId     String
+  contractId     String?
   expectedDate   DateTime
   amount         Float
   status         String    @default("pending")
@@ -41,8 +41,13 @@ model Receivable {
   notes          String?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
-  contract       Contract  @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  clientName     String?
+  description    String?
+  teamId         String?
+  contract       Contract? @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  team           Team?     @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
+  @@index([teamId])
   @@index([contractId])
   @@index([expectedDate])
   @@index([status])
@@ -131,19 +136,20 @@ model RecurringExpense {
 }
 
 model Team {
-  id              String     @id @default(cuid())
+  id              String       @id @default(cuid())
   name            String
-  type            String     @default("individual") // "individual" or "company"
-  companyName     String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
   companyActivity String?
-  employeeCount   String?    // "1", "2-5", "6-10", "11-20", "20+"
-  revenueTier     String?    // "0-100k", "100k-500k", "500k-1M", "1M+"
-  profession      String?    // For individuals
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
+  companyName     String?
+  employeeCount   String?
+  profession      String?
+  revenueTier     String?
+  type            String       @default("individual")
   budgets         Budget[]
   contracts       Contract[]
   expenses        Expense[]
+  receivables     Receivable[]
   users           User[]
 }
 
@@ -152,10 +158,10 @@ model User {
   email              String   @unique
   name               String?
   password           String
-  onboardingComplete Boolean  @default(false)
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
   teamId             String
+  onboardingComplete Boolean  @default(false)
   team               Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
   @@index([email])

@@ -162,7 +162,7 @@ export async function GET(request: NextRequest) {
         overdueItems: [...overdueReceivables.map(r => ({
           type: 'receivable' as const,
           id: r.id,
-          description: `Receber R$${r.amount.toLocaleString('pt-BR')} de ${r.contract.clientName}`,
+          description: `Receber R$${r.amount.toLocaleString('pt-BR')} de ${r.contract?.clientName || r.clientName || 'Cliente'}`,
           dueDate: r.expectedDate,
           amount: r.amount,
           entityType: 'receivable' as const,
@@ -184,8 +184,8 @@ export async function GET(request: NextRequest) {
       upcoming: {
         receivables: upcomingReceivables.slice(0, 5).map(r => ({
           id: r.id,
-          client: r.contract.clientName,
-          project: r.contract.projectName,
+          client: r.contract?.clientName || r.clientName || 'Cliente',
+          project: r.contract?.projectName || r.description || 'Recebível',
           amount: r.amount,
           expectedDate: r.expectedDate,
           entityType: 'receivable' as const,
