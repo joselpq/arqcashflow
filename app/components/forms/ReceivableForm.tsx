@@ -125,33 +125,7 @@ export default function ReceivableForm({ receivable, contracts, onSubmit, onCanc
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Contract Association Checkbox */}
-      <div className="border-b border-neutral-200 pb-4">
-        <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={isStandalone}
-            onChange={(e) => {
-              setIsStandalone(e.target.checked)
-              if (e.target.checked) {
-                setFormData({ ...formData, contractId: '' })
-              } else {
-                setFormData({ ...formData, clientName: '', description: '' })
-              }
-            }}
-            className="rounded border-neutral-300 text-blue-600 focus:ring-blue-500"
-            disabled={loading}
-          />
-          <span className="font-medium text-neutral-900">Recebível sem contrato</span>
-        </label>
-        <p className="text-sm text-neutral-600 mt-1">
-          {isStandalone ?
-            'Este recebível não está vinculado a nenhum contrato (ex: venda de equipamento, reembolsos, etc.)' :
-            'Este recebível está relacionado a um contrato existente'
-          }
-        </p>
-      </div>
-
+      {/* Contract Selection */}
       {!isStandalone ? (
         <div>
           <label className="block mb-2 font-medium text-neutral-900">Contrato *</label>
@@ -171,34 +145,46 @@ export default function ReceivableForm({ receivable, contracts, onSubmit, onCanc
           </select>
         </div>
       ) : (
-        <>
-          <div>
-            <label className="block mb-2 font-medium text-neutral-900">Cliente/Origem *</label>
-            <input
-              type="text"
-              required
-              className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
-              value={formData.clientName}
-              onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
-              placeholder="Ex: João Silva, Receita Federal, Empresa XYZ..."
-              disabled={loading}
-            />
-          </div>
-
-          <div>
-            <label className="block mb-2 font-medium text-neutral-900">Descrição *</label>
-            <input
-              type="text"
-              required
-              className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Ex: Venda de laptop, Reembolso de impostos, Restituição..."
-              disabled={loading}
-            />
-          </div>
-        </>
+        <div>
+          <label className="block mb-2 font-medium text-neutral-900">Cliente/Origem *</label>
+          <input
+            type="text"
+            required
+            className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
+            value={formData.clientName}
+            onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
+            placeholder="Ex: João Silva, Receita Federal, Empresa XYZ..."
+            disabled={loading}
+          />
+        </div>
       )}
+
+      {/* Standalone Option - Small checkbox below */}
+      <div className="text-sm">
+        <label
+          className="flex items-center gap-2 cursor-pointer text-neutral-600 hover:text-neutral-800"
+          title={isStandalone ?
+            'Este recebível não está vinculado a nenhum contrato (ex: venda de equipamento, reembolsos, etc.)' :
+            'Este recebível está relacionado a um contrato existente'
+          }
+        >
+          <input
+            type="checkbox"
+            checked={isStandalone}
+            onChange={(e) => {
+              setIsStandalone(e.target.checked)
+              if (e.target.checked) {
+                setFormData({ ...formData, contractId: '' })
+              } else {
+                setFormData({ ...formData, clientName: '', description: '' })
+              }
+            }}
+            className="rounded border-neutral-300 text-blue-600 focus:ring-blue-500 scale-90"
+            disabled={loading}
+          />
+          <span className="text-sm">Recebível sem contrato</span>
+        </label>
+      </div>
 
       <div>
         <label className="block mb-2 font-medium text-neutral-900">Data Esperada *</label>
@@ -235,6 +221,22 @@ export default function ReceivableForm({ receivable, contracts, onSubmit, onCanc
           disabled={loading}
         />
       </div>
+
+      {/* Description field for standalone receivables - positioned above Category */}
+      {isStandalone && (
+        <div>
+          <label className="block mb-2 font-medium text-neutral-900">Descrição *</label>
+          <input
+            type="text"
+            required
+            className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            placeholder="Ex: Venda de laptop, Reembolso de impostos, Restituição..."
+            disabled={loading}
+          />
+        </div>
+      )}
 
       <div>
         <label className="block mb-2 font-medium text-neutral-900">Categoria</label>
