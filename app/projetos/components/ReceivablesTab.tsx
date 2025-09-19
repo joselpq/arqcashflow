@@ -354,7 +354,7 @@ export default function ReceivablesTab() {
         )}
       </div>
 
-      {/* Receivables List */}
+      {/* Receivables Table */}
       {loading ? (
         <p>Carregando...</p>
       ) : filteredReceivables.length === 0 ? (
@@ -362,21 +362,64 @@ export default function ReceivablesTab() {
           {searchQuery ? `Nenhum recebível encontrado para "${searchQuery}"` : 'Nenhum recebível ainda'}
         </p>
       ) : (
-        <div className="space-y-4">
-          {filteredReceivables.map((receivable: any) => (
-            <div key={receivable.id} className="bg-white border-2 border-neutral-300 p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <p className="text-sm text-neutral-600 mb-1">
-                        {receivable.contract?.clientName} - {receivable.contract?.projectName}
-                      </p>
+        <div className="bg-white border border-neutral-200 rounded-lg overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-neutral-50 border-b border-neutral-200">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                    Cliente / Projeto
+                  </th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                    Valor
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                    Vencimento
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                    Categoria
+                  </th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                    Ações
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-neutral-200">
+                {filteredReceivables.map((receivable: any) => {
+                  const isOverdue = receivable.status === 'overdue'
+                  return (
+                  <tr key={receivable.id} className={`group hover:bg-neutral-50 transition-colors ${
+                    isOverdue ? 'bg-red-50 border-l-4 border-l-red-500' : ''
+                  }`}>
+                    <td className="px-4 py-4">
+                      <div>
+                        <div className="font-semibold text-neutral-900">
+                          {receivable.contract?.projectName || 'Projeto'}
+                        </div>
+                        <div className="text-sm text-neutral-600">
+                          {receivable.contract?.clientName || 'Cliente'}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-4 text-right">
+                      <div className="font-bold text-lg text-neutral-900">
+                        R$ {receivable.amount.toLocaleString('pt-BR')}
+                      </div>
+                      {receivable.receivedDate && receivable.receivedAmount && receivable.receivedAmount !== receivable.amount && (
+                        <div className="text-sm text-green-600">
+                          Recebido: R$ {receivable.receivedAmount.toLocaleString('pt-BR')}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-4 py-4">
                       <div className="flex items-center gap-2">
                         <div className={`w-3 h-3 rounded-full ${
                           receivable.status === 'pending' ? 'bg-yellow-500' :
                           receivable.status === 'received' ? 'bg-green-500' :
-                          receivable.status === 'overdue' ? 'bg-red-500' :
+                          receivable.status === 'overdue' ? 'bg-red-500 animate-pulse' :
                           'bg-neutral-500'
                         }`}></div>
                         <span className={`px-2 py-1 rounded-md text-xs font-medium ${
@@ -390,59 +433,54 @@ export default function ReceivablesTab() {
                            receivable.status === 'overdue' ? 'Atrasado' : 'Cancelado'}
                         </span>
                       </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-2xl font-bold text-neutral-900">R$ {receivable.amount.toLocaleString('pt-BR')}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4 mt-2 text-sm text-neutral-500">
-                    <span>📅 {formatDateForDisplay(receivable.expectedDate)}</span>
-                    {receivable.category && (
-                      <span>🏷️ {receivable.category}</span>
-                    )}
-                    {receivable.invoiceNumber && (
-                      <span>📄 {receivable.invoiceNumber}</span>
-                    )}
-                  </div>
-                  {receivable.receivedDate && (
-                    <p className="text-sm text-green-700">
-                      Recebido em: {formatDateForDisplay(receivable.receivedDate)}
-                      {receivable.receivedAmount && receivable.receivedAmount !== receivable.amount &&
-                        ` - R$ ${receivable.receivedAmount.toLocaleString('pt-BR')}`}
-                    </p>
-                  )}
-                  {receivable.category && (
-                    <p className="text-sm text-neutral-900">Categoria: {receivable.category}</p>
-                  )}
-                  {receivable.invoiceNumber && (
-                    <p className="text-sm text-neutral-900">Fatura: {receivable.invoiceNumber}</p>
-                  )}
-                </div>
-                <div className="flex flex-col gap-2 ml-4">
-                  {(receivable.status === 'pending' || receivable.status === 'overdue') && (
-                    <button
-                      onClick={() => markAsReceived(receivable)}
-                      className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 font-medium transition-colors"
-                    >
-                      Marcar como Recebido
-                    </button>
-                  )}
-                  <button
-                    onClick={() => openEditModal(receivable)}
-                    className="bg-blue-700 text-white px-3 py-1 rounded text-sm hover:bg-blue-800 font-medium transition-colors"
-                  >
-                    Editar
-                  </button>
-                  <button
-                    onClick={() => deleteReceivable(receivable.id)}
-                    className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 font-medium transition-colors"
-                  >
-                    Excluir
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
+                      {receivable.receivedDate && (
+                        <div className="text-xs text-green-600 mt-1">
+                          Recebido: {formatDateForDisplay(receivable.receivedDate)}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-4 py-4 text-sm text-neutral-900">
+                      {formatDateForDisplay(receivable.expectedDate)}
+                    </td>
+                    <td className="px-4 py-4 text-sm text-neutral-900">
+                      <div>{receivable.category || '-'}</div>
+                      {receivable.invoiceNumber && (
+                        <div className="text-xs text-neutral-500">#{receivable.invoiceNumber}</div>
+                      )}
+                    </td>
+                    <td className="px-4 py-4 text-right">
+                      <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        {(receivable.status === 'pending' || receivable.status === 'overdue') && (
+                          <button
+                            onClick={() => markAsReceived(receivable)}
+                            className="bg-green-600 text-white px-2 py-1 rounded text-xs hover:bg-green-700 font-medium transition-colors"
+                            title="Marcar como recebido"
+                          >
+                            ✓
+                          </button>
+                        )}
+                        <button
+                          onClick={() => openEditModal(receivable)}
+                          className="bg-blue-700 text-white px-2 py-1 rounded text-xs hover:bg-blue-800 font-medium transition-colors"
+                          title="Editar recebível"
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          onClick={() => deleteReceivable(receivable.id)}
+                          className="bg-red-600 text-white px-2 py-1 rounded text-xs hover:bg-red-700 font-medium transition-colors"
+                          title="Excluir recebível"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

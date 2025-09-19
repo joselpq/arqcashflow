@@ -25,7 +25,6 @@ export default function ExpensesTab() {
   const [expenses, setExpenses] = useState([])
   const [filteredExpenses, setFilteredExpenses] = useState([])
   const [contracts, setContracts] = useState([])
-  const [summary, setSummary] = useState({ total: 0, paid: 0, pending: 0, overdue: 0, count: 0 })
   const [loading, setLoading] = useState(false)
   const [formLoading, setFormLoading] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -107,7 +106,6 @@ export default function ExpensesTab() {
       }
       const data = await res.json()
       setExpenses(data.expenses || [])
-      setSummary(data.summary || { total: 0, paid: 0, pending: 0, overdue: 0, count: 0 })
     } catch (error) {
       console.error('Falha ao buscar despesas:', error)
       setExpenses([])
@@ -240,29 +238,6 @@ export default function ExpensesTab() {
         </button>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-        <div className="bg-white border-2 border-neutral-300 p-4 rounded-lg">
-          <p className="text-sm font-medium text-neutral-900">Total</p>
-          <p className="text-xl font-bold text-neutral-900">R$ {summary.total.toLocaleString('pt-BR')}</p>
-        </div>
-        <div className="bg-white border-2 border-neutral-300 p-4 rounded-lg">
-          <p className="text-sm font-medium text-neutral-900">Pendente</p>
-          <p className="text-xl font-bold text-yellow-700">R$ {summary.pending.toLocaleString('pt-BR')}</p>
-        </div>
-        <div className="bg-white border-2 border-neutral-300 p-4 rounded-lg">
-          <p className="text-sm font-medium text-neutral-900">Pago</p>
-          <p className="text-xl font-bold text-green-700">R$ {summary.paid.toLocaleString('pt-BR')}</p>
-        </div>
-        <div className="bg-white border-2 border-neutral-300 p-4 rounded-lg">
-          <p className="text-sm font-medium text-neutral-900">Atrasado</p>
-          <p className="text-xl font-bold text-red-700">R$ {summary.overdue.toLocaleString('pt-BR')}</p>
-        </div>
-        <div className="bg-white border-2 border-neutral-300 p-4 rounded-lg">
-          <p className="text-sm font-medium text-neutral-900">Qtd</p>
-          <p className="text-xl font-bold text-neutral-900">{summary.count}</p>
-        </div>
-      </div>
 
       {/* Search */}
       <div className="mb-4">
@@ -396,7 +371,7 @@ export default function ExpensesTab() {
         )}
       </div>
 
-      {/* Expenses List */}
+      {/* Expenses Table */}
       {loading ? (
         <p>Carregando...</p>
       ) : filteredExpenses.length === 0 ? (
@@ -404,19 +379,70 @@ export default function ExpensesTab() {
           {searchQuery ? `Nenhuma despesa encontrada para "${searchQuery}"` : 'Nenhuma despesa ainda'}
         </p>
       ) : (
-        <div className="space-y-4">
-          {filteredExpenses.map((expense: any) => (
-            <div key={expense.id} className="bg-white border-2 border-neutral-300 p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <h3 className="font-bold text-lg text-neutral-900 mb-1">{expense.description}</h3>
+        <div className="bg-white border border-neutral-200 rounded-lg overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-neutral-50 border-b border-neutral-200">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                    Descrição
+                  </th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                    Valor
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                    Vencimento
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                    Categoria
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                    Fornecedor
+                  </th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                    Ações
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-neutral-200">
+                {filteredExpenses.map((expense: any) => {
+                  const isOverdue = expense.status === 'overdue'
+                  return (
+                  <tr key={expense.id} className={`group hover:bg-neutral-50 transition-colors ${
+                    isOverdue ? 'bg-red-50 border-l-4 border-l-red-500' : ''
+                  }`}>
+                    <td className="px-4 py-4">
+                      <div>
+                        <div className="font-semibold text-neutral-900">{expense.description}</div>
+                        <div className="text-sm text-neutral-600">
+                          {expenseTypes.find(t => t.value === expense.type)?.label || expense.type}
+                        </div>
+                        {expense.contract && (
+                          <div className="text-xs text-neutral-500">
+                            {expense.contract.clientName} - {expense.contract.projectName}
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-4 text-right">
+                      <div className="font-bold text-lg text-neutral-900">
+                        R$ {expense.amount.toLocaleString('pt-BR')}
+                      </div>
+                      {expense.paidDate && expense.paidAmount && expense.paidAmount !== expense.amount && (
+                        <div className="text-sm text-green-600">
+                          Pago: R$ {expense.paidAmount.toLocaleString('pt-BR')}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-4 py-4">
                       <div className="flex items-center gap-2">
                         <div className={`w-3 h-3 rounded-full ${
                           expense.status === 'paid' ? 'bg-green-500' :
                           expense.status === 'pending' ? 'bg-yellow-500' :
-                          expense.status === 'overdue' ? 'bg-red-500' :
+                          expense.status === 'overdue' ? 'bg-red-500 animate-pulse' :
                           'bg-neutral-500'
                         }`}></div>
                         <span className={`px-2 py-1 rounded-md text-xs font-medium ${
@@ -425,63 +451,57 @@ export default function ExpensesTab() {
                           {statusOptions.find(s => s.value === expense.status)?.label || expense.status}
                         </span>
                       </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-2xl font-bold text-neutral-900">R$ {expense.amount.toLocaleString('pt-BR')}</p>
-                    </div>
-                  </div>
-                  {expense.paidDate && (
-                    <p className="text-sm text-green-700 mb-2">
-                      Pago em: {formatDateForDisplay(expense.paidDate)}
-                      {expense.paidAmount && expense.paidAmount !== expense.amount &&
-                        ` - R$ ${expense.paidAmount.toLocaleString('pt-BR')}`}
-                    </p>
-                  )}
-                  <div className="flex items-center gap-4 mt-2 text-sm text-neutral-500">
-                    <span>📅 {formatDateForDisplay(expense.dueDate)}</span>
-                    <span>🏷️ {expense.category}</span>
-                    <span>📋 {expenseTypes.find(t => t.value === expense.type)?.label || expense.type}</span>
-                    {expense.vendor && (
-                      <span>🏢 {expense.vendor}</span>
-                    )}
-                  </div>
-                  {expense.contract && (
-                    <p className="text-sm text-neutral-900">
-                      Projeto: {expense.contract.clientName} - {expense.contract.projectName}
-                    </p>
-                  )}
-                  {expense.vendor && (
-                    <p className="text-sm text-neutral-900">Fornecedor: {expense.vendor}</p>
-                  )}
-                  {expense.invoiceNumber && (
-                    <p className="text-sm text-neutral-900">Fatura: {expense.invoiceNumber}</p>
-                  )}
-                </div>
-                <div className="flex flex-col gap-2 ml-4">
-                  {(expense.status === 'pending' || expense.status === 'overdue') && (
-                    <button
-                      onClick={() => markAsPaid(expense)}
-                      className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 font-medium transition-colors"
-                    >
-                      Marcar como Pago
-                    </button>
-                  )}
-                  <button
-                    onClick={() => openEditModal(expense)}
-                    className="bg-blue-700 text-white px-3 py-1 rounded text-sm hover:bg-blue-800 font-medium transition-colors"
-                  >
-                    Editar
-                  </button>
-                  <button
-                    onClick={() => deleteExpense(expense.id)}
-                    className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 font-medium transition-colors"
-                  >
-                    Excluir
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
+                      {expense.paidDate && (
+                        <div className="text-xs text-green-600 mt-1">
+                          Pago: {formatDateForDisplay(expense.paidDate)}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-4 py-4 text-sm text-neutral-900">
+                      {formatDateForDisplay(expense.dueDate)}
+                    </td>
+                    <td className="px-4 py-4 text-sm text-neutral-900">
+                      {expense.category}
+                    </td>
+                    <td className="px-4 py-4 text-sm text-neutral-900">
+                      <div>{expense.vendor || '-'}</div>
+                      {expense.invoiceNumber && (
+                        <div className="text-xs text-neutral-500">#{expense.invoiceNumber}</div>
+                      )}
+                    </td>
+                    <td className="px-4 py-4 text-right">
+                      <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        {(expense.status === 'pending' || expense.status === 'overdue') && (
+                          <button
+                            onClick={() => markAsPaid(expense)}
+                            className="bg-green-600 text-white px-2 py-1 rounded text-xs hover:bg-green-700 font-medium transition-colors"
+                            title="Marcar como pago"
+                          >
+                            ✓
+                          </button>
+                        )}
+                        <button
+                          onClick={() => openEditModal(expense)}
+                          className="bg-blue-700 text-white px-2 py-1 rounded text-xs hover:bg-blue-800 font-medium transition-colors"
+                          title="Editar despesa"
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          onClick={() => deleteExpense(expense.id)}
+                          className="bg-red-600 text-white px-2 py-1 rounded text-xs hover:bg-red-700 font-medium transition-colors"
+                          title="Excluir despesa"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

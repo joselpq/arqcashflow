@@ -266,7 +266,7 @@ export default function ContractsTab() {
         )}
       </div>
 
-        {/* Contract List */}
+        {/* Contract Table */}
         {loading ? (
           <p>Carregando...</p>
         ) : filteredContracts.length === 0 ? (
@@ -274,60 +274,90 @@ export default function ContractsTab() {
             {searchQuery ? `Nenhum contrato encontrado para "${searchQuery}"` : 'Nenhum contrato ainda'}
           </p>
         ) : (
-          <div className="space-y-4 max-h-96 overflow-y-auto">
-            {filteredContracts.map((contract: any) => (
-              <div key={contract.id} className="bg-white border-2 border-neutral-300 p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <h3 className="font-bold text-lg text-neutral-900 mb-1">{contract.projectName}</h3>
-                        <p className="text-sm text-neutral-600">Cliente: {contract.clientName}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-2xl font-bold text-neutral-900">R$ {contract.totalValue.toLocaleString('pt-BR')}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 my-1">
-                      <div className="flex items-center gap-2">
-                        <div className={`w-3 h-3 rounded-full ${
-                          contract.status === 'active' ? 'bg-green-500' :
-                          contract.status === 'completed' ? 'bg-blue-500' :
-                          'bg-red-500'
-                        }`}></div>
-                        <span className={`px-2 py-1 rounded-md text-xs font-medium ${
-                          contract.status === 'active' ? 'bg-green-100 text-green-800' :
-                          contract.status === 'completed' ? 'bg-blue-100 text-blue-800' :
-                          'bg-red-100 text-red-800'
-                        }`}>
-                          {contract.status === 'active' ? 'Ativo' : contract.status === 'completed' ? 'Finalizado' : 'Cancelado'}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4 mt-2 text-sm text-neutral-500">
-                      <span>📅 {formatDateForDisplay(contract.signedDate)}</span>
-                      {contract.category && (
-                        <span>🏷️ {contract.category}</span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-2 ml-4">
-                    <button
-                      onClick={() => openEditModal(contract)}
-                      className="bg-blue-700 text-white px-3 py-1 rounded text-sm hover:bg-blue-800 font-medium transition-colors"
-                    >
-                      Editar
-                    </button>
-                    <button
-                      onClick={() => deleteContract(contract.id)}
-                      className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 font-medium transition-colors"
-                    >
-                      Excluir
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
+          <div className="bg-white border border-neutral-200 rounded-lg overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-neutral-50 border-b border-neutral-200">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                      Cliente / Projeto
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                      Valor
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                      Data
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                      Categoria
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                      Ações
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-neutral-200">
+                  {filteredContracts.map((contract: any) => (
+                    <tr key={contract.id} className="group hover:bg-neutral-50 transition-colors">
+                      <td className="px-4 py-4">
+                        <div>
+                          <div className="font-semibold text-neutral-900">{contract.projectName}</div>
+                          <div className="text-sm text-neutral-600">{contract.clientName}</div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 text-right">
+                        <div className="font-bold text-lg text-neutral-900">
+                          R$ {contract.totalValue.toLocaleString('pt-BR')}
+                        </div>
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="flex items-center gap-2">
+                          <div className={`w-3 h-3 rounded-full ${
+                            contract.status === 'active' ? 'bg-green-500' :
+                            contract.status === 'completed' ? 'bg-blue-500' :
+                            'bg-red-500'
+                          }`}></div>
+                          <span className={`px-2 py-1 rounded-md text-xs font-medium ${
+                            contract.status === 'active' ? 'bg-green-100 text-green-800' :
+                            contract.status === 'completed' ? 'bg-blue-100 text-blue-800' :
+                            'bg-red-100 text-red-800'
+                          }`}>
+                            {contract.status === 'active' ? 'Ativo' : contract.status === 'completed' ? 'Finalizado' : 'Cancelado'}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 text-sm text-neutral-900">
+                        {formatDateForDisplay(contract.signedDate)}
+                      </td>
+                      <td className="px-4 py-4 text-sm text-neutral-900">
+                        {contract.category || '-'}
+                      </td>
+                      <td className="px-4 py-4 text-right">
+                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                          <button
+                            onClick={() => openEditModal(contract)}
+                            className="bg-blue-700 text-white px-2 py-1 rounded text-xs hover:bg-blue-800 font-medium transition-colors"
+                            title="Editar contrato"
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            onClick={() => deleteContract(contract.id)}
+                            className="bg-red-600 text-white px-2 py-1 rounded text-xs hover:bg-red-700 font-medium transition-colors"
+                            title="Excluir contrato"
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
