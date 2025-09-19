@@ -26,6 +26,10 @@ A secure, multi-tenant cashflow management system designed for architects to tra
 2. **🏗️ Unified Projetos Management** - Consolidated project management with clean sub-tab navigation:
    - **📝 Contratos**: Complete contract management with categories and status tracking
    - **💰 Recebíveis**: Track expected and received payments with categories and filtering
+     - **Contract-based receivables**: Traditional receivables linked to specific contracts
+     - **Standalone receivables**: Independent receivables for sales, refunds, reimbursements (not linked to contracts)
+     - **Smart status detection**: Automatic status determination based on payment information
+     - **Flexible categorization**: Custom categories for both contract and standalone receivables
    - **💸 Despesas**: Cost tracking with vendors, categories, and payment status
 3. **Smart Navigation** - Intuitive tab structure following architect workflow patterns
 4. **Backward Compatibility** - Automatic URL redirects maintain existing bookmarks and links
@@ -58,7 +62,7 @@ A secure, multi-tenant cashflow management system designed for architects to tra
 16. **Smart Alerts & Notifications** - Automated detection of duplicates, value anomalies, date inconsistencies, and business rule violations
 17. **Alert Action Integration** - Click alerts to directly edit the related items with auto-redirect functionality
 18. **Net Cashflow Analysis** - Complete financial picture with income vs expenses
-19. **SQLite Database** - Simple, file-based database (easily upgradeable to PostgreSQL)
+19. **PostgreSQL Database** - Production-ready database with multi-tenant support and data integrity
 20. **Edit/Delete Functionality** - Full CRUD operations on all entities
 21. **Category System** - Organize contracts, receivables, and expenses by custom categories
 22. **Duplicate Detection** - Smart handling of duplicate client/project names with auto-increment
@@ -70,7 +74,13 @@ A secure, multi-tenant cashflow management system designed for architects to tra
 28. **Responsive Authentication** - Mobile-optimized login and registration forms with enhanced UX
 29. **LGPD-Compliant Legal Framework** - Complete Privacy Policy and Terms of Service in Portuguese
 30. **Enhanced Design System** - Improved color contrast and accessibility for professional use
-31. **🎯 WOW Onboarding Experience** - Multi-step guided setup that hooks users immediately:
+31. **🔄 Flexible Receivables Management** - Comprehensive receivable tracking with dual-mode support:
+    - **Contract Integration**: Traditional receivables linked to specific contracts
+    - **Standalone Mode**: Independent receivables for equipment sales, refunds, reimbursements
+    - **Smart Status Detection**: Automatic "received" status when payment information is provided
+    - **Precision Handling**: Accurate number handling to prevent floating-point errors
+    - **Enhanced UI**: Intuitive form with tooltips, better field ordering, and professional styling
+32. **🎯 WOW Onboarding Experience** - Multi-step guided setup that hooks users immediately:
     - **Step 1: Profile Setup** - Individual vs company selection with tailored form fields and dropdown options
     - **Step 2: Data Import** - Working drag-and-drop interface with AI processing for Excel/CSV files
     - **File Support** - Excel (.xlsx, .xls) and CSV files with intelligent data extraction
@@ -172,6 +182,11 @@ ArqCashflow features a clean, professional design system specifically crafted fo
 - ✅ **Professional Auth Design**: Harmonious design with proper breakpoints and element proportions
 - ✅ **LGPD-Compliant Legal Pages**: Comprehensive Privacy Policy and Terms of Service in Portuguese
 - ✅ **Enhanced Color Contrast**: Improved readability and accessibility while maintaining professional aesthetics
+- ✅ **Standalone Receivables**: Added support for receivables not associated with contracts (equipment sales, refunds, etc.)
+- ✅ **Smart Status Detection**: Automatic status determination based on payment information ("received" when payment data provided)
+- ✅ **Number Precision Fixes**: Resolved floating-point precision issues in receivable amount handling
+- ✅ **UI/UX Enhancements**: Improved receivable form with tooltips, better field ordering, and subtle checkbox styling
+- ✅ **Database Migration**: Migrated to PostgreSQL with proper team isolation and data integrity
 - ✅ **Visual Hierarchy Improvements**: Better text contrast and border definition for optimal user experience
 
 ### ✅ Recently Resolved Issues:
@@ -225,8 +240,10 @@ npm install
 Create a `.env` file in the root directory:
 
 ```env
-# Database
-DATABASE_URL="file:./dev.db"
+# Database (PostgreSQL - both development and production)
+DATABASE_URL="postgresql://username:password@localhost:5432/arqcashflow"
+# Or for development with SQLite (legacy option):
+# DATABASE_URL="file:./dev.db"
 
 # AI Features (Updated to Claude)
 CLAUDE_API_KEY="your-claude-api-key-here"
@@ -516,13 +533,14 @@ curl -X POST "https://arqcashflow.vercel.app/api/contracts" \
 
 ### 💰 Receivables API
 
-**Purpose**: Track expected payments and record actual payments from contracts
+**Purpose**: Track expected payments and record actual payments from contracts or standalone sources
 
 #### **GET /api/receivables** - List All Receivables
 **Purpose**: Retrieve all receivables with contract details and payment status
 
 **Query Parameters:**
 - `contractId` (string): Filter by specific contract ID
+  - Values: `all` (all receivables), `none` (standalone receivables only), or specific contract ID
 - `status` (string): Filter by payment status
   - Values: `pending`, `received`, `overdue`, `cancelled`
 - `category` (string): Filter by receivable category
@@ -562,17 +580,33 @@ curl "https://arqcashflow.vercel.app/api/receivables?status=pending&sortBy=expec
 ```
 
 #### **POST /api/receivables** - Create New Receivable
-**Purpose**: Create a new expected payment for a contract
+**Purpose**: Create a new expected payment for a contract or standalone source
 
-**Request Body:**
+**Request Body (Contract-based):**
 ```json
 {
-  "contractId": "string (required)",
+  "contractId": "string (required for contract-based)",
   "expectedDate": "YYYY-MM-DD (required)",
   "amount": "number (required)",
   "invoiceNumber": "string (optional)",
   "category": "string (optional)",
-  "notes": "string (optional)"
+  "notes": "string (optional)",
+  "status": "string (optional - auto-determined if payment info provided)"
+}
+```
+
+**Request Body (Standalone):**
+```json
+{
+  "contractId": null,
+  "clientName": "string (required for standalone)",
+  "description": "string (required for standalone)",
+  "expectedDate": "YYYY-MM-DD (required)",
+  "amount": "number (required)",
+  "invoiceNumber": "string (optional)",
+  "category": "string (optional)",
+  "notes": "string (optional)",
+  "status": "string (optional - auto-determined if payment info provided)"
 }
 ```
 
@@ -1432,8 +1466,8 @@ arqcashflow/
 ## For LLM Agents & Developers
 
 ### Quick Start Checklist
-1. ✅ **Environment Setup**: Add `OPENAI_API_KEY` to `.env`
-2. ✅ **Database**: Run `npx prisma migrate dev` (creates SQLite DB)
+1. ✅ **Environment Setup**: Add `CLAUDE_API_KEY` to `.env`
+2. ✅ **Database**: Run `npx prisma db push` (PostgreSQL) or `npx prisma migrate dev` (SQLite legacy)
 3. ✅ **Dependencies**: Run `npm install`
 4. ✅ **Test**: Run `npm run dev` and visit http://localhost:3000
 
@@ -1455,7 +1489,7 @@ arqcashflow/
 ```sql
 -- Core tables (simplified)
 Contract (id, clientName, projectName, totalValue, signedDate, status, category)
-Receivable (id, contractId→Contract.id, expectedDate, amount, status, category)
+Receivable (id, contractId→Contract.id, expectedDate, amount, status, category, clientName, description, teamId)
 Category (id, name, color) -- Currently unused in UI, future enhancement
 ```
 
