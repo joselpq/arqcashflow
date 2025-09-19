@@ -23,6 +23,7 @@ export default function ExpensesTab() {
   const editId = searchParams.get('edit')
 
   const [expenses, setExpenses] = useState([])
+  const [filteredExpenses, setFilteredExpenses] = useState([])
   const [contracts, setContracts] = useState([])
   const [summary, setSummary] = useState({ total: 0, paid: 0, pending: 0, overdue: 0, count: 0 })
   const [loading, setLoading] = useState(false)
@@ -38,6 +39,7 @@ export default function ExpensesTab() {
     sortBy: 'dueDate',
     sortOrder: 'asc',
   })
+  const [searchQuery, setSearchQuery] = useState('')
 
   const expenseCategories = [
     'materiais', 'mão-de-obra', 'equipamentos', 'transporte', 'escritório', 'software',
@@ -70,6 +72,25 @@ export default function ExpensesTab() {
       }
     }
   }, [editId, expenses])
+
+  // Client-side search filtering
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredExpenses(expenses)
+    } else {
+      const query = searchQuery.toLowerCase()
+      const filtered = expenses.filter((expense: any) =>
+        expense.description?.toLowerCase().includes(query) ||
+        expense.vendor?.toLowerCase().includes(query) ||
+        expense.category?.toLowerCase().includes(query) ||
+        expense.invoiceNumber?.toLowerCase().includes(query) ||
+        expense.contract?.clientName?.toLowerCase().includes(query) ||
+        expense.contract?.projectName?.toLowerCase().includes(query) ||
+        expense.notes?.toLowerCase().includes(query)
+      )
+      setFilteredExpenses(filtered)
+    }
+  }, [expenses, searchQuery])
 
   async function fetchExpenses() {
     setLoading(true)
@@ -243,12 +264,38 @@ export default function ExpensesTab() {
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-2 mb-6">
-        <div>
-          <label className="block text-sm font-semibold text-neutral-900 mb-2">Projeto</label>
+      {/* Search */}
+      <div className="mb-4">
+        <div className="relative">
+          <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            type="text"
+            placeholder="Buscar despesas, fornecedores, categorias, projetos..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-3 border-2 border-neutral-300 rounded-lg bg-white text-neutral-900 placeholder-neutral-500 focus:border-blue-600 focus:outline-none transition-colors"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Filters - Horizontal Bar */}
+      <div className="flex flex-wrap items-center gap-3 mb-6 p-4 bg-neutral-50 rounded-lg border border-neutral-200">
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-medium text-neutral-700 whitespace-nowrap">Projeto:</label>
           <select
-            className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
+            className="border border-neutral-300 rounded-md px-3 py-1 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none min-w-[180px]"
             value={filters.contractId}
             onChange={(e) => setFilters({ ...filters, contractId: e.target.value })}
           >
@@ -261,10 +308,10 @@ export default function ExpensesTab() {
           </select>
         </div>
 
-        <div>
-          <label className="block text-sm font-semibold text-neutral-900 mb-2">Status</label>
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-medium text-neutral-700 whitespace-nowrap">Status:</label>
           <select
-            className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
+            className="border border-neutral-300 rounded-md px-3 py-1 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
             value={filters.status}
             onChange={(e) => setFilters({ ...filters, status: e.target.value })}
           >
@@ -277,10 +324,10 @@ export default function ExpensesTab() {
           </select>
         </div>
 
-        <div>
-          <label className="block text-sm font-semibold text-neutral-900 mb-2">Categoria</label>
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-medium text-neutral-700 whitespace-nowrap">Categoria:</label>
           <select
-            className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
+            className="border border-neutral-300 rounded-md px-3 py-1 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
             value={filters.category}
             onChange={(e) => setFilters({ ...filters, category: e.target.value })}
           >
@@ -293,10 +340,10 @@ export default function ExpensesTab() {
           </select>
         </div>
 
-        <div>
-          <label className="block text-sm font-semibold text-neutral-900 mb-2">Tipo</label>
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-medium text-neutral-700 whitespace-nowrap">Tipo:</label>
           <select
-            className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
+            className="border border-neutral-300 rounded-md px-3 py-1 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
             value={filters.type}
             onChange={(e) => setFilters({ ...filters, type: e.target.value })}
           >
@@ -309,67 +356,95 @@ export default function ExpensesTab() {
           </select>
         </div>
 
-        <div>
-          <label className="block text-sm font-semibold text-neutral-900 mb-2">Ordenar Por</label>
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-medium text-neutral-700 whitespace-nowrap">Ordenar:</label>
           <select
-            className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
+            className="border border-neutral-300 rounded-md px-3 py-1 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
             value={filters.sortBy}
             onChange={(e) => setFilters({ ...filters, sortBy: e.target.value })}
           >
-            <option value="dueDate">Data de Vencimento</option>
+            <option value="dueDate">Vencimento</option>
             <option value="amount">Valor</option>
             <option value="status">Status</option>
             <option value="category">Categoria</option>
             <option value="vendor">Fornecedor</option>
-            <option value="createdAt">Data de Criação</option>
+            <option value="createdAt">Data Criação</option>
           </select>
         </div>
 
-        <div>
-          <label className="block text-sm font-semibold text-neutral-900 mb-2">Ordem</label>
+        <div className="flex items-center gap-2">
           <select
-            className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
+            className="border border-neutral-300 rounded-md px-3 py-1 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
             value={filters.sortOrder}
             onChange={(e) => setFilters({ ...filters, sortOrder: e.target.value })}
           >
-            <option value="asc">Crescente</option>
-            <option value="desc">Decrescente</option>
+            <option value="desc">↓ Desc</option>
+            <option value="asc">↑ Asc</option>
           </select>
         </div>
+
+        {(filters.contractId !== 'all' || filters.status !== 'pending' || filters.category !== 'all' || filters.type !== 'all' || searchQuery) && (
+          <button
+            onClick={() => {
+              setFilters({ contractId: 'all', status: 'pending', category: 'all', type: 'all', sortBy: 'dueDate', sortOrder: 'asc' })
+              setSearchQuery('')
+            }}
+            className="ml-2 text-sm text-blue-600 hover:text-blue-800 font-medium"
+          >
+            Limpar filtros
+          </button>
+        )}
       </div>
 
       {/* Expenses List */}
       {loading ? (
         <p>Carregando...</p>
-      ) : expenses.length === 0 ? (
-        <p className="text-neutral-900 font-medium">Nenhuma despesa ainda</p>
+      ) : filteredExpenses.length === 0 ? (
+        <p className="text-neutral-900 font-medium">
+          {searchQuery ? `Nenhuma despesa encontrada para "${searchQuery}"` : 'Nenhuma despesa ainda'}
+        </p>
       ) : (
         <div className="space-y-4">
-          {expenses.map((expense: any) => (
+          {filteredExpenses.map((expense: any) => (
             <div key={expense.id} className="bg-white border-2 border-neutral-300 p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow">
               <div className="flex justify-between items-start">
                 <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <h3 className="font-bold text-lg text-neutral-900">{expense.description}</h3>
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${
-                      statusOptions.find(s => s.value === expense.status)?.color || 'bg-neutral-100 text-neutral-900'
-                    }`}>
-                      {statusOptions.find(s => s.value === expense.status)?.label || expense.status}
-                    </span>
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <h3 className="font-bold text-lg text-neutral-900 mb-1">{expense.description}</h3>
+                      <div className="flex items-center gap-2">
+                        <div className={`w-3 h-3 rounded-full ${
+                          expense.status === 'paid' ? 'bg-green-500' :
+                          expense.status === 'pending' ? 'bg-yellow-500' :
+                          expense.status === 'overdue' ? 'bg-red-500' :
+                          'bg-neutral-500'
+                        }`}></div>
+                        <span className={`px-2 py-1 rounded-md text-xs font-medium ${
+                          statusOptions.find(s => s.value === expense.status)?.color || 'bg-neutral-100 text-neutral-900'
+                        }`}>
+                          {statusOptions.find(s => s.value === expense.status)?.label || expense.status}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold text-neutral-900">R$ {expense.amount.toLocaleString('pt-BR')}</p>
+                    </div>
                   </div>
-                  <p className="text-sm font-semibold text-neutral-900">Valor: R$ {expense.amount.toLocaleString('pt-BR')}</p>
-                  <p className="text-sm text-neutral-900">Vencimento: {formatDateForDisplay(expense.dueDate)}</p>
                   {expense.paidDate && (
-                    <p className="text-sm text-green-700">
+                    <p className="text-sm text-green-700 mb-2">
                       Pago em: {formatDateForDisplay(expense.paidDate)}
                       {expense.paidAmount && expense.paidAmount !== expense.amount &&
                         ` - R$ ${expense.paidAmount.toLocaleString('pt-BR')}`}
                     </p>
                   )}
-                  <p className="text-sm text-neutral-900">Categoria: {expense.category}</p>
-                  <p className="text-sm text-neutral-900">
-                    Tipo: {expenseTypes.find(t => t.value === expense.type)?.label || expense.type}
-                  </p>
+                  <div className="flex items-center gap-4 mt-2 text-sm text-neutral-500">
+                    <span>📅 {formatDateForDisplay(expense.dueDate)}</span>
+                    <span>🏷️ {expense.category}</span>
+                    <span>📋 {expenseTypes.find(t => t.value === expense.type)?.label || expense.type}</span>
+                    {expense.vendor && (
+                      <span>🏢 {expense.vendor}</span>
+                    )}
+                  </div>
                   {expense.contract && (
                     <p className="text-sm text-neutral-900">
                       Projeto: {expense.contract.clientName} - {expense.contract.projectName}

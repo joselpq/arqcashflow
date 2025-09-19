@@ -23,6 +23,7 @@ export default function ContractsTab() {
   const editId = searchParams.get('edit')
 
   const [contracts, setContracts] = useState([])
+  const [filteredContracts, setFilteredContracts] = useState([])
   const [loading, setLoading] = useState(true)
   const [formLoading, setFormLoading] = useState(false)
   const [uniqueCategories, setUniqueCategories] = useState<string[]>([])
@@ -35,10 +36,11 @@ export default function ContractsTab() {
     sortBy: 'createdAt',
     sortOrder: 'desc',
   })
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     fetchContracts()
-  }, [filters])
+  }, [filters, searchQuery])
 
   useEffect(() => {
     if (editId) {
@@ -48,6 +50,22 @@ export default function ContractsTab() {
       }
     }
   }, [editId, contracts])
+
+  // Client-side search filtering
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredContracts(contracts)
+    } else {
+      const query = searchQuery.toLowerCase()
+      const filtered = contracts.filter((contract: any) =>
+        contract.clientName?.toLowerCase().includes(query) ||
+        contract.projectName?.toLowerCase().includes(query) ||
+        contract.category?.toLowerCase().includes(query) ||
+        contract.description?.toLowerCase().includes(query)
+      )
+      setFilteredContracts(filtered)
+    }
+  }, [contracts, searchQuery])
 
   async function fetchContracts() {
     try {
@@ -150,95 +168,148 @@ export default function ContractsTab() {
         </button>
       </div>
 
-      {/* Filters */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-6">
-          <div>
-            <label className="block text-sm font-semibold text-neutral-900 mb-2">Status</label>
-            <select
-              className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
-              value={filters.status}
-              onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+      {/* Search */}
+      <div className="mb-4">
+        <div className="relative">
+          <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            type="text"
+            placeholder="Buscar contratos, clientes, projetos..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-3 border-2 border-neutral-300 rounded-lg bg-white text-neutral-900 placeholder-neutral-500 focus:border-blue-600 focus:outline-none transition-colors"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
             >
-              <option value="all">Todos</option>
-              {uniqueStatuses.map(status => (
-                <option key={status} value={status}>
-                  {status === 'active' ? 'Ativo' : status === 'completed' ? 'Finalizado' : 'Cancelado'}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-neutral-900 mb-2">Categoria</label>
-            <select
-              className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
-              value={filters.category}
-              onChange={(e) => setFilters({ ...filters, category: e.target.value })}
-            >
-              <option value="all">Todas</option>
-              {uniqueCategories.map(category => (
-                <option key={category} value={category}>{category}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-neutral-900 mb-2">Ordenar Por</label>
-            <select
-              className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
-              value={filters.sortBy}
-              onChange={(e) => setFilters({ ...filters, sortBy: e.target.value })}
-            >
-              <option value="createdAt">Data de Criação</option>
-              <option value="signedDate">Data de Assinatura</option>
-              <option value="clientName">Nome do Cliente</option>
-              <option value="projectName">Nome do Projeto</option>
-              <option value="totalValue">Valor Total</option>
-              <option value="status">Status</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-neutral-900 mb-2">Ordem</label>
-            <select
-              className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
-              value={filters.sortOrder}
-              onChange={(e) => setFilters({ ...filters, sortOrder: e.target.value })}
-            >
-              <option value="desc">Decrescente</option>
-              <option value="asc">Crescente</option>
-            </select>
-          </div>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
         </div>
+      </div>
+
+      {/* Filters - Horizontal Bar */}
+      <div className="flex flex-wrap items-center gap-3 mb-6 p-4 bg-neutral-50 rounded-lg border border-neutral-200">
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-medium text-neutral-700 whitespace-nowrap">Status:</label>
+          <select
+            className="border border-neutral-300 rounded-md px-3 py-1 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
+            value={filters.status}
+            onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+          >
+            <option value="all">Todos</option>
+            {uniqueStatuses.map(status => (
+              <option key={status} value={status}>
+                {status === 'active' ? 'Ativo' : status === 'completed' ? 'Finalizado' : 'Cancelado'}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-medium text-neutral-700 whitespace-nowrap">Categoria:</label>
+          <select
+            className="border border-neutral-300 rounded-md px-3 py-1 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
+            value={filters.category}
+            onChange={(e) => setFilters({ ...filters, category: e.target.value })}
+          >
+            <option value="all">Todas</option>
+            {uniqueCategories.map(category => (
+              <option key={category} value={category}>{category}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-medium text-neutral-700 whitespace-nowrap">Ordenar:</label>
+          <select
+            className="border border-neutral-300 rounded-md px-3 py-1 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
+            value={filters.sortBy}
+            onChange={(e) => setFilters({ ...filters, sortBy: e.target.value })}
+          >
+            <option value="createdAt">Data de Criação</option>
+            <option value="signedDate">Data de Assinatura</option>
+            <option value="clientName">Cliente</option>
+            <option value="projectName">Projeto</option>
+            <option value="totalValue">Valor</option>
+            <option value="status">Status</option>
+          </select>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <select
+            className="border border-neutral-300 rounded-md px-3 py-1 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
+            value={filters.sortOrder}
+            onChange={(e) => setFilters({ ...filters, sortOrder: e.target.value })}
+          >
+            <option value="desc">↓ Desc</option>
+            <option value="asc">↑ Asc</option>
+          </select>
+        </div>
+
+        {(filters.status !== 'active' || filters.category !== 'all' || searchQuery) && (
+          <button
+            onClick={() => {
+              setFilters({ status: 'active', category: 'all', sortBy: 'createdAt', sortOrder: 'desc' })
+              setSearchQuery('')
+            }}
+            className="ml-2 text-sm text-blue-600 hover:text-blue-800 font-medium"
+          >
+            Limpar filtros
+          </button>
+        )}
+      </div>
 
         {/* Contract List */}
         {loading ? (
           <p>Carregando...</p>
-        ) : contracts.length === 0 ? (
-          <p className="text-neutral-900 font-medium">Nenhum contrato ainda</p>
+        ) : filteredContracts.length === 0 ? (
+          <p className="text-neutral-900 font-medium">
+            {searchQuery ? `Nenhum contrato encontrado para "${searchQuery}"` : 'Nenhum contrato ainda'}
+          </p>
         ) : (
           <div className="space-y-4 max-h-96 overflow-y-auto">
-            {contracts.map((contract: any) => (
+            {filteredContracts.map((contract: any) => (
               <div key={contract.id} className="bg-white border-2 border-neutral-300 p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
-                    <h3 className="font-bold text-lg text-neutral-900">{contract.projectName}</h3>
-                    <p className="text-sm text-neutral-900 font-medium">Cliente: {contract.clientName}</p>
-                    <p className="text-sm font-semibold text-neutral-900">Valor: R$ {contract.totalValue.toLocaleString('pt-BR')}</p>
-                    <div className="flex items-center gap-2 my-1">
-                      <span className="text-sm font-medium text-neutral-900">Status:</span>
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${
-                        contract.status === 'active' ? 'bg-green-100 text-green-800' :
-                        contract.status === 'completed' ? 'bg-blue-100 text-blue-800' :
-                        'bg-red-100 text-red-800'
-                      }`}>
-                        {contract.status === 'active' ? 'Ativo' : contract.status === 'completed' ? 'Finalizado' : 'Cancelado'}
-                      </span>
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <h3 className="font-bold text-lg text-neutral-900 mb-1">{contract.projectName}</h3>
+                        <p className="text-sm text-neutral-600">Cliente: {contract.clientName}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-2xl font-bold text-neutral-900">R$ {contract.totalValue.toLocaleString('pt-BR')}</p>
+                      </div>
                     </div>
-                    <p className="text-sm text-neutral-900">Data: {formatDateForDisplay(contract.signedDate)}</p>
-                    {contract.category && (
-                      <p className="text-sm text-neutral-900">Categoria: {contract.category}</p>
-                    )}
+                    <div className="flex items-center gap-2 my-1">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-3 h-3 rounded-full ${
+                          contract.status === 'active' ? 'bg-green-500' :
+                          contract.status === 'completed' ? 'bg-blue-500' :
+                          'bg-red-500'
+                        }`}></div>
+                        <span className={`px-2 py-1 rounded-md text-xs font-medium ${
+                          contract.status === 'active' ? 'bg-green-100 text-green-800' :
+                          contract.status === 'completed' ? 'bg-blue-100 text-blue-800' :
+                          'bg-red-100 text-red-800'
+                        }`}>
+                          {contract.status === 'active' ? 'Ativo' : contract.status === 'completed' ? 'Finalizado' : 'Cancelado'}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4 mt-2 text-sm text-neutral-500">
+                      <span>📅 {formatDateForDisplay(contract.signedDate)}</span>
+                      {contract.category && (
+                        <span>🏷️ {contract.category}</span>
+                      )}
+                    </div>
                   </div>
                   <div className="flex flex-col gap-2 ml-4">
                     <button
