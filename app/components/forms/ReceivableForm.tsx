@@ -24,7 +24,7 @@ interface ReceivableFormProps {
 export default function ReceivableForm({ receivable, contracts, onSubmit, onCancel, loading = false }: ReceivableFormProps) {
   const [customCategory, setCustomCategory] = useState('')
   const [showCustomCategory, setShowCustomCategory] = useState(false)
-  const [isContractBased, setIsContractBased] = useState(true)
+  const [isStandalone, setIsStandalone] = useState(false)
   const [predefinedCategories, setPredefinedCategories] = useState([
     'projeto',
     'obra',
@@ -70,7 +70,7 @@ export default function ReceivableForm({ receivable, contracts, onSubmit, onCanc
         clientName: receivable.clientName || '',
         description: receivable.description || '',
       })
-      setIsContractBased(!!receivable.contractId)
+      setIsStandalone(!receivable.contractId)
     } else {
       // Reset form for new receivable
       setFormData({
@@ -85,7 +85,7 @@ export default function ReceivableForm({ receivable, contracts, onSubmit, onCanc
         clientName: '',
         description: '',
       })
-      setIsContractBased(true)
+      setIsStandalone(false)
       setCustomCategory('')
       setShowCustomCategory(false)
     }
@@ -109,10 +109,17 @@ export default function ReceivableForm({ receivable, contracts, onSubmit, onCanc
       }
     }
 
+    // Automatically determine status based on payment information
+    let status = 'pending'
+    if (formData.receivedDate && receivedAmount !== null) {
+      status = 'received'
+    }
+
     await onSubmit({
       ...formData,
       amount,
-      receivedAmount
+      receivedAmount,
+      status
     })
   }
 
@@ -123,10 +130,10 @@ export default function ReceivableForm({ receivable, contracts, onSubmit, onCanc
         <label className="flex items-center gap-2">
           <input
             type="checkbox"
-            checked={isContractBased}
+            checked={isStandalone}
             onChange={(e) => {
-              setIsContractBased(e.target.checked)
-              if (!e.target.checked) {
+              setIsStandalone(e.target.checked)
+              if (e.target.checked) {
                 setFormData({ ...formData, contractId: '' })
               } else {
                 setFormData({ ...formData, clientName: '', description: '' })
@@ -135,17 +142,17 @@ export default function ReceivableForm({ receivable, contracts, onSubmit, onCanc
             className="rounded border-neutral-300 text-blue-600 focus:ring-blue-500"
             disabled={loading}
           />
-          <span className="font-medium text-neutral-900">Associar a um contrato</span>
+          <span className="font-medium text-neutral-900">Recebível sem contrato</span>
         </label>
         <p className="text-sm text-neutral-600 mt-1">
-          {isContractBased ?
-            'Este recebível está relacionado a um contrato existente' :
-            'Este recebível não está vinculado a nenhum contrato (ex: venda de equipamento, reembolsos, etc.)'
+          {isStandalone ?
+            'Este recebível não está vinculado a nenhum contrato (ex: venda de equipamento, reembolsos, etc.)' :
+            'Este recebível está relacionado a um contrato existente'
           }
         </p>
       </div>
 
-      {isContractBased ? (
+      {!isStandalone ? (
         <div>
           <label className="block mb-2 font-medium text-neutral-900">Contrato *</label>
           <select
@@ -289,10 +296,12 @@ export default function ReceivableForm({ receivable, contracts, onSubmit, onCanc
             <button
               type="button"
               onClick={() => {
+                // Preserve exact amount value to avoid precision issues
+                const exactAmount = formData.amount || ''
                 setFormData({
                   ...formData,
                   receivedDate: new Date().toISOString().split('T')[0],
-                  receivedAmount: formData.amount || ''
+                  receivedAmount: exactAmount
                 })
               }}
               className={`px-3 py-1 rounded text-sm font-medium transition-colors flex items-center gap-1 ${
