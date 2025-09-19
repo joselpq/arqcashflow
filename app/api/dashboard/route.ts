@@ -5,7 +5,10 @@ import { isDateBefore, isDateInRange } from '@/lib/date-utils'
 
 export async function GET(request: NextRequest) {
   try {
+    console.log('🔍 Dashboard API: Starting data fetch')
+
     const { teamId } = await requireAuth()
+    console.log('✅ Dashboard API: Auth successful, teamId:', teamId)
 
     // Get current month dates
     const now = new Date()
@@ -13,26 +16,42 @@ export async function GET(request: NextRequest) {
     const currentMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59)
     const today = new Date()
 
-
+    console.log('📊 Dashboard API: Fetching contracts...')
     // Get contracts data
     const contracts = await prisma.contract.findMany({
       where: { teamId },
       include: { receivables: true }
     })
+    console.log('✅ Dashboard API: Contracts fetched:', contracts.length)
 
-    // Get receivables data
+    console.log('💰 Dashboard API: Fetching receivables...')
+    // Get receivables data (both contract-based and standalone)
     const receivables = await prisma.receivable.findMany({
       where: {
-        contract: { teamId }
+        OR: [
+          // Contract-based receivables
+          {
+            contract: {
+              teamId
+            }
+          },
+          // Standalone receivables
+          {
+            teamId: teamId
+          }
+        ]
       },
       include: { contract: true }
     })
+    console.log('✅ Dashboard API: Receivables fetched:', receivables.length)
 
+    console.log('💸 Dashboard API: Fetching expenses...')
     // Get expenses data
     const expenses = await prisma.expense.findMany({
       where: { teamId },
       include: { contract: true }
     })
+    console.log('✅ Dashboard API: Expenses fetched:', expenses.length)
 
     // Calculate key metrics
     const totalContracts = contracts.length
@@ -206,12 +225,24 @@ export async function GET(request: NextRequest) {
       monthlyTrend: monthlyData
     }
 
+    console.log('🎉 Dashboard API: Data processing complete')
     return NextResponse.json(dashboardData)
   } catch (error) {
-    console.error('Dashboard data error:', error)
+    console.error('❌ Dashboard API Error:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString()
+    })
+
     if (error instanceof Error && error.message === "Unauthorized") {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-    return NextResponse.json({ error: 'Failed to fetch dashboard data' }, { status: 500 })
+
+    // Provide more specific error message
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+    return NextResponse.json({
+      error: 'Failed to fetch dashboard data',
+      details: errorMessage
+    }, { status: 500 })
   }
 }

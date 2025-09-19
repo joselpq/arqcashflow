@@ -209,6 +209,7 @@ export default function Dashboard() {
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [retryAttempt, setRetryAttempt] = useState(0)
 
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -240,35 +241,70 @@ export default function Dashboard() {
     // Only fetch dashboard data if user is authenticated
     if (session) {
       async function checkOnboardingAndFetchDashboard() {
-        try {
-          // Check onboarding status
-          const onboardingRes = await fetch('/api/onboarding/status')
-          if (onboardingRes.ok) {
-            const { onboardingComplete } = await onboardingRes.json()
-            if (!onboardingComplete) {
-              router.push('/onboarding')
-              return
+        let retryCount = 0
+        const maxRetries = 3
+        const retryDelay = 1000 // 1 second
+
+        while (retryCount < maxRetries) {
+          try {
+            setRetryAttempt(retryCount + 1)
+            console.log('🔍 Dashboard: Starting data fetch, attempt', retryCount + 1)
+
+            // Check onboarding status
+            const onboardingRes = await fetch('/api/onboarding/status')
+            if (onboardingRes.ok) {
+              const { onboardingComplete } = await onboardingRes.json()
+              if (!onboardingComplete) {
+                router.push('/onboarding')
+                return
+              }
+            }
+
+            // Fetch dashboard data with timeout
+            const controller = new AbortController()
+            const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
+
+            const response = await fetch('/api/dashboard', {
+              signal: controller.signal
+            })
+            clearTimeout(timeoutId)
+
+            if (!response.ok) {
+              const errorData = await response.json()
+              throw new Error(`API Error ${response.status}: ${errorData.details || errorData.error || 'Unknown error'}`)
+            }
+
+            const dashboardData = await response.json()
+            console.log('✅ Dashboard: Data loaded successfully')
+            setData(dashboardData)
+            setError(null) // Clear any previous errors
+            break // Success, exit retry loop
+
+          } catch (err) {
+            retryCount++
+            const errorMessage = err instanceof Error ? err.message : 'Unknown error'
+            console.warn(`⚠️ Dashboard: Attempt ${retryCount} failed:`, errorMessage)
+
+            if (retryCount >= maxRetries) {
+              console.error('❌ Dashboard: All retry attempts failed')
+              setError(`Failed to load dashboard data after ${maxRetries} attempts: ${errorMessage}`)
+            } else {
+              // Wait before retrying
+              await new Promise(resolve => setTimeout(resolve, retryDelay * retryCount))
             }
           }
-
-          // Fetch dashboard data
-          const response = await fetch('/api/dashboard')
-          if (!response.ok) throw new Error('Failed to fetch dashboard data')
-          const dashboardData = await response.json()
-          setData(dashboardData)
-        } catch (err) {
-          setError(err instanceof Error ? err.message : 'Unknown error')
-        } finally {
-          setLoading(false)
         }
+
+        setLoading(false)
       }
 
       checkOnboardingAndFetchDashboard()
-    } else {
-      // If not authenticated, stop loading immediately
+    } else if (status === "unauthenticated") {
+      // If explicitly not authenticated, stop loading immediately
       setLoading(false)
     }
-  }, [session, router])
+    // If status is still "loading", don't change loading state
+  }, [session, status, router])
 
   // Modal handlers
   function openModal(type: 'receivable' | 'expense', entity?: any) {
@@ -363,6 +399,11 @@ export default function Dashboard() {
           <div className="text-center py-20">
             <div className="text-4xl mb-4">⏳</div>
             <p>Carregando dados...</p>
+            {retryAttempt > 1 && (
+              <p className="text-sm text-gray-500 mt-2">
+                Tentativa {retryAttempt} de 3...
+              </p>
+            )}
           </div>
         </div>
       </div>
@@ -376,7 +417,27 @@ export default function Dashboard() {
           <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
           <div className="text-center py-20">
             <div className="text-4xl mb-4">❌</div>
-            <p>Erro ao carregar dados: {error}</p>
+            <p className="text-lg text-red-600 mb-4">Erro ao carregar dados do dashboard</p>
+            <p className="text-sm text-gray-600 mb-6">
+              {error?.includes('attempts') ?
+                'Falha ao conectar com o servidor após múltiplas tentativas.' :
+                'Houve um problema ao buscar os dados.'
+              }
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors"
+            >
+              Tentar Novamente
+            </button>
+            {process.env.NODE_ENV === 'development' && (
+              <details className="mt-4 text-left max-w-2xl mx-auto">
+                <summary className="cursor-pointer text-sm text-gray-500">Detalhes do erro (desenvolvimento)</summary>
+                <pre className="mt-2 p-4 bg-gray-100 rounded text-xs overflow-auto">
+                  {error}
+                </pre>
+              </details>
+            )}
           </div>
         </div>
       </div>
