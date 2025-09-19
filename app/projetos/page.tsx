@@ -24,12 +24,6 @@ function ProjetosContent() {
 
   return (
     <div className="min-h-screen bg-neutral-50 p-8">
-      <div className="mb-4">
-        <a href="/" className="text-blue-700 hover:text-blue-800 font-medium">← Dashboard</a>
-      </div>
-
-      <h1 className="text-3xl font-bold text-neutral-900 tracking-wide mb-8">🏗️ Projetos</h1>
-
       {/* Tab Navigation */}
       <div className="mb-8">
         <nav className="flex space-x-8 border-b border-neutral-200">
@@ -80,10 +74,6 @@ export default function ProjetosPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-neutral-50 p-8">
-        <div className="mb-4">
-          <a href="/" className="text-blue-700 hover:text-blue-800 font-medium">← Dashboard</a>
-        </div>
-        <h1 className="text-3xl font-bold text-neutral-900 tracking-wide mb-8">🏗️ Projetos</h1>
         <div className="text-center py-12">
           <div className="animate-pulse text-neutral-500">Carregando...</div>
         </div>
