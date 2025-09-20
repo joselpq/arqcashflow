@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { requireAuth } from '@/lib/auth-utils'
-import { createDateForStorage } from '@/lib/date-utils'
+import { createDateForStorage, isExpenseOverdue, getExpenseActualStatus } from '@/lib/date-utils'
 import { createAuditContextFromAPI, auditCreate, safeAudit } from '@/lib/audit-middleware'
 
 const ExpenseSchema = z.object({
@@ -61,7 +61,17 @@ export async function GET(request: NextRequest) {
     }
 
     if (contractId && contractId !== 'all') where.contractId = contractId
-    if (status && status !== 'all') where.status = status
+
+    // Handle status filtering with calculated overdue logic
+    if (status && status !== 'all') {
+      if (status === 'overdue') {
+        // For overdue filter, get pending items and filter after calculation
+        where.status = 'pending'
+      } else {
+        where.status = status
+      }
+    }
+
     if (category && category !== 'all') where.category = category
     if (type && type !== 'all') where.type = type
     if (vendor) where.vendor = { contains: vendor }
@@ -81,7 +91,7 @@ export async function GET(request: NextRequest) {
       orderBy.dueDate = 'asc'
     }
 
-    const expenses = await prisma.expense.findMany({
+    let expenses = await prisma.expense.findMany({
       where,
       include: {
         contract: {
@@ -95,6 +105,19 @@ export async function GET(request: NextRequest) {
       orderBy,
     })
 
+    // Apply post-filter for calculated statuses
+    const requestedStatus = searchParams.get('status')
+    if (requestedStatus === 'overdue') {
+      // Filter to only show overdue items
+      expenses = expenses.filter(expense => isExpenseOverdue(expense))
+    } else if (requestedStatus === 'pending') {
+      // Filter to only show truly pending (not overdue) items
+      expenses = expenses.filter(expense => {
+        const actualStatus = getExpenseActualStatus(expense)
+        return actualStatus === 'pending'
+      })
+    }
+
     // Calculate summary statistics
     const total = expenses.reduce((sum, expense) => sum + expense.amount, 0)
     const paid = expenses
@@ -104,15 +127,7 @@ export async function GET(request: NextRequest) {
       .filter(expense => expense.status === 'pending')
       .reduce((sum, expense) => sum + expense.amount, 0)
     const overdue = expenses
-      .filter(expense => {
-        if (expense.status !== 'pending') return false
-        // Safe date comparison without timezone issues
-        const dueDate = new Date(expense.dueDate)
-        const today = new Date()
-        const dueDateOnly = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate())
-        const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate())
-        return dueDateOnly < todayOnly
-      })
+      .filter(expense => isExpenseOverdue(expense))
       .reduce((sum, expense) => sum + expense.amount, 0)
 
     return NextResponse.json({

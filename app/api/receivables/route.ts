@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { requireAuth } from '@/lib/auth-utils'
-import { createDateForStorage, getReceivableActualStatus } from '@/lib/date-utils'
+import { createDateForStorage, getReceivableActualStatus, isReceivableOverdue } from '@/lib/date-utils'
 import { createAuditContextFromAPI, auditCreate, safeAudit } from '@/lib/audit-middleware'
 
 const ReceivableSchema = z.object({
@@ -83,7 +83,16 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    if (status && status !== 'all') where.status = status
+    // Handle status filtering with calculated overdue logic
+    if (status && status !== 'all') {
+      if (status === 'overdue') {
+        // For overdue filter, get pending items and filter after calculation
+        where.status = 'pending'
+      } else {
+        where.status = status
+      }
+    }
+
     if (category && category !== 'all') where.category = category
 
     // Valid sort fields
@@ -96,7 +105,7 @@ export async function GET(request: NextRequest) {
       orderBy.expectedDate = 'asc'
     }
 
-    const receivables = await prisma.receivable.findMany({
+    let receivables = await prisma.receivable.findMany({
       where,
       include: {
         contract: true,
@@ -104,10 +113,8 @@ export async function GET(request: NextRequest) {
       orderBy,
     })
 
-    // Update status based on current date
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-
+    // Update status based on current date and apply post-filter for calculated statuses
+    const requestedStatus = status
     const receivablesWithUpdatedStatus = receivables.map(receivable => {
       const actualStatus = getReceivableActualStatus(receivable)
       if (actualStatus !== receivable.status) {
@@ -116,18 +123,35 @@ export async function GET(request: NextRequest) {
       return receivable
     })
 
+    // Apply post-filter for calculated statuses
+    let filteredReceivables = receivablesWithUpdatedStatus
+    if (requestedStatus === 'overdue') {
+      // Filter to only show overdue items
+      filteredReceivables = receivablesWithUpdatedStatus.filter(receivable =>
+        isReceivableOverdue(receivable)
+      )
+    } else if (requestedStatus === 'pending') {
+      // Filter to only show truly pending (not overdue) items
+      filteredReceivables = receivablesWithUpdatedStatus.filter(receivable => {
+        const actualStatus = getReceivableActualStatus(receivable)
+        return actualStatus === 'pending'
+      })
+    }
+
     console.log('💰 RECEIVABLES FOUND:', {
-      count: receivablesWithUpdatedStatus.length,
+      count: filteredReceivables.length,
       teamId,
-      receivableIds: receivablesWithUpdatedStatus.map(r => ({
+      requestedStatus,
+      receivableIds: filteredReceivables.map(r => ({
         id: r.id,
         contractId: r.contractId,
         contract: r.contract ? `${r.contract.clientName} - ${r.contract.projectName}` : 'No Contract',
-        amount: r.amount
+        amount: r.amount,
+        status: r.status
       }))
     })
 
-    return NextResponse.json(receivablesWithUpdatedStatus)
+    return NextResponse.json(filteredReceivables)
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") {
       return NextResponse.json({ error: 'Unauthorized - User authentication required' }, { status: 401 })

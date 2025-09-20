@@ -156,6 +156,8 @@ ArqCashflow features a clean, professional design system specifically crafted fo
 - ✅ **Form Precision**: All currency and date inputs now handle data consistently across Contratos, Recebíveis, and Despesas
 - ✅ **Date Formatting Standardization**: Standardized ContractsTab to use centralized date utilities instead of direct date-fns calls
 - ✅ **Centralized Overdue Calculations**: Created unified overdue logic functions to ensure consistent status calculations across all components and exports
+- ✅ **Status Filter Consistency**: Fixed receivables and expenses filtering to properly handle calculated overdue status vs database status
+- ✅ **Overdue Display Logic**: Resolved inconsistency where late items showed as "pending" when filtered but "overdue" when displayed
 - ✅ **Working Onboarding File Upload**: Fixed API compatibility issues with Excel/CSV processing
 - ✅ **File Type Validation**: Client-side validation for supported formats with clear error messages
 - ✅ **WOW Onboarding Experience**: Complete multi-step onboarding flow implementation with personalized setup

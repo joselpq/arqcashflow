@@ -140,6 +140,8 @@ const results = await prisma.model.findMany({
 - **Validation**: Always validate with Zod schemas before database operations
 - **Date Handling**: Use `createDateForStorage()` and check for empty strings before Prisma calls
 - **Overdue Logic**: Use centralized overdue functions instead of individual date comparisons
+- **Status Filtering**: For calculated statuses like "overdue", use conditional queries + post-filtering instead of direct database filtering
+- **Filter Consistency**: Ensure filter logic matches display logic for calculated fields
 - **Error Handling**: Provide specific error messages for Prisma validation failures
 - **Team Isolation**: All queries must filter by `teamId` for multi-tenant security
 
@@ -157,6 +159,8 @@ const results = await prisma.model.findMany({
 4. **Form Consistency**: Date and currency handling must be identical across all entity forms
 5. **Date Formatting Inconsistency**: ContractsTab had its own date formatting - now standardized
 6. **Overdue Calculation Duplication**: Multiple locations had different overdue logic - now centralized
+7. **Status Filter vs Display Mismatch**: Filtering used database status while display used calculated status - fixed with post-filtering
+8. **Overdue Filter Not Working**: Filtering for "overdue" returned empty because overdue is calculated, not stored - resolved with conditional queries
 
 ### Development Workflow
 - **Add new field**: Update Prisma schema → migrate → update API validation → update UI forms
