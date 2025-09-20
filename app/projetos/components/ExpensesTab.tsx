@@ -35,8 +35,7 @@ export default function ExpensesTab() {
   const [searchQuery, setSearchQuery] = useState('')
 
   const expenseCategories = [
-    'materiais', 'mão-de-obra', 'equipamentos', 'transporte', 'escritório', 'software',
-    'utilidades', 'aluguel', 'seguro', 'marketing', 'serviços-profissionais', 'outros'
+    'Salários', 'Escritório', 'Software', 'Marketing', 'Transporte', 'Equipamentos', 'Impostos', 'Outros'
   ]
 
   const expenseTypes = [

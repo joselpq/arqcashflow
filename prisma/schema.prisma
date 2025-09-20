@@ -73,7 +73,7 @@ model Expense {
   paidAmount    Float?
   vendor        String?
   invoiceNumber String?
-  type          String    @default("operational")
+  type          String?
   isRecurring   Boolean   @default(false)
   notes         String?
   receiptUrl    String?

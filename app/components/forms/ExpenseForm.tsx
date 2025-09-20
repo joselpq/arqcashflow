@@ -16,11 +16,10 @@ export default function ExpenseForm({ expense, contracts, onSubmit, onCancel, lo
     description: '',
     amount: '',
     dueDate: getTodayDateString(),
-    category: 'materiais',
+    category: 'Salários',
     contractId: '',
     vendor: '',
     invoiceNumber: '',
-    type: 'operational',
     notes: '',
     status: 'pending',
     paidDate: '',
@@ -28,15 +27,9 @@ export default function ExpenseForm({ expense, contracts, onSubmit, onCancel, lo
   })
 
   const expenseCategories = [
-    'materiais', 'mão-de-obra', 'equipamentos', 'transporte', 'escritório', 'software',
-    'utilidades', 'aluguel', 'seguro', 'marketing', 'serviços-profissionais', 'outros'
+    'Salários', 'Escritório', 'Software', 'Marketing', 'Transporte', 'Equipamentos', 'Impostos', 'Outros'
   ]
 
-  const expenseTypes = [
-    { value: 'operational', label: 'Operacional' },
-    { value: 'project', label: 'Projeto' },
-    { value: 'administrative', label: 'Administrativo' },
-  ]
 
   const statusOptions = [
     { value: 'pending', label: 'Pendente' },
@@ -52,11 +45,10 @@ export default function ExpenseForm({ expense, contracts, onSubmit, onCancel, lo
         description: expense.description || '',
         amount: expense.amount ? expense.amount.toString() : '',
         dueDate: expense.dueDate ? formatDateForInput(expense.dueDate) : '',
-        category: expense.category || 'materiais',
+        category: expense.category || 'Salários',
         contractId: expense.contractId || '',
         vendor: expense.vendor || '',
         invoiceNumber: expense.invoiceNumber || '',
-        type: expense.type || 'operational',
         notes: expense.notes || '',
         status: expense.status || 'pending',
         paidDate: expense.paidDate ? formatDateForInput(expense.paidDate) : '',
@@ -68,12 +60,11 @@ export default function ExpenseForm({ expense, contracts, onSubmit, onCancel, lo
         description: '',
         amount: '',
         dueDate: getTodayDateString(),
-        category: 'materiais',
+        category: 'Salários',
         contractId: '',
         vendor: '',
         invoiceNumber: '',
-        type: 'operational',
-        notes: '',
+            notes: '',
         status: 'pending',
         paidDate: '',
         paidAmount: '',
@@ -162,22 +153,6 @@ export default function ExpenseForm({ expense, contracts, onSubmit, onCancel, lo
         </select>
       </div>
 
-      <div>
-        <label className="block mb-2 font-medium text-neutral-900">Tipo *</label>
-        <select
-          required
-          className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900"
-          value={formData.type}
-          onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-          disabled={loading}
-        >
-          {expenseTypes.map(type => (
-            <option key={type.value} value={type.value}>
-              {type.label}
-            </option>
-          ))}
-        </select>
-      </div>
 
       <div>
         <label className="block mb-2 font-medium text-neutral-900">Projeto (Opcional)</label>

@@ -13,7 +13,7 @@ const ExpenseSchema = z.object({
   contractId: z.string().optional().nullable().transform(val => val === '' ? null : val),
   vendor: z.string().optional().nullable().transform(val => val === '' ? null : val),
   invoiceNumber: z.string().optional().nullable().transform(val => val === '' ? null : val),
-  type: z.enum(['operational', 'project', 'administrative']).default('operational'),
+  type: z.enum(['operational', 'project', 'administrative']).optional().nullable(),
   isRecurring: z.boolean().default(false),
   notes: z.string().optional().nullable().transform(val => val === '' ? null : val),
   receiptUrl: z.string().optional().nullable().transform(val => val === '' ? null : val),

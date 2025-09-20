@@ -31,7 +31,7 @@ function ExpensesPageContent() {
     description: '',
     amount: '',
     dueDate: '',
-    category: 'materiais',
+    category: 'Salários',
     contractId: '',
     vendor: '',
     invoiceNumber: '',
@@ -43,8 +43,7 @@ function ExpensesPageContent() {
   })
 
   const expenseCategories = [
-    'materiais', 'mão-de-obra', 'equipamentos', 'transporte', 'escritório', 'software',
-    'utilidades', 'aluguel', 'seguro', 'marketing', 'serviços-profissionais', 'outros'
+    'Salários', 'Escritório', 'Software', 'Marketing', 'Transporte', 'Equipamentos', 'Impostos', 'Outros'
   ]
 
   const expenseTypes = [
@@ -197,7 +196,7 @@ function ExpensesPageContent() {
       description: '',
       amount: '',
       dueDate: '',
-      category: 'materiais',
+      category: 'Salários',
       contractId: '',
       vendor: '',
       invoiceNumber: '',
