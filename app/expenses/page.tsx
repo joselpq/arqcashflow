@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { formatDateForInput, formatDateFull as formatDateForDisplay, getTodayDateString } from '@/lib/date-utils'
+import { formatDateForInput, formatDateFull as formatDateForDisplay, getTodayDateString, getExpenseActualStatus } from '@/lib/date-utils'
 // Supervisor imports removed - clean slate for rebuild
 
 function ExpensesPageContent() {
@@ -269,13 +269,7 @@ function ExpensesPageContent() {
   }
 
   function getStatusDisplay(expense) {
-    let status = expense.status
-
-    // Check if pending expense is overdue
-    if (status === 'pending' && new Date(expense.dueDate) < new Date()) {
-      status = 'overdue'
-    }
-
+    const status = getExpenseActualStatus(expense)
     const statusOption = statusOptions.find(s => s.value === status)
     return statusOption || { label: status, color: 'bg-neutral-100 text-neutral-900' }
   }

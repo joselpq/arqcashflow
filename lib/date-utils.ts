@@ -130,3 +130,79 @@ export function createDateForStorage(dateStr: string): Date {
     throw error
   }
 }
+
+/**
+ * Checks if a receivable is overdue based on expected date and status
+ * Standardizes overdue calculation across the application
+ */
+export function isReceivableOverdue(receivable: {
+  status: string
+  expectedDate: string | Date
+  receivedDate?: string | Date | null
+}): boolean {
+  // Only pending receivables can be overdue
+  if (receivable.status !== 'pending' || receivable.receivedDate) {
+    return false
+  }
+
+  const expectedDate = new Date(receivable.expectedDate)
+  expectedDate.setHours(0, 0, 0, 0)
+
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  return expectedDate < today
+}
+
+/**
+ * Checks if an expense is overdue based on due date and status
+ * Standardizes overdue calculation across the application
+ */
+export function isExpenseOverdue(expense: {
+  status: string
+  dueDate: string | Date
+  paidDate?: string | Date | null
+}): boolean {
+  // Only pending expenses can be overdue
+  if (expense.status !== 'pending' || expense.paidDate) {
+    return false
+  }
+
+  const dueDate = new Date(expense.dueDate)
+  dueDate.setHours(0, 0, 0, 0)
+
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  return dueDate < today
+}
+
+/**
+ * Gets the actual status of a receivable, including overdue calculation
+ * Returns 'overdue' if the receivable is past due, otherwise returns original status
+ */
+export function getReceivableActualStatus(receivable: {
+  status: string
+  expectedDate: string | Date
+  receivedDate?: string | Date | null
+}): string {
+  if (isReceivableOverdue(receivable)) {
+    return 'overdue'
+  }
+  return receivable.status
+}
+
+/**
+ * Gets the actual status of an expense, including overdue calculation
+ * Returns 'overdue' if the expense is past due, otherwise returns original status
+ */
+export function getExpenseActualStatus(expense: {
+  status: string
+  dueDate: string | Date
+  paidDate?: string | Date | null
+}): string {
+  if (isExpenseOverdue(expense)) {
+    return 'overdue'
+  }
+  return expense.status
+}

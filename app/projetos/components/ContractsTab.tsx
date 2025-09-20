@@ -2,21 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { format } from 'date-fns'
+import { formatDateFull as formatDateForDisplay } from '@/lib/date-utils'
 import Modal from '../../components/Modal'
 import ContractForm from '../../components/forms/ContractForm'
-
-// Helper function for date display
-function formatDateForDisplay(date: string | Date): string {
-  if (!date) return ''
-  if (typeof date === 'string' && date.includes('T')) {
-    const datePart = date.split('T')[0]
-    const [year, month, day] = datePart.split('-')
-    return `${day}/${month}/${year}`
-  }
-  const d = new Date(date)
-  return format(d, 'dd/MM/yyyy')
-}
 
 export default function ContractsTab() {
   const searchParams = useSearchParams()

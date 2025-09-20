@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { requireAuth } from '@/lib/auth-utils'
-import { createDateForStorage } from '@/lib/date-utils'
+import { createDateForStorage, getReceivableActualStatus } from '@/lib/date-utils'
 import { createAuditContextFromAPI, auditCreate, safeAudit } from '@/lib/audit-middleware'
 
 const ReceivableSchema = z.object({
@@ -109,14 +109,9 @@ export async function GET(request: NextRequest) {
     today.setHours(0, 0, 0, 0)
 
     const receivablesWithUpdatedStatus = receivables.map(receivable => {
-      // Only update status if it's pending and not received
-      if (receivable.status === 'pending' && !receivable.receivedDate) {
-        const expectedDate = new Date(receivable.expectedDate)
-        expectedDate.setHours(0, 0, 0, 0)
-
-        if (expectedDate < today) {
-          return { ...receivable, status: 'overdue' }
-        }
+      const actualStatus = getReceivableActualStatus(receivable)
+      if (actualStatus !== receivable.status) {
+        return { ...receivable, status: actualStatus }
       }
       return receivable
     })

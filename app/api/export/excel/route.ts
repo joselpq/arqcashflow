@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import ExcelJS from 'exceljs'
 import { format, startOfMonth, endOfMonth, eachMonthOfInterval, addMonths } from 'date-fns'
+import { getReceivableActualStatus, getExpenseActualStatus } from '@/lib/date-utils'
 
 export async function GET(request: NextRequest) {
   try {
@@ -127,15 +128,7 @@ export async function GET(request: NextRequest) {
 
     contracts.forEach(contract => {
       contract.receivables.forEach(receivable => {
-        // Determine actual status based on dates
-        let actualStatus = receivable.status
-        if (receivable.status === 'pending' && !receivable.receivedDate) {
-          const expectedDate = new Date(receivable.expectedDate)
-          expectedDate.setHours(0, 0, 0, 0)
-          if (expectedDate < today) {
-            actualStatus = 'overdue'
-          }
-        }
+        const actualStatus = getReceivableActualStatus(receivable)
 
         receivablesSheet.addRow({
           clientName: contract.clientName,
@@ -173,15 +166,7 @@ export async function GET(request: NextRequest) {
     ]
 
     allExpenses.forEach(expense => {
-      // Determine actual status based on dates
-      let actualStatus = expense.status
-      if (expense.status === 'pending' && !expense.paidDate) {
-        const dueDate = new Date(expense.dueDate)
-        dueDate.setHours(0, 0, 0, 0)
-        if (dueDate < today) {
-          actualStatus = 'overdue'
-        }
-      }
+      const actualStatus = getExpenseActualStatus(expense)
 
       expensesSheet.addRow({
         projectName: expense.contract

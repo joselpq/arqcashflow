@@ -149,6 +149,13 @@ ArqCashflow features a clean, professional design system specifically crafted fo
 ## 🚨 Known Bugs & Issues
 
 ### Recent Fixes (September 2025):
+- ✅ **Floating-Point Precision Bug**: Fixed currency inputs that changed values (e.g., 400 → 399.97) by removing problematic `step="0.01"` attributes
+- ✅ **Date Default Bug**: Fixed "Data Esperada" fields showing tomorrow's date instead of today by implementing timezone-safe date utilities
+- ✅ **Receivables Editing Error**: Resolved "Error saving receivable" when editing dates by fixing Prisma empty string validation
+- ✅ **Enhanced Date Handling**: Comprehensive date utility functions with proper timezone handling and empty string protection
+- ✅ **Form Precision**: All currency and date inputs now handle data consistently across Contratos, Recebíveis, and Despesas
+- ✅ **Date Formatting Standardization**: Standardized ContractsTab to use centralized date utilities instead of direct date-fns calls
+- ✅ **Centralized Overdue Calculations**: Created unified overdue logic functions to ensure consistent status calculations across all components and exports
 - ✅ **Working Onboarding File Upload**: Fixed API compatibility issues with Excel/CSV processing
 - ✅ **File Type Validation**: Client-side validation for supported formats with clear error messages
 - ✅ **WOW Onboarding Experience**: Complete multi-step onboarding flow implementation with personalized setup
@@ -199,6 +206,8 @@ ArqCashflow features a clean, professional design system specifically crafted fo
 - ✅ **UI/UX Enhancements**: Improved receivable form with tooltips, better field ordering, and subtle checkbox styling
 - ✅ **Database Migration**: Migrated to PostgreSQL with proper team isolation and data integrity
 - ✅ **Visual Hierarchy Improvements**: Better text contrast and border definition for optimal user experience
+- ✅ **Comprehensive Data Validation**: Enhanced API-level data cleaning to prevent empty string validation errors
+- ✅ **Reliable Date Processing**: All date fields now use `createDateForStorage()` for consistent timezone-safe processing
 
 ### ✅ Recently Resolved Issues:
 1. **Contract Team Assignment Bug** - **FIXED**
@@ -206,6 +215,18 @@ ArqCashflow features a clean, professional design system specifically crafted fo
    - **Resolution**: Enhanced `requireAuth()` function with proper team validation
    - **Current Status**: ✅ All APIs now properly filter by teamId with correct data isolation
    - **Verification**: Debug logging confirms proper team assignment across all operations
+
+2. **Currency Precision & Date Handling Bugs** - **FIXED**
+   - **Previous Issues**: Currency inputs showed precision errors (400→399.97), date fields defaulted to tomorrow
+   - **Resolution**: Removed `step="0.01"` attributes, implemented `getTodayDateString()` utility function
+   - **Current Status**: ✅ All forms handle currency and dates consistently with timezone-safe processing
+   - **Impact**: Fixed across all entities (contracts, receivables, expenses) and form types
+
+3. **Receivables Edit Error** - **FIXED**
+   - **Previous Issue**: "Error saving receivable" when editing Data Esperada fields
+   - **Resolution**: Enhanced API data cleaning to handle empty strings before Prisma validation
+   - **Current Status**: ✅ Robust empty string handling prevents validation errors
+   - **Root Cause**: Prisma expected null/undefined for optional DateTime fields, not empty strings
 
 ### Security Vulnerabilities Fixed:
 - ✅ **Budgets API**: Was completely unprotected, now requires team authentication
@@ -1352,7 +1373,7 @@ The application is deployed using **Vercel** for hosting and **Neon** for Postgr
 #### **Prerequisites:**
 - Vercel account
 - GitHub repository
-- OpenAI API key
+- Claude API key (from Anthropic)
 
 #### **Deployment Steps:**
 
@@ -1505,9 +1526,10 @@ After successful deployment:
 
 ### Common Issues
 
-1. **"OPENAI_API_KEY not configured"**
-   - Add your OpenAI API key to `.env` file
+1. **"CLAUDE_API_KEY not configured"**
+   - Add your Claude API key to `.env` file (format: `sk-ant-...`)
    - Restart the development server
+   - Note: We've migrated from OpenAI to Claude for superior document processing
 
 2. **Database connection errors**
    - Run `npx prisma migrate dev` to ensure database is initialized
@@ -1690,10 +1712,16 @@ if (contentType.includes('multipart/form-data')) {
    - Upload PDFs 3-32MB (should use FormData strategy)
    - Verify both strategies process correctly through Claude API
    - Test mixed file sizes in single upload
-3. **Edge cases**: Empty states, invalid dates, large numbers, special characters in names
-4. **Validation**: Try submitting empty forms, invalid data, non-existent IDs
-5. **AI testing**: Ask complex questions, test edge cases, verify SQL generation
-6. **Upload Strategy Verification**: Check browser DevTools to confirm correct Content-Type headers
+3. **Form Validation Testing**:
+   - **Currency Precision**: Test entering whole numbers (400, 1000) - should preserve exact values
+   - **Date Defaults**: Verify "Data Esperada" fields default to today's date, not tomorrow
+   - **Empty Date Handling**: Test saving forms with empty optional date fields
+   - **Edit Operations**: Test editing receivables' "Data Esperada" fields successfully
+4. **Edge cases**: Empty states, invalid dates, large numbers, special characters in names
+5. **Validation**: Try submitting empty forms, invalid data, non-existent IDs
+6. **AI testing**: Ask complex questions, test edge cases, verify SQL generation
+7. **Upload Strategy Verification**: Check browser DevTools to confirm correct Content-Type headers
+8. **Cross-Entity Consistency**: Verify currency and date handling works identically across Contratos, Recebíveis, and Despesas
 
 ## License
 

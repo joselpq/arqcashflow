@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { format, startOfMonth, endOfMonth, eachMonthOfInterval, addMonths } from 'date-fns'
+import { getReceivableActualStatus, getExpenseActualStatus } from '@/lib/date-utils'
 
 export async function GET(request: NextRequest) {
   try {
@@ -90,14 +91,7 @@ export async function GET(request: NextRequest) {
 
     contracts.forEach(contract => {
       contract.receivables.forEach(receivable => {
-        let actualStatus = receivable.status
-        if (receivable.status === 'pending' && !receivable.receivedDate) {
-          const expectedDate = new Date(receivable.expectedDate)
-          expectedDate.setHours(0, 0, 0, 0)
-          if (expectedDate < today) {
-            actualStatus = 'overdue'
-          }
-        }
+        const actualStatus = getReceivableActualStatus(receivable)
 
         csvContent += `"${contract.clientName}","${contract.projectName}","${format(new Date(receivable.expectedDate), 'yyyy-MM-dd')}",${receivable.amount},"${receivable.category || '-'}","${actualStatus}","${receivable.receivedDate ? format(new Date(receivable.receivedDate), 'yyyy-MM-dd') : '-'}","${receivable.receivedAmount || '-'}","${receivable.invoiceNumber || '-'}"\n`
       })
@@ -110,14 +104,7 @@ export async function GET(request: NextRequest) {
     csvContent += 'Projeto,Descrição,Categoria,Tipo,Valor,Data Vencimento,Status,Data Pagamento,Valor Pago,Fornecedor,Nota Fiscal\n'
 
     allExpenses.forEach(expense => {
-      let actualStatus = expense.status
-      if (expense.status === 'pending' && !expense.paidDate) {
-        const dueDate = new Date(expense.dueDate)
-        dueDate.setHours(0, 0, 0, 0)
-        if (dueDate < today) {
-          actualStatus = 'overdue'
-        }
-      }
+      const actualStatus = getExpenseActualStatus(expense)
 
       const projectName = expense.contract
         ? `${expense.contract.clientName} - ${expense.contract.projectName}`

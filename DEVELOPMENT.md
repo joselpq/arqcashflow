@@ -126,6 +126,44 @@ const results = await prisma.model.findMany({
 - Prevents multiple instances in development
 - Standard pattern for Next.js applications
 
+## Common Development Tasks & Best Practices
+
+### Form Development Guidelines
+- **Currency Inputs**: Never use `step="0.01"` attribute - causes floating-point precision errors (400 → 399.97)
+- **Date Defaults**: Use `getTodayDateString()` from `lib/date-utils.ts` instead of `new Date().toISOString().split('T')[0]`
+- **Date Processing**: Use `createDateForStorage()` for API date handling to ensure timezone-safe storage
+- **Date Display**: Use `formatDateFull()` for consistent DD/MM/YYYY display across all components
+- **Overdue Status**: Use `getReceivableActualStatus()` and `getExpenseActualStatus()` for consistent overdue calculations
+- **Empty String Handling**: Clean empty strings before Prisma operations to prevent validation errors
+
+### API Development Guidelines
+- **Validation**: Always validate with Zod schemas before database operations
+- **Date Handling**: Use `createDateForStorage()` and check for empty strings before Prisma calls
+- **Overdue Logic**: Use centralized overdue functions instead of individual date comparisons
+- **Error Handling**: Provide specific error messages for Prisma validation failures
+- **Team Isolation**: All queries must filter by `teamId` for multi-tenant security
+
+### Date Handling Best Practices
+- **Display Formatting**: Always use `formatDateFull()` from date-utils for consistent DD/MM/YYYY format
+- **Input Formatting**: Use `formatDateForInput()` for YYYY-MM-DD format in form fields
+- **Overdue Calculations**: Use `isReceivableOverdue()` and `isExpenseOverdue()` for business logic
+- **Status Display**: Use `getReceivableActualStatus()` and `getExpenseActualStatus()` for UI components
+- **Export Consistency**: All export functions now use centralized overdue calculations
+
+### Recent Bug Fixes & Lessons Learned
+1. **Floating-Point Precision**: HTML `step="0.01"` causes precision loss in number inputs
+2. **Timezone Issues**: `new Date().toISOString().split('T')[0]` can produce tomorrow's date
+3. **Prisma Validation**: Empty strings `""` cause errors for optional DateTime fields - use `null` or `undefined`
+4. **Form Consistency**: Date and currency handling must be identical across all entity forms
+5. **Date Formatting Inconsistency**: ContractsTab had its own date formatting - now standardized
+6. **Overdue Calculation Duplication**: Multiple locations had different overdue logic - now centralized
+
+### Development Workflow
+- **Add new field**: Update Prisma schema → migrate → update API validation → update UI forms
+- **New filter**: Add to API query params → add UI control → connect to state management
+- **Date fields**: Use date utilities, test timezone edge cases
+- **Currency fields**: Remove step attributes, test precision with whole numbers
+
 ## Database Schema Details
 
 ### Relationships
