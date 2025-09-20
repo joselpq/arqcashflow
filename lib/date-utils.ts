@@ -83,8 +83,50 @@ export function formatDateForInput(date: string | Date): string {
 }
 
 /**
- * Creates a date for database storage, ensuring it's stored as date-only
+ * Get today's date in YYYY-MM-DD format for date inputs
+ * Uses local timezone to ensure correct date regardless of server timezone
+ */
+export function getTodayDateString(): string {
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = String(today.getMonth() + 1).padStart(2, '0')
+  const day = String(today.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+/**
+ * Creates a date for database storage, preserving the local date
+ * Avoids timezone shifts by parsing the date components directly
  */
 export function createDateForStorage(dateStr: string): Date {
-  return new Date(dateStr + 'T00:00:00.000Z')
+  console.log('🔧 createDateForStorage called with:', dateStr)
+
+  if (!dateStr || dateStr.trim() === '') {
+    console.log('❌ Empty date string provided')
+    throw new Error('Date string cannot be empty')
+  }
+
+  try {
+    // Parse the date string (YYYY-MM-DD format)
+    const parts = dateStr.split('-')
+    if (parts.length !== 3) {
+      throw new Error(`Invalid date format: ${dateStr}. Expected YYYY-MM-DD format`)
+    }
+
+    const [year, month, day] = parts.map(Number)
+
+    // Basic validation
+    if (isNaN(year) || isNaN(month) || isNaN(day)) {
+      throw new Error(`Invalid date components in: ${dateStr}`)
+    }
+
+    // Create a date in local timezone at noon to avoid DST issues
+    const date = new Date(year, month - 1, day, 12, 0, 0, 0)
+
+    console.log('✅ createDateForStorage success:', date)
+    return date
+  } catch (error) {
+    console.error('❌ createDateForStorage error:', error)
+    throw error
+  }
 }

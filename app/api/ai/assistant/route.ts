@@ -3,6 +3,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { requireAuth } from '@/lib/auth-utils'
 import { prisma } from '@/lib/prisma'
 import { queryDatabase } from '@/lib/langchain'
+import { getTodayDateString } from '@/lib/date-utils'
 import { z } from 'zod'
 
 const claude = new Anthropic({
@@ -206,7 +207,7 @@ async function processDocuments(files: any[], teamId: string) {
               description: `Documento importado: ${file.name}`,
               amount: null,
               vendor: nameInfo.vendor,
-              date: new Date().toISOString().split('T')[0],
+              date: getTodayDateString(),
               category: 'outros'
             }
           })
@@ -667,7 +668,7 @@ Be intelligent about filling in description from category or context. Use null o
 
       // Set today's date if not provided
       if (!expenseData.date) {
-        expenseData.date = new Date().toISOString().split('T')[0]
+        expenseData.date = getTodayDateString()
       }
 
       // Be more flexible - only require amount, auto-generate description if missing
@@ -765,7 +766,7 @@ Be intelligent about filling in information from context. Use null only when tru
 
       // Set today's date if not provided
       if (!receivableData.date) {
-        receivableData.date = new Date().toISOString().split('T')[0]
+        receivableData.date = getTodayDateString()
       }
 
       // Only require amount, auto-generate description if missing

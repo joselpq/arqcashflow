@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { requireAuth } from '@/lib/auth-utils'
+import { createDateForStorage } from '@/lib/date-utils'
 import { createAuditContextFromAPI, auditCreate, safeAudit } from '@/lib/audit-middleware'
 
 const ExpenseSchema = z.object({
   description: z.string().min(1, 'Description is required'),
   amount: z.number().positive('Amount must be positive'),
-  dueDate: z.string().transform((str) => new Date(str + 'T00:00:00.000Z')),
+  dueDate: z.string().transform((str) => createDateForStorage(str)),
   category: z.string().min(1, 'Category is required'),
   contractId: z.string().optional().nullable().transform(val => val === '' ? null : val),
   vendor: z.string().optional().nullable().transform(val => val === '' ? null : val),
@@ -19,7 +20,7 @@ const ExpenseSchema = z.object({
   status: z.enum(['pending', 'paid', 'overdue', 'cancelled']).default('pending'),
   paidDate: z.union([z.string(), z.date()]).nullable().optional().transform(val => {
     if (val === '' || val === null || val === undefined) return null
-    return val instanceof Date ? val : new Date(val + 'T00:00:00.000Z')
+    return val instanceof Date ? val : createDateForStorage(val)
   }),
   paidAmount: z.number().positive().optional().nullable().transform(val => val === 0 || val === null ? null : val),
 })
@@ -28,7 +29,7 @@ const UpdateExpenseSchema = ExpenseSchema.partial().extend({
   status: z.enum(['pending', 'paid', 'overdue', 'cancelled']).optional(),
   paidDate: z.union([z.string(), z.date()]).nullable().optional().transform(val => {
     if (val === '' || val === null || val === undefined) return null
-    return val instanceof Date ? val : new Date(val + 'T00:00:00.000Z')
+    return val instanceof Date ? val : createDateForStorage(val)
   }),
   paidAmount: z.number().positive().optional().nullable().transform(val => val === 0 || val === null ? null : val),
 })

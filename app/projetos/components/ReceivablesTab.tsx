@@ -2,21 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { format } from 'date-fns'
+import { formatDateFull as formatDateForDisplay, getTodayDateString } from '@/lib/date-utils'
 import Modal from '../../components/Modal'
 import ReceivableForm from '../../components/forms/ReceivableForm'
-
-// Helper function for date display
-function formatDateForDisplay(date: string | Date): string {
-  if (!date) return ''
-  if (typeof date === 'string' && date.includes('T')) {
-    const datePart = date.split('T')[0]
-    const [year, month, day] = datePart.split('-')
-    return `${day}/${month}/${year}`
-  }
-  const d = new Date(date)
-  return format(d, 'dd/MM/yyyy')
-}
 
 export default function ReceivablesTab() {
   const searchParams = useSearchParams()
@@ -198,7 +186,7 @@ export default function ReceivablesTab() {
   function openMarkReceivedModal(receivable: any) {
     setReceivableToMark(receivable)
     setMarkReceivedData({
-      receivedDate: new Date().toISOString().split('T')[0],
+      receivedDate: getTodayDateString(),
       receivedAmount: receivable.amount.toString()
     })
     setIsMarkReceivedModalOpen(true)
@@ -582,7 +570,6 @@ export default function ReceivablesTab() {
             <label className="block mb-2 font-medium text-neutral-900">Valor Recebido *</label>
             <input
               type="number"
-              step="0.01"
               required
               className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
               value={markReceivedData.receivedAmount}

@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { requireAuth } from '@/lib/auth-utils'
+import { createDateForStorage, getTodayDateString } from '@/lib/date-utils'
 import { createAuditContextFromAPI, auditUpdate, auditDelete, safeAudit, captureEntityState } from '@/lib/audit-middleware'
 
 const UpdateExpenseSchema = z.object({
   description: z.string().min(1).optional(),
   amount: z.number().positive().optional(),
-  dueDate: z.string().transform((str) => new Date(str + 'T00:00:00.000Z')).optional(),
+  dueDate: z.string().transform((str) => createDateForStorage(str)).optional(),
   category: z.string().min(1).optional(),
   contractId: z.string().nullable().optional().transform(val => val === '' ? null : val),
   vendor: z.string().optional().nullable().transform(val => val === '' ? null : val),
@@ -17,7 +18,7 @@ const UpdateExpenseSchema = z.object({
   status: z.enum(['pending', 'paid', 'overdue', 'cancelled']).optional(),
   paidDate: z.union([z.string(), z.date()]).nullable().optional().transform(val => {
     if (val === '' || val === null || val === undefined) return null
-    return val instanceof Date ? val : new Date(val + 'T00:00:00.000Z')
+    return val instanceof Date ? val : createDateForStorage(val)
   }),
   paidAmount: z.number().positive().optional().nullable(),
   notes: z.string().optional().nullable().transform(val => val === '' ? null : val),
@@ -78,7 +79,7 @@ export async function PUT(
     // If marking as paid and no paidDate/paidAmount provided, set defaults
     if (validatedData.status === 'paid') {
       if (!validatedData.paidDate) {
-        validatedData.paidDate = new Date()
+        validatedData.paidDate = createDateForStorage(getTodayDateString())
       }
       // If no paidAmount specified, use the full amount
       if (!validatedData.paidAmount) {

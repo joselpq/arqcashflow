@@ -1,17 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { format } from 'date-fns'
-
-// Helper functions for date conversion with UTC handling
-function formatDateForInput(date: string | Date): string {
-  if (!date) return ''
-  if (typeof date === 'string' && date.includes('T')) {
-    return date.split('T')[0]
-  }
-  const d = new Date(date)
-  return format(d, 'yyyy-MM-dd')
-}
+import { formatDateForInput, getTodayDateString } from '@/lib/date-utils'
 
 interface ExpenseFormProps {
   expense?: any
@@ -25,7 +15,7 @@ export default function ExpenseForm({ expense, contracts, onSubmit, onCancel, lo
   const [formData, setFormData] = useState({
     description: '',
     amount: '',
-    dueDate: new Date().toISOString().split('T')[0],
+    dueDate: getTodayDateString(),
     category: 'materiais',
     contractId: '',
     vendor: '',
@@ -77,7 +67,7 @@ export default function ExpenseForm({ expense, contracts, onSubmit, onCancel, lo
       setFormData({
         description: '',
         amount: '',
-        dueDate: new Date().toISOString().split('T')[0],
+        dueDate: getTodayDateString(),
         category: 'materiais',
         contractId: '',
         vendor: '',
@@ -135,7 +125,6 @@ export default function ExpenseForm({ expense, contracts, onSubmit, onCancel, lo
         <label className="block mb-2 font-medium text-neutral-900">Valor *</label>
         <input
           type="number"
-          step="0.01"
           required
           className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
           value={formData.amount}
@@ -251,7 +240,7 @@ export default function ExpenseForm({ expense, contracts, onSubmit, onCancel, lo
                 onClick={() => {
                   setFormData({
                     ...formData,
-                    paidDate: new Date().toISOString().split('T')[0],
+                    paidDate: getTodayDateString(),
                     paidAmount: formData.amount,
                     status: 'paid'
                   })
@@ -301,7 +290,6 @@ export default function ExpenseForm({ expense, contracts, onSubmit, onCancel, lo
             <label className="block mb-2 font-medium text-neutral-900">Valor Pago</label>
             <input
               type="number"
-              step="0.01"
               className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
               value={formData.paidAmount}
               onChange={(e) => setFormData({ ...formData, paidAmount: e.target.value })}

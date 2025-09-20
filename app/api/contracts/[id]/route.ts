@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { requireAuth } from '@/lib/auth-utils'
+import { createDateForStorage } from '@/lib/date-utils'
 import { createAuditContextFromAPI, auditUpdate, auditDelete, safeAudit, captureEntityState } from '@/lib/audit-middleware'
 
 const UpdateContractSchema = z.object({
@@ -59,8 +60,8 @@ export async function PUT(
     }
 
     const updateData: any = { ...validatedData }
-    if (validatedData.signedDate) {
-      updateData.signedDate = new Date(validatedData.signedDate + 'T00:00:00.000Z')
+    if (validatedData.signedDate && validatedData.signedDate.trim() !== '') {
+      updateData.signedDate = createDateForStorage(validatedData.signedDate)
     }
 
     const contract = await prisma.contract.updateMany({

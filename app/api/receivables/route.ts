@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { requireAuth } from '@/lib/auth-utils'
+import { createDateForStorage } from '@/lib/date-utils'
 import { createAuditContextFromAPI, auditCreate, safeAudit } from '@/lib/audit-middleware'
 
 const ReceivableSchema = z.object({
@@ -164,7 +165,7 @@ export async function POST(request: NextRequest) {
 
     const createData: any = {
       contractId: validatedData.contractId,
-      expectedDate: new Date(validatedData.expectedDate + 'T00:00:00.000Z'),
+      expectedDate: validatedData.expectedDate && validatedData.expectedDate.trim() !== '' ? createDateForStorage(validatedData.expectedDate) : new Date(),
       amount: validatedData.amount,
       status: validatedData.status || 'pending',
       receivedAmount: validatedData.receivedAmount || null,
@@ -178,7 +179,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (validatedData.receivedDate && validatedData.receivedDate.trim() !== '') {
-      createData.receivedDate = new Date(validatedData.receivedDate + 'T00:00:00.000Z')
+      createData.receivedDate = validatedData.receivedDate && validatedData.receivedDate.trim() !== '' ? createDateForStorage(validatedData.receivedDate) : null
     }
 
     const receivable = await prisma.receivable.create({

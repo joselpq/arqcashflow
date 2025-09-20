@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { requireAuth } from '@/lib/auth-utils'
+import { createDateForStorage } from '@/lib/date-utils'
 import { createAuditContextFromAPI, auditCreate, safeAudit } from '@/lib/audit-middleware'
 
 const ContractSchema = z.object({
@@ -88,7 +89,7 @@ export async function POST(request: NextRequest) {
       data: {
         ...validatedData,
         teamId,
-        signedDate: new Date(validatedData.signedDate + 'T00:00:00.000Z'),
+        signedDate: validatedData.signedDate && validatedData.signedDate.trim() !== '' ? createDateForStorage(validatedData.signedDate) : new Date(),
       },
     })
 

@@ -2,31 +2,8 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { format } from 'date-fns'
+import { formatDateForInput, formatDateFull as formatDateForDisplay, getTodayDateString } from '@/lib/date-utils'
 // Supervisor imports removed - clean slate for rebuild
-
-// Helper functions for date conversion with UTC handling
-function formatDateForInput(date: string | Date): string {
-  if (!date) return ''
-  if (typeof date === 'string' && date.includes('T')) {
-    // Extract date part from ISO string to avoid timezone conversion
-    return date.split('T')[0]
-  }
-  const d = new Date(date)
-  return format(d, 'yyyy-MM-dd')
-}
-
-function formatDateForDisplay(date: string | Date): string {
-  if (!date) return ''
-  if (typeof date === 'string' && date.includes('T')) {
-    // Extract date part from ISO string and format manually to avoid timezone conversion
-    const datePart = date.split('T')[0]
-    const [year, month, day] = datePart.split('-')
-    return `${day}/${month}/${year}`
-  }
-  const d = new Date(date)
-  return format(d, 'dd/MM/yyyy')
-}
 
 function ExpensesPageContent() {
   const searchParams = useSearchParams()
@@ -187,7 +164,7 @@ function ExpensesPageContent() {
         ...(paidAmount !== null && { paidAmount }),
         // Include paidDate if provided, or set to today if status is paid but no date provided
         ...(formData.paidDate && { paidDate: formData.paidDate }),
-        ...(formData.status === 'paid' && !formData.paidDate && { paidDate: new Date().toISOString().split('T')[0] }),
+        ...(formData.status === 'paid' && !formData.paidDate && { paidDate: getTodayDateString() }),
       }
 
       const response = await fetch(url, {
@@ -368,8 +345,7 @@ function ExpensesPageContent() {
                   <label className="block text-sm font-medium mb-2 text-neutral-900">Valor *</label>
                   <input
                     type="number"
-                    step="0.01"
-                    value={formData.amount}
+                      value={formData.amount}
                     onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                     className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
                     required
@@ -489,8 +465,7 @@ function ExpensesPageContent() {
                       <label className="block text-sm font-medium mb-2 text-neutral-900">Valor Pago</label>
                       <input
                         type="number"
-                        step="0.01"
-                        value={formData.paidAmount}
+                              value={formData.paidAmount}
                         onChange={(e) => setFormData({ ...formData, paidAmount: e.target.value })}
                         className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
                         placeholder="Deixe vazio para usar o valor total"

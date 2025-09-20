@@ -1,17 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { format } from 'date-fns'
-
-// Helper functions for date conversion with UTC handling
-function formatDateForInput(date: string | Date): string {
-  if (!date) return ''
-  if (typeof date === 'string' && date.includes('T')) {
-    return date.split('T')[0]
-  }
-  const d = new Date(date)
-  return format(d, 'yyyy-MM-dd')
-}
+import { formatDateForInput, getTodayDateString } from '@/lib/date-utils'
 
 interface ReceivableFormProps {
   receivable?: any
@@ -32,7 +22,7 @@ export default function ReceivableForm({ receivable, contracts, onSubmit, onCanc
   ])
   const [formData, setFormData] = useState({
     contractId: '',
-    expectedDate: new Date().toISOString().split('T')[0],
+    expectedDate: getTodayDateString(),
     amount: '',
     invoiceNumber: '',
     category: '',
@@ -75,7 +65,7 @@ export default function ReceivableForm({ receivable, contracts, onSubmit, onCanc
       // Reset form for new receivable
       setFormData({
         contractId: '',
-        expectedDate: new Date().toISOString().split('T')[0],
+        expectedDate: getTodayDateString(),
         amount: '',
         invoiceNumber: '',
         category: '',
@@ -202,7 +192,6 @@ export default function ReceivableForm({ receivable, contracts, onSubmit, onCanc
         <label className="block mb-2 font-medium text-neutral-900">Valor Esperado *</label>
         <input
           type="number"
-          step="0.01"
           required
           className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
           value={formData.amount}
@@ -302,7 +291,7 @@ export default function ReceivableForm({ receivable, contracts, onSubmit, onCanc
                 const exactAmount = formData.amount || ''
                 setFormData({
                   ...formData,
-                  receivedDate: new Date().toISOString().split('T')[0],
+                  receivedDate: getTodayDateString(),
                   receivedAmount: exactAmount
                 })
               }}
@@ -335,7 +324,6 @@ export default function ReceivableForm({ receivable, contracts, onSubmit, onCanc
           <label className="block mb-2 font-medium text-neutral-900">Valor Recebido</label>
           <input
             type="number"
-            step="0.01"
             className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
             value={formData.receivedAmount}
             onChange={(e) => setFormData({ ...formData, receivedAmount: e.target.value })}

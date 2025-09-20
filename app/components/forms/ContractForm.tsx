@@ -1,17 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { format } from 'date-fns'
-
-// Helper functions for date conversion with UTC handling
-function formatDateForInput(date: string | Date): string {
-  if (!date) return ''
-  if (typeof date === 'string' && date.includes('T')) {
-    return date.split('T')[0]
-  }
-  const d = new Date(date)
-  return format(d, 'yyyy-MM-dd')
-}
+import { formatDateForInput, getTodayDateString } from '@/lib/date-utils'
 
 interface ContractFormProps {
   contract?: any
@@ -33,7 +23,7 @@ export default function ContractForm({ contract, onSubmit, onCancel, loading = f
     clientName: '',
     projectName: '',
     totalValue: '',
-    signedDate: new Date().toISOString().split('T')[0],
+    signedDate: getTodayDateString(),
     category: '',
     notes: '',
     status: 'active'
@@ -68,7 +58,7 @@ export default function ContractForm({ contract, onSubmit, onCancel, loading = f
         clientName: '',
         projectName: '',
         totalValue: '',
-        signedDate: new Date().toISOString().split('T')[0],
+        signedDate: getTodayDateString(),
         category: '',
         notes: '',
         status: 'active'
@@ -123,7 +113,6 @@ export default function ContractForm({ contract, onSubmit, onCancel, loading = f
         <label className="block mb-2 font-medium text-neutral-900">Valor Total *</label>
         <input
           type="number"
-          step="0.01"
           required
           className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
           value={formData.totalValue}
