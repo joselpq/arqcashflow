@@ -161,6 +161,8 @@ const results = await prisma.model.findMany({
 6. **Overdue Calculation Duplication**: Multiple locations had different overdue logic - now centralized
 7. **Status Filter vs Display Mismatch**: Filtering used database status while display used calculated status - fixed with post-filtering
 8. **Overdue Filter Not Working**: Filtering for "overdue" returned empty because overdue is calculated, not stored - resolved with conditional queries
+9. **API Response Status Mismatch**: APIs filtered correctly but returned objects with database status, not calculated status - fixed by updating status field in response
+10. **Inconsistent Filter Logic**: Receivables API mixed function calls and status field checks in filtering - standardized to use updated status field
 
 ### Development Workflow
 - **Add new field**: Update Prisma schema → migrate → update API validation → update UI forms

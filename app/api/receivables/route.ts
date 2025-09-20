@@ -128,14 +128,13 @@ export async function GET(request: NextRequest) {
     if (requestedStatus === 'overdue') {
       // Filter to only show overdue items
       filteredReceivables = receivablesWithUpdatedStatus.filter(receivable =>
-        isReceivableOverdue(receivable)
+        receivable.status === 'overdue'
       )
     } else if (requestedStatus === 'pending') {
       // Filter to only show truly pending (not overdue) items
-      filteredReceivables = receivablesWithUpdatedStatus.filter(receivable => {
-        const actualStatus = getReceivableActualStatus(receivable)
-        return actualStatus === 'pending'
-      })
+      filteredReceivables = receivablesWithUpdatedStatus.filter(receivable =>
+        receivable.status === 'pending'
+      )
     }
 
     console.log('💰 RECEIVABLES FOUND:', {

@@ -158,6 +158,8 @@ ArqCashflow features a clean, professional design system specifically crafted fo
 - ✅ **Centralized Overdue Calculations**: Created unified overdue logic functions to ensure consistent status calculations across all components and exports
 - ✅ **Status Filter Consistency**: Fixed receivables and expenses filtering to properly handle calculated overdue status vs database status
 - ✅ **Overdue Display Logic**: Resolved inconsistency where late items showed as "pending" when filtered but "overdue" when displayed
+- ✅ **API Status Field Updates**: Fixed APIs to return calculated status in response objects (expenses now show "overdue" instead of "pending")
+- ✅ **Complete Filter Functionality**: Overdue filters now work correctly for both receivables and expenses
 - ✅ **Working Onboarding File Upload**: Fixed API compatibility issues with Excel/CSV processing
 - ✅ **File Type Validation**: Client-side validation for supported formats with clear error messages
 - ✅ **WOW Onboarding Experience**: Complete multi-step onboarding flow implementation with personalized setup

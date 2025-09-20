@@ -105,39 +105,50 @@ export async function GET(request: NextRequest) {
       orderBy,
     })
 
-    // Apply post-filter for calculated statuses
+    // Update status based on current date and apply post-filter for calculated statuses
     const requestedStatus = searchParams.get('status')
+    const expensesWithUpdatedStatus = expenses.map(expense => {
+      const actualStatus = getExpenseActualStatus(expense)
+      if (actualStatus !== expense.status) {
+        return { ...expense, status: actualStatus }
+      }
+      return expense
+    })
+
+    // Apply post-filter for calculated statuses
+    let filteredExpenses = expensesWithUpdatedStatus
     if (requestedStatus === 'overdue') {
       // Filter to only show overdue items
-      expenses = expenses.filter(expense => isExpenseOverdue(expense))
+      filteredExpenses = expensesWithUpdatedStatus.filter(expense =>
+        expense.status === 'overdue'
+      )
     } else if (requestedStatus === 'pending') {
       // Filter to only show truly pending (not overdue) items
-      expenses = expenses.filter(expense => {
-        const actualStatus = getExpenseActualStatus(expense)
-        return actualStatus === 'pending'
-      })
+      filteredExpenses = expensesWithUpdatedStatus.filter(expense =>
+        expense.status === 'pending'
+      )
     }
 
-    // Calculate summary statistics
-    const total = expenses.reduce((sum, expense) => sum + expense.amount, 0)
-    const paid = expenses
+    // Calculate summary statistics from ALL expenses (not just filtered ones)
+    const total = expensesWithUpdatedStatus.reduce((sum, expense) => sum + expense.amount, 0)
+    const paid = expensesWithUpdatedStatus
       .filter(expense => expense.status === 'paid')
       .reduce((sum, expense) => sum + (expense.paidAmount || expense.amount), 0)
-    const pending = expenses
+    const pending = expensesWithUpdatedStatus
       .filter(expense => expense.status === 'pending')
       .reduce((sum, expense) => sum + expense.amount, 0)
-    const overdue = expenses
-      .filter(expense => isExpenseOverdue(expense))
+    const overdue = expensesWithUpdatedStatus
+      .filter(expense => expense.status === 'overdue')
       .reduce((sum, expense) => sum + expense.amount, 0)
 
     return NextResponse.json({
-      expenses,
+      expenses: filteredExpenses,
       summary: {
         total,
         paid,
         pending,
         overdue,
-        count: expenses.length,
+        count: expensesWithUpdatedStatus.length, // Total count, not filtered count
       },
     })
 
