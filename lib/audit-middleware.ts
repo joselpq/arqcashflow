@@ -66,7 +66,7 @@ export function createAuditContextFromAPI(
  */
 export async function auditCreate(
   context: AuditContext,
-  entityType: 'contract' | 'receivable' | 'expense',
+  entityType: 'contract' | 'receivable' | 'expense' | 'recurring_expense' | 'recurring_expense_generation',
   entityId: string,
   entityData: any
 ): Promise<void> {
@@ -84,7 +84,7 @@ export async function auditCreate(
  */
 export async function auditUpdate(
   context: AuditContext,
-  entityType: 'contract' | 'receivable' | 'expense',
+  entityType: 'contract' | 'receivable' | 'expense' | 'recurring_expense' | 'recurring_expense_generation',
   entityId: string,
   oldData: any,
   newData: any,
@@ -110,7 +110,7 @@ export async function auditUpdate(
  */
 export async function auditDelete(
   context: AuditContext,
-  entityType: 'contract' | 'receivable' | 'expense',
+  entityType: 'contract' | 'receivable' | 'expense' | 'recurring_expense' | 'recurring_expense_generation',
   entityId: string,
   finalSnapshot: any
 ): Promise<void> {

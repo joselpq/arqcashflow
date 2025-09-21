@@ -8,22 +8,23 @@ datasource db {
 }
 
 model Contract {
-  id          String       @id @default(cuid())
-  clientName  String
-  projectName String
-  description String?
-  totalValue  Float
-  signedDate  DateTime
-  status      String       @default("active")
-  category    String?
-  notes       String?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  teamId      String
-  budgets     Budget[]
-  team        Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  expenses    Expense[]
-  receivables Receivable[]
+  id                String             @id @default(cuid())
+  clientName        String
+  projectName       String
+  description       String?
+  totalValue        Float
+  signedDate        DateTime
+  status            String             @default("active")
+  category          String?
+  notes             String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  teamId            String
+  budgets           Budget[]
+  team              Team               @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  expenses          Expense[]
+  receivables       Receivable[]
+  recurringExpenses RecurringExpense[] // Recurring expenses for this project
 
   @@index([teamId])
 }
@@ -62,32 +63,39 @@ model Category {
 }
 
 model Expense {
-  id            String    @id @default(cuid())
-  contractId    String?
-  description   String
-  amount        Float
-  dueDate       DateTime
-  category      String
-  status        String    @default("pending")
-  paidDate      DateTime?
-  paidAmount    Float?
-  vendor        String?
-  invoiceNumber String?
-  type          String?
-  isRecurring   Boolean   @default(false)
-  notes         String?
-  receiptUrl    String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  teamId        String?
-  contract      Contract? @relation(fields: [contractId], references: [id])
-  team          Team?     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  id                 String             @id @default(cuid())
+  contractId         String?
+  description        String
+  amount             Float
+  dueDate            DateTime
+  category           String
+  status             String             @default("pending")
+  paidDate           DateTime?
+  paidAmount         Float?
+  vendor             String?
+  invoiceNumber      String?
+  type               String?
+  isRecurring        Boolean            @default(false)
+  notes              String?
+  receiptUrl         String?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  teamId             String?
+
+  // Recurring expense relation
+  recurringExpenseId String?
+  generatedDate      DateTime?          // When this was auto-generated
+
+  contract           Contract?          @relation(fields: [contractId], references: [id])
+  team               Team?              @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  recurringExpense   RecurringExpense?  @relation(fields: [recurringExpenseId], references: [id])
 
   @@index([teamId])
   @@index([contractId])
   @@index([dueDate])
   @@index([status])
   @@index([category])
+  @@index([recurringExpenseId])
 }
 
 model Budget {
@@ -114,25 +122,45 @@ model Budget {
 }
 
 model RecurringExpense {
-  id            String    @id @default(cuid())
-  description   String
-  amount        Float
-  category      String
-  vendor        String?
-  frequency     String
-  interval      Int       @default(1)
-  dayOfMonth    Int?
-  startDate     DateTime
-  endDate       DateTime?
-  isActive      Boolean   @default(true)
-  lastGenerated DateTime?
-  nextDue       DateTime
-  notes         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id             String    @id @default(cuid())
+  description    String
+  amount         Float
+  category       String
+  vendor         String?
+  frequency      String    // 'weekly', 'monthly', 'quarterly', 'annual'
+  interval       Int       @default(1)
+  dayOfMonth     Int?
+  startDate      DateTime
+  endDate        DateTime?
+  isActive       Boolean   @default(true)
+  lastGenerated  DateTime?
+  nextDue        DateTime
+  notes          String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
+  // Multi-tenant support
+  teamId         String
+  createdBy      String
+
+  // Enhanced features
+  contractId     String?   // Optional link to project
+  type           String?   // 'operational', 'project', 'administrative'
+  maxOccurrences Int?      // Alternative to endDate
+  generatedCount Int       @default(0)
+  lastError      String?   // Track generation errors
+  invoiceNumber  String?   // Template for invoice numbers
+
+  // Relations
+  team           Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user           User      @relation(fields: [createdBy], references: [id])
+  contract       Contract? @relation(fields: [contractId], references: [id])
+  expenses       Expense[] // Generated expenses from this recurring template
+
+  @@index([teamId])
   @@index([nextDue])
   @@index([isActive])
+  @@index([teamId, isActive, nextDue]) // Composite index for efficient queries
 }
 
 model AuditLog {
@@ -172,35 +200,37 @@ model AuditLog {
 }
 
 model Team {
-  id              String       @id @default(cuid())
-  name            String
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
-  companyActivity String?
-  companyName     String?
-  employeeCount   String?
-  profession      String?
-  revenueTier     String?
-  type            String       @default("individual")
-  budgets         Budget[]
-  contracts       Contract[]
-  expenses        Expense[]
-  receivables     Receivable[]
-  users           User[]
-  auditLogs       AuditLog[]   // New: Audit logs for this team
+  id                String             @id @default(cuid())
+  name              String
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  companyActivity   String?
+  companyName       String?
+  employeeCount     String?
+  profession        String?
+  revenueTier       String?
+  type              String             @default("individual")
+  budgets           Budget[]
+  contracts         Contract[]
+  expenses          Expense[]
+  receivables       Receivable[]
+  users             User[]
+  auditLogs         AuditLog[]         // Audit logs for this team
+  recurringExpenses RecurringExpense[] // Recurring expense templates
 }
 
 model User {
-  id                 String     @id @default(cuid())
-  email              String     @unique
+  id                 String             @id @default(cuid())
+  email              String             @unique
   name               String?
   password           String
-  createdAt          DateTime   @default(now())
-  updatedAt          DateTime   @updatedAt
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
   teamId             String
-  onboardingComplete Boolean    @default(false)
-  team               Team       @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  auditLogs          AuditLog[] // New: Audit logs created by this user
+  onboardingComplete Boolean            @default(false)
+  team               Team               @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  auditLogs          AuditLog[]         // Audit logs created by this user
+  recurringExpenses  RecurringExpense[] // Recurring expenses created by this user
 
   @@index([email])
   @@index([teamId])

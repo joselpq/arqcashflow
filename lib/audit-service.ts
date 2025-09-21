@@ -14,7 +14,7 @@ export interface AuditContext {
 }
 
 export interface EntityChange {
-  entityType: 'contract' | 'receivable' | 'expense'
+  entityType: 'contract' | 'receivable' | 'expense' | 'recurring_expense' | 'recurring_expense_generation'
   entityId: string
   action: 'created' | 'updated' | 'deleted'
   changes?: Record<string, { from: any; to: any }>
@@ -60,7 +60,7 @@ export async function logAuditEntry(
  */
 export async function logStatusChange(
   context: AuditContext,
-  entityType: 'contract' | 'receivable' | 'expense',
+  entityType: 'contract' | 'receivable' | 'expense' | 'recurring_expense',
   entityId: string,
   fromStatus: string,
   toStatus: string,
