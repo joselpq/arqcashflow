@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { formatDateForInput, formatDateFull as formatDateForDisplay, getTodayDateString, getExpenseActualStatus } from '@/lib/date-utils'
 import Modal from '../../components/Modal'
-import ExpenseForm from '../../components/forms/ExpenseForm'
+import EnhancedExpenseForm from '../../components/forms/EnhancedExpenseForm'
 
 export default function ExpensesTab() {
   const searchParams = useSearchParams()
@@ -12,42 +12,26 @@ export default function ExpensesTab() {
 
   const [expenses, setExpenses] = useState([])
   const [filteredExpenses, setFilteredExpenses] = useState([])
-  const [recurringExpenses, setRecurringExpenses] = useState([])
+  // Removed recurringExpenses state - now handled through regular expenses filter
   const [contracts, setContracts] = useState([])
   const [loading, setLoading] = useState(false)
   const [formLoading, setFormLoading] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingExpense, setEditingExpense] = useState(null)
-  const [viewMode, setViewMode] = useState('regular') // 'regular', 'recurring'
+  // Removed viewMode - now using filters.recurrenceType
   const [isMarkPaidModalOpen, setIsMarkPaidModalOpen] = useState(false)
   const [expenseToMark, setExpenseToMark] = useState<any>(null)
   const [markPaidData, setMarkPaidData] = useState({
     paidDate: '',
     paidAmount: ''
   })
-  const [isRecurringModalOpen, setIsRecurringModalOpen] = useState(false)
-  const [recurringFormData, setRecurringFormData] = useState({
-    description: '',
-    amount: '',
-    dueDate: '',
-    category: 'Salários',
-    contractId: '',
-    vendor: '',
-    invoiceNumber: '',
-    type: 'operational',
-    notes: '',
-    frequency: 'monthly',
-    interval: 1,
-    dayOfMonth: '',
-    endDate: '',
-    maxOccurrences: '',
-  })
+  // Removed recurring modal state - now handled in unified form
 
   const [filters, setFilters] = useState({
     contractId: 'all',
     status: 'pending',
     category: 'all',
-    type: 'all',
+    recurrenceType: 'all', // 'all', 'regular', 'recurring'
     sortBy: 'dueDate',
     sortOrder: 'asc',
   })
@@ -57,10 +41,10 @@ export default function ExpensesTab() {
     'Salários', 'Escritório', 'Software', 'Marketing', 'Transporte', 'Equipamentos', 'Impostos', 'Outros'
   ]
 
-  const expenseTypes = [
-    { value: 'operational', label: 'Operacional' },
-    { value: 'project', label: 'Projeto' },
-    { value: 'administrative', label: 'Administrativo' },
+  const recurrenceTypes = [
+    { value: 'all', label: 'Todas' },
+    { value: 'regular', label: 'Não Recorrentes' },
+    { value: 'recurring', label: 'Recorrentes' },
   ]
 
   const statusOptions = [
@@ -78,13 +62,10 @@ export default function ExpensesTab() {
   ]
 
   useEffect(() => {
-    if (viewMode === 'regular') {
-      fetchExpenses()
-    } else {
-      fetchRecurringExpenses()
-    }
+    // Always use fetchExpenses - it handles filtering internally
+    fetchExpenses()
     fetchContracts()
-  }, [filters, viewMode])
+  }, [filters])
 
   useEffect(() => {
     if (editId && expenses.length > 0) {
@@ -117,9 +98,21 @@ export default function ExpensesTab() {
   async function fetchExpenses() {
     setLoading(true)
     try {
-      const params = new URLSearchParams(filters)
+      // Prepare filters for API call
+      const apiFilters = { ...filters }
 
+      // Handle recurrence type filter
+      if (filters.recurrenceType === 'regular') {
+        apiFilters.isRecurring = 'false'
+      } else if (filters.recurrenceType === 'recurring') {
+        apiFilters.isRecurring = 'true'
+      }
+      // Remove recurrenceType as it's not an API filter
+      delete apiFilters.recurrenceType
+
+      const params = new URLSearchParams(apiFilters)
       const res = await fetch(`/api/expenses?${params.toString()}`)
+
       if (!res.ok) {
         if (res.status === 401) {
           window.location.href = '/login'
@@ -127,6 +120,7 @@ export default function ExpensesTab() {
         }
         throw new Error(`Failed to fetch expenses: ${res.status}`)
       }
+
       const data = await res.json()
       setExpenses(data.expenses || [])
     } catch (error) {
@@ -137,34 +131,7 @@ export default function ExpensesTab() {
     }
   }
 
-  async function fetchRecurringExpenses() {
-    setLoading(true)
-    try {
-      const params = new URLSearchParams({
-        category: filters.category,
-        contractId: filters.contractId,
-        sortBy: filters.sortBy,
-        sortOrder: filters.sortOrder,
-      })
-      const response = await fetch(`/api/recurring-expenses?${params}`)
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          window.location.href = '/login'
-          return
-        }
-        throw new Error(`Failed to fetch recurring expenses: ${response.status}`)
-      }
-
-      const data = await response.json()
-      setRecurringExpenses(data.recurringExpenses || [])
-    } catch (error) {
-      console.error('Error fetching recurring expenses:', error)
-      setRecurringExpenses([])
-    } finally {
-      setLoading(false)
-    }
-  }
+  // Removed fetchRecurringExpenses - now handled through regular fetchExpenses with filter
 
   async function fetchContracts() {
     try {
@@ -199,125 +166,53 @@ export default function ExpensesTab() {
     setEditingExpense(null)
   }
 
-  async function handleFormSubmit(expenseData: any) {
+  async function handleFormSubmit(expenseData: any, isRecurring: boolean) {
     setFormLoading(true)
     try {
-      const url = editingExpense ? `/api/expenses/${editingExpense.id}` : '/api/expenses'
-      const method = editingExpense ? 'PUT' : 'POST'
+      if (isRecurring && !editingExpense) {
+        // Handle recurring expense creation
+        const response = await fetch('/api/recurring-expenses', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(expenseData),
+        })
 
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(expenseData)
-      })
-
-      if (res.ok) {
-        closeModal()
-        if (viewMode === 'regular') {
-          await fetchExpenses()
+        if (response.ok) {
+          alert('Despesa recorrente criada com sucesso!')
+          closeModal()
+          // Switch filter to show recurring expenses
+          setFilters({ ...filters, recurrenceType: 'recurring' })
         } else {
-          await fetchRecurringExpenses()
+          const error = await response.json()
+          alert(`Erro: ${error.error}`)
         }
       } else {
-        alert('Error saving expense')
+        // Handle regular expense
+        const url = editingExpense ? `/api/expenses/${editingExpense.id}` : '/api/expenses'
+        const method = editingExpense ? 'PUT' : 'POST'
+
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(expenseData)
+        })
+
+        if (res.ok) {
+          closeModal()
+          await fetchExpenses()
+        } else {
+          alert('Erro ao salvar despesa')
+        }
       }
     } catch (error) {
       console.error('Error:', error)
-      alert('Error saving expense')
+      alert('Erro ao salvar despesa')
     } finally {
       setFormLoading(false)
     }
   }
 
-  async function handleRecurringFormSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setFormLoading(true)
-    try {
-      // Validate and prepare form data
-      const amount = parseFloat(recurringFormData.amount)
-      if (isNaN(amount) || amount <= 0) {
-        alert('Por favor, insira um valor válido maior que zero')
-        return
-      }
-
-      // Validate recurring data
-      const interval = parseInt(recurringFormData.interval.toString())
-      if (isNaN(interval) || interval < 1) {
-        alert('Por favor, insira um intervalo válido (1 ou maior)')
-        return
-      }
-
-      const dayOfMonth = recurringFormData.dayOfMonth ? parseInt(recurringFormData.dayOfMonth) : null
-      if (dayOfMonth && (dayOfMonth < 1 || dayOfMonth > 31)) {
-        alert('Por favor, insira um dia do mês válido (1-31)')
-        return
-      }
-
-      const maxOccurrences = recurringFormData.maxOccurrences ? parseInt(recurringFormData.maxOccurrences) : null
-      if (maxOccurrences && maxOccurrences < 1) {
-        alert('Por favor, insira um número de ocorrências válido')
-        return
-      }
-
-      // Prepare recurring expense data
-      const recurringExpenseData = {
-        description: recurringFormData.description,
-        amount: amount,
-        category: recurringFormData.category,
-        frequency: recurringFormData.frequency,
-        interval: interval,
-        dayOfMonth: dayOfMonth,
-        startDate: recurringFormData.dueDate,
-        endDate: recurringFormData.endDate || null,
-        maxOccurrences: maxOccurrences,
-        contractId: recurringFormData.contractId || null,
-        vendor: recurringFormData.vendor || null,
-        invoiceNumber: recurringFormData.invoiceNumber || null,
-        type: recurringFormData.type,
-        notes: recurringFormData.notes || null,
-      }
-
-      const response = await fetch('/api/recurring-expenses', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(recurringExpenseData),
-      })
-
-      if (response.ok) {
-        alert('Despesa recorrente criada com sucesso!')
-        setIsRecurringModalOpen(false)
-        resetRecurringForm()
-        fetchRecurringExpenses()
-      } else {
-        const error = await response.json()
-        alert(`Erro: ${error.error}`)
-      }
-    } catch (error) {
-      console.error('Error saving recurring expense:', error)
-      alert('Erro ao salvar despesa recorrente')
-    } finally {
-      setFormLoading(false)
-    }
-  }
-
-  function resetRecurringForm() {
-    setRecurringFormData({
-      description: '',
-      amount: '',
-      dueDate: '',
-      category: 'Salários',
-      contractId: '',
-      vendor: '',
-      invoiceNumber: '',
-      type: 'operational',
-      notes: '',
-      frequency: 'monthly',
-      interval: 1,
-      dayOfMonth: '',
-      endDate: '',
-      maxOccurrences: '',
-    })
-  }
+  // Removed unused recurring form functions - now handled in EnhancedExpenseForm
 
   async function deleteExpense(id: string) {
     if (!confirm('Are you sure you want to delete this expense?')) {
@@ -386,155 +281,22 @@ export default function ExpensesTab() {
     }
   }
 
-  // Recurring expense functions
-  async function toggleRecurringActive(recurring: any) {
-    try {
-      const response = await fetch(`/api/recurring-expenses/${recurring.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          isActive: !recurring.isActive,
-        }),
-      })
-
-      if (response.ok) {
-        fetchRecurringExpenses()
-        alert(recurring.isActive ? 'Despesa recorrente pausada!' : 'Despesa recorrente ativada!')
-      } else {
-        const error = await response.json()
-        alert(`Erro: ${error.error}`)
-      }
-    } catch (error) {
-      console.error('Error toggling active status:', error)
-      alert('Erro ao alterar status')
-    }
-  }
-
-  async function generateNext(recurring: any) {
-    try {
-      const response = await fetch(`/api/recurring-expenses/${recurring.id}/generate`, {
-        method: 'POST',
-      })
-
-      if (response.ok) {
-        const result = await response.json()
-        fetchRecurringExpenses()
-        alert(result.message)
-      } else {
-        const error = await response.json()
-        alert(`Erro: ${error.error}`)
-      }
-    } catch (error) {
-      console.error('Error generating expense:', error)
-      alert('Erro ao gerar despesa')
-    }
-  }
-
-  async function deleteRecurring(recurring: any) {
-    if (!confirm(`Excluir despesa recorrente "${recurring.description}"? Isso não afetará as despesas já geradas.`)) return
-
-    try {
-      const response = await fetch(`/api/recurring-expenses/${recurring.id}`, {
-        method: 'DELETE',
-      })
-
-      if (response.ok) {
-        fetchRecurringExpenses()
-        alert('Despesa recorrente excluída!')
-      } else {
-        const error = await response.json()
-        alert(`Erro: ${error.error}`)
-      }
-    } catch (error) {
-      console.error('Error deleting recurring expense:', error)
-      alert('Erro ao excluir despesa recorrente')
-    }
-  }
-
-  function getFrequencyDisplay(frequency: string, interval: number) {
-    const base = frequencyOptions.find(f => f.value === frequency)?.label || frequency
-    if (interval === 1) return base
-    return `A cada ${interval} ${frequency === 'weekly' ? 'semanas' :
-                                   frequency === 'monthly' ? 'meses' :
-                                   frequency === 'quarterly' ? 'trimestres' : 'anos'}`
-  }
-
-  function getRecurringStatusDisplay(recurring: any) {
-    if (!recurring.isActive) {
-      return { label: 'Pausada', color: 'bg-gray-100 text-gray-800' }
-    }
-
-    if (recurring.lastError) {
-      return { label: 'Erro', color: 'bg-red-100 text-red-800' }
-    }
-
-    if (recurring.maxOccurrences && recurring.generatedCount >= recurring.maxOccurrences) {
-      return { label: 'Concluída', color: 'bg-green-100 text-green-800' }
-    }
-
-    const nextDue = new Date(recurring.nextDue)
-    const today = new Date()
-    if (nextDue <= today) {
-      return { label: 'Pronta', color: 'bg-blue-100 text-blue-800' }
-    }
-
-    return { label: 'Ativa', color: 'bg-green-100 text-green-800' }
-  }
+  // Removed unused recurring management functions
 
   return (
     <div>
-      {/* Header with View Mode Toggle and Add Button */}
+      {/* Header with Add Button */}
       <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center gap-4">
-          <h2 className="text-xl font-bold text-neutral-900">Despesas</h2>
-
-          {/* View Mode Toggle */}
-          <div className="flex bg-neutral-200 rounded-lg p-1">
-            <button
-              onClick={() => setViewMode('regular')}
-              className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                viewMode === 'regular'
-                  ? 'bg-white text-neutral-900 shadow-sm'
-                  : 'text-neutral-600 hover:text-neutral-900'
-              }`}
-            >
-              Regulares
-            </button>
-            <button
-              onClick={() => setViewMode('recurring')}
-              className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                viewMode === 'recurring'
-                  ? 'bg-white text-neutral-900 shadow-sm'
-                  : 'text-neutral-600 hover:text-neutral-900'
-              }`}
-            >
-              🔄 Recorrentes
-            </button>
-          </div>
-        </div>
-
-        <div className="flex gap-2">
-          {viewMode === 'regular' && (
-            <button
-              onClick={openAddModal}
-              className="bg-blue-700 text-white px-4 py-2 rounded-lg hover:bg-blue-800 font-medium transition-colors flex items-center gap-2"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Adicionar Despesa
-            </button>
-          )}
-          {viewMode === 'regular' && (
-            <button
-              onClick={() => setIsRecurringModalOpen(true)}
-              className="bg-green-700 text-white px-4 py-2 rounded-lg hover:bg-green-800 font-medium transition-colors flex items-center gap-2"
-            >
-              🔄
-              Criar Recorrente
-            </button>
-          )}
-        </div>
+        <h2 className="text-xl font-bold text-neutral-900">Despesas</h2>
+        <button
+          onClick={openAddModal}
+          className="bg-blue-700 text-white px-4 py-2 rounded-lg hover:bg-blue-800 font-medium transition-colors flex items-center gap-2"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          Adicionar Despesa
+        </button>
       </div>
 
 
@@ -618,11 +380,10 @@ export default function ExpensesTab() {
           <label className="text-sm font-medium text-neutral-700 whitespace-nowrap">Tipo:</label>
           <select
             className="border border-neutral-300 rounded-md px-3 py-1 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
-            value={filters.type}
-            onChange={(e) => setFilters({ ...filters, type: e.target.value })}
+            value={filters.recurrenceType}
+            onChange={(e) => setFilters({ ...filters, recurrenceType: e.target.value })}
           >
-            <option value="all">Todos</option>
-            {expenseTypes.map(type => (
+            {recurrenceTypes.map(type => (
               <option key={type.value} value={type.value}>
                 {type.label}
               </option>
@@ -657,10 +418,10 @@ export default function ExpensesTab() {
           </select>
         </div>
 
-        {(filters.contractId !== 'all' || filters.status !== 'pending' || filters.category !== 'all' || filters.type !== 'all' || searchQuery) && (
+        {(filters.contractId !== 'all' || filters.status !== 'pending' || filters.category !== 'all' || filters.recurrenceType !== 'all' || searchQuery) && (
           <button
             onClick={() => {
-              setFilters({ contractId: 'all', status: 'pending', category: 'all', type: 'all', sortBy: 'dueDate', sortOrder: 'asc' })
+              setFilters({ contractId: 'all', status: 'pending', category: 'all', recurrenceType: 'all', sortBy: 'dueDate', sortOrder: 'asc' })
               setSearchQuery('')
             }}
             className="ml-2 text-sm text-blue-600 hover:text-blue-800 font-medium"
@@ -673,12 +434,11 @@ export default function ExpensesTab() {
       {/* Expenses Table */}
       {loading ? (
         <p>Carregando...</p>
-      ) : viewMode === 'regular' ? (
-        filteredExpenses.length === 0 ? (
-          <p className="text-neutral-900 font-medium">
-            {searchQuery ? `Nenhuma despesa encontrada para "${searchQuery}"` : 'Nenhuma despesa ainda'}
-          </p>
-        ) : (
+      ) : filteredExpenses.length === 0 ? (
+        <p className="text-neutral-900 font-medium">
+          {searchQuery ? `Nenhuma despesa encontrada para "${searchQuery}"` : 'Nenhuma despesa ainda'}
+        </p>
+      ) : (
         <div className="bg-white border border-neutral-200 rounded-lg overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -717,9 +477,11 @@ export default function ExpensesTab() {
                     <td className="px-4 py-4">
                       <div>
                         <div className="font-semibold text-neutral-900">{expense.description}</div>
-                        <div className="text-sm text-neutral-600">
-                          {expenseTypes.find(t => t.value === expense.type)?.label || expense.type}
-                        </div>
+                        {expense.isRecurring && (
+                          <div className="text-xs text-blue-600">
+                            🔄 Recorrente
+                          </div>
+                        )}
                         {expense.contract && (
                           <div className="text-xs text-neutral-500">
                             {expense.contract.clientName} - {expense.contract.projectName}
@@ -803,112 +565,6 @@ export default function ExpensesTab() {
             </table>
           </div>
         </div>
-        )
-      ) : (
-        /* Recurring Expenses View */
-        recurringExpenses.length === 0 ? (
-          <div className="text-center text-neutral-600 py-12">
-            <div className="text-6xl mb-4">📅</div>
-            <h3 className="text-xl font-medium mb-2">Nenhuma despesa recorrente encontrada</h3>
-            <p className="text-neutral-500 mb-4">
-              Comece criando uma despesa recorrente usando o botão "Adicionar Despesa".
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {recurringExpenses.map((recurring: any) => {
-              const statusDisplay = getRecurringStatusDisplay(recurring)
-              return (
-                <div key={recurring.id} className="bg-white border-2 border-neutral-300 rounded-lg p-6 hover:shadow-md transition-shadow">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h3 className="font-bold text-lg text-neutral-900">{recurring.description}</h3>
-                        <span className={`px-2 py-1 rounded text-xs ${statusDisplay.color}`}>
-                          {statusDisplay.label}
-                        </span>
-                      </div>
-
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-1 text-sm text-neutral-900 font-medium">
-                        <div>
-                          <strong>Valor:</strong> R$ {recurring.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </div>
-                        <div>
-                          <strong>Próximo:</strong> {formatDateForDisplay(recurring.nextDue)}
-                        </div>
-                        <div>
-                          <strong>Frequência:</strong> {getFrequencyDisplay(recurring.frequency, recurring.interval)}
-                        </div>
-                        <div>
-                          <strong>Categoria:</strong> {recurring.category}
-                        </div>
-                        <div>
-                          <strong>Geradas:</strong> {recurring.generatedCount}
-                          {recurring.maxOccurrences && ` / ${recurring.maxOccurrences}`}
-                        </div>
-                        {recurring.dayOfMonth && (
-                          <div>
-                            <strong>Dia:</strong> {recurring.dayOfMonth}
-                          </div>
-                        )}
-                      </div>
-
-                      {recurring.contract && (
-                        <div className="text-sm text-blue-700 mt-1 font-medium">
-                          <strong>Projeto:</strong> {recurring.contract.clientName} - {recurring.contract.projectName}
-                        </div>
-                      )}
-
-                      {recurring.vendor && (
-                        <div className="text-sm text-neutral-600 mt-1">
-                          <strong>Fornecedor:</strong> {recurring.vendor}
-                        </div>
-                      )}
-
-                      {recurring.lastError && (
-                        <div className="text-sm text-red-600 mt-1 bg-red-50 p-2 rounded">
-                          <strong>⚠️ Erro:</strong> {recurring.lastError}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex flex-col gap-1 ml-4">
-                      {recurring.isActive ? (
-                        <>
-                          <button
-                            onClick={() => generateNext(recurring)}
-                            className="text-xs bg-blue-600 text-white px-3 py-1 rounded-lg hover:bg-blue-700 font-medium transition-colors"
-                          >
-                            Gerar Agora
-                          </button>
-                          <button
-                            onClick={() => toggleRecurringActive(recurring)}
-                            className="text-xs bg-yellow-600 text-white px-3 py-1 rounded-lg hover:bg-yellow-700 font-medium transition-colors"
-                          >
-                            Pausar
-                          </button>
-                        </>
-                      ) : (
-                        <button
-                          onClick={() => toggleRecurringActive(recurring)}
-                          className="text-xs bg-green-600 text-white px-3 py-1 rounded-lg hover:bg-green-700 font-medium transition-colors"
-                        >
-                          Ativar
-                        </button>
-                      )}
-                      <button
-                        onClick={() => deleteRecurring(recurring)}
-                        className="text-xs bg-red-600 text-white px-3 py-1 rounded-lg hover:bg-red-700 font-medium transition-colors"
-                      >
-                        Excluir
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        )
       )}
 
       {/* Modal */}
@@ -918,7 +574,7 @@ export default function ExpensesTab() {
         title={editingExpense ? 'Editar Despesa' : 'Adicionar Despesa'}
         size="lg"
       >
-        <ExpenseForm
+        <EnhancedExpenseForm
           expense={editingExpense}
           contracts={contracts}
           onSubmit={handleFormSubmit}
@@ -994,172 +650,7 @@ export default function ExpensesTab() {
         </div>
       </Modal>
 
-      {/* Recurring Expense Modal */}
-      <Modal
-        isOpen={isRecurringModalOpen}
-        onClose={() => {
-          setIsRecurringModalOpen(false)
-          resetRecurringForm()
-        }}
-        title="Criar Despesa Recorrente"
-        size="lg"
-      >
-        <form onSubmit={handleRecurringFormSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-2 text-neutral-900">Descrição *</label>
-            <input
-              type="text"
-              value={recurringFormData.description}
-              onChange={(e) => setRecurringFormData({ ...recurringFormData, description: e.target.value })}
-              className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-2 text-neutral-900">Valor *</label>
-            <input
-              type="number"
-              value={recurringFormData.amount}
-              onChange={(e) => setRecurringFormData({ ...recurringFormData, amount: e.target.value })}
-              className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-2 text-neutral-900">Data de Início *</label>
-            <input
-              type="date"
-              value={recurringFormData.dueDate}
-              onChange={(e) => setRecurringFormData({ ...recurringFormData, dueDate: e.target.value })}
-              className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-2 text-neutral-900">Categoria *</label>
-            <select
-              value={recurringFormData.category}
-              onChange={(e) => setRecurringFormData({ ...recurringFormData, category: e.target.value })}
-              className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
-              required
-            >
-              {expenseCategories.map(cat => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-2 text-blue-900">Frequência</label>
-              <select
-                value={recurringFormData.frequency}
-                onChange={(e) => setRecurringFormData({ ...recurringFormData, frequency: e.target.value })}
-                className="w-full border-2 border-blue-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-blue-900"
-              >
-                {frequencyOptions.map(freq => (
-                  <option key={freq.value} value={freq.value}>{freq.label}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2 text-blue-900">Repetir a cada</label>
-              <input
-                type="number"
-                min="1"
-                max="12"
-                value={recurringFormData.interval}
-                onChange={(e) => setRecurringFormData({ ...recurringFormData, interval: parseInt(e.target.value) || 1 })}
-                className="w-full border-2 border-blue-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-blue-900"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-2 text-blue-900">
-                Dia do mês (opcional)
-                <span className="text-xs text-blue-600 block">Para mensal/trimestral (1-31)</span>
-              </label>
-              <input
-                type="number"
-                min="1"
-                max="31"
-                value={recurringFormData.dayOfMonth}
-                onChange={(e) => setRecurringFormData({ ...recurringFormData, dayOfMonth: e.target.value })}
-                className="w-full border-2 border-blue-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-blue-900"
-                placeholder="Deixe vazio para usar dia atual"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2 text-blue-900">
-                Máximo de ocorrências (opcional)
-                <span className="text-xs text-blue-600 block">Deixe vazio para repetir indefinidamente</span>
-              </label>
-              <input
-                type="number"
-                min="1"
-                value={recurringFormData.maxOccurrences}
-                onChange={(e) => setRecurringFormData({ ...recurringFormData, maxOccurrences: e.target.value })}
-                className="w-full border-2 border-blue-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-blue-900"
-                placeholder="Ex: 12 para um ano"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-2 text-neutral-900">Projeto</label>
-            <select
-              value={recurringFormData.contractId}
-              onChange={(e) => setRecurringFormData({ ...recurringFormData, contractId: e.target.value })}
-              className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
-            >
-              <option value="">Nenhum projeto específico</option>
-              {contracts.map(contract => (
-                <option key={contract.id} value={contract.id}>
-                  {contract.clientName} - {contract.projectName}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-2 text-neutral-900">Fornecedor</label>
-            <input
-              type="text"
-              value={recurringFormData.vendor}
-              onChange={(e) => setRecurringFormData({ ...recurringFormData, vendor: e.target.value })}
-              className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
-            />
-          </div>
-
-          <div className="flex gap-2 pt-4">
-            <button
-              type="submit"
-              disabled={formLoading}
-              className="bg-green-700 text-white px-6 py-2 rounded-lg hover:bg-green-800 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {formLoading ? 'Criando...' : '🔄 Criar Despesa Recorrente'}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setIsRecurringModalOpen(false)
-                resetRecurringForm()
-              }}
-              disabled={formLoading}
-              className="bg-neutral-600 text-white px-6 py-2 rounded-lg hover:bg-neutral-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Cancelar
-            </button>
-          </div>
-        </form>
-      </Modal>
+      {/* Removed old recurring modal - now handled in unified form */}
     </div>
   )
 }
