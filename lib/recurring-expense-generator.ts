@@ -175,7 +175,8 @@ function shouldGenerateExpense(
 
 async function generateExpenseForDate(
   recurringExpense: RecurringExpense,
-  dueDate: Date
+  dueDate: Date,
+  markAsPaid = false
 ): Promise<{ success: boolean; expenseId?: string; error?: string }> {
   try {
     // Check if expense already exists for this date
@@ -204,14 +205,18 @@ async function generateExpenseForDate(
         amount: recurringExpense.amount,
         dueDate: dueDate,
         category: recurringExpense.category,
-        status: 'pending',
+        status: markAsPaid ? 'paid' : 'pending',
+        paidDate: markAsPaid ? dueDate : null,
+        paidAmount: markAsPaid ? recurringExpense.amount : null,
         vendor: recurringExpense.vendor,
         invoiceNumber: recurringExpense.invoiceNumber ?
           `${recurringExpense.invoiceNumber}-${dueDate.getMonth() + 1}${dueDate.getFullYear()}` :
           null,
         type: recurringExpense.type,
         isRecurring: true,
-        notes: `Gerado automaticamente de: ${recurringExpense.description}`,
+        notes: markAsPaid ?
+          `Gerado automaticamente de: ${recurringExpense.description} (marcado como pago automaticamente)` :
+          `Gerado automaticamente de: ${recurringExpense.description}`,
         teamId: recurringExpense.teamId,
         contractId: recurringExpense.contractId,
         recurringExpenseId: recurringExpense.id,
@@ -288,7 +293,7 @@ export async function generateRecurringExpenses(
         // Generate expenses up to the end date
         while (currentDue <= endDate && generated < 10) { // Safety limit per recurring expense
           if (shouldGenerateExpense(recurringExpense, currentDue)) {
-            const expenseResult = await generateExpenseForDate(recurringExpense, currentDue)
+            const expenseResult = await generateExpenseForDate(recurringExpense, currentDue, false)
 
             if (expenseResult.success) {
               generated++
@@ -356,6 +361,114 @@ export async function generateRecurringExpenses(
   return result
 }
 
+export async function generateInitialRecurringExpenses(
+  recurringExpenseId: string,
+  teamId: string
+): Promise<GenerationResult> {
+  const result: GenerationResult = {
+    success: true,
+    generated: 0,
+    errors: [],
+    skipped: 0,
+    details: []
+  }
+
+  try {
+    const recurringExpense = await prisma.recurringExpense.findFirst({
+      where: {
+        id: recurringExpenseId,
+        teamId, // Ensure team isolation
+      },
+    })
+
+    if (!recurringExpense) {
+      result.success = false
+      result.errors.push('Recurring expense not found')
+      return result
+    }
+
+    const now = new Date()
+    const startDate = new Date(recurringExpense.startDate)
+    let currentDate = new Date(startDate)
+    let generated = 0
+
+    // Generate all expenses from start date up to current month
+    while (currentDate <= now && generated < 50) { // Safety limit
+      if (shouldGenerateExpense(recurringExpense, currentDate)) {
+        // Determine if this expense should be marked as paid (past months)
+        const isPastExpense = currentDate < now &&
+          (now.getFullYear() > currentDate.getFullYear() ||
+           (now.getFullYear() === currentDate.getFullYear() && now.getMonth() > currentDate.getMonth()))
+
+        const expenseResult = await generateExpenseForDate(recurringExpense, currentDate, isPastExpense)
+
+        if (expenseResult.success) {
+          generated++
+          result.generated++
+        } else {
+          if (expenseResult.error !== 'Expense already exists for this date') {
+            result.errors.push(`${recurringExpense.description} (${currentDate.toDateString()}): ${expenseResult.error}`)
+          } else {
+            result.skipped++
+          }
+        }
+      }
+
+      // Calculate next occurrence
+      currentDate = calculateNextDueDate(
+        currentDate,
+        recurringExpense.frequency,
+        recurringExpense.interval,
+        recurringExpense.dayOfMonth
+      )
+    }
+
+    // Update recurring expense with correct nextDue and generatedCount
+    if (generated > 0) {
+      const nextDue = calculateNextDueDate(
+        new Date(recurringExpense.startDate),
+        recurringExpense.frequency,
+        recurringExpense.interval,
+        recurringExpense.dayOfMonth
+      )
+
+      // Find the next due date after current month
+      let futureNextDue = nextDue
+      while (futureNextDue <= now) {
+        futureNextDue = calculateNextDueDate(
+          futureNextDue,
+          recurringExpense.frequency,
+          recurringExpense.interval,
+          recurringExpense.dayOfMonth
+        )
+      }
+
+      await prisma.recurringExpense.update({
+        where: { id: recurringExpenseId },
+        data: {
+          nextDue: futureNextDue,
+          lastGenerated: now,
+          generatedCount: recurringExpense.generatedCount + generated,
+          lastError: null,
+        },
+      })
+    }
+
+    result.details.push({
+      recurringExpenseId,
+      generated: result.generated,
+      error: result.errors[0]
+    })
+
+  } catch (error) {
+    console.error('Error generating initial recurring expenses:', error)
+    result.success = false
+    result.errors.push(error instanceof Error ? error.message : 'Unknown error')
+  }
+
+  return result
+}
+
 export async function generateForSpecificRecurringExpense(
   recurringExpenseId: string,
   teamId: string
@@ -386,7 +499,7 @@ export async function generateForSpecificRecurringExpense(
     const nextDue = new Date(recurringExpense.nextDue)
 
     if (shouldGenerateExpense(recurringExpense, nextDue)) {
-      const expenseResult = await generateExpenseForDate(recurringExpense, nextDue)
+      const expenseResult = await generateExpenseForDate(recurringExpense, nextDue, false)
 
       if (expenseResult.success) {
         result.generated = 1

@@ -46,6 +46,7 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get('category')
     const type = searchParams.get('type')
     const vendor = searchParams.get('vendor')
+    const isRecurring = searchParams.get('isRecurring')
 
     // Sorting parameters
     const sortBy = searchParams.get('sortBy') || 'dueDate'
@@ -75,6 +76,14 @@ export async function GET(request: NextRequest) {
     if (category && category !== 'all') where.category = category
     if (type && type !== 'all') where.type = type
     if (vendor) where.vendor = { contains: vendor }
+
+    // Handle isRecurring filter
+    if (isRecurring === 'true') {
+      where.isRecurring = true
+    } else if (isRecurring === 'false') {
+      where.isRecurring = false
+    }
+    // If isRecurring is null/undefined, show all expenses
 
     if (startDate || endDate) {
       where.dueDate = {}

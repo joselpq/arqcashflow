@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { requireAuth } from '@/lib/auth-utils'
 import { createDateForStorage } from '@/lib/date-utils'
 import { createAuditContextFromAPI, auditCreate, safeAudit } from '@/lib/audit-middleware'
+import { generateInitialRecurringExpenses } from '@/lib/recurring-expense-generator'
 
 // Validation schema for recurring expenses
 const RecurringExpenseSchema = z.object({
@@ -195,6 +196,15 @@ export async function POST(request: NextRequest) {
         },
       },
     })
+
+    // Generate initial expenses for past and current periods
+    try {
+      const generationResult = await generateInitialRecurringExpenses(recurringExpense.id, teamId)
+      console.log(`Generated ${generationResult.generated} initial expenses for recurring expense ${recurringExpense.id}`)
+    } catch (error) {
+      console.error('Error generating initial expenses:', error)
+      // Don't fail the creation if generation fails, just log it
+    }
 
     // Log audit entry for recurring expense creation
     await safeAudit(async () => {
