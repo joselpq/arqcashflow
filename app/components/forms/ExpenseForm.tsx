@@ -85,7 +85,7 @@ export default function ExpenseForm({ expense, contracts, onSubmit, onCancel, lo
     if (formData.paidAmount) {
       paidAmount = parseFloat(formData.paidAmount)
       if (isNaN(paidAmount)) {
-        alert('Paid amount must be a valid number')
+        alert('Por favor, insira um valor pago válido')
         return
       }
     }

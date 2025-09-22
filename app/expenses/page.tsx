@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { formatDateForInput, formatDateFull as formatDateForDisplay, getTodayDateString, getExpenseActualStatus } from '@/lib/date-utils'
-// Supervisor imports removed - clean slate for rebuild
+import RecurringExpenseActionModal from '@/app/components/RecurringExpenseActionModal'
 
 function ExpensesPageContent() {
   const searchParams = useSearchParams()
@@ -16,7 +16,14 @@ function ExpensesPageContent() {
   const [loading, setLoading] = useState(false)
   const [editingExpense, setEditingExpense] = useState(null)
   const [viewMode, setViewMode] = useState('regular') // 'regular', 'recurring'
-  // Supervisor state removed - clean slate for rebuild
+
+  // Recurring expense action modal state
+  const [recurringActionModal, setRecurringActionModal] = useState({
+    isOpen: false,
+    expense: null,
+    action: 'edit' as 'edit' | 'delete'
+  })
+  const [recurringEditScope, setRecurringEditScope] = useState<'this' | 'future' | 'all' | null>(null)
 
   // Filters
   const [filters, setFilters] = useState({
@@ -254,6 +261,44 @@ function ExpensesPageContent() {
         return
       }
 
+      // Check if this is a recurring expense edit
+      if (editingExpense && editingExpense.recurringExpenseId && recurringEditScope) {
+        // Handle recurring expense edit
+        const updatedData = {
+          description: formData.description,
+          amount: amount,
+          category: formData.category,
+          vendor: formData.vendor || undefined,
+          notes: formData.notes || undefined,
+        }
+
+        const response = await fetch(`/api/expenses/${editingExpense.id}/recurring-action`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'edit',
+            scope: recurringEditScope,
+            updatedData
+          }),
+        })
+
+        if (response.ok) {
+          const result = await response.json()
+          alert(`${result.result.updated} despesa(s) atualizada(s) com sucesso!`)
+          resetForm()
+          setRecurringEditScope(null)
+          if (viewMode === 'regular') {
+            fetchExpenses()
+          } else {
+            fetchRecurringExpenses()
+          }
+        } else {
+          const error = await response.json()
+          alert(`Erro: ${error.error}`)
+        }
+        return
+      }
+
       // Regular expense logic (existing functionality preserved)
       const url = editingExpense ? `/api/expenses/${editingExpense.id}` : '/api/expenses'
       const method = editingExpense ? 'PUT' : 'POST'
@@ -331,10 +376,21 @@ function ExpensesPageContent() {
   }
 
   async function editExpense(expense) {
+    // Check if this is a recurring expense
+    if (expense.recurringExpenseId) {
+      setRecurringActionModal({
+        isOpen: true,
+        expense: expense,
+        action: 'edit'
+      })
+      return
+    }
+
+    // Regular expense edit
     setEditingExpense(expense)
     setFormData({
       description: expense.description,
-      amount: expense.amount.toString(),
+      amount: formatCurrencyForInput(expense.amount),
       dueDate: formatDateForInput(expense.dueDate),
       category: expense.category,
       contractId: expense.contractId || '',
@@ -344,7 +400,7 @@ function ExpensesPageContent() {
       notes: expense.notes || '',
       status: expense.status || 'pending',
       paidDate: expense.paidDate ? formatDateForInput(expense.paidDate) : '',
-      paidAmount: expense.paidAmount ? expense.paidAmount.toString() : '',
+      paidAmount: formatCurrencyForInput(expense.paidAmount),
     })
   }
 
@@ -375,6 +431,17 @@ function ExpensesPageContent() {
   }
 
   async function deleteExpense(expense) {
+    // Check if this is a recurring expense
+    if (expense.recurringExpenseId) {
+      setRecurringActionModal({
+        isOpen: true,
+        expense: expense,
+        action: 'delete'
+      })
+      return
+    }
+
+    // Regular expense delete
     if (!confirm(`Excluir despesa "${expense.description}"?`)) return
 
     try {
@@ -393,6 +460,75 @@ function ExpensesPageContent() {
     } catch (error) {
       console.error('Error deleting expense:', error)
       alert('Erro ao excluir despesa')
+    }
+  }
+
+  // Handle recurring expense actions
+  async function handleRecurringAction(scope: 'this' | 'future' | 'all') {
+    const { expense, action } = recurringActionModal
+
+    try {
+      if (action === 'edit') {
+        // For edit action, we need to get the updated data from the form
+        // For now, we'll implement a direct edit approach
+        await handleRecurringEdit(expense, scope)
+      } else {
+        await handleRecurringDelete(expense, scope)
+      }
+    } catch (error) {
+      console.error(`Error performing recurring ${action}:`, error)
+      alert(`Erro ao ${action === 'edit' ? 'editar' : 'excluir'} despesa recorrente`)
+    }
+  }
+
+  async function handleRecurringEdit(expense: any, scope: 'this' | 'future' | 'all') {
+    // Open the regular edit form for the user to make changes
+    // Then we'll modify the form submission to handle the scope
+    setEditingExpense(expense)
+    setFormData({
+      description: expense.description,
+      amount: formatCurrencyForInput(expense.amount),
+      dueDate: formatDateForInput(expense.dueDate),
+      category: expense.category,
+      contractId: expense.contractId || '',
+      vendor: expense.vendor || '',
+      invoiceNumber: expense.invoiceNumber || '',
+      type: expense.type,
+      notes: expense.notes || '',
+      status: expense.status || 'pending',
+      paidDate: expense.paidDate ? formatDateForInput(expense.paidDate) : '',
+      paidAmount: formatCurrencyForInput(expense.paidAmount),
+    })
+
+    // Store the scope for later use in form submission
+    setRecurringEditScope(scope)
+  }
+
+  async function handleRecurringDelete(expense: any, scope: 'this' | 'future' | 'all') {
+    const response = await fetch(`/api/expenses/${expense.id}/recurring-action`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        action: 'delete',
+        scope: scope
+      })
+    })
+
+    if (response.ok) {
+      const result = await response.json()
+
+      // Refresh the appropriate view
+      if (viewMode === 'regular') {
+        fetchExpenses()
+      } else {
+        fetchRecurringExpenses()
+      }
+
+      alert(`${result.result.deleted} despesa(s) excluída(s) com sucesso!`)
+    } else {
+      throw new Error('Failed to delete recurring expense')
     }
   }
 
@@ -1081,6 +1217,15 @@ function ExpensesPageContent() {
           </div>
         </div>
       </div>
+
+      {/* Recurring Expense Action Modal */}
+      <RecurringExpenseActionModal
+        isOpen={recurringActionModal.isOpen}
+        onClose={() => setRecurringActionModal({ ...recurringActionModal, isOpen: false })}
+        expense={recurringActionModal.expense}
+        action={recurringActionModal.action}
+        onActionConfirm={handleRecurringAction}
+      />
     </div>
   )
 }

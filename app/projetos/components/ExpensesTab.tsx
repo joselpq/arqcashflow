@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import { formatDateForInput, formatDateFull as formatDateForDisplay, getTodayDateString, getExpenseActualStatus } from '@/lib/date-utils'
 import Modal from '../../components/Modal'
 import EnhancedExpenseForm from '../../components/forms/EnhancedExpenseForm'
+import RecurringExpenseActionModal from '../../components/RecurringExpenseActionModal'
 
 export default function ExpensesTab() {
   const searchParams = useSearchParams()
@@ -19,6 +20,13 @@ export default function ExpensesTab() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingExpense, setEditingExpense] = useState(null)
   // Removed viewMode - now using filters.recurrenceType
+
+  // Recurring expense action modal state
+  const [recurringActionModal, setRecurringActionModal] = useState({
+    isOpen: false,
+    expense: null,
+    action: 'edit' as 'edit' | 'delete'
+  })
   const [isMarkPaidModalOpen, setIsMarkPaidModalOpen] = useState(false)
   const [expenseToMark, setExpenseToMark] = useState<any>(null)
   const [markPaidData, setMarkPaidData] = useState({
@@ -157,6 +165,17 @@ export default function ExpensesTab() {
   }
 
   function openEditModal(expense: any) {
+    // Check if this is a recurring expense
+    if (expense.recurringExpenseId) {
+      setRecurringActionModal({
+        isOpen: true,
+        expense: expense,
+        action: 'edit'
+      })
+      return
+    }
+
+    // Regular expense edit
     setEditingExpense(expense)
     setIsModalOpen(true)
   }
@@ -182,6 +201,33 @@ export default function ExpensesTab() {
           closeModal()
           // Switch filter to show recurring expenses
           setFilters({ ...filters, recurrenceType: 'recurring' })
+        } else {
+          const error = await response.json()
+          alert(`Erro: ${error.error}`)
+        }
+      } else if (editingExpense && editingExpense.recurringExpenseId && editingExpense.recurringEditScope) {
+        // Handle recurring expense edit
+        const response = await fetch(`/api/expenses/${editingExpense.id}/recurring-action`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'edit',
+            scope: editingExpense.recurringEditScope,
+            updatedData: {
+              description: expenseData.description,
+              amount: typeof expenseData.amount === 'string' ? parseFloat(expenseData.amount) : expenseData.amount,
+              category: expenseData.category,
+              vendor: expenseData.vendor,
+              notes: expenseData.notes,
+            }
+          }),
+        })
+
+        if (response.ok) {
+          const result = await response.json()
+          alert(`${result.result.updated} despesa(s) atualizada(s) com sucesso!`)
+          closeModal()
+          await fetchExpenses()
         } else {
           const error = await response.json()
           alert(`Erro: ${error.error}`)
@@ -212,15 +258,70 @@ export default function ExpensesTab() {
     }
   }
 
+  // Handle recurring expense actions
+  async function handleRecurringAction(scope: 'this' | 'future' | 'all') {
+    const { expense, action } = recurringActionModal
+
+    try {
+      if (action === 'edit') {
+        await handleRecurringEdit(expense, scope)
+      } else {
+        await handleRecurringDelete(expense, scope)
+      }
+    } catch (error) {
+      console.error(`Error performing recurring ${action}:`, error)
+      alert(`Erro ao ${action === 'edit' ? 'editar' : 'excluir'} despesa recorrente`)
+    }
+  }
+
+  async function handleRecurringEdit(expense: any, scope: 'this' | 'future' | 'all') {
+    // For the projetos page, we'll open the edit modal with the enhanced form
+    // The EnhancedExpenseForm will handle the recurring logic
+    setEditingExpense({ ...expense, recurringEditScope: scope })
+    setIsModalOpen(true)
+  }
+
+  async function handleRecurringDelete(expense: any, scope: 'this' | 'future' | 'all') {
+    const response = await fetch(`/api/expenses/${expense.id}/recurring-action`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        action: 'delete',
+        scope: scope
+      })
+    })
+
+    if (response.ok) {
+      const result = await response.json()
+      await fetchExpenses()
+      alert(`${result.result.deleted} despesa(s) excluída(s) com sucesso!`)
+    } else {
+      throw new Error('Failed to delete recurring expense')
+    }
+  }
+
   // Removed unused recurring form functions - now handled in EnhancedExpenseForm
 
-  async function deleteExpense(id: string) {
+  async function deleteExpense(expense: any) {
+    // Check if this is a recurring expense
+    if (expense.recurringExpenseId) {
+      setRecurringActionModal({
+        isOpen: true,
+        expense: expense,
+        action: 'delete'
+      })
+      return
+    }
+
+    // Regular expense delete
     if (!confirm('Are you sure you want to delete this expense?')) {
       return
     }
 
     try {
-      const res = await fetch(`/api/expenses/${id}`, {
+      const res = await fetch(`/api/expenses/${expense.id}`, {
         method: 'DELETE'
       })
 
@@ -550,7 +651,7 @@ export default function ExpensesTab() {
                           ✏️
                         </button>
                         <button
-                          onClick={() => deleteExpense(expense.id)}
+                          onClick={() => deleteExpense(expense)}
                           className="bg-red-600 text-white px-2 py-1 rounded text-xs hover:bg-red-700 font-medium transition-colors"
                           title="Excluir despesa"
                         >
@@ -650,7 +751,14 @@ export default function ExpensesTab() {
         </div>
       </Modal>
 
-      {/* Removed old recurring modal - now handled in unified form */}
+      {/* Recurring Expense Action Modal */}
+      <RecurringExpenseActionModal
+        isOpen={recurringActionModal.isOpen}
+        onClose={() => setRecurringActionModal({ ...recurringActionModal, isOpen: false })}
+        expense={recurringActionModal.expense}
+        action={recurringActionModal.action}
+        onActionConfirm={handleRecurringAction}
+      />
     </div>
   )
 }
