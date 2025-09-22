@@ -446,3 +446,58 @@ npx prisma generate
 3. **File uploads**: Not implemented yet (Excel is download-only)
 4. **API rate limits**: OpenAI has usage limits
 5. **Database connections**: Use connection pooling in production
+
+## Lessons Learned
+
+### Case Study: The "Precision Bug" Investigation (September 2024)
+
+**Problem**: Financial values were mysteriously changing after user input:
+- Input: 200 → Stored: 198
+- Input: 600 → Stored: 595 or 597
+- Input: 30000 → Stored: 29997
+- Input: 1000 → Stored: 997
+
+**Initial Investigation**:
+We suspected JavaScript floating-point precision issues and spent considerable time investigating:
+- Database storage (PostgreSQL DOUBLE PRECISION)
+- API serialization/deserialization
+- Prisma ORM conversion
+- Object spread timing in form submissions
+
+**Extensive Debugging Setup**:
+Added comprehensive logging at multiple levels:
+- Form level: parseFloat() conversion tracking
+- API level: request body value tracking
+- Database level: Prisma operation tracking
+- Display level: rendering value tracking
+
+**Multiple Fix Attempts**:
+1. **Object preparation pattern**: Separating data object creation from function calls
+2. **API endpoint restructuring**: Avoiding direct spread in Prisma calls
+3. **Comprehensive value tracking**: Following values through entire pipeline
+
+**Breakthrough Discovery**:
+The actual root cause was discovered through user observation - when hovering over number input fields and scrolling, the scroll wheel was incrementing/decrementing the values without the user realizing it.
+
+**Actual Problem**: HTML number inputs respond to scroll wheel events even without visible spinners, causing accidental value changes during normal page scrolling.
+
+**Simple Solution**:
+```typescript
+// Add to all number inputs
+onWheel={(e) => e.currentTarget.blur()}
+```
+
+**Key Takeaways**:
+1. **User interaction bugs can masquerade as complex technical issues**
+2. **Always observe actual user behavior, not just code behavior**
+3. **HTML form elements have hidden behaviors that can cause unexpected UX issues**
+4. **Scroll wheel behavior on number inputs affects UX even with hidden spinners**
+5. **Sometimes the simplest explanation (accidental user input) is correct**
+
+**Prevention Strategy**:
+- Always disable scroll behavior on number inputs in financial applications
+- Test with actual users performing real workflows, not just isolated testing
+- Consider that "random" data corruption might indicate interaction bugs
+- Investigate UI/UX causes before diving deep into data pipeline debugging
+
+This case demonstrates how a complex technical investigation can reveal a simple UX problem, emphasizing the importance of holistic debugging approaches.

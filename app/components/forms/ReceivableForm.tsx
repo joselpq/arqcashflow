@@ -84,18 +84,7 @@ export default function ReceivableForm({ receivable, contracts, onSubmit, onCanc
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
 
-    // 🔍 DEBUG: Track value conversion at receivable form level
-    console.log('💰 RECEIVABLE FORM DEBUG - Value tracking:')
-    console.log('  - Raw input value (string):', `"${formData.amount}"`)
-    console.log('  - Input value type:', typeof formData.amount)
-    console.log('  - Input value length:', formData.amount.length)
-
     const amount = parseFloat(formData.amount)
-    console.log('  - parseFloat result:', amount)
-    console.log('  - parseFloat result type:', typeof amount)
-    console.log('  - Is number exact?:', amount.toString() === formData.amount)
-    console.log('  - Precision test:', amount === Math.round(amount * 100) / 100)
-
     if (isNaN(amount)) {
       alert('Amount must be a valid number')
       return
@@ -103,9 +92,7 @@ export default function ReceivableForm({ receivable, contracts, onSubmit, onCanc
 
     let receivedAmount = null
     if (formData.receivedAmount) {
-      console.log('  - Raw receivedAmount (string):', `"${formData.receivedAmount}"`)
       receivedAmount = parseFloat(formData.receivedAmount)
-      console.log('  - parseFloat receivedAmount result:', receivedAmount)
       if (isNaN(receivedAmount)) {
         alert('Received amount must be a valid number')
         return
@@ -124,10 +111,6 @@ export default function ReceivableForm({ receivable, contracts, onSubmit, onCanc
       receivedAmount,
       status
     }
-
-    console.log('  - Final submission data:', submissionData)
-    console.log('  - Final amount in submission:', submissionData.amount)
-    console.log('  - Final receivedAmount in submission:', submissionData.receivedAmount)
 
     await onSubmit(submissionData)
   }

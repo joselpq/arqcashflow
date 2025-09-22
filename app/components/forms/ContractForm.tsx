@@ -71,18 +71,7 @@ export default function ContractForm({ contract, onSubmit, onCancel, loading = f
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
 
-    // 🔍 DEBUG: Track value conversion at form level
-    console.log('📝 FORM DEBUG - Value tracking:')
-    console.log('  - Raw input value (string):', `"${formData.totalValue}"`)
-    console.log('  - Input value type:', typeof formData.totalValue)
-    console.log('  - Input value length:', formData.totalValue.length)
-
     const totalValue = parseFloat(formData.totalValue)
-    console.log('  - parseFloat result:', totalValue)
-    console.log('  - parseFloat result type:', typeof totalValue)
-    console.log('  - Is number exact?:', totalValue.toString() === formData.totalValue)
-    console.log('  - Precision test:', totalValue === Math.round(totalValue * 100) / 100)
-
     if (isNaN(totalValue)) {
       alert('Total value must be a valid number')
       return
@@ -92,9 +81,6 @@ export default function ContractForm({ contract, onSubmit, onCancel, loading = f
       ...formData,
       totalValue
     }
-
-    console.log('  - Final submission data:', submissionData)
-    console.log('  - Final totalValue in submission:', submissionData.totalValue)
 
     await onSubmit(submissionData)
   }
