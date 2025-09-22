@@ -1,8 +1,8 @@
 ---
-title: "Contracts API"
+title: "Expenses API"
 type: "reference"
 audience: ["developer", "agent"]
-contexts: ["api", "contracts", "rest", "database"]
+contexts: ["api", "expenses", "rest", "database"]
 complexity: "intermediate"
 last_updated: "2025-09-22"
 version: "1.0"
@@ -13,13 +13,13 @@ related:
 dependencies: ["next.js", "prisma", "zod"]
 ---
 
-# Contracts API
+# Expenses API
 
-Comprehensive API reference for contracts management operations.
+Comprehensive API reference for expenses management operations.
 
 ## Context for LLM Agents
 
-**Scope**: Complete contracts API operations including CRUD, filtering, sorting, and business logic
+**Scope**: Complete expenses API operations including CRUD, filtering, sorting, and business logic
 **Prerequisites**: Understanding of REST APIs, Next.js App Router, Prisma ORM, and team-based data isolation
 **Key Patterns**:
 - RESTful endpoint design with standard HTTP methods
@@ -30,15 +30,15 @@ Comprehensive API reference for contracts management operations.
 
 ## Endpoint Overview
 
-**Base URL**: `/api/contracts`
+**Base URL**: `/api/expenses`
 **Methods**: GET, POST
 **Authentication**: Required
 **Team Isolation**: Yes
 
 
-## GET /api/contracts
+## GET /api/expenses
 
-Retrieve contracts records with optional filtering and sorting.
+Retrieve expenses records with optional filtering and sorting.
 
 ### Query Parameters
 
@@ -46,19 +46,21 @@ Retrieve contracts records with optional filtering and sorting.
 |-----------|------|-------------|---------|
 | `sortBy` | string | Sort field | `createdAt` |
 | `sortOrder` | string | Sort direction (`asc`/`desc`) | `desc` |
+| `status` | string | Filter by status | `all` |
+| `category` | string | Filter by category | `all` |
 
 ### Example Request
 
 ```bash
-curl -X GET "http://localhost:3000/api/contracts?status=active&sortBy=createdAt&sortOrder=desc" \
+curl -X GET "http://localhost:3000/api/expenses?status=active&sortBy=createdAt&sortOrder=desc" \
   -H "Content-Type: application/json"
 ```
 
 ### Response Format
 
 ```typescript
-interface ContractsResponse {
-  data: Contracts[];
+interface ExpensesResponse {
+  data: Expenses[];
   total: number;
   filters: {
     status: string;
@@ -71,9 +73,9 @@ interface ContractsResponse {
 
 
 
-## POST /api/contracts
+## POST /api/expenses
 
-Create a new contracts record.
+Create a new expenses record.
 
 ### Request Body
 
@@ -81,26 +83,33 @@ Create a new contracts record.
 Schema validation using Zod:
 
 ```typescript
-const ContractSchema = z.object({
-  clientName: z.string(),
-  projectName: z.string(),
-  description: z.string().optional(),
-  totalValue: z.number(),
-  signedDate: z.string(),
-  status: z.string().optional(),
-  category: z.string().optional(),
-  notes: z.string().optional(),
-});
+const ExpenseSchema = z.object({
+  description: z.string().min(1, 'Description is required'),
+  amount: z.number().positive('Amount must be positive'),
+  dueDate: z.string().transform((str) => createDateForStorage(str)),
+  category: z.string().min(1, 'Category is required'),
+  contractId: z.string().optional().nullable().transform(val => val === '' ? null : val),
+  vendor: z.string().optional().nullable().transform(val => val === '' ? null : val),
+  invoiceNumber: z.string().optional().nullable().transform(val => val === '' ? null : val),
+  type: z.enum(['operational', 'project', 'administrative']).optional().nullable(),
+  isRecurring: z.boolean().default(false),
+  notes: z.string().optional().nullable().transform(val => val === '' ? null : val),
+  receiptUrl: z.string().optional().nullable().transform(val => val === '' ? null : val),
+  status: z.enum(['pending', 'paid', 'overdue', 'cancelled']).default('pending'),
+  paidDate: z.union([z.string(), z.date()]).nullable().optional().transform(val => {
+    if (val === '' || val === null || val === undefined) return null
+    return val instanceof Date ? val : createDateForStorage(val)
+  });
 ```
 
 
 ### Example Request
 
 ```bash
-curl -X POST "http://localhost:3000/api/contracts" \
+curl -X POST "http://localhost:3000/api/expenses" \
   -H "Content-Type: application/json" \
   -d '{
-    "example": "Request body will be populated based on the specific contracts schema"
+    "example": "Request body will be populated based on the specific expenses schema"
   }'
 ```
 
@@ -108,7 +117,7 @@ curl -X POST "http://localhost:3000/api/contracts" \
 
 ```typescript
 interface CreateResponse {
-  data: Contracts;
+  data: Expenses;
   alerts?: AIAlert[];
 }
 ```
@@ -143,7 +152,7 @@ interface ErrorResponse {
 
 ## Team Isolation
 
-All contracts operations are automatically filtered by team context:
+All expenses operations are automatically filtered by team context:
 
 ```typescript
 // All queries include team isolation

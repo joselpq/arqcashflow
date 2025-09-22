@@ -1,8 +1,8 @@
 ---
-title: "Contracts API"
+title: "Register API"
 type: "reference"
 audience: ["developer", "agent"]
-contexts: ["api", "contracts", "rest", "database"]
+contexts: ["api", "register", "rest", "database"]
 complexity: "intermediate"
 last_updated: "2025-09-22"
 version: "1.0"
@@ -13,67 +13,34 @@ related:
 dependencies: ["next.js", "prisma", "zod"]
 ---
 
-# Contracts API
+# Register API
 
-Comprehensive API reference for contracts management operations.
+Comprehensive API reference for register management operations.
 
 ## Context for LLM Agents
 
-**Scope**: Complete contracts API operations including CRUD, filtering, sorting, and business logic
+**Scope**: Complete register API operations including CRUD, filtering, sorting, and business logic
 **Prerequisites**: Understanding of REST APIs, Next.js App Router, Prisma ORM, and team-based data isolation
 **Key Patterns**:
 - RESTful endpoint design with standard HTTP methods
 - Team-based data isolation for multi-tenant security
 - Zod validation for type-safe request/response handling
 - Consistent error handling and response formats
-- Session-based authentication required for all operations
+
 
 ## Endpoint Overview
 
-**Base URL**: `/api/contracts`
-**Methods**: GET, POST
-**Authentication**: Required
+**Base URL**: `/api/auth/register`
+**Methods**: POST
+**Authentication**: None
 **Team Isolation**: Yes
 
 
-## GET /api/contracts
-
-Retrieve contracts records with optional filtering and sorting.
-
-### Query Parameters
-
-| Parameter | Type | Description | Default |
-|-----------|------|-------------|---------|
-| `sortBy` | string | Sort field | `createdAt` |
-| `sortOrder` | string | Sort direction (`asc`/`desc`) | `desc` |
-
-### Example Request
-
-```bash
-curl -X GET "http://localhost:3000/api/contracts?status=active&sortBy=createdAt&sortOrder=desc" \
-  -H "Content-Type: application/json"
-```
-
-### Response Format
-
-```typescript
-interface ContractsResponse {
-  data: Contracts[];
-  total: number;
-  filters: {
-    status: string;
-    category?: string;
-    sortBy: string;
-    sortOrder: 'asc' | 'desc';
-  };
-}
-```
 
 
+## POST /api/auth/register
 
-## POST /api/contracts
-
-Create a new contracts record.
+Create a new register record.
 
 ### Request Body
 
@@ -81,15 +48,10 @@ Create a new contracts record.
 Schema validation using Zod:
 
 ```typescript
-const ContractSchema = z.object({
-  clientName: z.string(),
-  projectName: z.string(),
-  description: z.string().optional(),
-  totalValue: z.number(),
-  signedDate: z.string(),
-  status: z.string().optional(),
-  category: z.string().optional(),
-  notes: z.string().optional(),
+const registerSchema = z.object({
+  email: z.string().email("Invalid email format"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  name: z.string().optional()
 });
 ```
 
@@ -97,10 +59,10 @@ const ContractSchema = z.object({
 ### Example Request
 
 ```bash
-curl -X POST "http://localhost:3000/api/contracts" \
+curl -X POST "http://localhost:3000/api/auth/register" \
   -H "Content-Type: application/json" \
   -d '{
-    "example": "Request body will be populated based on the specific contracts schema"
+    "example": "Request body will be populated based on the specific register schema"
   }'
 ```
 
@@ -108,7 +70,7 @@ curl -X POST "http://localhost:3000/api/contracts" \
 
 ```typescript
 interface CreateResponse {
-  data: Contracts;
+  data: Register;
   alerts?: AIAlert[];
 }
 ```
@@ -143,7 +105,7 @@ interface ErrorResponse {
 
 ## Team Isolation
 
-All contracts operations are automatically filtered by team context:
+All register operations are automatically filtered by team context:
 
 ```typescript
 // All queries include team isolation
@@ -160,7 +122,7 @@ This ensures complete data separation between teams in the multi-tenant system.
 
 ### Business Logic
 - **Team Isolation**: Enforced at API level
-- **Authentication**: Required for all operations
+- **Authentication**: Public access
 - **Validation**: Zod schemas ensure type safety
 - **Error Handling**: Consistent error responses across all endpoints
 

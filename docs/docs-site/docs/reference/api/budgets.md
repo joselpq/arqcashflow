@@ -1,8 +1,8 @@
 ---
-title: "Contracts API"
+title: "Budgets API"
 type: "reference"
 audience: ["developer", "agent"]
-contexts: ["api", "contracts", "rest", "database"]
+contexts: ["api", "budgets", "rest", "database"]
 complexity: "intermediate"
 last_updated: "2025-09-22"
 version: "1.0"
@@ -13,13 +13,13 @@ related:
 dependencies: ["next.js", "prisma", "zod"]
 ---
 
-# Contracts API
+# Budgets API
 
-Comprehensive API reference for contracts management operations.
+Comprehensive API reference for budgets management operations.
 
 ## Context for LLM Agents
 
-**Scope**: Complete contracts API operations including CRUD, filtering, sorting, and business logic
+**Scope**: Complete budgets API operations including CRUD, filtering, sorting, and business logic
 **Prerequisites**: Understanding of REST APIs, Next.js App Router, Prisma ORM, and team-based data isolation
 **Key Patterns**:
 - RESTful endpoint design with standard HTTP methods
@@ -30,35 +30,35 @@ Comprehensive API reference for contracts management operations.
 
 ## Endpoint Overview
 
-**Base URL**: `/api/contracts`
+**Base URL**: `/api/budgets`
 **Methods**: GET, POST
 **Authentication**: Required
 **Team Isolation**: Yes
 
 
-## GET /api/contracts
+## GET /api/budgets
 
-Retrieve contracts records with optional filtering and sorting.
+Retrieve budgets records with optional filtering and sorting.
 
 ### Query Parameters
 
 | Parameter | Type | Description | Default |
 |-----------|------|-------------|---------|
-| `sortBy` | string | Sort field | `createdAt` |
-| `sortOrder` | string | Sort direction (`asc`/`desc`) | `desc` |
+| `status` | string | Filter by status | `all` |
+| `category` | string | Filter by category | `all` |
 
 ### Example Request
 
 ```bash
-curl -X GET "http://localhost:3000/api/contracts?status=active&sortBy=createdAt&sortOrder=desc" \
+curl -X GET "http://localhost:3000/api/budgets?status=active&sortBy=createdAt&sortOrder=desc" \
   -H "Content-Type: application/json"
 ```
 
 ### Response Format
 
 ```typescript
-interface ContractsResponse {
-  data: Contracts[];
+interface BudgetsResponse {
+  data: Budgets[];
   total: number;
   filters: {
     status: string;
@@ -71,9 +71,9 @@ interface ContractsResponse {
 
 
 
-## POST /api/contracts
+## POST /api/budgets
 
-Create a new contracts record.
+Create a new budgets record.
 
 ### Request Body
 
@@ -81,14 +81,15 @@ Create a new contracts record.
 Schema validation using Zod:
 
 ```typescript
-const ContractSchema = z.object({
-  clientName: z.string(),
-  projectName: z.string(),
-  description: z.string().optional(),
-  totalValue: z.number(),
-  signedDate: z.string(),
-  status: z.string().optional(),
-  category: z.string().optional(),
+const BudgetSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  category: z.string().min(1, 'Category is required'),
+  budgetAmount: z.number().positive('Budget amount must be positive'),
+  period: z.enum(['monthly', 'quarterly', 'project', 'annual']),
+  startDate: z.string().transform((str) => new Date(str)),
+  endDate: z.string().transform((str) => new Date(str)),
+  contractId: z.string().optional(),
+  isActive: z.boolean().default(true),
   notes: z.string().optional(),
 });
 ```
@@ -97,10 +98,10 @@ const ContractSchema = z.object({
 ### Example Request
 
 ```bash
-curl -X POST "http://localhost:3000/api/contracts" \
+curl -X POST "http://localhost:3000/api/budgets" \
   -H "Content-Type: application/json" \
   -d '{
-    "example": "Request body will be populated based on the specific contracts schema"
+    "example": "Request body will be populated based on the specific budgets schema"
   }'
 ```
 
@@ -108,7 +109,7 @@ curl -X POST "http://localhost:3000/api/contracts" \
 
 ```typescript
 interface CreateResponse {
-  data: Contracts;
+  data: Budgets;
   alerts?: AIAlert[];
 }
 ```
@@ -143,7 +144,7 @@ interface ErrorResponse {
 
 ## Team Isolation
 
-All contracts operations are automatically filtered by team context:
+All budgets operations are automatically filtered by team context:
 
 ```typescript
 // All queries include team isolation

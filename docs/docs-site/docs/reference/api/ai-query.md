@@ -1,8 +1,8 @@
 ---
-title: "Contracts API"
+title: "Query API"
 type: "reference"
 audience: ["developer", "agent"]
-contexts: ["api", "contracts", "rest", "database"]
+contexts: ["api", "query", "rest", "database"]
 complexity: "intermediate"
 last_updated: "2025-09-22"
 version: "1.0"
@@ -13,13 +13,13 @@ related:
 dependencies: ["next.js", "prisma", "zod"]
 ---
 
-# Contracts API
+# Query API
 
-Comprehensive API reference for contracts management operations.
+Comprehensive API reference for query management operations.
 
 ## Context for LLM Agents
 
-**Scope**: Complete contracts API operations including CRUD, filtering, sorting, and business logic
+**Scope**: Complete query API operations including CRUD, filtering, sorting, and business logic
 **Prerequisites**: Understanding of REST APIs, Next.js App Router, Prisma ORM, and team-based data isolation
 **Key Patterns**:
 - RESTful endpoint design with standard HTTP methods
@@ -30,50 +30,17 @@ Comprehensive API reference for contracts management operations.
 
 ## Endpoint Overview
 
-**Base URL**: `/api/contracts`
-**Methods**: GET, POST
+**Base URL**: `/api/ai/query`
+**Methods**: POST
 **Authentication**: Required
 **Team Isolation**: Yes
 
 
-## GET /api/contracts
-
-Retrieve contracts records with optional filtering and sorting.
-
-### Query Parameters
-
-| Parameter | Type | Description | Default |
-|-----------|------|-------------|---------|
-| `sortBy` | string | Sort field | `createdAt` |
-| `sortOrder` | string | Sort direction (`asc`/`desc`) | `desc` |
-
-### Example Request
-
-```bash
-curl -X GET "http://localhost:3000/api/contracts?status=active&sortBy=createdAt&sortOrder=desc" \
-  -H "Content-Type: application/json"
-```
-
-### Response Format
-
-```typescript
-interface ContractsResponse {
-  data: Contracts[];
-  total: number;
-  filters: {
-    status: string;
-    category?: string;
-    sortBy: string;
-    sortOrder: 'asc' | 'desc';
-  };
-}
-```
 
 
+## POST /api/ai/query
 
-## POST /api/contracts
-
-Create a new contracts record.
+Create a new query record.
 
 ### Request Body
 
@@ -81,26 +48,22 @@ Create a new contracts record.
 Schema validation using Zod:
 
 ```typescript
-const ContractSchema = z.object({
-  clientName: z.string(),
-  projectName: z.string(),
-  description: z.string().optional(),
-  totalValue: z.number(),
-  signedDate: z.string(),
-  status: z.string().optional(),
-  category: z.string().optional(),
-  notes: z.string().optional(),
-});
+const QuerySchema = z.object({
+  question: z.string().min(1),
+  history: z.array(z.object({
+    question: z.string(),
+    answer: z.string()
+  });
 ```
 
 
 ### Example Request
 
 ```bash
-curl -X POST "http://localhost:3000/api/contracts" \
+curl -X POST "http://localhost:3000/api/ai/query" \
   -H "Content-Type: application/json" \
   -d '{
-    "example": "Request body will be populated based on the specific contracts schema"
+    "example": "Request body will be populated based on the specific query schema"
   }'
 ```
 
@@ -108,7 +71,7 @@ curl -X POST "http://localhost:3000/api/contracts" \
 
 ```typescript
 interface CreateResponse {
-  data: Contracts;
+  data: Query;
   alerts?: AIAlert[];
 }
 ```
@@ -143,7 +106,7 @@ interface ErrorResponse {
 
 ## Team Isolation
 
-All contracts operations are automatically filtered by team context:
+All query operations are automatically filtered by team context:
 
 ```typescript
 // All queries include team isolation

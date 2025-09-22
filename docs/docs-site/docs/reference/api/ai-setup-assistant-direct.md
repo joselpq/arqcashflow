@@ -1,8 +1,8 @@
 ---
-title: "Contracts API"
+title: "Setup-assistant-direct API"
 type: "reference"
 audience: ["developer", "agent"]
-contexts: ["api", "contracts", "rest", "database"]
+contexts: ["api", "setup-assistant-direct", "rest", "database"]
 complexity: "intermediate"
 last_updated: "2025-09-22"
 version: "1.0"
@@ -13,13 +13,13 @@ related:
 dependencies: ["next.js", "prisma", "zod"]
 ---
 
-# Contracts API
+# Setup-assistant-direct API
 
-Comprehensive API reference for contracts management operations.
+Comprehensive API reference for setup-assistant-direct management operations.
 
 ## Context for LLM Agents
 
-**Scope**: Complete contracts API operations including CRUD, filtering, sorting, and business logic
+**Scope**: Complete setup-assistant-direct API operations including CRUD, filtering, sorting, and business logic
 **Prerequisites**: Understanding of REST APIs, Next.js App Router, Prisma ORM, and team-based data isolation
 **Key Patterns**:
 - RESTful endpoint design with standard HTTP methods
@@ -30,77 +30,29 @@ Comprehensive API reference for contracts management operations.
 
 ## Endpoint Overview
 
-**Base URL**: `/api/contracts`
-**Methods**: GET, POST
+**Base URL**: `/api/ai/setup-assistant-direct`
+**Methods**: POST
 **Authentication**: Required
 **Team Isolation**: Yes
 
 
-## GET /api/contracts
-
-Retrieve contracts records with optional filtering and sorting.
-
-### Query Parameters
-
-| Parameter | Type | Description | Default |
-|-----------|------|-------------|---------|
-| `sortBy` | string | Sort field | `createdAt` |
-| `sortOrder` | string | Sort direction (`asc`/`desc`) | `desc` |
-
-### Example Request
-
-```bash
-curl -X GET "http://localhost:3000/api/contracts?status=active&sortBy=createdAt&sortOrder=desc" \
-  -H "Content-Type: application/json"
-```
-
-### Response Format
-
-```typescript
-interface ContractsResponse {
-  data: Contracts[];
-  total: number;
-  filters: {
-    status: string;
-    category?: string;
-    sortBy: string;
-    sortOrder: 'asc' | 'desc';
-  };
-}
-```
 
 
+## POST /api/ai/setup-assistant-direct
 
-## POST /api/contracts
-
-Create a new contracts record.
+Create a new setup-assistant-direct record.
 
 ### Request Body
 
 
-Schema validation using Zod:
-
-```typescript
-const ContractSchema = z.object({
-  clientName: z.string(),
-  projectName: z.string(),
-  description: z.string().optional(),
-  totalValue: z.number(),
-  signedDate: z.string(),
-  status: z.string().optional(),
-  category: z.string().optional(),
-  notes: z.string().optional(),
-});
-```
-
 
 ### Example Request
 
 ```bash
-curl -X POST "http://localhost:3000/api/contracts" \
+curl -X POST "http://localhost:3000/api/ai/setup-assistant-direct" \
   -H "Content-Type: application/json" \
   -d '{
-    "example": "Request body will be populated based on the specific contracts schema"
+    "example": "Request body will be populated based on the specific setup-assistant-direct schema"
   }'
 ```
 
@@ -108,7 +60,7 @@ curl -X POST "http://localhost:3000/api/contracts" \
 
 ```typescript
 interface CreateResponse {
-  data: Contracts;
+  data: Setup-assistant-direct;
   alerts?: AIAlert[];
 }
 ```
@@ -143,7 +95,7 @@ interface ErrorResponse {
 
 ## Team Isolation
 
-All contracts operations are automatically filtered by team context:
+All setup-assistant-direct operations are automatically filtered by team context:
 
 ```typescript
 // All queries include team isolation

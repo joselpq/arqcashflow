@@ -1,8 +1,8 @@
 ---
-title: "Contracts API"
+title: "Dashboard API"
 type: "reference"
 audience: ["developer", "agent"]
-contexts: ["api", "contracts", "rest", "database"]
+contexts: ["api", "dashboard", "rest", "database"]
 complexity: "intermediate"
 last_updated: "2025-09-22"
 version: "1.0"
@@ -13,13 +13,13 @@ related:
 dependencies: ["next.js", "prisma", "zod"]
 ---
 
-# Contracts API
+# Dashboard API
 
-Comprehensive API reference for contracts management operations.
+Comprehensive API reference for dashboard management operations.
 
 ## Context for LLM Agents
 
-**Scope**: Complete contracts API operations including CRUD, filtering, sorting, and business logic
+**Scope**: Complete dashboard API operations including CRUD, filtering, sorting, and business logic
 **Prerequisites**: Understanding of REST APIs, Next.js App Router, Prisma ORM, and team-based data isolation
 **Key Patterns**:
 - RESTful endpoint design with standard HTTP methods
@@ -30,35 +30,34 @@ Comprehensive API reference for contracts management operations.
 
 ## Endpoint Overview
 
-**Base URL**: `/api/contracts`
-**Methods**: GET, POST
+**Base URL**: `/api/dashboard`
+**Methods**: GET
 **Authentication**: Required
 **Team Isolation**: Yes
 
 
-## GET /api/contracts
+## GET /api/dashboard
 
-Retrieve contracts records with optional filtering and sorting.
+Retrieve dashboard records with optional filtering and sorting.
 
 ### Query Parameters
 
 | Parameter | Type | Description | Default |
 |-----------|------|-------------|---------|
-| `sortBy` | string | Sort field | `createdAt` |
-| `sortOrder` | string | Sort direction (`asc`/`desc`) | `desc` |
+| `status` | string | Filter by status | `all` |
 
 ### Example Request
 
 ```bash
-curl -X GET "http://localhost:3000/api/contracts?status=active&sortBy=createdAt&sortOrder=desc" \
+curl -X GET "http://localhost:3000/api/dashboard?status=active&sortBy=createdAt&sortOrder=desc" \
   -H "Content-Type: application/json"
 ```
 
 ### Response Format
 
 ```typescript
-interface ContractsResponse {
-  data: Contracts[];
+interface DashboardResponse {
+  data: Dashboard[];
   total: number;
   filters: {
     status: string;
@@ -70,48 +69,6 @@ interface ContractsResponse {
 ```
 
 
-
-## POST /api/contracts
-
-Create a new contracts record.
-
-### Request Body
-
-
-Schema validation using Zod:
-
-```typescript
-const ContractSchema = z.object({
-  clientName: z.string(),
-  projectName: z.string(),
-  description: z.string().optional(),
-  totalValue: z.number(),
-  signedDate: z.string(),
-  status: z.string().optional(),
-  category: z.string().optional(),
-  notes: z.string().optional(),
-});
-```
-
-
-### Example Request
-
-```bash
-curl -X POST "http://localhost:3000/api/contracts" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "example": "Request body will be populated based on the specific contracts schema"
-  }'
-```
-
-### Response
-
-```typescript
-interface CreateResponse {
-  data: Contracts;
-  alerts?: AIAlert[];
-}
-```
 
 
 
@@ -143,7 +100,7 @@ interface ErrorResponse {
 
 ## Team Isolation
 
-All contracts operations are automatically filtered by team context:
+All dashboard operations are automatically filtered by team context:
 
 ```typescript
 // All queries include team isolation

@@ -1,8 +1,8 @@
 ---
-title: "Contracts API"
+title: "Recurring-expenses API"
 type: "reference"
 audience: ["developer", "agent"]
-contexts: ["api", "contracts", "rest", "database"]
+contexts: ["api", "recurring-expenses", "rest", "database"]
 complexity: "intermediate"
 last_updated: "2025-09-22"
 version: "1.0"
@@ -13,13 +13,13 @@ related:
 dependencies: ["next.js", "prisma", "zod"]
 ---
 
-# Contracts API
+# Recurring-expenses API
 
-Comprehensive API reference for contracts management operations.
+Comprehensive API reference for recurring-expenses management operations.
 
 ## Context for LLM Agents
 
-**Scope**: Complete contracts API operations including CRUD, filtering, sorting, and business logic
+**Scope**: Complete recurring-expenses API operations including CRUD, filtering, sorting, and business logic
 **Prerequisites**: Understanding of REST APIs, Next.js App Router, Prisma ORM, and team-based data isolation
 **Key Patterns**:
 - RESTful endpoint design with standard HTTP methods
@@ -30,15 +30,15 @@ Comprehensive API reference for contracts management operations.
 
 ## Endpoint Overview
 
-**Base URL**: `/api/contracts`
+**Base URL**: `/api/recurring-expenses`
 **Methods**: GET, POST
 **Authentication**: Required
 **Team Isolation**: Yes
 
 
-## GET /api/contracts
+## GET /api/recurring-expenses
 
-Retrieve contracts records with optional filtering and sorting.
+Retrieve recurring-expenses records with optional filtering and sorting.
 
 ### Query Parameters
 
@@ -46,19 +46,21 @@ Retrieve contracts records with optional filtering and sorting.
 |-----------|------|-------------|---------|
 | `sortBy` | string | Sort field | `createdAt` |
 | `sortOrder` | string | Sort direction (`asc`/`desc`) | `desc` |
+| `status` | string | Filter by status | `all` |
+| `category` | string | Filter by category | `all` |
 
 ### Example Request
 
 ```bash
-curl -X GET "http://localhost:3000/api/contracts?status=active&sortBy=createdAt&sortOrder=desc" \
+curl -X GET "http://localhost:3000/api/recurring-expenses?status=active&sortBy=createdAt&sortOrder=desc" \
   -H "Content-Type: application/json"
 ```
 
 ### Response Format
 
 ```typescript
-interface ContractsResponse {
-  data: Contracts[];
+interface Recurring-expensesResponse {
+  data: Recurring-expenses[];
   total: number;
   filters: {
     status: string;
@@ -71,9 +73,9 @@ interface ContractsResponse {
 
 
 
-## POST /api/contracts
+## POST /api/recurring-expenses
 
-Create a new contracts record.
+Create a new recurring-expenses record.
 
 ### Request Body
 
@@ -81,26 +83,22 @@ Create a new contracts record.
 Schema validation using Zod:
 
 ```typescript
-const ContractSchema = z.object({
-  clientName: z.string(),
-  projectName: z.string(),
-  description: z.string().optional(),
-  totalValue: z.number(),
-  signedDate: z.string(),
-  status: z.string().optional(),
-  category: z.string().optional(),
-  notes: z.string().optional(),
-});
+const RecurringExpenseSchema = z.object({
+  description: z.string().min(1, 'Description is required'),
+  amount: z.number().positive('Amount must be positive'),
+  category: z.string().min(1, 'Category is required'),
+  frequency: z.enum(['weekly', 'monthly', 'quarterly', 'annual'], {
+    errorMap: () => ({ message: 'Frequency must be weekly, monthly, quarterly, or annual' });
 ```
 
 
 ### Example Request
 
 ```bash
-curl -X POST "http://localhost:3000/api/contracts" \
+curl -X POST "http://localhost:3000/api/recurring-expenses" \
   -H "Content-Type: application/json" \
   -d '{
-    "example": "Request body will be populated based on the specific contracts schema"
+    "example": "Request body will be populated based on the specific recurring-expenses schema"
   }'
 ```
 
@@ -108,7 +106,7 @@ curl -X POST "http://localhost:3000/api/contracts" \
 
 ```typescript
 interface CreateResponse {
-  data: Contracts;
+  data: Recurring-expenses;
   alerts?: AIAlert[];
 }
 ```
@@ -143,7 +141,7 @@ interface ErrorResponse {
 
 ## Team Isolation
 
-All contracts operations are automatically filtered by team context:
+All recurring-expenses operations are automatically filtered by team context:
 
 ```typescript
 // All queries include team isolation

@@ -1,0 +1,23 @@
+{
+  "name": "arqcashflow-docs-automation",
+  "version": "1.0.0",
+  "description": "Automated documentation generation and validation for ArqCashflow",
+  "scripts": {
+    "docs:generate": "npm run docs:api && npm run docs:schema",
+    "docs:api": "node generate-api-docs.js",
+    "docs:schema": "node generate-schema-docs.js",
+    "docs:validate": "node validate-docs.js",
+    "docs:build": "npm run docs:generate && cd .. && npm run build",
+    "docs:check": "npm run docs:validate && npm run docs:build",
+    "docs:clean": "rm -rf ../docs/reference/api/*.md",
+    "docs:fresh": "npm run docs:clean && npm run docs:generate",
+    "docs:ci": "npm run docs:generate && npm run docs:validate",
+    "docs:watch": "nodemon --watch ../../../app/api --watch ../../../prisma --ext ts,prisma --exec 'npm run docs:generate'"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.0"
+  },
+  "keywords": ["documentation", "automation", "api", "database", "validation"],
+  "author": "ArqCashflow Team",
+  "license": "MIT"
+}

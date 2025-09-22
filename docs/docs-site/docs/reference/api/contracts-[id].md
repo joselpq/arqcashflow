@@ -1,8 +1,8 @@
 ---
-title: "Contracts API"
+title: "[id] API"
 type: "reference"
 audience: ["developer", "agent"]
-contexts: ["api", "contracts", "rest", "database"]
+contexts: ["api", "[id]", "rest", "database"]
 complexity: "intermediate"
 last_updated: "2025-09-22"
 version: "1.0"
@@ -13,13 +13,13 @@ related:
 dependencies: ["next.js", "prisma", "zod"]
 ---
 
-# Contracts API
+# [id] API
 
-Comprehensive API reference for contracts management operations.
+Comprehensive API reference for [id] management operations.
 
 ## Context for LLM Agents
 
-**Scope**: Complete contracts API operations including CRUD, filtering, sorting, and business logic
+**Scope**: Complete [id] API operations including CRUD, filtering, sorting, and business logic
 **Prerequisites**: Understanding of REST APIs, Next.js App Router, Prisma ORM, and team-based data isolation
 **Key Patterns**:
 - RESTful endpoint design with standard HTTP methods
@@ -30,35 +30,34 @@ Comprehensive API reference for contracts management operations.
 
 ## Endpoint Overview
 
-**Base URL**: `/api/contracts`
-**Methods**: GET, POST
+**Base URL**: `/api/contracts/{id}`
+**Methods**: GET, PUT, DELETE
 **Authentication**: Required
 **Team Isolation**: Yes
 
 
-## GET /api/contracts
+## GET /api/contracts/{id}
 
-Retrieve contracts records with optional filtering and sorting.
+Retrieve [id] records with optional filtering and sorting.
 
 ### Query Parameters
 
 | Parameter | Type | Description | Default |
 |-----------|------|-------------|---------|
-| `sortBy` | string | Sort field | `createdAt` |
-| `sortOrder` | string | Sort direction (`asc`/`desc`) | `desc` |
+
 
 ### Example Request
 
 ```bash
-curl -X GET "http://localhost:3000/api/contracts?status=active&sortBy=createdAt&sortOrder=desc" \
+curl -X GET "http://localhost:3000/api/contracts/{id}?status=active&sortBy=createdAt&sortOrder=desc" \
   -H "Content-Type: application/json"
 ```
 
 ### Response Format
 
 ```typescript
-interface ContractsResponse {
-  data: Contracts[];
+interface [id]Response {
+  data: [id][];
   total: number;
   filters: {
     status: string;
@@ -71,51 +70,51 @@ interface ContractsResponse {
 
 
 
-## POST /api/contracts
 
-Create a new contracts record.
+
+## PUT /api/contracts/{id}
+
+Update an existing [id] record.
+
+### Path Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `id` | string | [id] ID |
 
 ### Request Body
 
-
-Schema validation using Zod:
-
-```typescript
-const ContractSchema = z.object({
-  clientName: z.string(),
-  projectName: z.string(),
-  description: z.string().optional(),
-  totalValue: z.number(),
-  signedDate: z.string(),
-  status: z.string().optional(),
-  category: z.string().optional(),
-  notes: z.string().optional(),
-});
-```
-
+All fields are optional for updates.
 
 ### Example Request
 
 ```bash
-curl -X POST "http://localhost:3000/api/contracts" \
+curl -X PUT "http://localhost:3000/api/contracts/{id}/clx123456789" \
   -H "Content-Type: application/json" \
   -d '{
-    "example": "Request body will be populated based on the specific contracts schema"
+    "status": "completed"
   }'
 ```
 
-### Response
 
-```typescript
-interface CreateResponse {
-  data: Contracts;
-  alerts?: AIAlert[];
-}
+
+## DELETE /api/contracts/{id}
+
+Delete a [id] record.
+
+⚠️ **Warning**: This operation may cascade to related records. Use with caution.
+
+### Path Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `id` | string | [id] ID |
+
+### Example Request
+
+```bash
+curl -X DELETE "http://localhost:3000/api/contracts/{id}/clx123456789"
 ```
-
-
-
-
 
 
 ## Error Handling
@@ -143,7 +142,7 @@ interface ErrorResponse {
 
 ## Team Isolation
 
-All contracts operations are automatically filtered by team context:
+All [id] operations are automatically filtered by team context:
 
 ```typescript
 // All queries include team isolation

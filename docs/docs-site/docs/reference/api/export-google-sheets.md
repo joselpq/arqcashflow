@@ -1,8 +1,8 @@
 ---
-title: "Contracts API"
+title: "Google-sheets API"
 type: "reference"
 audience: ["developer", "agent"]
-contexts: ["api", "contracts", "rest", "database"]
+contexts: ["api", "google-sheets", "rest", "database"]
 complexity: "intermediate"
 last_updated: "2025-09-22"
 version: "1.0"
@@ -13,52 +13,52 @@ related:
 dependencies: ["next.js", "prisma", "zod"]
 ---
 
-# Contracts API
+# Google-sheets API
 
-Comprehensive API reference for contracts management operations.
+Comprehensive API reference for google-sheets management operations.
 
 ## Context for LLM Agents
 
-**Scope**: Complete contracts API operations including CRUD, filtering, sorting, and business logic
+**Scope**: Complete google-sheets API operations including CRUD, filtering, sorting, and business logic
 **Prerequisites**: Understanding of REST APIs, Next.js App Router, Prisma ORM, and team-based data isolation
 **Key Patterns**:
 - RESTful endpoint design with standard HTTP methods
 - Team-based data isolation for multi-tenant security
 - Zod validation for type-safe request/response handling
 - Consistent error handling and response formats
-- Session-based authentication required for all operations
+
 
 ## Endpoint Overview
 
-**Base URL**: `/api/contracts`
-**Methods**: GET, POST
-**Authentication**: Required
-**Team Isolation**: Yes
+**Base URL**: `/api/export/google-sheets`
+**Methods**: GET
+**Authentication**: None
+**Team Isolation**: No
 
 
-## GET /api/contracts
+## GET /api/export/google-sheets
 
-Retrieve contracts records with optional filtering and sorting.
+Retrieve google-sheets records with optional filtering and sorting.
 
 ### Query Parameters
 
 | Parameter | Type | Description | Default |
 |-----------|------|-------------|---------|
-| `sortBy` | string | Sort field | `createdAt` |
-| `sortOrder` | string | Sort direction (`asc`/`desc`) | `desc` |
+| `status` | string | Filter by status | `all` |
+| `category` | string | Filter by category | `all` |
 
 ### Example Request
 
 ```bash
-curl -X GET "http://localhost:3000/api/contracts?status=active&sortBy=createdAt&sortOrder=desc" \
+curl -X GET "http://localhost:3000/api/export/google-sheets?status=active&sortBy=createdAt&sortOrder=desc" \
   -H "Content-Type: application/json"
 ```
 
 ### Response Format
 
 ```typescript
-interface ContractsResponse {
-  data: Contracts[];
+interface Google-sheetsResponse {
+  data: Google-sheets[];
   total: number;
   filters: {
     status: string;
@@ -70,48 +70,6 @@ interface ContractsResponse {
 ```
 
 
-
-## POST /api/contracts
-
-Create a new contracts record.
-
-### Request Body
-
-
-Schema validation using Zod:
-
-```typescript
-const ContractSchema = z.object({
-  clientName: z.string(),
-  projectName: z.string(),
-  description: z.string().optional(),
-  totalValue: z.number(),
-  signedDate: z.string(),
-  status: z.string().optional(),
-  category: z.string().optional(),
-  notes: z.string().optional(),
-});
-```
-
-
-### Example Request
-
-```bash
-curl -X POST "http://localhost:3000/api/contracts" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "example": "Request body will be populated based on the specific contracts schema"
-  }'
-```
-
-### Response
-
-```typescript
-interface CreateResponse {
-  data: Contracts;
-  alerts?: AIAlert[];
-}
-```
 
 
 
@@ -141,26 +99,12 @@ interface ErrorResponse {
 | 500 | INTERNAL_ERROR | Server error |
 
 
-## Team Isolation
-
-All contracts operations are automatically filtered by team context:
-
-```typescript
-// All queries include team isolation
-const where = {
-  teamId: session.user.teamId,
-  ...additionalFilters
-};
-```
-
-This ensures complete data separation between teams in the multi-tenant system.
-
 
 ## Implementation Notes
 
 ### Business Logic
-- **Team Isolation**: Enforced at API level
-- **Authentication**: Required for all operations
+- **Team Isolation**: Not applicable
+- **Authentication**: Public access
 - **Validation**: Zod schemas ensure type safety
 - **Error Handling**: Consistent error responses across all endpoints
 

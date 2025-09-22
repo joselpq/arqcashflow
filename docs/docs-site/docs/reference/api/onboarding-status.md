@@ -1,8 +1,8 @@
 ---
-title: "Contracts API"
+title: "Status API"
 type: "reference"
 audience: ["developer", "agent"]
-contexts: ["api", "contracts", "rest", "database"]
+contexts: ["api", "status", "rest", "database"]
 complexity: "intermediate"
 last_updated: "2025-09-22"
 version: "1.0"
@@ -13,13 +13,13 @@ related:
 dependencies: ["next.js", "prisma", "zod"]
 ---
 
-# Contracts API
+# Status API
 
-Comprehensive API reference for contracts management operations.
+Comprehensive API reference for status management operations.
 
 ## Context for LLM Agents
 
-**Scope**: Complete contracts API operations including CRUD, filtering, sorting, and business logic
+**Scope**: Complete status API operations including CRUD, filtering, sorting, and business logic
 **Prerequisites**: Understanding of REST APIs, Next.js App Router, Prisma ORM, and team-based data isolation
 **Key Patterns**:
 - RESTful endpoint design with standard HTTP methods
@@ -30,35 +30,34 @@ Comprehensive API reference for contracts management operations.
 
 ## Endpoint Overview
 
-**Base URL**: `/api/contracts`
-**Methods**: GET, POST
+**Base URL**: `/api/onboarding/status`
+**Methods**: GET
 **Authentication**: Required
-**Team Isolation**: Yes
+**Team Isolation**: No
 
 
-## GET /api/contracts
+## GET /api/onboarding/status
 
-Retrieve contracts records with optional filtering and sorting.
+Retrieve status records with optional filtering and sorting.
 
 ### Query Parameters
 
 | Parameter | Type | Description | Default |
 |-----------|------|-------------|---------|
-| `sortBy` | string | Sort field | `createdAt` |
-| `sortOrder` | string | Sort direction (`asc`/`desc`) | `desc` |
+
 
 ### Example Request
 
 ```bash
-curl -X GET "http://localhost:3000/api/contracts?status=active&sortBy=createdAt&sortOrder=desc" \
+curl -X GET "http://localhost:3000/api/onboarding/status?status=active&sortBy=createdAt&sortOrder=desc" \
   -H "Content-Type: application/json"
 ```
 
 ### Response Format
 
 ```typescript
-interface ContractsResponse {
-  data: Contracts[];
+interface StatusResponse {
+  data: Status[];
   total: number;
   filters: {
     status: string;
@@ -70,48 +69,6 @@ interface ContractsResponse {
 ```
 
 
-
-## POST /api/contracts
-
-Create a new contracts record.
-
-### Request Body
-
-
-Schema validation using Zod:
-
-```typescript
-const ContractSchema = z.object({
-  clientName: z.string(),
-  projectName: z.string(),
-  description: z.string().optional(),
-  totalValue: z.number(),
-  signedDate: z.string(),
-  status: z.string().optional(),
-  category: z.string().optional(),
-  notes: z.string().optional(),
-});
-```
-
-
-### Example Request
-
-```bash
-curl -X POST "http://localhost:3000/api/contracts" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "example": "Request body will be populated based on the specific contracts schema"
-  }'
-```
-
-### Response
-
-```typescript
-interface CreateResponse {
-  data: Contracts;
-  alerts?: AIAlert[];
-}
-```
 
 
 
@@ -141,25 +98,11 @@ interface ErrorResponse {
 | 500 | INTERNAL_ERROR | Server error |
 
 
-## Team Isolation
-
-All contracts operations are automatically filtered by team context:
-
-```typescript
-// All queries include team isolation
-const where = {
-  teamId: session.user.teamId,
-  ...additionalFilters
-};
-```
-
-This ensures complete data separation between teams in the multi-tenant system.
-
 
 ## Implementation Notes
 
 ### Business Logic
-- **Team Isolation**: Enforced at API level
+- **Team Isolation**: Not applicable
 - **Authentication**: Required for all operations
 - **Validation**: Zod schemas ensure type safety
 - **Error Handling**: Consistent error responses across all endpoints

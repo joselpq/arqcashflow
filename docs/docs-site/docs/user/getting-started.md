@@ -15,7 +15,68 @@ dependencies: []
 
 # Getting Started with ArqCashflow
 
-ArqCashflow is a comprehensive financial management system designed specifically for architects to track contracts, receivables, and expenses with AI-powered assistance.
+ArqCashflow is a secure, multi-tenant cashflow management system designed for architects to track contracts, receivables, and analyze financial data using AI with team-based data segregation.
+
+## What ArqCashflow Does
+
+ArqCashflow helps architects manage their business finances through:
+
+- **📝 Contracts**: Client agreements and project management
+- **💰 Receivables**: Payment tracking and cash flow optimization
+- **💸 Expenses**: Cost management and vendor payments
+- **🤖 AI Assistant**: Natural language document processing and queries
+- **📊 Reporting**: Excel and Google Sheets export capabilities
+
+## 🔐 Authentication Required
+
+This system requires authentication and implements team-based data segregation. Each team can only access their own data.
+
+### Authentication Status:
+- ✅ **User Registration/Login**: NextAuth.js with credentials provider
+- ✅ **Team Creation**: Auto-creates teams during registration
+- ✅ **Route Protection**: Middleware protects all pages except auth routes
+- ✅ **API Security**: All APIs require authentication and filter by team
+- ✅ **Data Isolation**: Secure team-based data segregation
+
+## First Time Setup
+
+1. **Create an Account**:
+   - Visit the application URL
+   - You will be redirected to `/login`
+   - Click "Register" to create a new account
+   - A team will be automatically created for you
+
+2. **Team Isolation**:
+   - Each user gets their own team during registration
+   - Data is completely isolated between teams
+   - Users can only see and manage their team's data
+
+3. **Login**:
+   - Use your email and password to login
+   - Sessions are managed via JWT tokens
+   - Protected routes require authentication
+
+## 🎯 WOW Onboarding Experience
+
+New users experience a multi-step guided setup:
+
+### Step 1: Profile Setup
+- Choose between Individual vs Company
+- Tailored form fields and dropdown options
+- Collects user type, profession, company activity
+- Employee count and revenue tier selection
+
+### Step 2: Data Import
+- Working drag-and-drop interface with AI processing
+- Support for Excel (.xlsx, .xls) and CSV files
+- Intelligent data extraction and parsing
+- Brazilian format handling (DD/MM/YYYY dates, R$ currency)
+
+### Navigation Features
+- Back button support and progress indicators
+- Hidden navigation during onboarding to eliminate distractions
+- Skip option - users can complete onboarding later
+- Database-tracked completion prevents main app access until finished
 
 ## Context for LLM Agents
 
