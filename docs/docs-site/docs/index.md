@@ -116,7 +116,7 @@ Every document includes machine-readable frontmatter with:
 - **LLM Agents**: Use [Document Templates](./meta/templates/document-template.md) for consistent output
 
 ### **Contributing**
-This documentation follows the [LLM-Agent-Optimized Framework](../DOCUMENTATION_STRATEGY_PROPOSAL.md) designed for human-AI collaborative development. All contributions should follow the established templates and metadata structure.
+This documentation follows the LLM-Agent-Optimized Framework designed for human-AI collaborative development. All contributions should follow the established templates and metadata structure found in the [Document Template](./meta/templates/document-template.md).
 
 ---
 
