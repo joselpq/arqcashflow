@@ -374,47 +374,6 @@ useEffect(() => { fetchData() }, [filters])
 - Use ExcelJS efficiently (don't recreate objects)
 - Consider background processing for very large exports
 
-## Testing Approach
-
-### Manual Testing Checklist
-1. Create test contracts with various categories
-2. Add receivables with different statuses and categories
-3. Add expenses with different types (operational, project, administrative)
-4. Create budgets for different categories and periods
-5. Test all filter combinations on all pages
-6. Test sorting by each field in both directions
-7. Test edit/delete operations across all entities
-8. Test Excel export with complete data
-9. Test Google Sheets export (requires OAuth setup)
-10. Test AI queries with various question types
-11. Test mandatory field validation with asterisk indicators
-12. Test tab navigation within Projetos page
-13. Test URL parameter support for deep linking to tabs
-14. Test middleware redirects from old URLs
-15. Test error cases (invalid data, network issues)
-
-### API Testing with curl
-```bash
-# Create contract
-curl -X POST http://localhost:3001/api/contracts \
-  -H "Content-Type: application/json" \
-  -d '{"clientName":"Test Client","projectName":"Test Project","totalValue":5000,"signedDate":"2024-01-01"}'
-
-# Create expense
-curl -X POST http://localhost:3001/api/expenses \
-  -H "Content-Type: application/json" \
-  -d '{"description":"Office supplies","amount":150,"dueDate":"2024-01-15","category":"office","type":"operational"}'
-
-# List with filters
-curl "http://localhost:3001/api/contracts?status=active&sortBy=totalValue&sortOrder=desc"
-curl "http://localhost:3001/api/expenses?status=pending&category=materials&sortBy=dueDate"
-
-# Test AI query
-curl -X POST http://localhost:3001/api/ai/query \
-  -H "Content-Type: application/json" \
-  -d '{"question":"How many active contracts do I have?"}'
-
-```
 
 ## Deployment Notes
 
@@ -422,12 +381,12 @@ curl -X POST http://localhost:3001/api/ai/query \
 ```bash
 # Development
 DATABASE_URL="file:./dev.db"
-OPENAI_API_KEY="sk-..."
+CLAUDE_API_KEY="sk-ant-..."
 NEXT_PUBLIC_GOOGLE_CLIENT_ID="your-google-oauth-client-id"
 
 # Production (Vercel + Railway)
 DATABASE_URL="postgresql://user:pass@host:port/db"
-OPENAI_API_KEY="sk-..."
+CLAUDE_API_KEY="sk-ant-..."
 NEXT_PUBLIC_GOOGLE_CLIENT_ID="your-production-google-oauth-client-id"
 ```
 
@@ -443,8 +402,8 @@ npx prisma generate
 ### Common Deployment Issues
 1. **BigInt serialization**: Already handled in codebase
 2. **Date timezone issues**: Use UTC consistently
-3. **File uploads**: Not implemented yet (Excel is download-only)
-4. **API rate limits**: OpenAI has usage limits
+3. **File uploads**: Large files supported via smart upload strategy
+4. **API rate limits**: Claude API has usage limits
 5. **Database connections**: Use connection pooling in production
 
 ## Lessons Learned
@@ -501,3 +460,112 @@ onWheel={(e) => e.currentTarget.blur()}
 - Investigate UI/UX causes before diving deep into data pipeline debugging
 
 This case demonstrates how a complex technical investigation can reveal a simple UX problem, emphasizing the importance of holistic debugging approaches.
+
+## Advanced Technical Implementation
+
+### Large File Upload Architecture
+
+**Problem Solved**: Vercel serverless functions have a 4.5MB body size limit, which prevented uploading large PDFs for Claude API processing.
+
+**Solution**: Smart dual upload strategy that automatically selects the optimal method:
+
+#### Upload Strategy Selection
+```typescript
+const largeFileThreshold = 3 * 1024 * 1024 // 3MB
+const isLargeFile = file.size > largeFileThreshold
+
+if (isLargeFile) {
+  // Use multipart/form-data - bypasses JSON body size limits
+  // Files sent as native File objects to /api/ai/assistant
+} else {
+  // Use JSON + base64 - faster for small files
+  // Existing efficient workflow maintained
+}
+```
+
+#### Backend Processing
+```typescript
+// Automatic content-type detection
+if (contentType.includes('multipart/form-data')) {
+  // Process FormData, convert File objects to base64 in Node.js
+  const arrayBuffer = await file.arrayBuffer()
+  const base64 = Buffer.from(arrayBuffer).toString('base64')
+} else {
+  // Process JSON with pre-encoded base64 data
+  const files = await request.json().files
+}
+```
+
+#### Benefits
+- **32MB PDF Support**: Up from ~2.8MB effective limit
+- **No External Dependencies**: Uses standard web APIs, no storage tokens
+- **Automatic Selection**: Users don't need to know about the strategy
+- **Memory Efficient**: Large file base64 conversion happens server-side
+- **Backward Compatible**: Existing small file workflow unchanged
+
+### Current Limitations & Development TODOs
+- Limited error messaging (generic alerts)
+- No data validation beyond type checking
+- Excel export could include charts/visualizations
+- No email notifications for overdue payments
+- No recurring payment schedules
+
+## Comprehensive Testing Strategy
+
+### Manual Testing Checklist
+1. Create test contracts with various categories
+2. Add receivables with different statuses and categories
+3. Add expenses with different types (operational, project, administrative)
+4. Create budgets for different categories and periods
+5. Test all filter combinations on all pages
+6. Test sorting by each field in both directions
+7. Test edit/delete operations across all entities
+8. Test Excel export with complete data
+9. Test Google Sheets export (requires OAuth setup)
+10. Test AI queries with various question types
+11. Test mandatory field validation with asterisk indicators
+12. Test tab navigation within Projetos page
+13. Test URL parameter support for deep linking to tabs
+14. Test middleware redirects from old URLs
+15. Test error cases (invalid data, network issues)
+
+### API Testing with curl
+```bash
+# Create contract
+curl -X POST http://localhost:3001/api/contracts \
+  -H "Content-Type: application/json" \
+  -d '{"clientName":"Test Client","projectName":"Test Project","totalValue":5000,"signedDate":"2024-01-01"}'
+
+# Create expense
+curl -X POST http://localhost:3001/api/expenses \
+  -H "Content-Type: application/json" \
+  -d '{"description":"Office supplies","amount":150,"dueDate":"2024-01-15","category":"office","type":"operational"}'
+
+# List with filters
+curl "http://localhost:3001/api/contracts?status=active&sortBy=totalValue&sortOrder=desc"
+curl "http://localhost:3001/api/expenses?status=pending&category=materials&sortBy=dueDate"
+
+# Test AI query
+curl -X POST http://localhost:3001/api/ai/query \
+  -H "Content-Type: application/json" \
+  -d '{"question":"How many active contracts do I have?"}'
+```
+
+### Large File Testing
+- Upload PDFs <3MB (should use JSON strategy)
+- Upload PDFs 3-32MB (should use FormData strategy)
+- Verify both strategies process correctly through Claude API
+- Test mixed file sizes in single upload
+
+### Form Validation Testing
+- **Currency Precision**: Test entering whole numbers (400, 1000) - should preserve exact values
+- **Date Defaults**: Verify "Data Esperada" fields default to today's date, not tomorrow
+- **Empty Date Handling**: Test saving forms with empty optional date fields
+- **Edit Operations**: Test editing receivables' "Data Esperada" fields successfully
+
+### Edge Cases & Validation
+- Empty states, invalid dates, large numbers, special characters in names
+- Try submitting empty forms, invalid data, non-existent IDs
+- AI testing: Ask complex questions, test edge cases, verify SQL generation
+- Upload Strategy Verification: Check browser DevTools to confirm correct Content-Type headers
+- Cross-Entity Consistency: Verify currency and date handling works identically across Contratos, Recebíveis, and Despesas
