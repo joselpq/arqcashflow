@@ -30,7 +30,6 @@ export default function EnhancedExpenseForm({ expense, contracts, onSubmit, onCa
   const [recurringData, setRecurringData] = useState({
     frequency: 'monthly',
     interval: 1,
-    dayOfMonth: '',
     endDate: '',
     maxOccurrences: '',
   })
@@ -90,7 +89,6 @@ export default function EnhancedExpenseForm({ expense, contracts, onSubmit, onCa
       setRecurringData({
         frequency: 'monthly',
         interval: 1,
-        dayOfMonth: '',
         endDate: '',
         maxOccurrences: '',
       })
@@ -123,11 +121,9 @@ export default function EnhancedExpenseForm({ expense, contracts, onSubmit, onCa
         return
       }
 
-      const dayOfMonth = recurringData.dayOfMonth ? parseInt(recurringData.dayOfMonth) : null
-      if (dayOfMonth && (dayOfMonth < 1 || dayOfMonth > 31)) {
-        alert('Por favor, insira um dia do mês válido (1-31)')
-        return
-      }
+      // Auto-calculate dayOfMonth from startDate
+      const startDate = new Date(formData.dueDate)
+      const dayOfMonth = startDate.getDate()
 
       const maxOccurrences = recurringData.maxOccurrences ? parseInt(recurringData.maxOccurrences) : null
       if (maxOccurrences && maxOccurrences < 1) {
@@ -255,21 +251,7 @@ export default function EnhancedExpenseForm({ expense, contracts, onSubmit, onCa
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-2 text-blue-900">
-                Dia do mês (opcional)
-                <span className="text-xs text-blue-600 block">Para mensal/trimestral (1-31)</span>
-              </label>
-              <input
-                type="number"
-                min="1"
-                max="31"
-                value={recurringData.dayOfMonth}
-                onChange={(e) => setRecurringData({ ...recurringData, dayOfMonth: e.target.value })}
-                className="w-full border-2 border-blue-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-blue-900"
-                placeholder="Deixe vazio para usar dia atual"
-              />
-            </div>
+            {/* dayOfMonth is now auto-calculated from startDate */}
 
             <div>
               <label className="block text-sm font-medium mb-2 text-blue-900">

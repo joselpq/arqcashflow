@@ -15,7 +15,7 @@ const RecurringExpenseSchema = z.object({
     errorMap: () => ({ message: 'Frequency must be weekly, monthly, quarterly, or annual' })
   }),
   interval: z.number().min(1).max(12, 'Interval must be between 1 and 12'),
-  dayOfMonth: z.number().min(1).max(31).optional().nullable(),
+  // dayOfMonth is now auto-calculated from startDate, remove from input schema
   startDate: z.string().transform((str) => createDateForStorage(str)),
   endDate: z.string().optional().nullable().transform(val => {
     if (val === '' || val === null || val === undefined) return null
@@ -33,35 +33,37 @@ const RecurringExpenseSchema = z.object({
 
 const UpdateRecurringExpenseSchema = RecurringExpenseSchema.partial()
 
-// Calculate next due date based on frequency and interval
-function calculateNextDue(startDate: Date, frequency: string, interval: number, dayOfMonth?: number): Date {
+// Simplified next due date calculation - consistent with user expectations
+function calculateNextDue(startDate: Date, frequency: string, interval: number, dayOfMonth: number): Date {
   const next = new Date(startDate)
 
   switch (frequency) {
     case 'weekly':
+      // For weekly, just add weeks (dayOfMonth not relevant)
       next.setDate(next.getDate() + (7 * interval))
       break
+
     case 'monthly':
-      if (dayOfMonth) {
-        next.setDate(dayOfMonth)
-        if (next <= startDate) {
-          next.setMonth(next.getMonth() + interval)
-        }
-      } else {
-        next.setMonth(next.getMonth() + interval)
-      }
+      // For monthly, go to next month and set the day
+      next.setMonth(next.getMonth() + interval)
+      // Handle month-end edge cases (e.g., Jan 31 → Feb 28)
+      const lastDayOfMonth = new Date(next.getFullYear(), next.getMonth() + 1, 0).getDate()
+      next.setDate(Math.min(dayOfMonth, lastDayOfMonth))
       break
+
     case 'quarterly':
+      // For quarterly, add 3 months per interval
       next.setMonth(next.getMonth() + (3 * interval))
-      if (dayOfMonth) {
-        next.setDate(dayOfMonth)
-      }
+      const lastDayOfQuarter = new Date(next.getFullYear(), next.getMonth() + 1, 0).getDate()
+      next.setDate(Math.min(dayOfMonth, lastDayOfQuarter))
       break
+
     case 'annual':
+      // For annual, add years
       next.setFullYear(next.getFullYear() + interval)
-      if (dayOfMonth) {
-        next.setDate(dayOfMonth)
-      }
+      // Handle leap year edge case (Feb 29 → Feb 28)
+      const lastDayOfYear = new Date(next.getFullYear(), next.getMonth() + 1, 0).getDate()
+      next.setDate(Math.min(dayOfMonth, lastDayOfYear))
       break
   }
 
@@ -164,17 +166,21 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const validatedData = RecurringExpenseSchema.parse(body)
 
+    // Auto-calculate dayOfMonth from startDate
+    const dayOfMonth = validatedData.startDate.getDate()
+
     // Calculate initial nextDue date
     const nextDue = calculateNextDue(
       validatedData.startDate,
       validatedData.frequency,
       validatedData.interval,
-      validatedData.dayOfMonth || undefined
+      dayOfMonth
     )
 
     const recurringExpense = await prisma.recurringExpense.create({
       data: {
         ...validatedData,
+        dayOfMonth, // Add the auto-calculated dayOfMonth
         teamId,
         createdBy: user.id,
         nextDue,

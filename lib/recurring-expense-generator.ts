@@ -100,49 +100,51 @@ function adjustForMonthEnd(date: Date, dayOfMonth: number): Date {
   return getNextBusinessDay(adjustedDate)
 }
 
+// Simplified calculation function - same logic as API route for consistency
 function calculateNextDueDate(
   currentDate: Date,
   frequency: string,
   interval: number,
-  dayOfMonth?: number | null
+  dayOfMonth: number | null
 ): Date {
-  let nextDate: Date
+  // If dayOfMonth is null, use the current date's day
+  const targetDay = dayOfMonth || currentDate.getDate()
+  const next = new Date(currentDate)
 
   switch (frequency) {
     case 'weekly':
-      nextDate = addWeeks(currentDate, interval)
+      // For weekly, just add weeks (dayOfMonth not relevant)
+      next.setDate(next.getDate() + (7 * interval))
       break
 
     case 'monthly':
-      if (dayOfMonth) {
-        // Calculate next occurrence of the specific day of month
-        nextDate = addMonths(currentDate, interval)
-        nextDate = adjustForMonthEnd(nextDate, dayOfMonth)
-      } else {
-        // Use the same day of month as current date
-        nextDate = addMonths(currentDate, interval)
-      }
+      // For monthly, go to next month and set the day
+      next.setMonth(next.getMonth() + interval)
+      // Handle month-end edge cases (e.g., Jan 31 → Feb 28)
+      const lastDayOfMonth = new Date(next.getFullYear(), next.getMonth() + 1, 0).getDate()
+      next.setDate(Math.min(targetDay, lastDayOfMonth))
       break
 
     case 'quarterly':
-      nextDate = addMonths(currentDate, 3 * interval)
-      if (dayOfMonth) {
-        nextDate = adjustForMonthEnd(nextDate, dayOfMonth)
-      }
+      // For quarterly, add 3 months per interval
+      next.setMonth(next.getMonth() + (3 * interval))
+      const lastDayOfQuarter = new Date(next.getFullYear(), next.getMonth() + 1, 0).getDate()
+      next.setDate(Math.min(targetDay, lastDayOfQuarter))
       break
 
     case 'annual':
-      nextDate = addYears(currentDate, interval)
-      if (dayOfMonth) {
-        nextDate = adjustForMonthEnd(nextDate, dayOfMonth)
-      }
+      // For annual, add years
+      next.setFullYear(next.getFullYear() + interval)
+      // Handle leap year edge case (Feb 29 → Feb 28)
+      const lastDayOfYear = new Date(next.getFullYear(), next.getMonth() + 1, 0).getDate()
+      next.setDate(Math.min(targetDay, lastDayOfYear))
       break
 
     default:
       throw new Error(`Unsupported frequency: ${frequency}`)
   }
 
-  return nextDate
+  return next
 }
 
 function shouldGenerateExpense(
@@ -395,10 +397,9 @@ export async function generateInitialRecurringExpenses(
     // Generate all expenses from start date up to current month
     while (currentDate <= now && generated < 50) { // Safety limit
       if (shouldGenerateExpense(recurringExpense, currentDate)) {
-        // Determine if this expense should be marked as paid (past months)
-        const isPastExpense = currentDate < now &&
-          (now.getFullYear() > currentDate.getFullYear() ||
-           (now.getFullYear() === currentDate.getFullYear() && now.getMonth() > currentDate.getMonth()))
+        // Determine if this expense should be marked as paid (any past date)
+        // Assume all expenses before today were already paid
+        const isPastExpense = currentDate < now
 
         const expenseResult = await generateExpenseForDate(recurringExpense, currentDate, isPastExpense)
 

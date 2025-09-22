@@ -291,10 +291,17 @@ NEXTAUTH_URL="http://localhost:3000"
 # Google Sheets (Optional)
 GOOGLE_CLIENT_EMAIL="your-service-account@project.iam.gserviceaccount.com"
 GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nYOUR-KEY-HERE\n-----END PRIVATE KEY-----"
+
+# Recurring Expenses Cron Job
+CRON_SECRET="your-secure-cron-secret-here"
 ```
 
-**Generate NEXTAUTH_SECRET:**
+**Generate Secrets:**
 ```bash
+# Generate NEXTAUTH_SECRET
+openssl rand -base64 32
+
+# Generate CRON_SECRET
 openssl rand -base64 32
 ```
 
@@ -314,7 +321,29 @@ Visit http://localhost:3000
 
 **Note**: The app runs on port 3000 by default. If occupied, use `PORT=3001 npm run dev` to specify a different port.
 
-### 5. First Time Setup - Authentication
+### 5. Recurring Expenses Automation
+
+The system includes automated recurring expense generation that runs daily at 2 AM UTC via Vercel Cron.
+
+**Configuration:**
+- **Cron Schedule**: Daily at 2 AM UTC (`0 2 * * *`)
+- **Endpoint**: `/api/cron/generate-recurring`
+- **Authentication**: Requires `CRON_SECRET` environment variable
+- **Look-ahead**: Generates expenses up to 3 months in advance
+
+**Manual Testing:**
+```bash
+# Test the cron endpoint manually (requires CRON_SECRET)
+curl -X GET "http://localhost:3000/api/cron/generate-recurring" \
+  -H "Authorization: Bearer your-cron-secret-here"
+```
+
+**How it Works:**
+1. **Initial Creation**: When you create a recurring expense, it immediately generates past + current expenses
+2. **Daily Automation**: Cron job generates upcoming expenses automatically
+3. **Smart Status**: Past expenses marked as "paid", future expenses as "pending"
+
+### 6. First Time Setup - Authentication
 
 1. **Create an Account**:
    - Visit http://localhost:3000
