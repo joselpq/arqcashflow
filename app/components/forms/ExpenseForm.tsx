@@ -136,7 +136,7 @@ export default function ExpenseForm({ expense, contracts, onSubmit, onCancel, lo
         <input
           type="number"
           required
-          className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
+          className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           value={formData.amount}
           onChange={(e) => {
             console.log('💸 EXPENSE FIELD DEBUG - Amount onChange:')
@@ -151,6 +151,7 @@ export default function ExpenseForm({ expense, contracts, onSubmit, onCancel, lo
             console.log('  - Blur event value type:', typeof e.target.value)
             console.log('  - Current formData.amount after blur:', formData.amount)
           }}
+          onWheel={(e) => e.currentTarget.blur()}
           disabled={loading}
         />
       </div>
@@ -296,9 +297,10 @@ export default function ExpenseForm({ expense, contracts, onSubmit, onCancel, lo
             <label className="block mb-2 font-medium text-neutral-900">Valor Pago</label>
             <input
               type="number"
-              className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
+              className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               value={formData.paidAmount}
               onChange={(e) => setFormData({ ...formData, paidAmount: e.target.value })}
+              onWheel={(e) => e.currentTarget.blur()}
               disabled={loading}
             />
           </div>

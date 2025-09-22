@@ -182,9 +182,10 @@ export default function EnhancedExpenseForm({ expense, contracts, onSubmit, onCa
         <input
           type="number"
           required
-          className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
+          className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           value={formData.amount}
           onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+          onWheel={(e) => e.currentTarget.blur()}
           disabled={loading}
         />
       </div>
@@ -244,7 +245,8 @@ export default function EnhancedExpenseForm({ expense, contracts, onSubmit, onCa
                 max="12"
                 value={recurringData.interval}
                 onChange={(e) => setRecurringData({ ...recurringData, interval: parseInt(e.target.value) || 1 })}
-                className="w-full border-2 border-blue-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-blue-900"
+                onWheel={(e) => e.currentTarget.blur()}
+                className="w-full border-2 border-blue-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-blue-900 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />
             </div>
           </div>
@@ -262,7 +264,8 @@ export default function EnhancedExpenseForm({ expense, contracts, onSubmit, onCa
                 min="1"
                 value={recurringData.maxOccurrences}
                 onChange={(e) => setRecurringData({ ...recurringData, maxOccurrences: e.target.value })}
-                className="w-full border-2 border-blue-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-blue-900"
+                onWheel={(e) => e.currentTarget.blur()}
+                className="w-full border-2 border-blue-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-blue-900 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 placeholder="Ex: 12 para um ano"
               />
             </div>
@@ -428,9 +431,10 @@ export default function EnhancedExpenseForm({ expense, contracts, onSubmit, onCa
             <label className="block mb-2 font-medium text-neutral-900">Valor Pago</label>
             <input
               type="number"
-              className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
+              className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               value={formData.paidAmount}
               onChange={(e) => setFormData({ ...formData, paidAmount: e.target.value })}
+              onWheel={(e) => e.currentTarget.blur()}
               disabled={loading}
             />
           </div>

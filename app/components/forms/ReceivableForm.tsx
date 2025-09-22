@@ -212,9 +212,10 @@ export default function ReceivableForm({ receivable, contracts, onSubmit, onCanc
         <input
           type="number"
           required
-          className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
+          className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           value={formData.amount}
           onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+          onWheel={(e) => e.currentTarget.blur()}
           disabled={loading}
         />
       </div>
@@ -343,9 +344,10 @@ export default function ReceivableForm({ receivable, contracts, onSubmit, onCanc
           <label className="block mb-2 font-medium text-neutral-900">Valor Recebido</label>
           <input
             type="number"
-            className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
+            className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             value={formData.receivedAmount}
             onChange={(e) => setFormData({ ...formData, receivedAmount: e.target.value })}
+            onWheel={(e) => e.currentTarget.blur()}
             disabled={loading}
           />
         </div>
