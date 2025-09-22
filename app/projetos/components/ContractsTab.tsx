@@ -84,7 +84,7 @@ export default function ContractsTab() {
       const data = await res.json()
       setContracts(data)
 
-      const categories = [...new Set(data.map((contract: any) => contract.category).filter(Boolean))]
+      const categories = [...new Set(data.map((contract: any) => contract.category).filter(Boolean))] as string[]
       setUniqueCategories(categories)
     } catch (error) {
       console.error('Error fetching contracts:', error)
