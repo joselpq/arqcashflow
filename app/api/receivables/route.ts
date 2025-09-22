@@ -165,7 +165,20 @@ export async function POST(request: NextRequest) {
     const { user, teamId } = await requireAuth()
 
     const body = await request.json()
+
+    // 🔍 DEBUG: Track value at API level for receivables
+    console.log('💰 RECEIVABLES API DEBUG - Value tracking:')
+    console.log('  - Raw request body:', body)
+    console.log('  - Body amount:', body.amount)
+    console.log('  - Body amount type:', typeof body.amount)
+    console.log('  - Body amount precise?:', Number.isInteger(body.amount * 100))
+
     const validatedData = ReceivableSchema.parse(body)
+
+    console.log('  - After Zod validation:', validatedData)
+    console.log('  - Validated amount:', validatedData.amount)
+    console.log('  - Validated amount type:', typeof validatedData.amount)
+    console.log('  - Validated amount precise?:', Number.isInteger(validatedData.amount * 100))
 
     // If contractId is provided, verify that the contract belongs to the user's team
     if (validatedData.contractId) {
@@ -181,7 +194,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const createData: any = {
+    // 🔧 FIX: Prepare data object separately to avoid spread timing issues
+    const dataForDB: any = {
       contractId: validatedData.contractId,
       expectedDate: validatedData.expectedDate && validatedData.expectedDate.trim() !== '' ? createDateForStorage(validatedData.expectedDate) : new Date(),
       amount: validatedData.amount,
@@ -197,12 +211,23 @@ export async function POST(request: NextRequest) {
     }
 
     if (validatedData.receivedDate && validatedData.receivedDate.trim() !== '') {
-      createData.receivedDate = validatedData.receivedDate && validatedData.receivedDate.trim() !== '' ? createDateForStorage(validatedData.receivedDate) : null
+      dataForDB.receivedDate = validatedData.receivedDate && validatedData.receivedDate.trim() !== '' ? createDateForStorage(validatedData.receivedDate) : null
     }
 
+    console.log('  - Data prepared for DB:', dataForDB)
+    console.log('  - DB amount:', dataForDB.amount)
+    console.log('  - DB amount type:', typeof dataForDB.amount)
+
     const receivable = await prisma.receivable.create({
-      data: createData,
+      data: dataForDB,
       include: { contract: true }
+    })
+
+    console.log('✅ RECEIVABLE CREATED:', {
+      receivableId: receivable.id,
+      storedAmount: receivable.amount,
+      storedAmountType: typeof receivable.amount,
+      storedAmountPrecise: Number.isInteger(receivable.amount * 100)
     })
 
     // Log audit entry for receivable creation

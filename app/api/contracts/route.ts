@@ -62,6 +62,18 @@ export async function GET(request: NextRequest) {
       contractIds: contracts.map(c => ({ id: c.id, teamId: c.teamId, client: c.clientName, project: c.projectName }))
     })
 
+    // 🔍 DEBUG: Track values when fetched from DB
+    console.log('📊 DB FETCH DEBUG - Value tracking:')
+    contracts.forEach((contract, index) => {
+      console.log(`  Contract ${index + 1}:`)
+      console.log(`    - ID: ${contract.id}`)
+      console.log(`    - Client: ${contract.clientName}`)
+      console.log(`    - DB totalValue: ${contract.totalValue}`)
+      console.log(`    - DB totalValue type: ${typeof contract.totalValue}`)
+      console.log(`    - DB totalValue precise?: ${Number.isInteger(contract.totalValue * 100)}`)
+      console.log(`    - DB totalValue as string: "${contract.totalValue.toString()}"`)
+    })
+
     return NextResponse.json(contracts)
   } catch (error) {
     console.error('❌ CONTRACT FETCH ERROR:', error)
@@ -83,7 +95,20 @@ export async function POST(request: NextRequest) {
     })
 
     const body = await request.json()
+
+    // 🔍 DEBUG: Track value at API level
+    console.log('🌐 API DEBUG - Value tracking:')
+    console.log('  - Raw request body:', body)
+    console.log('  - Body totalValue:', body.totalValue)
+    console.log('  - Body totalValue type:', typeof body.totalValue)
+    console.log('  - Body totalValue precise?:', Number.isInteger(body.totalValue * 100))
+
     const validatedData = ContractSchema.parse(body)
+
+    console.log('  - After Zod validation:', validatedData)
+    console.log('  - Validated totalValue:', validatedData.totalValue)
+    console.log('  - Validated totalValue type:', typeof validatedData.totalValue)
+    console.log('  - Validated totalValue precise?:', Number.isInteger(validatedData.totalValue * 100))
 
     const contract = await prisma.contract.create({
       data: {
@@ -97,7 +122,10 @@ export async function POST(request: NextRequest) {
       contractId: contract.id,
       assignedTeamId: contract.teamId,
       clientName: contract.clientName,
-      projectName: contract.projectName
+      projectName: contract.projectName,
+      storedTotalValue: contract.totalValue,
+      storedValueType: typeof contract.totalValue,
+      storedValuePrecise: Number.isInteger(contract.totalValue * 100)
     })
 
     // Log audit entry for contract creation

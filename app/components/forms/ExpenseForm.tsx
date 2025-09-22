@@ -75,7 +75,18 @@ export default function ExpenseForm({ expense, contracts, onSubmit, onCancel, lo
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
 
+    // 🔍 DEBUG: Track value conversion at expense form level
+    console.log('💸 EXPENSE FORM DEBUG - Value tracking:')
+    console.log('  - Raw input value (string):', `"${formData.amount}"`)
+    console.log('  - Input value type:', typeof formData.amount)
+    console.log('  - Input value length:', formData.amount.length)
+
     const amount = parseFloat(formData.amount)
+    console.log('  - parseFloat result:', amount)
+    console.log('  - parseFloat result type:', typeof amount)
+    console.log('  - Is number exact?:', amount.toString() === formData.amount)
+    console.log('  - Precision test:', amount === Math.round(amount * 100) / 100)
+
     if (isNaN(amount)) {
       alert('Amount must be a valid number')
       return
@@ -83,19 +94,27 @@ export default function ExpenseForm({ expense, contracts, onSubmit, onCancel, lo
 
     let paidAmount = null
     if (formData.paidAmount) {
+      console.log('  - Raw paidAmount (string):', `"${formData.paidAmount}"`)
       paidAmount = parseFloat(formData.paidAmount)
+      console.log('  - parseFloat paidAmount result:', paidAmount)
       if (isNaN(paidAmount)) {
         alert('Por favor, insira um valor pago válido')
         return
       }
     }
 
-    await onSubmit({
+    const submissionData = {
       ...formData,
       amount,
       paidAmount,
       contractId: formData.contractId || null // Send null if empty string
-    })
+    }
+
+    console.log('  - Final submission data:', submissionData)
+    console.log('  - Final amount in submission:', submissionData.amount)
+    console.log('  - Final paidAmount in submission:', submissionData.paidAmount)
+
+    await onSubmit(submissionData)
   }
 
   return (
@@ -119,7 +138,19 @@ export default function ExpenseForm({ expense, contracts, onSubmit, onCancel, lo
           required
           className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
           value={formData.amount}
-          onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+          onChange={(e) => {
+            console.log('💸 EXPENSE FIELD DEBUG - Amount onChange:')
+            console.log('  - Input event value:', e.target.value)
+            console.log('  - Input event value type:', typeof e.target.value)
+            console.log('  - Current formData.amount:', formData.amount)
+            setFormData({ ...formData, amount: e.target.value })
+          }}
+          onBlur={(e) => {
+            console.log('💸 EXPENSE FIELD DEBUG - Amount onBlur:')
+            console.log('  - Blur event value:', e.target.value)
+            console.log('  - Blur event value type:', typeof e.target.value)
+            console.log('  - Current formData.amount after blur:', formData.amount)
+          }}
           disabled={loading}
         />
       </div>

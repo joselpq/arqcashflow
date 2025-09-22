@@ -151,7 +151,7 @@ export default function EnhancedExpenseForm({ expense, contracts, onSubmit, onCa
 
       await onSubmit(recurringExpenseData, true)
     } else {
-      // Regular expense data
+      // Regular expense data - prepare object separately to avoid timing issues
       const expenseData = {
         ...formData,
         amount,

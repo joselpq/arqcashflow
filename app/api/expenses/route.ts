@@ -172,13 +172,33 @@ export async function POST(request: NextRequest) {
     const { user, teamId } = await requireAuth()
 
     const body = await request.json()
+
+    // 🔍 DEBUG: Track value at API level for expenses
+    console.log('💸 EXPENSES API DEBUG - Value tracking:')
+    console.log('  - Raw request body:', body)
+    console.log('  - Body amount:', body.amount)
+    console.log('  - Body amount type:', typeof body.amount)
+    console.log('  - Body amount precise?:', Number.isInteger(body.amount * 100))
+
     const validatedData = ExpenseSchema.parse(body)
 
+    console.log('  - After Zod validation:', validatedData)
+    console.log('  - Validated amount:', validatedData.amount)
+    console.log('  - Validated amount type:', typeof validatedData.amount)
+    console.log('  - Validated amount precise?:', Number.isInteger(validatedData.amount * 100))
+
+    // 🔧 FIX: Prepare data object separately to avoid spread timing issues
+    const dataForDB = {
+      ...validatedData,
+      teamId
+    }
+
+    console.log('  - Data prepared for DB:', dataForDB)
+    console.log('  - DB amount:', dataForDB.amount)
+    console.log('  - DB amount type:', typeof dataForDB.amount)
+
     const expense = await prisma.expense.create({
-      data: {
-        ...validatedData,
-        teamId
-      },
+      data: dataForDB,
       include: {
         contract: {
           select: {
@@ -188,6 +208,13 @@ export async function POST(request: NextRequest) {
           },
         },
       },
+    })
+
+    console.log('✅ EXPENSE CREATED:', {
+      expenseId: expense.id,
+      storedAmount: expense.amount,
+      storedAmountType: typeof expense.amount,
+      storedAmountPrecise: Number.isInteger(expense.amount * 100)
     })
 
     // Log audit entry for expense creation
