@@ -179,17 +179,25 @@ export class ReceivableService extends BaseService<
       }
     }
 
-    // Overdue filtering
+    // Overdue filtering - remove the 'overdue' field from where clause first
     if (filters.overdue !== undefined) {
+      const { overdue, ...whereWithoutOverdue } = where
       const today = new Date()
+
       if (filters.overdue) {
-        where.expectedDate = { lt: today }
-        where.status = { not: 'received' }
+        return {
+          ...whereWithoutOverdue,
+          expectedDate: { lt: today },
+          status: { not: 'received' }
+        }
       } else {
-        where.OR = [
-          { expectedDate: { gte: today } },
-          { status: 'received' }
-        ]
+        return {
+          ...whereWithoutOverdue,
+          OR: [
+            { expectedDate: { gte: today } },
+            { status: 'received' }
+          ]
+        }
       }
     }
 

@@ -216,17 +216,25 @@ export class ExpenseService extends BaseService<
       }
     }
 
-    // Overdue filtering
+    // Overdue filtering - remove the 'overdue' field from where clause first
     if (filters.overdue !== undefined) {
+      const { overdue, ...whereWithoutOverdue } = where
       const today = new Date()
+
       if (filters.overdue) {
-        where.dueDate = { lt: today }
-        where.status = { not: 'paid' }
+        return {
+          ...whereWithoutOverdue,
+          dueDate: { lt: today },
+          status: { not: 'paid' }
+        }
       } else {
-        where.OR = [
-          { dueDate: { gte: today } },
-          { status: 'paid' }
-        ]
+        return {
+          ...whereWithoutOverdue,
+          OR: [
+            { dueDate: { gte: today } },
+            { status: 'paid' }
+          ]
+        }
       }
     }
 
