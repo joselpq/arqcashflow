@@ -404,10 +404,10 @@ model AuditLog {
   What         kind  // What kind of change
   action       String  // "created", "updated", "deleted"
   What         changed  // What changed (for updates)
-  changes      Json  // JSON object with before/after values
+  changes      Json  // { "status": { "from": "pending", "to": "received" } }
   Complete     state  // Complete state snapshot (optional, for critical changes)
   snapshot     Json?  // Full entity state after change
-  metadata     Json?  // Request metadata (endpoint, IP, user agent)
+  metadata     Json?  // { "api_endpoint": "/api/contracts", "ip": "...", "user_agent": "..." }
   user         User @relation(fields: [userId], references: [id])
   team         Team @relation(fields: [teamId], references: [id])
   @@index([entityType, entityId]) // Query by entity
@@ -424,15 +424,20 @@ model AuditLog {
 |-------|------|-------------|-------------|
 | `id` | String | Primary Key, Required, Has Default | - |
 | `timestamp` | DateTime | Required, Has Default | - |
-| `userId` | String | Required | Who made the change |
+| `Who` | made | Required | Who made the change |
+| `userId` | String | Required | - |
 | `userEmail` | String | Required | Cached for resilience if user is deleted |
-| `teamId` | String | Required | Team context |
-| `entityType` | String | Required | contract, receivable, or expense |
+| `teamId` | String | Required | - |
+| `What` | entity | Required | What entity was changed |
+| `entityType` | String | Required | "contract", "receivable", "expense" |
 | `entityId` | String | Required | The ID of the changed entity |
-| `action` | String | Required | created, updated, or deleted |
-| `changes` | Json | Required | JSON object with before/after values |
+| `What` | kind | Required | What kind of change |
+| `action` | String | Required | "created", "updated", "deleted" |
+| `What` | changed | Required | What changed (for updates) |
+| `changes` | Json | Required | `{ "status": { "from": "pending", "to": "received" } }` |
+| `Complete` | state | Required | Complete state snapshot (optional, for critical changes) |
 | `snapshot` | Json? | None | Full entity state after change |
-| `metadata` | Json? | None | Request metadata (endpoint, IP, user agent) |
+| `metadata` | Json? | None | `{ "api_endpoint": "/api/contracts", "ip": "...", "user_agent": "..." }` |
 
 #### Relationships
 
