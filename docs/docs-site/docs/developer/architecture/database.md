@@ -431,7 +431,7 @@ model AuditLog {
 | `entityId` | String | Required | The ID of the changed entity |
 | `action` | String | Required | "created", "updated", "deleted" |
 | `changes` | Json | Required | JSON object with before/after values |
-| `snapshot` | Json? | None | Full entity state after change
+| `snapshot` | Json? | None | Full entity state after change |
 | `metadata` | Json? | None | Request metadata (endpoint, IP, user agent) |
 
 #### Relationships
