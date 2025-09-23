@@ -2,32 +2,33 @@
 title: "Team Context Middleware Implementation and Validation"
 type: "decision"
 audience: ["developer", "agent"]
-contexts: ["architecture", "middleware", "security", "team-isolation", "contracts-api", "validation", "testing"]
+contexts: ["architecture", "middleware", "security", "team-isolation", "contracts-api", "receivables-api", "expenses-api", "recurring-expenses", "validation", "testing"]
 complexity: "intermediate"
-last_updated: "2025-09-23"
+last_updated: "2025-09-22"
 version: "1.0"
 agent_roles: ["middleware-implementor", "security-validator"]
 related:
   - decisions/004-no-regrets-architecture-improvements.md
   - developer/architecture/overview.md
-dependencies: ["next.js", "prisma", "typescript", "team-context-middleware", "contracts-api", "authentication"]
+dependencies: ["next.js", "prisma", "typescript", "team-context-middleware", "contracts-api", "receivables-api", "expenses-api", "authentication", "zod", "audit-middleware"]
 ---
 
 # Team Context Middleware Implementation and Validation
 
 ## Context for LLM Agents
 
-**Scope**: Implementation details and validation approach for team context middleware
-**Prerequisites**: Understanding of existing auth patterns, Prisma ORM, and team-based data isolation
+**Scope**: Comprehensive team context middleware implementation with full expenses API migration
+**Prerequisites**: Understanding of existing auth patterns, Prisma ORM, team-based data isolation, and recurring expense patterns
 **Key Patterns**:
 - Backwards-compatible middleware wrapper
-- Team-scoped Prisma client
-- Side-by-side validation approach
-- Gradual migration strategy
+- Team-scoped Prisma client with automatic team filtering
+- Complex recurring operations with scope-based actions (this/future/all)
+- Comprehensive authenticated validation approach
+- Gradual migration strategy with real-world testing
 
 ## Implementation Status
 
-**CURRENT STATUS (2025-09-23)**: ✅ **CONTRACTS, RECEIVABLES & EXPENSES APIs MIGRATED - FULLY VALIDATED**
+**CURRENT STATUS (2025-09-22)**: ✅ **CONTRACTS, RECEIVABLES & EXPENSES APIs MIGRATED - FULLY VALIDATED**
 - ✅ **Contracts API**: Migrated with 29% code reduction (app/api/contracts/route.ts)
 - ✅ **Receivables API**: Migrated with 35% code reduction (app/api/receivables/route.ts)
 - ✅ **Expenses API**: Migrated with comprehensive functionality:
