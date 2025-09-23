@@ -424,19 +424,14 @@ model AuditLog {
 |-------|------|-------------|-------------|
 | `id` | String | Primary Key, Required, Has Default | - |
 | `timestamp` | DateTime | Required, Has Default | - |
-| `Who` | made | Required | Who made the change |
-| `userId` | String | Required | - |
+| `userId` | String | Required | Who made the change |
 | `userEmail` | String | Required | Cached for resilience if user is deleted |
-| `teamId` | String | Required | - |
-| `What` | entity | Required | What entity was changed |
+| `teamId` | String | Required | Team context |
 | `entityType` | String | Required | "contract", "receivable", "expense" |
 | `entityId` | String | Required | The ID of the changed entity |
-| `What` | kind | Required | What kind of change |
 | `action` | String | Required | "created", "updated", "deleted" |
-| `What` | changed | Required | What changed (for updates) |
 | `changes` | Json | Required | JSON object with before/after values |
-| `Complete` | state | Required | Complete state snapshot (optional, for critical changes) |
-| `snapshot` | Json? | None | Full entity state after change |
+| `snapshot` | Json? | None | Full entity state after change
 | `metadata` | Json? | None | Request metadata (endpoint, IP, user agent) |
 
 #### Relationships
