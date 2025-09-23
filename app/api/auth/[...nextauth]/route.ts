@@ -55,12 +55,19 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+        // Get user's team info
+        const userData = await prisma.user.findUnique({
+          where: { id: user.id },
+          select: { teamId: true }
+        });
+        token.teamId = userData?.teamId;
       }
       return token;
     },
     async session({ session, token }) {
       if (session?.user) {
         session.user.id = token.id as string;
+        session.user.teamId = token.teamId as string;
       }
       return session;
     }
