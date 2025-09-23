@@ -427,9 +427,9 @@ model AuditLog {
 | `userId` | String | Required | Who made the change |
 | `userEmail` | String | Required | Cached for resilience if user is deleted |
 | `teamId` | String | Required | Team context |
-| `entityType` | String | Required | "contract", "receivable", "expense" |
+| `entityType` | String | Required | contract, receivable, or expense |
 | `entityId` | String | Required | The ID of the changed entity |
-| `action` | String | Required | "created", "updated", "deleted" |
+| `action` | String | Required | created, updated, or deleted |
 | `changes` | Json | Required | JSON object with before/after values |
 | `snapshot` | Json? | None | Full entity state after change |
 | `metadata` | Json? | None | Request metadata (endpoint, IP, user agent) |

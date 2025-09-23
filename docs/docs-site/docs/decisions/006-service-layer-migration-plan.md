@@ -2,7 +2,7 @@
 title: "Service Layer Migration Implementation Plan"
 type: "decision"
 audience: ["developer", "agent"]
-contexts: ["architecture", "migration", "service-layer", "business-logic", "api-refactoring"]
+contexts: ["architecture", "migration", "service-layer", "business-logic", "api-refactoring", "validation", "team-isolation", "bug-fixes"]
 complexity: "intermediate"
 last_updated: "2025-09-23"
 version: "1.0"
@@ -33,6 +33,8 @@ dependencies: ["service-layer-extraction", "team-context-middleware", "next.js",
 - Business rules: All enforced correctly
 - Team isolation: Verified across all services
 - Performance: No degradation detected
+- Bug fixes: Service layer fixes existing API bugs (receivables/expenses returning `{}`)
+- Response handling: All services return data correctly
 
 ## Decision Summary
 

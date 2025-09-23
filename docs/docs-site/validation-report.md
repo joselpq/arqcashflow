@@ -4,22 +4,16 @@ Generated on: 2025-09-23
 
 ## Summary
 
-- **Total files validated**: 46
-- **Broken links**: 2
+- **Total files validated**: 48
+- **Broken links**: 1
 - **Stale content**: 0
-- **Missing metadata**: 0
-- **Format inconsistencies**: 2
-- **Orphaned files**: 13
+- **Missing metadata**: 1
+- **Format inconsistencies**: 3
+- **Orphaned files**: 12
 
 ## Issues Found
 
-### 🔗 Broken Links (2)
-
-
-- **File**: `developer/testing/authenticated-testing.md`
-  - **Link**: `../decisions/005-team-context-middleware-implementation.md`
-  - **Text**: "Middleware Implementation"
-  - **Resolved to**: `/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/docs/docs-site/docs/developer/decisions/005-team-context-middleware-implementation.md`
+### 🔗 Broken Links (1)
 
 
 - **File**: `intro.md`
@@ -32,31 +26,35 @@ Generated on: 2025-09-23
 
 ✅ All content is fresh!
 
-### 📋 Missing Metadata (0)
+### 📋 Missing Metadata (1)
 
-✅ All files have required metadata!
 
-### 📐 Format Inconsistencies (2)
+- **File**: `agents/llm-agent-guide.md`
+  - **Missing fields**: title, type, audience, contexts
+
+
+### 📐 Format Inconsistencies (3)
 
 
 - **File**: `agents/contexts/contract-management.md`
   - **Issues**: Missing LLM Context section
 
 
+- **File**: `agents/llm-agent-guide.md`
+  - **Issues**: Missing agent_roles or contexts in frontmatter
+
+
 - **File**: `reference/api/index.md`
   - **Issues**: Missing LLM Context section
 
 
-### 🔍 Orphaned Files (13)
+### 🔍 Orphaned Files (12)
 
 
 - `decisions/003-strategic-architecture-evolution.md`
 
 
-- `decisions/004-no-regrets-architecture-improvements.md`
-
-
-- `decisions/005-team-context-middleware-implementation.md`
+- `decisions/006-service-layer-migration-plan.md`
 
 
 - `developer/integrations/google-sheets.md`
@@ -93,7 +91,7 @@ Generated on: 2025-09-23
 
 ### High Priority
 - 🔴 Fix broken links to prevent navigation issues
-
+- 🔴 Add missing metadata for proper categorization
 - 🟡 Update format to match LLM-optimized structure
 
 ### Medium Priority
@@ -107,7 +105,7 @@ Generated on: 2025-09-23
 
 ## Health Score
 
-**Overall Score**: 97% 🟢
+**Overall Score**: 96% 🟢
 
 ---
 

@@ -78,7 +78,10 @@ jobs:
         continue-on-error: true
 
       - name: Build documentation site
-        run: npm run build
+        run: |
+          # Clear any cached builds to ensure fresh compilation
+          rm -rf .docusaurus 2>/dev/null || true
+          npm run build
 
       - name: Setup Pages
         if: github.event_name == 'push' && github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'

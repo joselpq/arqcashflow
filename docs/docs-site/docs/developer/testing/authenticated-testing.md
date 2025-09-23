@@ -2,7 +2,7 @@
 title: "Authenticated Testing with Test Users"
 type: "guide"
 audience: ["developer", "agent"]
-contexts: ["testing", "authentication", "middleware", "team-isolation"]
+contexts: ["testing", "authentication", "middleware", "team-isolation", "service-validation"]
 complexity: "intermediate"
 last_updated: "2025-09-23"
 version: "1.0"

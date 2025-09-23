@@ -23,6 +23,7 @@ export interface TeamScopedPrismaClient {
   contract: {
     findMany: (args?: any) => Promise<any[]>
     findUnique: (args: any) => Promise<any>
+    findFirst: (args?: any) => Promise<any>
     create: (args: any) => Promise<any>
     update: (args: any) => Promise<any>
     delete: (args: any) => Promise<any>
@@ -31,6 +32,7 @@ export interface TeamScopedPrismaClient {
   receivable: {
     findMany: (args?: any) => Promise<any[]>
     findUnique: (args: any) => Promise<any>
+    findFirst: (args?: any) => Promise<any>
     create: (args: any) => Promise<any>
     update: (args: any) => Promise<any>
     delete: (args: any) => Promise<any>
@@ -39,6 +41,7 @@ export interface TeamScopedPrismaClient {
   expense: {
     findMany: (args?: any) => Promise<any[]>
     findUnique: (args: any) => Promise<any>
+    findFirst: (args?: any) => Promise<any>
     create: (args: any) => Promise<any>
     update: (args: any) => Promise<any>
     delete: (args: any) => Promise<any>
@@ -113,6 +116,10 @@ export function createTeamScopedPrisma(teamId: string): TeamScopedPrismaClient {
     findUnique: (args: any) => {
       const scopedArgs = ensureTeamScope(args)
       return (prisma[entityName] as any).findUnique(scopedArgs)
+    },
+    findFirst: (args?: any) => {
+      const scopedArgs = ensureTeamScope(args)
+      return (prisma[entityName] as any).findFirst(scopedArgs)
     },
     create: (args: any) => {
       const scopedArgs = ensureTeamScopeCreate(args)
