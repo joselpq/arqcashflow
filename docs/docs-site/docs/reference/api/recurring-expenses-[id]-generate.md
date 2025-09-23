@@ -30,7 +30,7 @@ Comprehensive API reference for generate management operations.
 
 ## Endpoint Overview
 
-**Base URL**: `/api/recurring-expenses/{id}/generate`
+**Base URL**: `/api/recurring-expenses/\{id\}/generate`
 **Methods**: POST
 **Authentication**: Required
 **Team Isolation**: Yes
@@ -38,7 +38,7 @@ Comprehensive API reference for generate management operations.
 
 
 
-## POST /api/recurring-expenses/{id}/generate
+## POST /api/recurring-expenses/\{id\}/generate
 
 Create a new generate record.
 
@@ -49,7 +49,7 @@ Create a new generate record.
 ### Example Request
 
 ```bash
-curl -X POST "http://localhost:3000/api/recurring-expenses/{id}/generate" \
+curl -X POST "http://localhost:3000/api/recurring-expenses/\{id\}/generate" \
   -H "Content-Type: application/json" \
   -d '{
     "example": "Request body will be populated based on the specific generate schema"

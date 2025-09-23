@@ -30,7 +30,7 @@ Comprehensive API reference for [id] management operations.
 
 ## Endpoint Overview
 
-**Base URL**: `/api/receivables/{id}`
+**Base URL**: `/api/receivables/\{id\}`
 **Methods**: PUT, DELETE
 **Authentication**: None
 **Team Isolation**: Yes
@@ -40,7 +40,7 @@ Comprehensive API reference for [id] management operations.
 
 
 
-## PUT /api/receivables/{id}
+## PUT /api/receivables/\{id\}
 
 Update an existing [id] record.
 
@@ -57,7 +57,7 @@ All fields are optional for updates.
 ### Example Request
 
 ```bash
-curl -X PUT "http://localhost:3000/api/receivables/{id}/clx123456789" \
+curl -X PUT "http://localhost:3000/api/receivables/\{id\}/clx123456789" \
   -H "Content-Type: application/json" \
   -d '{
     "status": "completed"
@@ -66,7 +66,7 @@ curl -X PUT "http://localhost:3000/api/receivables/{id}/clx123456789" \
 
 
 
-## DELETE /api/receivables/{id}
+## DELETE /api/receivables/\{id\}
 
 Delete a [id] record.
 
@@ -81,7 +81,7 @@ Delete a [id] record.
 ### Example Request
 
 ```bash
-curl -X DELETE "http://localhost:3000/api/receivables/{id}/clx123456789"
+curl -X DELETE "http://localhost:3000/api/receivables/\{id\}/clx123456789"
 ```
 
 

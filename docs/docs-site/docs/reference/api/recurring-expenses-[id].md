@@ -30,13 +30,13 @@ Comprehensive API reference for [id] management operations.
 
 ## Endpoint Overview
 
-**Base URL**: `/api/recurring-expenses/{id}`
+**Base URL**: `/api/recurring-expenses/\{id\}`
 **Methods**: GET, PUT, DELETE
 **Authentication**: Required
 **Team Isolation**: Yes
 
 
-## GET /api/recurring-expenses/{id}
+## GET /api/recurring-expenses/\{id\}
 
 Retrieve [id] records with optional filtering and sorting.
 
@@ -49,7 +49,7 @@ Retrieve [id] records with optional filtering and sorting.
 ### Example Request
 
 ```bash
-curl -X GET "http://localhost:3000/api/recurring-expenses/{id}?status=active&sortBy=createdAt&sortOrder=desc" \
+curl -X GET "http://localhost:3000/api/recurring-expenses/\{id\}?status=active&sortBy=createdAt&sortOrder=desc" \
   -H "Content-Type: application/json"
 ```
 
@@ -72,7 +72,7 @@ interface [id]Response {
 
 
 
-## PUT /api/recurring-expenses/{id}
+## PUT /api/recurring-expenses/\{id\}
 
 Update an existing [id] record.
 
@@ -89,7 +89,7 @@ All fields are optional for updates.
 ### Example Request
 
 ```bash
-curl -X PUT "http://localhost:3000/api/recurring-expenses/{id}/clx123456789" \
+curl -X PUT "http://localhost:3000/api/recurring-expenses/\{id\}/clx123456789" \
   -H "Content-Type: application/json" \
   -d '{
     "status": "completed"
@@ -98,7 +98,7 @@ curl -X PUT "http://localhost:3000/api/recurring-expenses/{id}/clx123456789" \
 
 
 
-## DELETE /api/recurring-expenses/{id}
+## DELETE /api/recurring-expenses/\{id\}
 
 Delete a [id] record.
 
@@ -113,7 +113,7 @@ Delete a [id] record.
 ### Example Request
 
 ```bash
-curl -X DELETE "http://localhost:3000/api/recurring-expenses/{id}/clx123456789"
+curl -X DELETE "http://localhost:3000/api/recurring-expenses/\{id\}/clx123456789"
 ```
 
 

@@ -30,7 +30,7 @@ Comprehensive API reference for recurring-action management operations.
 
 ## Endpoint Overview
 
-**Base URL**: `/api/expenses/{id}/recurring-action`
+**Base URL**: `/api/expenses/\{id\}/recurring-action`
 **Methods**: POST
 **Authentication**: Required
 **Team Isolation**: Yes
@@ -38,7 +38,7 @@ Comprehensive API reference for recurring-action management operations.
 
 
 
-## POST /api/expenses/{id}/recurring-action
+## POST /api/expenses/\{id\}/recurring-action
 
 Create a new recurring-action record.
 
@@ -65,7 +65,7 @@ const RecurringActionSchema = z.object({
 ### Example Request
 
 ```bash
-curl -X POST "http://localhost:3000/api/expenses/{id}/recurring-action" \
+curl -X POST "http://localhost:3000/api/expenses/\{id\}/recurring-action" \
   -H "Content-Type: application/json" \
   -d '{
     "example": "Request body will be populated based on the specific recurring-action schema"

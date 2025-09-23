@@ -462,7 +462,7 @@ CLAUDE_API_KEY="..."
 
 - **[Testing Strategies](./strategies.md)**: General testing approaches
 - **[Standardized Test Port](./standardized-test-port.md)**: Port 3010 configuration
-- **[Middleware Implementation](../decisions/005-team-context-middleware-implementation.md)**: Technical details
+- **[Middleware Implementation](../../decisions/005-team-context-middleware-implementation.md)**: Technical details
 - **[Development Setup](../setup.md)**: Environment configuration
 
 ---

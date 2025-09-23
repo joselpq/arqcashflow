@@ -56,7 +56,7 @@ ArqCashflow is a secure, multi-tenant cashflow management system designed for ar
 
 ### 🤖 **For LLM Agents**
 - **[Agent Contexts](./agents/contexts/contract-management.md)** - Specialized context documents
-- **[LLM Agent Guide](../../../LLM_AGENT_GUIDE.md)** - Optimized context paths
+- **[LLM Agent Guide](./agents/llm-agent-guide.md)** - Optimized context paths
 - **[Decision Records](./decisions/001-precision-bug-investigation.md)** - Architecture decisions
 
 ### 🎨 **Design & UX**
@@ -75,7 +75,7 @@ Browse the [API Reference](./reference/api/index.md) for complete endpoint docum
 Check [Architecture Overview](./developer/architecture/overview.md) and [Authentication Guide](./developer/authentication.md).
 
 ### **LLM Agent Development?**
-Use the [LLM Agent Guide](../../../LLM_AGENT_GUIDE.md) for optimized context paths.
+Use the [LLM Agent Guide](./agents/llm-agent-guide.md) for optimized context paths.
 
 ## Documentation Features
 

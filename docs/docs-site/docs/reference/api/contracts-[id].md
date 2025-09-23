@@ -13,13 +13,13 @@ related:
 dependencies: ["next.js", "prisma", "zod"]
 ---
 
-# [id] API
+# Contracts \{id\} API
 
-Comprehensive API reference for [id] management operations.
+Comprehensive API reference for contract \{id\} management operations.
 
 ## Context for LLM Agents
 
-**Scope**: Complete [id] API operations including CRUD, filtering, sorting, and business logic
+**Scope**: Complete contract \{id\} API operations including CRUD, filtering, sorting, and business logic
 **Prerequisites**: Understanding of REST APIs, Next.js App Router, Prisma ORM, and team-based data isolation
 **Key Patterns**:
 - RESTful endpoint design with standard HTTP methods
@@ -30,15 +30,15 @@ Comprehensive API reference for [id] management operations.
 
 ## Endpoint Overview
 
-**Base URL**: `/api/contracts/{id}`
+**Base URL**: `/api/contracts/\{id\}`
 **Methods**: GET, PUT, DELETE
 **Authentication**: None
 **Team Isolation**: Yes
 
 
-## GET /api/contracts/{id}
+## GET /api/contracts/\{id\}
 
-Retrieve [id] records with optional filtering and sorting.
+Retrieve contract \{id\} records with optional filtering and sorting.
 
 ### Query Parameters
 
@@ -49,7 +49,7 @@ Retrieve [id] records with optional filtering and sorting.
 ### Example Request
 
 ```bash
-curl -X GET "http://localhost:3000/api/contracts/{id}?status=active&sortBy=createdAt&sortOrder=desc" \
+curl -X GET "http://localhost:3000/api/contracts/\{id\}?status=active&sortBy=createdAt&sortOrder=desc" \
   -H "Content-Type: application/json"
 ```
 
@@ -72,7 +72,7 @@ interface [id]Response {
 
 
 
-## PUT /api/contracts/{id}
+## PUT /api/contracts/\{id\}
 
 Update an existing [id] record.
 
@@ -89,7 +89,7 @@ All fields are optional for updates.
 ### Example Request
 
 ```bash
-curl -X PUT "http://localhost:3000/api/contracts/{id}/clx123456789" \
+curl -X PUT "http://localhost:3000/api/contracts/\{id\}/clx123456789" \
   -H "Content-Type: application/json" \
   -d '{
     "status": "completed"
@@ -98,7 +98,7 @@ curl -X PUT "http://localhost:3000/api/contracts/{id}/clx123456789" \
 
 
 
-## DELETE /api/contracts/{id}
+## DELETE /api/contracts/\{id\}
 
 Delete a [id] record.
 
@@ -113,7 +113,7 @@ Delete a [id] record.
 ### Example Request
 
 ```bash
-curl -X DELETE "http://localhost:3000/api/contracts/{id}/clx123456789"
+curl -X DELETE "http://localhost:3000/api/contracts/\{id\}/clx123456789"
 ```
 
 
