@@ -4,7 +4,7 @@ type: "reference"
 audience: ["developer", "agent"]
 contexts: ["api", "[...nextauth]", "rest", "database"]
 complexity: "intermediate"
-last_updated: "2025-09-22"
+last_updated: "2025-09-23"
 version: "1.0"
 agent_roles: ["api-developer", "integration-engineer"]
 related:
@@ -33,7 +33,7 @@ Comprehensive API reference for [...nextauth] management operations.
 **Base URL**: `/api/auth/[...nextauth]`
 **Methods**: 
 **Authentication**: Required
-**Team Isolation**: No
+**Team Isolation**: Yes
 
 
 
@@ -66,11 +66,25 @@ interface ErrorResponse {
 | 500 | INTERNAL_ERROR | Server error |
 
 
+## Team Isolation
+
+All [...nextauth] operations are automatically filtered by team context:
+
+```typescript
+// All queries include team isolation
+const where = {
+  teamId: session.user.teamId,
+  ...additionalFilters
+};
+```
+
+This ensures complete data separation between teams in the multi-tenant system.
+
 
 ## Implementation Notes
 
 ### Business Logic
-- **Team Isolation**: Not applicable
+- **Team Isolation**: Enforced at API level
 - **Authentication**: Required for all operations
 - **Validation**: Zod schemas ensure type safety
 - **Error Handling**: Consistent error responses across all endpoints

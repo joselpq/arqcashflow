@@ -4,7 +4,7 @@ type: "reference"
 audience: ["developer", "agent"]
 contexts: ["database", "prisma", "schema", "orm"]
 complexity: "intermediate"
-last_updated: "2025-09-22"
+last_updated: "2025-09-23"
 version: "1.0"
 agent_roles: ["database-developer", "backend-engineer", "data-modeler"]
 related:
@@ -1010,4 +1010,4 @@ const result = await prisma.model.findMany({
 ---
 
 *This documentation is auto-generated from `prisma/schema.prisma`. For updates, modify the schema file and regenerate.*
-*Last generated: 2025-09-22*
+*Last generated: 2025-09-23*

@@ -4,7 +4,7 @@ type: "reference"
 audience: ["developer", "agent"]
 contexts: ["api", "rest", "documentation"]
 complexity: "intermediate"
-last_updated: "2025-09-22"
+last_updated: "2025-09-23"
 version: "1.0"
 agent_roles: ["api-developer", "integration-engineer"]
 ---
@@ -12,17 +12,6 @@ agent_roles: ["api-developer", "integration-engineer"]
 # API Reference
 
 Comprehensive API documentation for ArqCashflow REST endpoints.
-
-## Context for LLM Agents
-
-**Scope**: Complete REST API reference for ArqCashflow including all endpoints, authentication patterns, and team-based data isolation
-**Prerequisites**: Understanding of REST APIs, NextAuth.js authentication, multi-tenant architecture, and JSON data formats
-**Key Patterns**:
-- Team-based data isolation across all endpoints
-- NextAuth.js session-based authentication
-- RESTful design with standard HTTP methods
-- Consistent JSON request/response formats
-- AI-powered endpoints for document processing and natural language interactions
 
 ## Available APIs
 
@@ -70,4 +59,4 @@ All data operations are automatically filtered by team context for multi-tenant 
 
 ---
 
-*This documentation is auto-generated from the codebase. Last updated: 2025-09-22*
+*This documentation is auto-generated from the codebase. Last updated: 2025-09-23*
