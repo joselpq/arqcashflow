@@ -156,7 +156,7 @@ export function createTeamScopedPrisma(teamId: string): TeamScopedPrismaClient {
  */
 export async function withTeamContext<T>(
   handler: (context: TeamContext) => Promise<T>
-): Promise<T> {
+): Promise<NextResponse> {
   try {
     // Use existing requireAuth - no behavior change
     const { user, teamId } = await requireAuth()
@@ -165,14 +165,46 @@ export async function withTeamContext<T>(
     const teamScopedPrisma = createTeamScopedPrisma(teamId)
 
     // Execute handler with context
-    return await handler({
+    const result = await handler({
       user,
       teamId,
       teamScopedPrisma
     })
+
+    return NextResponse.json(result)
   } catch (error) {
-    // Re-throw auth errors as-is (maintains existing behavior)
-    throw error
+    // Handle auth errors (maintains existing behavior)
+    if (error instanceof Error && error.message === "Unauthorized") {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Handle "not found" errors
+    if (error instanceof Error && (
+      error.message.includes("not found") ||
+      error.message.includes("Not found")
+    )) {
+      return NextResponse.json({ error: error.message }, { status: 404 })
+    }
+
+    // Handle "access denied" errors
+    if (error instanceof Error && (
+      error.message.includes("Access denied") ||
+      error.message.includes("access denied")
+    )) {
+      return NextResponse.json({ error: error.message }, { status: 403 })
+    }
+
+    // Handle validation errors
+    if (error && typeof error === 'object' && 'errors' in error) {
+      return NextResponse.json({ error: error }, { status: 400 })
+    }
+
+    // Handle other errors
+    console.error('Team context middleware error:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
   }
 }
 

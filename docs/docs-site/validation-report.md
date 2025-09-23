@@ -1,19 +1,25 @@
 # Documentation Validation Report
 
-Generated on: 2025-09-22
+Generated on: 2025-09-23
 
 ## Summary
 
-- **Total files validated**: 42
-- **Broken links**: 1
+- **Total files validated**: 46
+- **Broken links**: 2
 - **Stale content**: 0
 - **Missing metadata**: 0
-- **Format inconsistencies**: 1
-- **Orphaned files**: 11
+- **Format inconsistencies**: 2
+- **Orphaned files**: 13
 
 ## Issues Found
 
-### 🔗 Broken Links (1)
+### 🔗 Broken Links (2)
+
+
+- **File**: `developer/testing/authenticated-testing.md`
+  - **Link**: `../decisions/005-team-context-middleware-implementation.md`
+  - **Text**: "Middleware Implementation"
+  - **Resolved to**: `/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/docs/docs-site/docs/developer/decisions/005-team-context-middleware-implementation.md`
 
 
 - **File**: `intro.md`
@@ -30,17 +36,27 @@ Generated on: 2025-09-22
 
 ✅ All files have required metadata!
 
-### 📐 Format Inconsistencies (1)
+### 📐 Format Inconsistencies (2)
 
 
 - **File**: `agents/contexts/contract-management.md`
   - **Issues**: Missing LLM Context section
 
 
-### 🔍 Orphaned Files (11)
+- **File**: `reference/api/index.md`
+  - **Issues**: Missing LLM Context section
 
 
-- `decisions/002-claude-migration.md`
+### 🔍 Orphaned Files (13)
+
+
+- `decisions/003-strategic-architecture-evolution.md`
+
+
+- `decisions/004-no-regrets-architecture-improvements.md`
+
+
+- `decisions/005-team-context-middleware-implementation.md`
 
 
 - `developer/integrations/google-sheets.md`
@@ -91,7 +107,7 @@ Generated on: 2025-09-22
 
 ## Health Score
 
-**Overall Score**: 98% 🟢
+**Overall Score**: 97% 🟢
 
 ---
 

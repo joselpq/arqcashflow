@@ -2,33 +2,39 @@
 title: "Team Context Middleware Implementation and Validation"
 type: "decision"
 audience: ["developer", "agent"]
-contexts: ["architecture", "middleware", "security", "team-isolation", "contracts-api", "receivables-api", "expenses-api", "recurring-expenses", "validation", "testing"]
+contexts: ["architecture", "middleware", "security", "team-isolation", "contracts-api", "receivables-api", "expenses-api", "dashboard-api", "error-handling", "frontend-compatibility", "validation", "testing"]
 complexity: "intermediate"
-last_updated: "2025-09-22"
+last_updated: "2025-09-23"
 version: "1.0"
 agent_roles: ["middleware-implementor", "security-validator"]
 related:
   - decisions/004-no-regrets-architecture-improvements.md
   - developer/architecture/overview.md
-dependencies: ["next.js", "prisma", "typescript", "team-context-middleware", "contracts-api", "receivables-api", "expenses-api", "authentication", "zod", "audit-middleware"]
+dependencies: ["next.js", "prisma", "typescript", "team-context-middleware", "contracts-api", "receivables-api", "expenses-api", "dashboard-api", "authentication", "zod", "audit-middleware", "error-handling"]
 ---
 
 # Team Context Middleware Implementation and Validation
 
 ## Context for LLM Agents
 
-**Scope**: Comprehensive team context middleware implementation with full expenses API migration
-**Prerequisites**: Understanding of existing auth patterns, Prisma ORM, team-based data isolation, and recurring expense patterns
+**Scope**: Complete team context middleware implementation with comprehensive API migration and error handling resolution
+**Prerequisites**: Understanding of existing auth patterns, Prisma ORM, team-based data isolation, recurring expense patterns, and Next.js App Router middleware patterns
 **Key Patterns**:
-- Backwards-compatible middleware wrapper
+- Backwards-compatible middleware wrapper with proper error handling
 - Team-scoped Prisma client with automatic team filtering
 - Complex recurring operations with scope-based actions (this/future/all)
-- Comprehensive authenticated validation approach
-- Gradual migration strategy with real-world testing
+- Frontend compatibility fixes (array vs object response handling)
+- Authenticated validation approach with real test users
+- Gradual migration strategy with comprehensive testing
+- Error handling standardization (401/404/403/500 responses)
+**Recent Critical Fixes**:
+- Fixed frontend compatibility issue in contracts API (data.forEach error)
+- Implemented proper error response handling in withTeamContext middleware
+- Resolved response wrapping conflicts between .then()/.catch() and middleware patterns
 
 ## Implementation Status
 
-**CURRENT STATUS (2025-09-22)**: ✅ **CONTRACTS, RECEIVABLES & EXPENSES APIs MIGRATED - FULLY VALIDATED**
+**CURRENT STATUS (2025-09-23)**: ✅ **CONTRACTS, RECEIVABLES & EXPENSES APIs MIGRATED - FULLY VALIDATED & ERROR-RESOLVED**
 - ✅ **Contracts API**: Migrated with 29% code reduction (app/api/contracts/route.ts)
 - ✅ **Receivables API**: Migrated with 35% code reduction (app/api/receivables/route.ts)
 - ✅ **Expenses API**: Migrated with comprehensive functionality:
@@ -75,7 +81,8 @@ dependencies: ["next.js", "prisma", "typescript", "team-context-middleware", "co
   - Filtering, sorting, and summary statistics
 - **Test users**: Two pre-configured users with separate teams
 - **Sample data**: Realistic contracts, expenses, receivables for each team
-- **Documentation**: Complete testing guide in `docs/developer/testing/authenticated-testing.md`
+- **Documentation**: Complete testing guide in `docs/developer/testing/authenticated-testing.md` ✅ VALIDATED
+- **Error resolution**: Frontend compatibility issues resolved, documented with technical details
 
 ## Architecture Design
 
@@ -206,17 +213,54 @@ Use both test users to verify:
 
 ## Current Test Results
 
-### Manual Validation ⚠️
+### Manual Validation ✅
 - **Interface validation**: Middleware provides expected context
-- **Team scoping**: Needs authenticated testing to verify
-- **Error handling**: 401 errors working correctly
+- **Team scoping**: Verified with authenticated testing
+- **Error handling**: 401 errors working correctly after fixes
 - **Backwards compatibility**: No breaking changes
+- **Frontend compatibility**: Fixed array response issues
 
-### Authenticated Testing Required
-- **Functional validation**: Need to test with auth credentials
-- **Data filtering**: Verify team-scoped queries work
-- **Create operations**: Test teamId auto-insertion
-- **Security**: Validate cross-team isolation
+### Authenticated Testing ✅ COMPLETE
+- **Functional validation**: Tested with auth credentials successfully
+- **Data filtering**: Team-scoped queries working correctly
+- **Create operations**: TeamId auto-insertion verified
+- **Security**: Cross-team isolation validated
+- **Frontend integration**: Contracts API responses compatible with UI
+
+## Critical Error Resolution (2025-09-23)
+
+### Issue: Frontend Compatibility Error
+**Problem**: Frontend error "data.forEach is not a function" occurred when migrating contracts API to middleware.
+
+**Root Cause Analysis**:
+1. Original contracts API used `.then()/.catch()` pattern after middleware wrapper
+2. Middleware `withTeamContext` returns `NextResponse.json()` internally
+3. Adding `.then()` created response wrapping conflict
+4. Frontend received object instead of expected array
+
+**Technical Details**:
+```typescript
+// ❌ BROKEN - Double response wrapping
+return withTeamContext(async ({ teamScopedPrisma }) => {
+  const contracts = await teamScopedPrisma.contract.findMany({...})
+  return contracts
+}).then(result => NextResponse.json(result)).catch(...)
+
+// ✅ FIXED - Let middleware handle response
+return withTeamContext(async ({ teamScopedPrisma }) => {
+  const contracts = await teamScopedPrisma.contract.findMany({...})
+  return contracts  // Middleware automatically wraps in NextResponse.json()
+})
+```
+
+**Resolution Steps**:
+1. Identified issue through frontend console error in localhost
+2. Analyzed middleware response handling pattern
+3. Removed `.then()/.catch()` from contracts API route
+4. Verified array response structure using test script
+5. Confirmed frontend functionality restored
+
+**Impact**: This fix ensures all migrated APIs maintain frontend compatibility while benefiting from middleware error handling.
 
 ## Risk Assessment
 

@@ -1,13 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { requireAuth } from '@/lib/auth-utils'
+import { withTeamContext } from '@/lib/middleware/team-context'
 import { isDateBefore, isDateInRange } from '@/lib/date-utils'
 
 export async function GET(request: NextRequest) {
-  try {
+  return withTeamContext(async ({ teamScopedPrisma, teamId }) => {
     console.log('🔍 Dashboard API: Starting data fetch')
-
-    const { teamId } = await requireAuth()
     console.log('✅ Dashboard API: Auth successful, teamId:', teamId)
 
     // Get current month dates
@@ -17,38 +14,22 @@ export async function GET(request: NextRequest) {
     const today = new Date()
 
     console.log('📊 Dashboard API: Fetching contracts...')
-    // Get contracts data
-    const contracts = await prisma.contract.findMany({
-      where: { teamId },
+    // Get contracts data - teamId automatically filtered
+    const contracts = await teamScopedPrisma.contract.findMany({
       include: { receivables: true }
     })
     console.log('✅ Dashboard API: Contracts fetched:', contracts.length)
 
     console.log('💰 Dashboard API: Fetching receivables...')
-    // Get receivables data (both contract-based and standalone)
-    const receivables = await prisma.receivable.findMany({
-      where: {
-        OR: [
-          // Contract-based receivables
-          {
-            contract: {
-              teamId
-            }
-          },
-          // Standalone receivables
-          {
-            teamId: teamId
-          }
-        ]
-      },
+    // Get receivables data - teamId automatically filtered
+    const receivables = await teamScopedPrisma.receivable.findMany({
       include: { contract: true }
     })
     console.log('✅ Dashboard API: Receivables fetched:', receivables.length)
 
     console.log('💸 Dashboard API: Fetching expenses...')
-    // Get expenses data
-    const expenses = await prisma.expense.findMany({
-      where: { teamId },
+    // Get expenses data - teamId automatically filtered
+    const expenses = await teamScopedPrisma.expense.findMany({
       include: { contract: true }
     })
     console.log('✅ Dashboard API: Expenses fetched:', expenses.length)
@@ -226,23 +207,6 @@ export async function GET(request: NextRequest) {
     }
 
     console.log('🎉 Dashboard API: Data processing complete')
-    return NextResponse.json(dashboardData)
-  } catch (error) {
-    console.error('❌ Dashboard API Error:', {
-      message: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
-      timestamp: new Date().toISOString()
-    })
-
-    if (error instanceof Error && error.message === "Unauthorized") {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    // Provide more specific error message
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
-    return NextResponse.json({
-      error: 'Failed to fetch dashboard data',
-      details: errorMessage
-    }, { status: 500 })
-  }
+    return dashboardData
+  })
 }

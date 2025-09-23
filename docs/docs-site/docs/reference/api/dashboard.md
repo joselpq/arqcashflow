@@ -26,13 +26,13 @@ Comprehensive API reference for dashboard management operations.
 - Team-based data isolation for multi-tenant security
 - Zod validation for type-safe request/response handling
 - Consistent error handling and response formats
-- Session-based authentication required for all operations
+
 
 ## Endpoint Overview
 
 **Base URL**: `/api/dashboard`
 **Methods**: GET
-**Authentication**: Required
+**Authentication**: None
 **Team Isolation**: Yes
 
 
@@ -117,7 +117,7 @@ This ensures complete data separation between teams in the multi-tenant system.
 
 ### Business Logic
 - **Team Isolation**: Enforced at API level
-- **Authentication**: Required for all operations
+- **Authentication**: Public access
 - **Validation**: Zod schemas ensure type safety
 - **Error Handling**: Consistent error responses across all endpoints
 

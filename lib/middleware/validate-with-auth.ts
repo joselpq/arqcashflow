@@ -226,11 +226,8 @@ async function testMiddlewareEquivalence(): Promise<void> {
   const session = await loginUser(TEST_USERS[0].email, TEST_USERS[0].password)
 
   // Test GET endpoints
-  const [originalContracts, middlewareContracts] = await Promise.all([
+  const [originalContracts] = await Promise.all([
     makeAuthenticatedRequest('/api/contracts', session),
-    // Note: We'll need to create a middleware version of contracts for this test
-    // For now, test with the existing middleware POC
-    makeAuthenticatedRequest('/api/budgets', session),
   ])
 
   if (!originalContracts.success) {

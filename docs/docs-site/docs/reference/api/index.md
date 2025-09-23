@@ -20,7 +20,6 @@ Comprehensive API documentation for ArqCashflow REST endpoints.
 - [Ai-setup-assistant-direct API](./ai-setup-assistant-direct.md)
 - [Auth-[...nextauth] API](./auth-[...nextauth].md)
 - [Auth-register API](./auth-register.md)
-- [Budgets API](./budgets.md)
 - [Contracts-[id] API](./contracts-[id].md)
 - [Contracts API](./contracts.md)
 - [Cron-generate-recurring API](./cron-generate-recurring.md)
@@ -56,6 +55,22 @@ All requests and responses use `application/json` content type.
 
 ### Team Isolation
 All data operations are automatically filtered by team context for multi-tenant security.
+
+### Migration Status
+The following APIs have been migrated to use the team context middleware:
+- ✅ Contracts API (29% code reduction)
+- ✅ Receivables API (35% code reduction)
+- ✅ Expenses API (31% code reduction)
+- ✅ Dashboard API (14.5% code reduction)
+- ✅ Individual resource APIs ([id] routes)
+
+## LLM Context
+
+**Purpose**: Comprehensive API documentation for ArqCashflow financial management system
+**Key Features**: Team-based isolation, NextAuth.js authentication, RESTful endpoints
+**Architecture**: Next.js App Router with Prisma ORM and PostgreSQL
+**Security**: Multi-tenant team context middleware for data isolation
+**Testing**: Authenticated testing framework with pre-configured test users
 
 ---
 

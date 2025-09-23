@@ -483,7 +483,6 @@ function getModelPurpose(modelName) {
     'Contract': 'Client agreements and project definitions',
     'Receivable': 'Expected payments and cash flow tracking',
     'Expense': 'Project costs and operational spending',
-    'Budget': 'Financial planning and budget management',
     'RecurringExpense': 'Automated recurring cost management',
     'AuditLog': 'System activity tracking and compliance'
   };

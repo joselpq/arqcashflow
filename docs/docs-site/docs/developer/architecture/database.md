@@ -57,14 +57,13 @@ generator client {
 
 | Model | Purpose | Key Relationships |
 |-------|---------|-------------------|
-| Contract | Client agreements and project definitions | budgets, team, expenses, receivables, recurringExpenses |
+| Contract | Client agreements and project definitions | team, expenses, receivables, recurringExpenses |
 | Receivable | Expected payments and cash flow tracking | contract, team |
 | Category | Data management entity | None |
 | Expense | Project costs and operational spending | contract, team, recurringExpense |
-| Budget | Financial planning and budget management | contract, team |
 | RecurringExpense | Automated recurring cost management | team, user, contract, expenses |
 | AuditLog | System activity tracking and compliance | user, team |
-| Team | Multi-tenant team organization | budgets, contracts, expenses, receivables, users, auditLogs, recurringExpenses |
+| Team | Multi-tenant team organization | contracts, expenses, receivables, users, auditLogs, recurringExpenses |
 | User | User authentication and profile management | team, auditLogs, recurringExpenses |
 
 ### Contract
@@ -85,7 +84,6 @@ model Contract {
   createdAt    DateTime @default(now()
   updatedAt    DateTime @updatedAt
   teamId       String 
-  budgets      Budget[] 
   team         Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
   expenses     Expense[] 
   receivables  Receivable[] 
@@ -110,7 +108,6 @@ model Contract {
 | `createdAt` | DateTime | Required, Has Default | - |
 | `updatedAt` | DateTime | Required | - |
 | `teamId` | String | Required | - |
-| `budgets` | Budget[] | Required | - |
 | `expenses` | Expense[] | Required | - |
 | `receivables` | Receivable[] | Required | - |
 | `recurringExpenses` | RecurringExpense[] | Required | Recurring expenses for this project |
@@ -119,7 +116,6 @@ model Contract {
 
 | Field | Type | Relationship | Description |
 |-------|------|--------------|-------------|
-| `budgets` | Budget[] | One-to-Many | Related Budget records |
 | `team` | Team | Many-to-One | Related Team records |
 | `expenses` | Expense[] | One-to-Many | Related Expense records |
 | `receivables` | Receivable[] | One-to-Many | Related Receivable records |
@@ -303,62 +299,6 @@ model Expense {
 - Amount must be positive
 - Recurring expenses generate automatic instances
 
-### Budget
-
-
-
-```prisma
-model Budget {
-  id           String @id @default(cuid()
-  contractId   String? 
-  name         String 
-  category     String 
-  budgetAmount Float 
-  period       String 
-  startDate    DateTime 
-  endDate      DateTime 
-  isActive     Boolean @default(true)
-  notes        String? 
-  createdAt    DateTime @default(now()
-  updatedAt    DateTime @updatedAt
-  teamId       String? 
-  contract     Contract? @relation(fields: [contractId], references: [id])
-  team         Team? @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  @@index([teamId])
-  @@index([contractId])
-  @@index([category])
-  @@index([startDate, endDate])
-}
-```
-
-#### Fields
-
-| Field | Type | Constraints | Description |
-|-------|------|-------------|-------------|
-| `id` | String | Primary Key, Required, Has Default | - |
-| `contractId` | String? | None | - |
-| `name` | String | Required | - |
-| `category` | String | Required | - |
-| `budgetAmount` | Float | Required | - |
-| `period` | String | Required | - |
-| `startDate` | DateTime | Required | - |
-| `endDate` | DateTime | Required | - |
-| `isActive` | Boolean | Required, Has Default | - |
-| `notes` | String? | None | - |
-| `createdAt` | DateTime | Required, Has Default | - |
-| `updatedAt` | DateTime | Required | - |
-| `teamId` | String? | None | - |
-
-#### Relationships
-
-| Field | Type | Relationship | Description |
-|-------|------|--------------|-------------|
-| `contract` | Contract? | Many-to-One | Related Contract records |
-| `team` | Team? | Many-to-One | Related Team records |
-
-#### Business Rules
-- Standard CRUD operations apply
-
 ### RecurringExpense
 
 
@@ -525,7 +465,6 @@ model Team {
   profession   String? 
   revenueTier  String? 
   type         String @default("individual")
-  budgets      Budget[] 
   contracts    Contract[] 
   expenses     Expense[] 
   receivables  Receivable[] 
@@ -550,7 +489,6 @@ model Team {
 | `profession` | String? | None | - |
 | `revenueTier` | String? | None | - |
 | `type` | String | Required, Has Default | - |
-| `budgets` | Budget[] | Required | - |
 | `contracts` | Contract[] | Required | - |
 | `expenses` | Expense[] | Required | - |
 | `receivables` | Receivable[] | Required | - |
@@ -562,7 +500,6 @@ model Team {
 
 | Field | Type | Relationship | Description |
 |-------|------|--------------|-------------|
-| `budgets` | Budget[] | One-to-Many | Related Budget records |
 | `contracts` | Contract[] | One-to-Many | Related Contract records |
 | `expenses` | Expense[] | One-to-Many | Related Expense records |
 | `receivables` | Receivable[] | One-to-Many | Related Receivable records |
@@ -634,7 +571,6 @@ model User {
 ### Entity Relationship Diagram
 
 ```
-Contract ||--o{ Budget : has many
 Team ||--|| Contract : belongs to
 Contract ||--o{ Expense : has many
 Contract ||--o{ Receivable : has many
@@ -644,15 +580,12 @@ Team ||--|| Receivable : belongs to
 Contract ||--|| Expense : belongs to
 Team ||--|| Expense : belongs to
 RecurringExpense ||--|| Expense : belongs to
-Contract ||--|| Budget : belongs to
-Team ||--|| Budget : belongs to
 Team ||--|| RecurringExpense : belongs to
 User ||--|| RecurringExpense : belongs to
 Contract ||--|| RecurringExpense : belongs to
 RecurringExpense ||--o{ Expense : has many
 User ||--|| AuditLog : belongs to
 Team ||--|| AuditLog : belongs to
-Team ||--o{ Budget : has many
 Team ||--o{ Contract : has many
 Team ||--o{ Expense : has many
 Team ||--o{ Receivable : has many
@@ -667,11 +600,6 @@ User ||--o{ RecurringExpense : has many
 ### Relationship Types
 
 #### One-to-Many Relationships
-
-- **Contract** → **Budget**: One Contract can have multiple Budget records
-  - Delete strategy: Cascade
-  - Business rule: Deleting Contract removes all related Budget records
-
 
 - **Contract** → **Expense**: One Contract can have multiple Expense records
   - Delete strategy: Cascade
@@ -691,11 +619,6 @@ User ||--o{ RecurringExpense : has many
 - **RecurringExpense** → **Expense**: One RecurringExpense can have multiple Expense records
   - Delete strategy: Cascade
   - Business rule: Deleting RecurringExpense removes all related Expense records
-
-
-- **Team** → **Budget**: One Team can have multiple Budget records
-  - Delete strategy: Cascade
-  - Business rule: Deleting Team removes all related Budget records
 
 
 - **Team** → **Contract**: One Team can have multiple Contract records
@@ -770,16 +693,6 @@ User ||--o{ RecurringExpense : has many
   - Business rule: Expense can exist without RecurringExpense
 
 
-- **Budget** → **Contract**: Multiple Budget records can belong to one Contract
-  - Optional: Yes
-  - Business rule: Budget can exist without Contract
-
-
-- **Budget** → **Team**: Multiple Budget records can belong to one Team
-  - Optional: Yes
-  - Business rule: Budget can exist without Team
-
-
 - **RecurringExpense** → **Team**: Multiple RecurringExpense records can belong to one Team
   - Optional: No
   - Business rule: RecurringExpense must be linked to Team
@@ -817,7 +730,6 @@ User ||--o{ RecurringExpense : has many
 - **Receivable**: `id` (String)
 - **Category**: `id` (String)
 - **Expense**: `id` (String)
-- **Budget**: `id` (String)
 - **RecurringExpense**: `id` (String)
 - **AuditLog**: `id` (String)
 - **Team**: `id` (String)
@@ -874,18 +786,6 @@ User ||--o{ RecurringExpense : has many
 
 
 - **Expense.recurringExpenseId**: Foreign key relationship
-
-
-- **Budget.contractId**: Foreign key relationship
-
-
-- **Budget.createdAt**: Performance optimization
-
-
-- **Budget.updatedAt**: Performance optimization
-
-
-- **Budget.teamId**: Foreign key relationship
 
 
 - **RecurringExpense.createdAt**: Performance optimization

@@ -58,14 +58,7 @@ export async function GET(request: NextRequest) {
     })
 
     return contracts
-  }).then(result => NextResponse.json(result))
-    .catch(error => {
-      console.error('CONTRACT FETCH ERROR:', error)
-      if (error instanceof Error && error.message === "Unauthorized") {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-      }
-      return NextResponse.json({ error: 'Failed to fetch contracts' }, { status: 500 })
-    })
+  })
 }
 
 export async function POST(request: NextRequest) {
@@ -96,17 +89,7 @@ export async function POST(request: NextRequest) {
     return {
       contract
     }
-  }).then(result => NextResponse.json(result, { status: 201 }))
-    .catch(error => {
-      if (error instanceof Error && error.message === "Unauthorized") {
-        return NextResponse.json({ error: 'Unauthorized - User must belong to a team' }, { status: 401 })
-      }
-      if (error instanceof z.ZodError) {
-        return NextResponse.json({ error: error.errors }, { status: 400 })
-      }
-      console.error('Contract creation error:', error)
-      return NextResponse.json({ error: 'Failed to create contract' }, { status: 500 })
-    })
+  })
 }
 
 /**

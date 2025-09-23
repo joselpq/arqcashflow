@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
-import { requireAuth } from '@/lib/auth-utils'
+import { withTeamContext } from '@/lib/middleware/team-context'
 import { createDateForStorage } from '@/lib/date-utils'
 import { createAuditContextFromAPI, auditUpdate, auditDelete, safeAudit, captureEntityState } from '@/lib/audit-middleware'
+import { prisma } from '@/lib/prisma'
 
 const UpdateReceivableSchema = z.object({
   expectedDate: z.string().optional(),
@@ -23,9 +23,8 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  try {
+  return withTeamContext(async ({ teamScopedPrisma, user, teamId }) => {
     console.log('🔍 Receivables PUT endpoint called')
-    const { user, teamId } = await requireAuth()
     const { id } = await params
     console.log('📝 Request data:', { userId: user.id, teamId, receivableId: id })
 
@@ -35,17 +34,17 @@ export async function PUT(
     const validatedData = UpdateReceivableSchema.parse(body)
     console.log('✅ Validated data:', JSON.stringify(validatedData, null, 2))
 
-    // Capture state before update for audit
+    // Capture state before update for audit (using raw prisma for audit)
     const beforeState = await captureEntityState('receivable', id, prisma)
     if (!beforeState) {
-      return NextResponse.json({ error: 'Receivable not found' }, { status: 404 })
+      throw new Error('Receivable not found')
     }
 
     // Verify team ownership
     const hasAccess = beforeState.teamId === teamId ||
                      (beforeState.contract && beforeState.contract.teamId === teamId)
     if (!hasAccess) {
-      return NextResponse.json({ error: 'Access denied' }, { status: 403 })
+      throw new Error('Access denied')
     }
 
     const updateData: any = { ...validatedData }
@@ -100,6 +99,7 @@ export async function PUT(
     console.log('🧹 Cleaned updateData for Prisma:', JSON.stringify(cleanUpdateData, null, 2))
 
     console.log('💾 Updating receivable in database...')
+    // Use raw prisma for update since we need the exact ID match
     const receivable = await prisma.receivable.update({
       where: { id },
       data: cleanUpdateData,
@@ -117,49 +117,31 @@ export async function PUT(
       await auditUpdate(auditContext, 'receivable', id, beforeState, validatedData, receivable)
     })
 
-    return NextResponse.json(receivable)
-  } catch (error) {
-    console.error('❌ Error in receivables PUT endpoint:', error)
-
-    if (error instanceof Error && error.message === "Unauthorized") {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-    if (error instanceof z.ZodError) {
-      console.error('📋 Validation errors:', error.errors)
-      return NextResponse.json({ error: error.errors }, { status: 400 })
-    }
-    console.error('💥 Unexpected error:', {
-      message: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined
-    })
-    return NextResponse.json({
-      error: 'Failed to update receivable',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 })
-  }
+    return receivable
+  })
 }
 
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  try {
-    const { user, teamId } = await requireAuth()
+  return withTeamContext(async ({ user, teamId }) => {
     const { id } = await params
 
-    // Capture state before deletion for audit
+    // Capture state before deletion for audit (using raw prisma for audit)
     const beforeState = await captureEntityState('receivable', id, prisma)
     if (!beforeState) {
-      return NextResponse.json({ error: 'Receivable not found' }, { status: 404 })
+      throw new Error('Receivable not found')
     }
 
     // Verify team ownership
     const hasAccess = beforeState.teamId === teamId ||
                      (beforeState.contract && beforeState.contract.teamId === teamId)
     if (!hasAccess) {
-      return NextResponse.json({ error: 'Access denied' }, { status: 403 })
+      throw new Error('Access denied')
     }
 
+    // Use raw prisma for delete since we need the exact ID
     await prisma.receivable.delete({
       where: { id },
     })
@@ -174,11 +156,6 @@ export async function DELETE(
       await auditDelete(auditContext, 'receivable', id, beforeState)
     })
 
-    return NextResponse.json({ message: 'Receivable deleted successfully' })
-  } catch (error) {
-    if (error instanceof Error && error.message === "Unauthorized") {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-    return NextResponse.json({ error: 'Failed to delete receivable' }, { status: 500 })
-  }
+    return { message: 'Receivable deleted successfully' }
+  })
 }

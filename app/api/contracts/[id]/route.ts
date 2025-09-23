@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
-import { requireAuth } from '@/lib/auth-utils'
+import { withTeamContext } from '@/lib/middleware/team-context'
 import { createDateForStorage } from '@/lib/date-utils'
 import { createAuditContextFromAPI, auditUpdate, auditDelete, safeAudit, captureEntityState } from '@/lib/audit-middleware'
+import { prisma } from '@/lib/prisma'
 
 const UpdateContractSchema = z.object({
   clientName: z.string().optional(),
@@ -20,43 +20,36 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  try {
-    const { teamId } = await requireAuth()
+  return withTeamContext(async ({ teamScopedPrisma }) => {
     const { id } = await params
 
-    const contract = await prisma.contract.findFirst({
-      where: { id, teamId },
+    const contract = await teamScopedPrisma.contract.findFirst({
+      where: { id },
       include: { receivables: true },
     })
 
     if (!contract) {
-      return NextResponse.json({ error: 'Contract not found' }, { status: 404 })
+      throw new Error('Contract not found')
     }
 
-    return NextResponse.json(contract)
-  } catch (error) {
-    if (error instanceof Error && error.message === "Unauthorized") {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-    return NextResponse.json({ error: 'Failed to fetch contract' }, { status: 500 })
-  }
+    return contract
+  })
 }
 
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  try {
-    const { user, teamId } = await requireAuth()
+  return withTeamContext(async ({ teamScopedPrisma, user, teamId }) => {
     const { id } = await params
 
     const body = await request.json()
     const validatedData = UpdateContractSchema.parse(body)
 
-    // Capture state before update for audit
+    // Capture state before update for audit (using raw prisma for audit)
     const beforeState = await captureEntityState('contract', id, prisma)
     if (!beforeState || beforeState.teamId !== teamId) {
-      return NextResponse.json({ error: 'Contract not found' }, { status: 404 })
+      throw new Error('Contract not found')
     }
 
     const updateData: any = { ...validatedData }
@@ -64,17 +57,17 @@ export async function PUT(
       updateData.signedDate = createDateForStorage(validatedData.signedDate)
     }
 
-    const contract = await prisma.contract.updateMany({
-      where: { id, teamId },
+    const contract = await teamScopedPrisma.contract.updateMany({
+      where: { id },
       data: updateData,
     })
 
     if (contract.count === 0) {
-      return NextResponse.json({ error: 'Contract not found' }, { status: 404 })
+      throw new Error('Contract not found')
     }
 
-    const updatedContract = await prisma.contract.findFirst({
-      where: { id, teamId },
+    const updatedContract = await teamScopedPrisma.contract.findFirst({
+      where: { id },
       include: { receivables: true }
     })
 
@@ -88,40 +81,31 @@ export async function PUT(
       await auditUpdate(auditContext, 'contract', id, beforeState, validatedData, updatedContract)
     })
 
-    return NextResponse.json({
+    return {
       contract: updatedContract
-    })
-  } catch (error) {
-    if (error instanceof Error && error.message === "Unauthorized") {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.errors }, { status: 400 })
-    }
-    return NextResponse.json({ error: 'Failed to update contract' }, { status: 500 })
-  }
+  })
 }
 
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  try {
-    const { user, teamId } = await requireAuth()
+  return withTeamContext(async ({ teamScopedPrisma, user, teamId }) => {
     const { id } = await params
 
-    // Capture state before deletion for audit
+    // Capture state before deletion for audit (using raw prisma for audit)
     const beforeState = await captureEntityState('contract', id, prisma)
     if (!beforeState || beforeState.teamId !== teamId) {
-      return NextResponse.json({ error: 'Contract not found' }, { status: 404 })
+      throw new Error('Contract not found')
     }
 
-    const result = await prisma.contract.deleteMany({
-      where: { id, teamId },
+    const result = await teamScopedPrisma.contract.deleteMany({
+      where: { id },
     })
 
     if (result.count === 0) {
-      return NextResponse.json({ error: 'Contract not found' }, { status: 404 })
+      throw new Error('Contract not found')
     }
 
     // Log audit entry for contract deletion
@@ -134,11 +118,6 @@ export async function DELETE(
       await auditDelete(auditContext, 'contract', id, beforeState)
     })
 
-    return NextResponse.json({ message: 'Contract deleted successfully' })
-  } catch (error) {
-    if (error instanceof Error && error.message === "Unauthorized") {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-    return NextResponse.json({ error: 'Failed to delete contract' }, { status: 500 })
-  }
+    return { message: 'Contract deleted successfully' }
+  })
 }
