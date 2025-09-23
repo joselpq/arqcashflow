@@ -17,6 +17,8 @@ dependencies: ["prisma", "postgresql"]
 
 Comprehensive database schema documentation for ArqCashflow generated from Prisma schema.
 
+*Updated for testing purposes.*
+
 ## Context for LLM Agents
 
 **Scope**: Complete database schema including models, relationships, constraints, and business logic
