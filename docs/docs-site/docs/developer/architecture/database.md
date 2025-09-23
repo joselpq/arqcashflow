@@ -434,10 +434,10 @@ model AuditLog {
 | `What` | kind | Required | What kind of change |
 | `action` | String | Required | "created", "updated", "deleted" |
 | `What` | changed | Required | What changed (for updates) |
-| `changes` | Json | Required | `{ "status": { "from": "pending", "to": "received" } }` |
+| `changes` | Json | Required | JSON object with before/after values |
 | `Complete` | state | Required | Complete state snapshot (optional, for critical changes) |
 | `snapshot` | Json? | None | Full entity state after change |
-| `metadata` | Json? | None | `{ "api_endpoint": "/api/contracts", "ip": "...", "user_agent": "..." }` |
+| `metadata` | Json? | None | Request metadata (endpoint, IP, user agent) |
 
 #### Relationships
 
