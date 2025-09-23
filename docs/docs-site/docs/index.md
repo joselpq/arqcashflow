@@ -49,7 +49,7 @@ Key Topics:
 - Local development environment
 - Architecture and system design
 - API reference and integration
-- Testing strategies and deployment
+- **Testing strategies with authenticated test users**
 - Database schema and migrations
 
 ### 🤖 **For LLM Agents**

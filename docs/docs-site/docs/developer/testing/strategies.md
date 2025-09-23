@@ -32,11 +32,22 @@ Comprehensive testing approach for ArqCashflow covering manual testing, API vali
 
 ArqCashflow uses a multi-layered testing approach:
 
-1. **Manual Testing**: Complete user journeys and workflows
-2. **API Testing**: Direct endpoint validation with curl
-3. **Form Validation**: Precision testing for financial data
-4. **AI Integration Testing**: Document processing and NLP validation
-5. **Edge Case Testing**: Boundary conditions and error states
+1. **Authenticated Testing**: Team isolation and middleware validation with test users
+2. **Manual Testing**: Complete user journeys and workflows
+3. **API Testing**: Direct endpoint validation with curl
+4. **Form Validation**: Precision testing for financial data
+5. **AI Integration Testing**: Document processing and NLP validation
+6. **Edge Case Testing**: Boundary conditions and error states
+
+### Authentication-First Testing
+
+All testing starts with **authenticated test users** to ensure realistic scenarios:
+- **Test Users Available**: `test@example.com` and `test2@example.com` (password: `password123`)
+- **Team Isolation**: Each user belongs to separate teams for cross-team testing
+- **Automated Validation**: Run `npx tsx lib/middleware/validate-with-auth.ts` for complete validation
+- **Port Standard**: All testing uses port 3010 (`PORT=3010 npm run dev`)
+
+See **[Authenticated Testing Guide](./authenticated-testing.md)** for complete setup and usage.
 
 ## Manual Testing Workflows
 
@@ -140,15 +151,25 @@ ArqCashflow uses a multi-layered testing approach:
 ## API Testing with curl
 
 ### Authentication Testing
-```bash
-# Test session-based authentication
-curl -X POST http://localhost:3000/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com","password":"testpass","name":"Test User"}'
 
-curl -X POST http://localhost:3000/api/auth/signin \
-  -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com","password":"testpass"}'
+**Use Automated Authenticated Testing**: For comprehensive authentication testing, use the dedicated test users:
+
+```bash
+# Setup test users and run full validation
+npx tsx lib/dev-seed.ts
+npx tsx lib/middleware/validate-with-auth.ts
+```
+
+**Manual Authentication Testing** (if needed):
+```bash
+# Test with pre-configured test users
+# User 1: test@example.com / password123
+# User 2: test2@example.com / password123
+
+# Note: Use port 3010 for all testing
+curl -X POST http://localhost:3010/api/auth/callback/credentials \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "email=test@example.com&password=password123"
 ```
 
 ### Contract API Testing
