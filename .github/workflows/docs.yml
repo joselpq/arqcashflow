@@ -31,13 +31,10 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  deploy:
-    name: Deploy to GitHub Pages
+  build:
+    name: Build and Validate Documentation
     if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     defaults:
       run:
         working-directory: ./docs/docs-site
@@ -75,18 +72,6 @@ jobs:
           # Tell Docusaurus to build for GitHub Pages
           NODE_ENV: production
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: './docs/docs-site/build'
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
-
       - name: Upload validation report
         if: always()
         uses: actions/upload-artifact@v4
@@ -95,6 +80,29 @@ jobs:
           path: docs/docs-site/validation-report.md
           retention-days: 30
           if-no-files-found: ignore
+
+      - name: Upload build artifact for deployment
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './docs/docs-site/build'
+
+  deploy:
+    name: Deploy to GitHub Pages
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
 
   # Weekly health check job - runs on schedule for automated monitoring
   validate:
@@ -160,7 +168,7 @@ jobs:
   comment-pr:
     name: Comment PR Results
     if: github.event_name == 'pull_request'
-    needs: deploy
+    needs: build
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
