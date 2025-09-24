@@ -17,6 +17,21 @@ const API_DIR = path.join(__dirname, '../../../app/api');
 const OUTPUT_DIR = path.join(__dirname, '../docs/reference/api');
 const today = new Date().toISOString().split('T')[0];
 
+/**
+ * Escape content that could break MDX parsing
+ */
+function escapeMDXContent(content) {
+  if (!content) return content;
+
+  // Wrap content with curly braces in backticks
+  // This prevents MDX from trying to parse them as JSX expressions
+  if (content.includes('{') && content.includes('}')) {
+    return `\`${content}\``;
+  }
+
+  return content;
+}
+
 // Ensure output directory exists
 if (!fs.existsSync(OUTPUT_DIR)) {
   fs.mkdirSync(OUTPUT_DIR, { recursive: true });
@@ -254,7 +269,7 @@ curl -X PUT "http://localhost:3000${endpoint}/clx123456789" \\
 ` : ''}
 
 ${routeInfo.methods.includes('DELETE') ? `
-## DELETE ${endpoint.replace(resourceName, '{id}')}
+## DELETE ${endpoint.replace(resourceName, escapeMDXContent('{id}'))}
 
 Delete a ${resourceName} record.
 

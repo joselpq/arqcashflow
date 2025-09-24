@@ -203,7 +203,8 @@ function extractDocumentation(block) {
 
   for (const line of lines) {
     if (line.trim().startsWith('///')) {
-      docLines.push(line.trim().replace(/^\/\/\/\s*/, ''));
+      const content = line.trim().replace(/^\/\/\/\s*/, '');
+      docLines.push(escapeMDXContent(content));
     }
   }
 
@@ -215,7 +216,22 @@ function extractDocumentation(block) {
  */
 function extractFieldDocumentation(line) {
   const commentMatch = line.match(/\/\/\s*(.+)$/);
-  return commentMatch ? commentMatch[1] : '';
+  return commentMatch ? escapeMDXContent(commentMatch[1]) : '';
+}
+
+/**
+ * Escape content that could break MDX parsing
+ */
+function escapeMDXContent(content) {
+  if (!content) return content;
+
+  // Wrap JSON objects and other content with curly braces in backticks
+  // This prevents MDX from trying to parse them as JSX expressions
+  if (content.includes('{') && content.includes('}')) {
+    return `\`${content}\``;
+  }
+
+  return content;
 }
 
 /**

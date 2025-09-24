@@ -75,7 +75,7 @@ interface HealthResponse {
 
 
 
-## DELETE /api/monitoring/{id}
+## DELETE /api/monitoring/`{id}`
 
 Delete a health record.
 
