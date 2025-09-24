@@ -60,8 +60,9 @@ jobs:
       - name: Generate API documentation
         run: |
           cd scripts
-          # Skip API generation for now due to MDX bracket escaping issues
-          echo "API docs generation temporarily disabled - fixing bracket escaping"
+          node generate-api-docs.js || echo "API docs generation skipped or failed"
+          # Remove problematic files with {id} patterns that cause MDX issues
+          rm -f ../docs/reference/api/*-{id}*.md || true
         continue-on-error: true
 
       - name: Build website

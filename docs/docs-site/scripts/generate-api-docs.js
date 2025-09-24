@@ -87,14 +87,14 @@ function generateRouteDoc(routePath, routeInfo) {
   const routeName = path.basename(routePath, '.ts');
   const isCollection = routeName === 'route';
   const resourceName = isCollection ?
-    path.basename(path.dirname(routePath)) :
-    routeName;
+    path.basename(path.dirname(routePath)).replace(/\[(\w+)\]/g, '$1') :
+    routeName.replace(/\[(\w+)\]/g, '$1');
 
   const methods = routeInfo.methods.join(', ');
   const endpoint = routePath
     .replace(API_DIR, '/api')
     .replace('/route.ts', '')
-    .replace(/\[(\w+)\]/g, '{$1}');
+    .replace(/\[(\w+)\]/g, '\\{$1\\}'); // Escape curly braces for MDX
 
   return `---
 title: "${resourceName.charAt(0).toUpperCase() + resourceName.slice(1)} API"
@@ -368,9 +368,11 @@ function main() {
       const routeInfo = analyzeRouteFile(routePath);
       const documentation = generateRouteDoc(routePath, routeInfo);
 
-      // Generate output filename
+      // Generate output filename (replace [id] patterns to avoid MDX issues)
       const relativePath = path.relative(API_DIR, routePath);
-      const resourceName = path.dirname(relativePath).replace(/\//g, '-');
+      const resourceName = path.dirname(relativePath)
+        .replace(/\//g, '-')
+        .replace(/\[(\w+)\]/g, '{$1}'); // Replace [id] with {id} for filenames
       const outputFile = path.join(OUTPUT_DIR, `${resourceName}.md`);
 
       // Write documentation
@@ -395,7 +397,9 @@ function main() {
 function generateIndexFile(routes) {
   const resources = routes.map(route => {
     const relativePath = path.relative(API_DIR, route);
-    const resourceName = path.dirname(relativePath).replace(/\//g, '-');
+    const resourceName = path.dirname(relativePath)
+      .replace(/\//g, '-')
+      .replace(/\[(\w+)\]/g, '{$1}'); // Replace [id] with {id} for filenames
     return {
       name: resourceName,
       path: `./${resourceName}.md`
