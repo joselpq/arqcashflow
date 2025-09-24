@@ -404,10 +404,10 @@ model AuditLog {
   What         kind  // What kind of change
   action       String  // "created", "updated", "deleted"
   What         changed  // What changed (for updates)
-  changes      Json  // {"status": {"from": "pending", "to": "received"}}
+  changes      Json  // { "status": { "from": "pending", "to": "received" } }
   Complete     state  // Complete state snapshot (optional, for critical changes)
   snapshot     Json?  // Full entity state after change
-  metadata     Json?  // {"api_endpoint": "/api/contracts", "ip": "...", "user_agent": "..."}
+  metadata     Json?  // { "api_endpoint": "/api/contracts", "ip": "...", "user_agent": "..." }
   user         User @relation(fields: [userId], references: [id])
   team         Team @relation(fields: [teamId], references: [id])
   @@index([entityType, entityId]) // Query by entity
@@ -434,10 +434,10 @@ model AuditLog {
 | `What` | kind | Required | What kind of change |
 | `action` | String | Required | "created", "updated", "deleted" |
 | `What` | changed | Required | What changed (for updates) |
-| `changes` | Json | Required | `{"status": {"from": "pending", "to": "received"}}` |
+| `changes` | Json | Required | { "status": { "from": "pending", "to": "received" } } |
 | `Complete` | state | Required | Complete state snapshot (optional, for critical changes) |
 | `snapshot` | Json? | None | Full entity state after change |
-| `metadata` | Json? | None | `{"api_endpoint": "/api/contracts", "ip": "...", "user_agent": "..."}` |
+| `metadata` | Json? | None | { "api_endpoint": "/api/contracts", "ip": "...", "user_agent": "..." } |
 
 #### Relationships
 

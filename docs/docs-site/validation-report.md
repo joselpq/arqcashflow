@@ -8,7 +8,7 @@ Generated on: 2025-09-24
 - **Broken links**: 0
 - **Stale content**: 0
 - **Missing metadata**: 0
-- **Format inconsistencies**: 0
+- **Format inconsistencies**: 1
 - **Orphaned files**: 16
 
 ## Issues Found
@@ -25,9 +25,12 @@ Generated on: 2025-09-24
 
 ✅ All files have required metadata!
 
-### 📐 Format Inconsistencies (0)
+### 📐 Format Inconsistencies (1)
 
-✅ All files follow consistent format!
+
+- **File**: `reference/api/index.md`
+  - **Issues**: Missing LLM Context section
+
 
 ### 🔍 Orphaned Files (16)
 
@@ -85,7 +88,7 @@ Generated on: 2025-09-24
 ### High Priority
 
 
-
+- 🟡 Update format to match LLM-optimized structure
 
 ### Medium Priority
 
@@ -98,7 +101,7 @@ Generated on: 2025-09-24
 
 ## Health Score
 
-**Overall Score**: 100% 🟢
+**Overall Score**: 99% 🟢
 
 ---
 

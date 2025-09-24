@@ -2,11 +2,11 @@
 title: "LLM Agent Guide: ArqCashflow Project"
 type: "guide"
 audience: ["agent", "developer"]
-contexts: ["automation", "ci-cd", "documentation", "health-monitoring", "code-validation", "search"]
+contexts: ["automation", "ci-cd", "documentation", "health-monitoring", "code-validation", "search", "service-layer", "api-migration", "auto-generation"]
 complexity: "intermediate"
 last_updated: "2025-09-24"
 version: "2.0"
-agent_roles: ["documentation-maintainer", "automation-specialist", "health-monitor"]
+agent_roles: ["documentation-maintainer", "automation-specialist", "health-monitor", "service-migration-specialist", "api-developer"]
 related:
   - docs/docs-site/docs/agents/llm-agent-guide.md
   - DOCUMENTATION_STRATEGY_PROPOSAL.md
@@ -362,20 +362,23 @@ cd docs/docs-site/scripts && node validate-docs.js && gh issue list --repo josel
 
 ### Next Priority Tasks (for incoming agents)
 
-1. **Complete Final 5% of Phase 4** (Phase 4: 95% complete)
+1. **Service Layer Migration - Phase 2** (Phase 1: ✅ Complete)
+   - ✅ Phase 1: Service layer extraction and validation (DEPLOYED)
+   - ⏳ Phase 2: Complete migration of remaining API routes
+   - ⏳ Phase 3: Remove legacy implementation and feature flags
+   - ⏳ Phase 4: Performance optimization and monitoring
+
+2. **Documentation System - Complete** (Phase 4: ✅ 100% Complete)
    - ✅ Weekly health checks with automated issue creation (DONE)
    - ✅ PR comment automation with validation summaries (DONE)
    - ✅ Multi-job workflow structure (build→deploy→validate→comment) (DONE)
    - ✅ Code example validation with syntax checking (DONE)
-   - ⏳ Performance monitoring and analytics tracking (final 5%)
+   - ✅ Code-driven auto-generation (API docs, schema docs, changelog) (DONE)
 
-2. **Optional Future Enhancements**
+3. **Optional Future Enhancements**
    - Upgrade to Algolia DocSearch (if external indexing desired)
    - Add component documentation extraction
-
-3. **Implement Code Example Validation**
-   - Extract TypeScript from markdown
-   - Add type-checking to CI/CD
+   - Service layer performance monitoring and analytics
 
 ---
 
