@@ -1133,9 +1133,9 @@ describe('DateInput Component', () => {
 
 ## Related Documentation
 
-- [Form Handling Context](../agents/contexts/form-handling.md) - Form implementation patterns
-- [Design Principles](../design/principles.md) - UI design guidelines
-- [Architecture Overview](../developer/architecture/overview.md) - System design context
+- [Form Handling Context](../contexts/form-handling.md) - Form implementation patterns
+- [Design Principles](../../design/principles.md) - UI design guidelines
+- [Architecture Overview](../../developer/architecture/overview.md) - System design context
 
 ---
 

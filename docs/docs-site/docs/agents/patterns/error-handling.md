@@ -1263,9 +1263,9 @@ describe('useErrorHandler', () => {
 
 ## Related Documentation
 
-- [Debugging Approach Context](../agents/contexts/debugging-approach.md) - Systematic debugging methodology
-- [API Development Context](../agents/contexts/api-development.md) - API error handling patterns
-- [Architecture Overview](../developer/architecture/overview.md) - System design context
+- [Debugging Approach Context](../contexts/debugging-approach.md) - Systematic debugging methodology
+- [API Development Context](../contexts/api-development.md) - API error handling patterns
+- [Architecture Overview](../../developer/architecture/overview.md) - System design context
 
 ---
 

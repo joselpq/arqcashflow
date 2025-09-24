@@ -1306,9 +1306,9 @@ global.console = {
 
 ## Related Documentation
 
-- [Debugging Approach Context](../agents/contexts/debugging-approach.md) - Systematic debugging methodology
-- [Testing Strategies Guide](../developer/testing/strategies.md) - Comprehensive testing setup
-- [Standardized Test Port](../developer/testing/standardized-test-port.md) - Port 3010 testing configuration
+- [Debugging Approach Context](../contexts/debugging-approach.md) - Systematic debugging methodology
+- [Testing Strategies Guide](../../developer/testing/strategies.md) - Comprehensive testing setup
+- [Standardized Test Port](../../developer/testing/standardized-test-port.md) - Port 3010 testing configuration
 
 ---
 

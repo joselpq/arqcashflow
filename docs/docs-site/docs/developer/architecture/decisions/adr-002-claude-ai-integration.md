@@ -179,7 +179,7 @@ Integrate Claude AI (Anthropic) with a dual-model strategy:
 
 ### Related Decisions
 - [Team-based Data Isolation](./adr-001-team-based-isolation.md): How AI features respect team boundaries
-- [AI Assistant Context](../../agents/contexts/ai-assistant.md): Implementation patterns for AI features
+- [AI Assistant Context](../../../agents/contexts/ai-assistant.md): Implementation patterns for AI features
 
 ### External Resources
 - [Anthropic Claude API Documentation](https://docs.anthropic.com/claude/reference)

@@ -156,7 +156,7 @@ Implement complete team-based data isolation using:
 
 ### Related Decisions
 - [Database Schema Design](../database.md): Complete schema documentation
-- [API Development Patterns](../../agents/contexts/api-development.md): Team-aware API patterns
+- [API Development Patterns](../../../agents/contexts/api-development.md): Team-aware API patterns
 
 ### External Resources
 - [Multi-tenant Architecture Patterns](https://docs.microsoft.com/en-us/azure/architecture/guide/multitenant/approaches/overview)

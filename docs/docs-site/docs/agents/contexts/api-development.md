@@ -941,9 +941,9 @@ class CachedContractService extends ContractService {
 
 ## Related Documentation
 
-- [Team Context Middleware ADR](../decisions/005-team-context-middleware-implementation.md) - Detailed security implementation
-- [Architecture Overview](../developer/architecture/overview.md) - System design context
-- [API Reference](../reference/api/index.md) - Complete API documentation
+- [Team Context Middleware ADR](../../decisions/005-team-context-middleware-implementation.md) - Detailed security implementation
+- [Architecture Overview](../../developer/architecture/overview.md) - System design context
+- [API Reference](../../reference/api/index.md) - Complete API documentation
 
 ---
 

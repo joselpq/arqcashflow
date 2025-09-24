@@ -183,7 +183,7 @@ Adopt Next.js 15 with App Router as the full-stack foundation:
 
 ### Related Decisions
 - [Team-based Data Isolation](./adr-001-team-based-isolation.md): How middleware enforces security
-- [Testing Strategies](../../agents/patterns/testing-strategies.md): Full-stack testing patterns
+- [Testing Strategies](../../../agents/patterns/testing-strategies.md): Full-stack testing patterns
 
 ### External Resources
 - [Next.js App Router Documentation](https://nextjs.org/docs/app)

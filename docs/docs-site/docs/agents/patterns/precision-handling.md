@@ -887,9 +887,9 @@ describe('Financial Validation', () => {
 
 ## Related Documentation
 
-- [Precision Bug Investigation ADR](../decisions/001-precision-bug-investigation.md) - Detailed case study
-- [Form Handling Context](../agents/contexts/form-handling.md) - Form implementation patterns
-- [Design Principles](../design/principles.md) - UI design guidelines
+- [Precision Bug Investigation ADR](../../decisions/001-precision-bug-investigation.md) - Detailed case study
+- [Form Handling Context](../contexts/form-handling.md) - Form implementation patterns
+- [Design Principles](../../design/principles.md) - UI design guidelines
 
 ---
 

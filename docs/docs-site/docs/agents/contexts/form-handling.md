@@ -493,9 +493,9 @@ const handleSubmit = async (data: FormData) => {
 
 ## Related Documentation
 
-- [Precision Bug Investigation](../decisions/001-precision-bug-investigation.md) - Background on scroll wheel issue
-- [Design Principles](../design/principles.md) - Form design guidelines
-- [Architecture Overview](../developer/architecture/overview.md) - System integration patterns
+- [Precision Bug Investigation](../../decisions/001-precision-bug-investigation.md) - Background on scroll wheel issue
+- [Design Principles](../../design/principles.md) - Form design guidelines
+- [Architecture Overview](../../developer/architecture/overview.md) - System integration patterns
 
 ---
 

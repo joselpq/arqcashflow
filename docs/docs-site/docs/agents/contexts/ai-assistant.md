@@ -688,9 +688,9 @@ const AIAssistant: React.FC = () => {
 
 ## Related Documentation
 
-- [Claude Migration Decision](../decisions/002-claude-migration.md) - Why we chose Claude over OpenAI
-- [API Reference](../reference/api/ai-assistant.md) - AI Assistant endpoints
-- [Architecture Overview](../developer/architecture/overview.md) - System integration patterns
+- [Claude Migration Decision](../../decisions/002-claude-migration.md) - Why we chose Claude over OpenAI
+- [API Reference](../../reference/api/ai-assistant.md) - AI Assistant endpoints
+- [Architecture Overview](../../developer/architecture/overview.md) - System integration patterns
 
 ---
 

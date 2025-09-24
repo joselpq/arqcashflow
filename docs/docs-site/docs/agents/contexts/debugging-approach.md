@@ -712,9 +712,9 @@ This methodology was successfully applied to resolve the precision bug issue:
 
 ## Related Documentation
 
-- [Precision Bug Investigation ADR](../decisions/001-precision-bug-investigation.md) - Detailed case study
-- [Testing Strategies](../developer/testing/strategies.md) - Testing methodologies
-- [Architecture Overview](../developer/architecture/overview.md) - System understanding for debugging
+- [Precision Bug Investigation ADR](../../decisions/001-precision-bug-investigation.md) - Detailed case study
+- [Testing Strategies](../../developer/testing/strategies.md) - Testing methodologies
+- [Architecture Overview](../../developer/architecture/overview.md) - System understanding for debugging
 
 ---
 
