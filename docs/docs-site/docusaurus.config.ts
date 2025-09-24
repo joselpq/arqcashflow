@@ -69,17 +69,18 @@ const config: Config = {
     ],
   ],
 
-  plugins: [
-    [
-      require.resolve("@easyops-cn/docusaurus-search-local"),
-      {
-        hashed: true,
-        language: ["en"],
-        highlightSearchTermsOnTargetPage: true,
-        explicitSearchResultPath: true,
-      },
-    ],
-  ],
+  // Search plugin temporarily disabled due to CI/CD compatibility issues
+  // plugins: [
+  //   [
+  //     require.resolve("@easyops-cn/docusaurus-search-local"),
+  //     {
+  //       hashed: true,
+  //       language: ["en"],
+  //       highlightSearchTermsOnTargetPage: true,
+  //       explicitSearchResultPath: true,
+  //     },
+  //   ],
+  // ],
 
   themeConfig: {
     // Replace with your project's social card
