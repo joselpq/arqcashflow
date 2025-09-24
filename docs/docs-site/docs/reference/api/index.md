@@ -13,6 +13,16 @@ agent_roles: ["api-developer", "integration-engineer"]
 
 Comprehensive API documentation for ArqCashflow REST endpoints.
 
+## Context for LLM Agents
+
+**Scope**: Complete API reference for all ArqCashflow REST endpoints with auto-generated documentation
+**Prerequisites**: Understanding of REST APIs, HTTP methods, and JSON data formats
+**Key Patterns**:
+- Team-based authentication and data isolation
+- Consistent JSON request/response formats
+- Standard HTTP status codes and error handling
+- Auto-generated documentation from codebase
+
 ## Available APIs
 
 - [Ai-assistant API](./ai-assistant.md)

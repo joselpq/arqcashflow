@@ -15,6 +15,16 @@ dependencies: ["prisma", "claude-api", "next.js"]
 
 # Contract Management Context for LLM Agents
 
+## Context for LLM Agents
+
+**Scope**: Comprehensive context for LLM agents working on contract-related functionality in ArqCashflow
+**Prerequisites**: Understanding of financial management systems, Next.js architecture, and Prisma ORM
+**Key Patterns**:
+- Team-based data isolation (all queries include teamId)
+- CRUD operations with validation and error handling
+- AI-powered document processing integration
+- State management for form interactions
+
 ## Context Overview
 
 **Purpose**: Provide comprehensive context for LLM agents working on contract-related functionality in ArqCashflow

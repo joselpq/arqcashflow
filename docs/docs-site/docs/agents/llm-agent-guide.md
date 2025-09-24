@@ -1,6 +1,31 @@
+---
+title: "LLM Agent Guide: ArqCashflow Project"
+type: "guide"
+audience: ["agent"]
+contexts: ["llm-optimization", "documentation", "context-management", "agent-workflows"]
+complexity: "intermediate"
+last_updated: "2025-09-24"
+version: "1.0"
+agent_roles: ["documentation-navigator", "context-provider", "workflow-optimizer"]
+related:
+  - index.md
+  - agents/contexts/contract-management.md
+dependencies: []
+---
+
 # LLM Agent Guide: ArqCashflow Project
 
 **Quick Context**: ArqCashflow is a financial management system for architects built with Next.js, TypeScript, and Claude AI, optimized for LLM-agent collaborative development.
+
+## Context for LLM Agents
+
+**Scope**: Complete guide for LLM agents working on ArqCashflow project with optimized context paths and priority reading orders
+**Prerequisites**: Understanding of software development, Next.js architecture, and LLM agent workflows
+**Key Patterns**:
+- Context-first documentation reading strategy
+- Task-specific documentation paths
+- Efficient context management for limited token budgets
+- Project structure navigation optimized for AI agents
 
 ## 🎯 For LLM Agents: How to Use This Documentation Efficiently
 
