@@ -1,10 +1,10 @@
 ---
-title: "[id] API"
+title: "Recurring-action API"
 type: "reference"
 audience: ["developer", "agent"]
-contexts: ["api", "[id]", "rest", "database"]
+contexts: ["api", "recurring-action", "rest", "database"]
 complexity: "intermediate"
-last_updated: "2025-09-23"
+last_updated: "2025-09-24"
 version: "1.0"
 agent_roles: ["api-developer", "integration-engineer"]
 related:
@@ -13,13 +13,13 @@ related:
 dependencies: ["next.js", "prisma", "zod"]
 ---
 
-# [id] API
+# Recurring-action API
 
-Comprehensive API reference for [id] management operations.
+Comprehensive API reference for recurring-action management operations.
 
 ## Context for LLM Agents
 
-**Scope**: Complete [id] API operations including CRUD, filtering, sorting, and business logic
+**Scope**: Complete recurring-action API operations including CRUD, filtering, sorting, and business logic
 **Prerequisites**: Understanding of REST APIs, Next.js App Router, Prisma ORM, and team-based data isolation
 **Key Patterns**:
 - RESTful endpoint design with standard HTTP methods
@@ -30,91 +30,60 @@ Comprehensive API reference for [id] management operations.
 
 ## Endpoint Overview
 
-**Base URL**: `/api/recurring-expenses/\{id\}`
-**Methods**: GET, PUT, DELETE
+**Base URL**: `/api/expenses/:id/recurring-action`
+**Methods**: POST
 **Authentication**: Required
 **Team Isolation**: Yes
 
 
-## GET /api/recurring-expenses/\{id\}
 
-Retrieve [id] records with optional filtering and sorting.
 
-### Query Parameters
+## POST /api/expenses/:id/recurring-action
 
-| Parameter | Type | Description | Default |
-|-----------|------|-------------|---------|
+Create a new recurring-action record.
+
+### Request Body
+
+
+Schema validation using Zod:
+
+```typescript
+const RecurringActionSchema = z.object({
+  action: z.enum(['edit', 'delete']),
+  scope: z.enum(['this', 'future', 'all']),
+  // For edit actions, include the updated data
+  updatedData: z.object({
+    description: z.string().optional(),
+    amount: z.number().optional(),
+    category: z.string().optional(),
+    vendor: z.string().optional(),
+    notes: z.string().optional(),
+  });
+```
 
 
 ### Example Request
 
 ```bash
-curl -X GET "http://localhost:3000/api/recurring-expenses/\{id\}?status=active&sortBy=createdAt&sortOrder=desc" \
-  -H "Content-Type: application/json"
+curl -X POST "http://localhost:3000/api/expenses/:id/recurring-action" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "example": "Request body will be populated based on the specific recurring-action schema"
+  }'
 ```
 
-### Response Format
+### Response
 
 ```typescript
-interface [id]Response {
-  data: [id][];
-  total: number;
-  filters: {
-    status: string;
-    category?: string;
-    sortBy: string;
-    sortOrder: 'asc' | 'desc';
-  };
+interface CreateResponse {
+  data: Recurring-action;
+  alerts?: AIAlert[];
 }
 ```
 
 
 
 
-
-## PUT /api/recurring-expenses/\{id\}
-
-Update an existing [id] record.
-
-### Path Parameters
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `id` | string | [id] ID |
-
-### Request Body
-
-All fields are optional for updates.
-
-### Example Request
-
-```bash
-curl -X PUT "http://localhost:3000/api/recurring-expenses/\{id\}/clx123456789" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "status": "completed"
-  }'
-```
-
-
-
-## DELETE /api/recurring-expenses/\{id\}
-
-Delete a [id] record.
-
-⚠️ **Warning**: This operation may cascade to related records. Use with caution.
-
-### Path Parameters
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `id` | string | [id] ID |
-
-### Example Request
-
-```bash
-curl -X DELETE "http://localhost:3000/api/recurring-expenses/\{id\}/clx123456789"
-```
 
 
 ## Error Handling
@@ -142,7 +111,7 @@ interface ErrorResponse {
 
 ## Team Isolation
 
-All [id] operations are automatically filtered by team context:
+All recurring-action operations are automatically filtered by team context:
 
 ```typescript
 // All queries include team isolation

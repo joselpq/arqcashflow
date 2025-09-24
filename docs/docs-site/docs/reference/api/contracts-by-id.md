@@ -1,10 +1,10 @@
 ---
-title: "[id] API"
+title: "Contracts Item API"
 type: "reference"
 audience: ["developer", "agent"]
-contexts: ["api", "[id]", "rest", "database"]
+contexts: ["api", "contracts Item", "rest", "database"]
 complexity: "intermediate"
-last_updated: "2025-09-23"
+last_updated: "2025-09-24"
 version: "1.0"
 agent_roles: ["api-developer", "integration-engineer"]
 related:
@@ -13,13 +13,13 @@ related:
 dependencies: ["next.js", "prisma", "zod"]
 ---
 
-# Contracts \{id\} API
+# Contracts Item API
 
-Comprehensive API reference for contract \{id\} management operations.
+Comprehensive API reference for contracts Item management operations.
 
 ## Context for LLM Agents
 
-**Scope**: Complete contract \{id\} API operations including CRUD, filtering, sorting, and business logic
+**Scope**: Complete contracts Item API operations including CRUD, filtering, sorting, and business logic
 **Prerequisites**: Understanding of REST APIs, Next.js App Router, Prisma ORM, and team-based data isolation
 **Key Patterns**:
 - RESTful endpoint design with standard HTTP methods
@@ -30,15 +30,15 @@ Comprehensive API reference for contract \{id\} management operations.
 
 ## Endpoint Overview
 
-**Base URL**: `/api/contracts/\{id\}`
+**Base URL**: `/api/contracts/:id`
 **Methods**: GET, PUT, DELETE
 **Authentication**: None
 **Team Isolation**: Yes
 
 
-## GET /api/contracts/\{id\}
+## GET /api/contracts/:id
 
-Retrieve contract \{id\} records with optional filtering and sorting.
+Retrieve contracts Item records with optional filtering and sorting.
 
 ### Query Parameters
 
@@ -49,15 +49,15 @@ Retrieve contract \{id\} records with optional filtering and sorting.
 ### Example Request
 
 ```bash
-curl -X GET "http://localhost:3000/api/contracts/\{id\}?status=active&sortBy=createdAt&sortOrder=desc" \
+curl -X GET "http://localhost:3000/api/contracts/:id?status=active&sortBy=createdAt&sortOrder=desc" \
   -H "Content-Type: application/json"
 ```
 
 ### Response Format
 
 ```typescript
-interface [id]Response {
-  data: [id][];
+interface Contracts ItemResponse {
+  data: Contracts Item[];
   total: number;
   filters: {
     status: string;
@@ -72,15 +72,15 @@ interface [id]Response {
 
 
 
-## PUT /api/contracts/\{id\}
+## PUT /api/contracts/:id
 
-Update an existing [id] record.
+Update an existing contracts Item record.
 
 ### Path Parameters
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `id` | string | [id] ID |
+| `id` | string | Contracts Item ID |
 
 ### Request Body
 
@@ -89,7 +89,7 @@ All fields are optional for updates.
 ### Example Request
 
 ```bash
-curl -X PUT "http://localhost:3000/api/contracts/\{id\}/clx123456789" \
+curl -X PUT "http://localhost:3000/api/contracts/:id/clx123456789" \
   -H "Content-Type: application/json" \
   -d '{
     "status": "completed"
@@ -98,9 +98,9 @@ curl -X PUT "http://localhost:3000/api/contracts/\{id\}/clx123456789" \
 
 
 
-## DELETE /api/contracts/\{id\}
+## DELETE /api/contracts/:id
 
-Delete a [id] record.
+Delete a contracts Item record.
 
 ⚠️ **Warning**: This operation may cascade to related records. Use with caution.
 
@@ -108,12 +108,12 @@ Delete a [id] record.
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `id` | string | [id] ID |
+| `id` | string | Contracts Item ID |
 
 ### Example Request
 
 ```bash
-curl -X DELETE "http://localhost:3000/api/contracts/\{id\}/clx123456789"
+curl -X DELETE "http://localhost:3000/api/contracts/:id/clx123456789"
 ```
 
 
@@ -142,7 +142,7 @@ interface ErrorResponse {
 
 ## Team Isolation
 
-All [id] operations are automatically filtered by team context:
+All contracts Item operations are automatically filtered by team context:
 
 ```typescript
 // All queries include team isolation

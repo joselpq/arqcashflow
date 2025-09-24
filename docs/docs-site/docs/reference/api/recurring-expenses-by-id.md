@@ -1,10 +1,10 @@
 ---
-title: "[id] API"
+title: "Recurring-expenses Item API"
 type: "reference"
 audience: ["developer", "agent"]
-contexts: ["api", "[id]", "rest", "database"]
+contexts: ["api", "recurring-expenses Item", "rest", "database"]
 complexity: "intermediate"
-last_updated: "2025-09-23"
+last_updated: "2025-09-24"
 version: "1.0"
 agent_roles: ["api-developer", "integration-engineer"]
 related:
@@ -13,42 +13,74 @@ related:
 dependencies: ["next.js", "prisma", "zod"]
 ---
 
-# [id] API
+# Recurring-expenses Item API
 
-Comprehensive API reference for [id] management operations.
+Comprehensive API reference for recurring-expenses Item management operations.
 
 ## Context for LLM Agents
 
-**Scope**: Complete [id] API operations including CRUD, filtering, sorting, and business logic
+**Scope**: Complete recurring-expenses Item API operations including CRUD, filtering, sorting, and business logic
 **Prerequisites**: Understanding of REST APIs, Next.js App Router, Prisma ORM, and team-based data isolation
 **Key Patterns**:
 - RESTful endpoint design with standard HTTP methods
 - Team-based data isolation for multi-tenant security
 - Zod validation for type-safe request/response handling
 - Consistent error handling and response formats
-
+- Session-based authentication required for all operations
 
 ## Endpoint Overview
 
-**Base URL**: `/api/receivables/\{id\}`
-**Methods**: PUT, DELETE
-**Authentication**: None
+**Base URL**: `/api/recurring-expenses/:id`
+**Methods**: GET, PUT, DELETE
+**Authentication**: Required
 **Team Isolation**: Yes
 
 
+## GET /api/recurring-expenses/:id
+
+Retrieve recurring-expenses Item records with optional filtering and sorting.
+
+### Query Parameters
+
+| Parameter | Type | Description | Default |
+|-----------|------|-------------|---------|
+
+
+### Example Request
+
+```bash
+curl -X GET "http://localhost:3000/api/recurring-expenses/:id?status=active&sortBy=createdAt&sortOrder=desc" \
+  -H "Content-Type: application/json"
+```
+
+### Response Format
+
+```typescript
+interface Recurring-expenses ItemResponse {
+  data: Recurring-expenses Item[];
+  total: number;
+  filters: {
+    status: string;
+    category?: string;
+    sortBy: string;
+    sortOrder: 'asc' | 'desc';
+  };
+}
+```
 
 
 
 
-## PUT /api/receivables/\{id\}
 
-Update an existing [id] record.
+## PUT /api/recurring-expenses/:id
+
+Update an existing recurring-expenses Item record.
 
 ### Path Parameters
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `id` | string | [id] ID |
+| `id` | string | Recurring-expenses Item ID |
 
 ### Request Body
 
@@ -57,7 +89,7 @@ All fields are optional for updates.
 ### Example Request
 
 ```bash
-curl -X PUT "http://localhost:3000/api/receivables/\{id\}/clx123456789" \
+curl -X PUT "http://localhost:3000/api/recurring-expenses/:id/clx123456789" \
   -H "Content-Type: application/json" \
   -d '{
     "status": "completed"
@@ -66,9 +98,9 @@ curl -X PUT "http://localhost:3000/api/receivables/\{id\}/clx123456789" \
 
 
 
-## DELETE /api/receivables/\{id\}
+## DELETE /api/recurring-expenses/:id
 
-Delete a [id] record.
+Delete a recurring-expenses Item record.
 
 ⚠️ **Warning**: This operation may cascade to related records. Use with caution.
 
@@ -76,12 +108,12 @@ Delete a [id] record.
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `id` | string | [id] ID |
+| `id` | string | Recurring-expenses Item ID |
 
 ### Example Request
 
 ```bash
-curl -X DELETE "http://localhost:3000/api/receivables/\{id\}/clx123456789"
+curl -X DELETE "http://localhost:3000/api/recurring-expenses/:id/clx123456789"
 ```
 
 
@@ -110,7 +142,7 @@ interface ErrorResponse {
 
 ## Team Isolation
 
-All [id] operations are automatically filtered by team context:
+All recurring-expenses Item operations are automatically filtered by team context:
 
 ```typescript
 // All queries include team isolation
@@ -127,7 +159,7 @@ This ensures complete data separation between teams in the multi-tenant system.
 
 ### Business Logic
 - **Team Isolation**: Enforced at API level
-- **Authentication**: Public access
+- **Authentication**: Required for all operations
 - **Validation**: Zod schemas ensure type safety
 - **Error Handling**: Consistent error responses across all endpoints
 

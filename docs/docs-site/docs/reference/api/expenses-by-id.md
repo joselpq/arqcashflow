@@ -1,10 +1,10 @@
 ---
-title: "Generate API"
+title: "Expenses Item API"
 type: "reference"
 audience: ["developer", "agent"]
-contexts: ["api", "generate", "rest", "database"]
+contexts: ["api", "expenses Item", "rest", "database"]
 complexity: "intermediate"
-last_updated: "2025-09-23"
+last_updated: "2025-09-24"
 version: "1.0"
 agent_roles: ["api-developer", "integration-engineer"]
 related:
@@ -13,13 +13,13 @@ related:
 dependencies: ["next.js", "prisma", "zod"]
 ---
 
-# Generate API
+# Expenses Item API
 
-Comprehensive API reference for generate management operations.
+Comprehensive API reference for expenses Item management operations.
 
 ## Context for LLM Agents
 
-**Scope**: Complete generate API operations including CRUD, filtering, sorting, and business logic
+**Scope**: Complete expenses Item API operations including CRUD, filtering, sorting, and business logic
 **Prerequisites**: Understanding of REST APIs, Next.js App Router, Prisma ORM, and team-based data isolation
 **Key Patterns**:
 - RESTful endpoint design with standard HTTP methods
@@ -30,44 +30,92 @@ Comprehensive API reference for generate management operations.
 
 ## Endpoint Overview
 
-**Base URL**: `/api/recurring-expenses/\{id\}/generate`
-**Methods**: POST
+**Base URL**: `/api/expenses/:id`
+**Methods**: GET, PUT, DELETE
 **Authentication**: Required
 **Team Isolation**: Yes
 
 
+## GET /api/expenses/:id
 
+Retrieve expenses Item records with optional filtering and sorting.
 
-## POST /api/recurring-expenses/\{id\}/generate
+### Query Parameters
 
-Create a new generate record.
-
-### Request Body
-
-
+| Parameter | Type | Description | Default |
+|-----------|------|-------------|---------|
+| `status` | string | Filter by status | `all` |
+| `category` | string | Filter by category | `all` |
 
 ### Example Request
 
 ```bash
-curl -X POST "http://localhost:3000/api/recurring-expenses/\{id\}/generate" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "example": "Request body will be populated based on the specific generate schema"
-  }'
+curl -X GET "http://localhost:3000/api/expenses/:id?status=active&sortBy=createdAt&sortOrder=desc" \
+  -H "Content-Type: application/json"
 ```
 
-### Response
+### Response Format
 
 ```typescript
-interface CreateResponse {
-  data: Generate;
-  alerts?: AIAlert[];
+interface Expenses ItemResponse {
+  data: Expenses Item[];
+  total: number;
+  filters: {
+    status: string;
+    category?: string;
+    sortBy: string;
+    sortOrder: 'asc' | 'desc';
+  };
 }
 ```
 
 
 
 
+
+## PUT /api/expenses/:id
+
+Update an existing expenses Item record.
+
+### Path Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `id` | string | Expenses Item ID |
+
+### Request Body
+
+All fields are optional for updates.
+
+### Example Request
+
+```bash
+curl -X PUT "http://localhost:3000/api/expenses/:id/clx123456789" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "status": "completed"
+  }'
+```
+
+
+
+## DELETE /api/expenses/:id
+
+Delete a expenses Item record.
+
+⚠️ **Warning**: This operation may cascade to related records. Use with caution.
+
+### Path Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `id` | string | Expenses Item ID |
+
+### Example Request
+
+```bash
+curl -X DELETE "http://localhost:3000/api/expenses/:id/clx123456789"
+```
 
 
 ## Error Handling
@@ -95,7 +143,7 @@ interface ErrorResponse {
 
 ## Team Isolation
 
-All generate operations are automatically filtered by team context:
+All expenses Item operations are automatically filtered by team context:
 
 ```typescript
 // All queries include team isolation

@@ -1,10 +1,10 @@
 ---
-title: "[...nextauth] API"
+title: "Auth Item API"
 type: "reference"
 audience: ["developer", "agent"]
-contexts: ["api", "[...nextauth]", "rest", "database"]
+contexts: ["api", "auth Item", "rest", "database"]
 complexity: "intermediate"
-last_updated: "2025-09-23"
+last_updated: "2025-09-24"
 version: "1.0"
 agent_roles: ["api-developer", "integration-engineer"]
 related:
@@ -13,13 +13,13 @@ related:
 dependencies: ["next.js", "prisma", "zod"]
 ---
 
-# [...nextauth] API
+# Auth Item API
 
-Comprehensive API reference for [...nextauth] management operations.
+Comprehensive API reference for auth Item management operations.
 
 ## Context for LLM Agents
 
-**Scope**: Complete [...nextauth] API operations including CRUD, filtering, sorting, and business logic
+**Scope**: Complete auth Item API operations including CRUD, filtering, sorting, and business logic
 **Prerequisites**: Understanding of REST APIs, Next.js App Router, Prisma ORM, and team-based data isolation
 **Key Patterns**:
 - RESTful endpoint design with standard HTTP methods
@@ -68,7 +68,7 @@ interface ErrorResponse {
 
 ## Team Isolation
 
-All [...nextauth] operations are automatically filtered by team context:
+All auth Item operations are automatically filtered by team context:
 
 ```typescript
 // All queries include team isolation

@@ -1,10 +1,10 @@
 ---
-title: "[id] API"
+title: "Receivables Item API"
 type: "reference"
 audience: ["developer", "agent"]
-contexts: ["api", "[id]", "rest", "database"]
+contexts: ["api", "receivables Item", "rest", "database"]
 complexity: "intermediate"
-last_updated: "2025-09-23"
+last_updated: "2025-09-24"
 version: "1.0"
 agent_roles: ["api-developer", "integration-engineer"]
 related:
@@ -13,75 +13,42 @@ related:
 dependencies: ["next.js", "prisma", "zod"]
 ---
 
-# [id] API
+# Receivables Item API
 
-Comprehensive API reference for [id] management operations.
+Comprehensive API reference for receivables Item management operations.
 
 ## Context for LLM Agents
 
-**Scope**: Complete [id] API operations including CRUD, filtering, sorting, and business logic
+**Scope**: Complete receivables Item API operations including CRUD, filtering, sorting, and business logic
 **Prerequisites**: Understanding of REST APIs, Next.js App Router, Prisma ORM, and team-based data isolation
 **Key Patterns**:
 - RESTful endpoint design with standard HTTP methods
 - Team-based data isolation for multi-tenant security
 - Zod validation for type-safe request/response handling
 - Consistent error handling and response formats
-- Session-based authentication required for all operations
+
 
 ## Endpoint Overview
 
-**Base URL**: `/api/expenses/\{id\}`
-**Methods**: GET, PUT, DELETE
-**Authentication**: Required
+**Base URL**: `/api/receivables/:id`
+**Methods**: PUT, DELETE
+**Authentication**: None
 **Team Isolation**: Yes
 
 
-## GET /api/expenses/\{id\}
-
-Retrieve [id] records with optional filtering and sorting.
-
-### Query Parameters
-
-| Parameter | Type | Description | Default |
-|-----------|------|-------------|---------|
-| `status` | string | Filter by status | `all` |
-| `category` | string | Filter by category | `all` |
-
-### Example Request
-
-```bash
-curl -X GET "http://localhost:3000/api/expenses/\{id\}?status=active&sortBy=createdAt&sortOrder=desc" \
-  -H "Content-Type: application/json"
-```
-
-### Response Format
-
-```typescript
-interface [id]Response {
-  data: [id][];
-  total: number;
-  filters: {
-    status: string;
-    category?: string;
-    sortBy: string;
-    sortOrder: 'asc' | 'desc';
-  };
-}
-```
 
 
 
 
+## PUT /api/receivables/:id
 
-## PUT /api/expenses/\{id\}
-
-Update an existing [id] record.
+Update an existing receivables Item record.
 
 ### Path Parameters
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `id` | string | [id] ID |
+| `id` | string | Receivables Item ID |
 
 ### Request Body
 
@@ -90,7 +57,7 @@ All fields are optional for updates.
 ### Example Request
 
 ```bash
-curl -X PUT "http://localhost:3000/api/expenses/\{id\}/clx123456789" \
+curl -X PUT "http://localhost:3000/api/receivables/:id/clx123456789" \
   -H "Content-Type: application/json" \
   -d '{
     "status": "completed"
@@ -99,9 +66,9 @@ curl -X PUT "http://localhost:3000/api/expenses/\{id\}/clx123456789" \
 
 
 
-## DELETE /api/expenses/\{id\}
+## DELETE /api/receivables/:id
 
-Delete a [id] record.
+Delete a receivables Item record.
 
 ⚠️ **Warning**: This operation may cascade to related records. Use with caution.
 
@@ -109,12 +76,12 @@ Delete a [id] record.
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `id` | string | [id] ID |
+| `id` | string | Receivables Item ID |
 
 ### Example Request
 
 ```bash
-curl -X DELETE "http://localhost:3000/api/expenses/\{id\}/clx123456789"
+curl -X DELETE "http://localhost:3000/api/receivables/:id/clx123456789"
 ```
 
 
@@ -143,7 +110,7 @@ interface ErrorResponse {
 
 ## Team Isolation
 
-All [id] operations are automatically filtered by team context:
+All receivables Item operations are automatically filtered by team context:
 
 ```typescript
 // All queries include team isolation
@@ -160,7 +127,7 @@ This ensures complete data separation between teams in the multi-tenant system.
 
 ### Business Logic
 - **Team Isolation**: Enforced at API level
-- **Authentication**: Required for all operations
+- **Authentication**: Public access
 - **Validation**: Zod schemas ensure type safety
 - **Error Handling**: Consistent error responses across all endpoints
 

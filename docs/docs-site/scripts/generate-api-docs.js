@@ -86,15 +86,27 @@ function analyzeRouteFile(filePath) {
 function generateRouteDoc(routePath, routeInfo) {
   const routeName = path.basename(routePath, '.ts');
   const isCollection = routeName === 'route';
-  const resourceName = isCollection ?
-    path.basename(path.dirname(routePath)).replace(/\[(\w+)\]/g, '$1') :
-    routeName.replace(/\[(\w+)\]/g, '$1');
+  // Get meaningful resource name avoiding 'id' conflicts
+  let resourceName;
+  if (isCollection) {
+    // For route.ts files, get the directory name
+    const dirName = path.basename(path.dirname(routePath));
+    if (dirName.includes('[')) {
+      // This is an [id] directory, get the parent
+      const parentPath = path.dirname(path.dirname(routePath));
+      resourceName = path.basename(parentPath) + ' Item';
+    } else {
+      resourceName = dirName;
+    }
+  } else {
+    resourceName = routeName;
+  }
 
   const methods = routeInfo.methods.join(', ');
   const endpoint = routePath
     .replace(API_DIR, '/api')
     .replace('/route.ts', '')
-    .replace(/\[(\w+)\]/g, '\\{$1\\}'); // Escape curly braces for MDX
+    .replace(/\[(\w+)\]/g, ':$1'); // Use colon notation for parameters - safe for MDX
 
   return `---
 title: "${resourceName.charAt(0).toUpperCase() + resourceName.slice(1)} API"
@@ -368,11 +380,11 @@ function main() {
       const routeInfo = analyzeRouteFile(routePath);
       const documentation = generateRouteDoc(routePath, routeInfo);
 
-      // Generate output filename (replace [id] patterns to avoid MDX issues)
+      // Generate output filename (replace [id] patterns with safe hyphens)
       const relativePath = path.relative(API_DIR, routePath);
       const resourceName = path.dirname(relativePath)
         .replace(/\//g, '-')
-        .replace(/\[(\w+)\]/g, '{$1}'); // Replace [id] with {id} for filenames
+        .replace(/\[(\w+)\]/g, 'by-$1'); // Replace [id] with by-id for filenames
       const outputFile = path.join(OUTPUT_DIR, `${resourceName}.md`);
 
       // Write documentation
@@ -399,7 +411,7 @@ function generateIndexFile(routes) {
     const relativePath = path.relative(API_DIR, route);
     const resourceName = path.dirname(relativePath)
       .replace(/\//g, '-')
-      .replace(/\[(\w+)\]/g, '{$1}'); // Replace [id] with {id} for filenames
+      .replace(/\[(\w+)\]/g, 'by-$1'); // Replace [id] with by-id for filenames
     return {
       name: resourceName,
       path: `./${resourceName}.md`

@@ -1,10 +1,10 @@
 ---
-title: "Recurring-action API"
+title: "Generate API"
 type: "reference"
 audience: ["developer", "agent"]
-contexts: ["api", "recurring-action", "rest", "database"]
+contexts: ["api", "generate", "rest", "database"]
 complexity: "intermediate"
-last_updated: "2025-09-23"
+last_updated: "2025-09-24"
 version: "1.0"
 agent_roles: ["api-developer", "integration-engineer"]
 related:
@@ -13,13 +13,13 @@ related:
 dependencies: ["next.js", "prisma", "zod"]
 ---
 
-# Recurring-action API
+# Generate API
 
-Comprehensive API reference for recurring-action management operations.
+Comprehensive API reference for generate management operations.
 
 ## Context for LLM Agents
 
-**Scope**: Complete recurring-action API operations including CRUD, filtering, sorting, and business logic
+**Scope**: Complete generate API operations including CRUD, filtering, sorting, and business logic
 **Prerequisites**: Understanding of REST APIs, Next.js App Router, Prisma ORM, and team-based data isolation
 **Key Patterns**:
 - RESTful endpoint design with standard HTTP methods
@@ -30,7 +30,7 @@ Comprehensive API reference for recurring-action management operations.
 
 ## Endpoint Overview
 
-**Base URL**: `/api/expenses/\{id\}/recurring-action`
+**Base URL**: `/api/recurring-expenses/:id/generate`
 **Methods**: POST
 **Authentication**: Required
 **Team Isolation**: Yes
@@ -38,37 +38,21 @@ Comprehensive API reference for recurring-action management operations.
 
 
 
-## POST /api/expenses/\{id\}/recurring-action
+## POST /api/recurring-expenses/:id/generate
 
-Create a new recurring-action record.
+Create a new generate record.
 
 ### Request Body
 
-
-Schema validation using Zod:
-
-```typescript
-const RecurringActionSchema = z.object({
-  action: z.enum(['edit', 'delete']),
-  scope: z.enum(['this', 'future', 'all']),
-  // For edit actions, include the updated data
-  updatedData: z.object({
-    description: z.string().optional(),
-    amount: z.number().optional(),
-    category: z.string().optional(),
-    vendor: z.string().optional(),
-    notes: z.string().optional(),
-  });
-```
 
 
 ### Example Request
 
 ```bash
-curl -X POST "http://localhost:3000/api/expenses/\{id\}/recurring-action" \
+curl -X POST "http://localhost:3000/api/recurring-expenses/:id/generate" \
   -H "Content-Type: application/json" \
   -d '{
-    "example": "Request body will be populated based on the specific recurring-action schema"
+    "example": "Request body will be populated based on the specific generate schema"
   }'
 ```
 
@@ -76,7 +60,7 @@ curl -X POST "http://localhost:3000/api/expenses/\{id\}/recurring-action" \
 
 ```typescript
 interface CreateResponse {
-  data: Recurring-action;
+  data: Generate;
   alerts?: AIAlert[];
 }
 ```
@@ -111,7 +95,7 @@ interface ErrorResponse {
 
 ## Team Isolation
 
-All recurring-action operations are automatically filtered by team context:
+All generate operations are automatically filtered by team context:
 
 ```typescript
 // All queries include team isolation
