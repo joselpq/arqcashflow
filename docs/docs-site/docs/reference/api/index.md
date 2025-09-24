@@ -15,13 +15,13 @@ Comprehensive API documentation for ArqCashflow REST endpoints.
 
 ## Context for LLM Agents
 
-**Scope**: Complete API reference for all ArqCashflow REST endpoints with auto-generated documentation
-**Prerequisites**: Understanding of REST APIs, HTTP methods, and JSON data formats
+**Scope**: Complete reference for all ArqCashflow REST API endpoints with authentication and team isolation patterns
+**Prerequisites**: Understanding of REST APIs, HTTP methods, and ArqCashflow's team-based architecture
 **Key Patterns**:
-- Team-based authentication and data isolation
-- Consistent JSON request/response formats
-- Standard HTTP status codes and error handling
-- Auto-generated documentation from codebase
+- Team-based data isolation on all endpoints
+- NextAuth.js authentication requirements
+- Standardized response formats and error handling
+- Brazilian locale considerations for financial data
 
 ## Available APIs
 

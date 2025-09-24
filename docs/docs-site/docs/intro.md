@@ -2,9 +2,9 @@
 title: "Welcome to ArqCashflow Documentation"
 type: "guide"
 audience: ["user", "developer", "agent"]
-contexts: ["introduction", "overview", "getting-started"]
+contexts: ["introduction", "overview", "getting-started", "llm-optimization", "automation"]
 complexity: "beginner"
-last_updated: "2025-09-22"
+last_updated: "2025-09-24"
 version: "1.0"
 agent_roles: ["onboarding-assistant", "documentation-navigator"]
 sidebar_position: 1
@@ -61,7 +61,7 @@ ArqCashflow is a secure, multi-tenant cashflow management system designed for ar
 
 ### 🎨 **Design & UX**
 - **[Design Principles](./design/principles.md)** - Complete design system
-- **[Component Guidelines](./design/principles.md#component-design-principles)** - UI patterns
+- **[Component Guidelines](./design/principles.md)** - UI patterns
 
 ## Quick Navigation
 

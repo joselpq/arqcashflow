@@ -4,23 +4,18 @@ Generated on: 2025-09-24
 
 ## Summary
 
-- **Total files validated**: 48
-- **Broken links**: 1
+- **Total files validated**: 64
+- **Broken links**: 0
 - **Stale content**: 0
 - **Missing metadata**: 0
 - **Format inconsistencies**: 0
-- **Orphaned files**: 6
+- **Orphaned files**: 16
 
 ## Issues Found
 
-### 🔗 Broken Links (1)
+### 🔗 Broken Links (0)
 
-
-- **File**: `intro.md`
-  - **Link**: `./design/principles.md#component-design-principles`
-  - **Text**: "Component Guidelines"
-  - **Resolved to**: `/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/docs/docs-site/docs/design/principles.md#component-design-principles`
-
+✅ No broken links found!
 
 ### 📅 Stale Content (0)
 
@@ -34,13 +29,43 @@ Generated on: 2025-09-24
 
 ✅ All files follow consistent format!
 
-### 🔍 Orphaned Files (6)
+### 🔍 Orphaned Files (16)
+
+
+- `agents/examples/ai-document-processing.md`
+
+
+- `agents/examples/api-endpoint-implementation.md`
+
+
+- `agents/examples/debugging-workflow.md`
+
+
+- `agents/examples/form-component-with-validation.md`
+
+
+- `agents/patterns/date-processing.md`
+
+
+- `agents/patterns/error-handling.md`
+
+
+- `agents/patterns/precision-handling.md`
 
 
 - `decisions/003-strategic-architecture-evolution.md`
 
 
 - `decisions/006-service-layer-migration-plan.md`
+
+
+- `developer/architecture/decisions/adr-002-claude-ai-integration.md`
+
+
+- `developer/architecture/decisions/adr-003-nextjs-app-router.md`
+
+
+- `developer/architecture/decisions/adr-004-prisma-postgresql.md`
 
 
 - `developer/integrations/google-sheets.md`
@@ -58,7 +83,7 @@ Generated on: 2025-09-24
 ## Recommendations
 
 ### High Priority
-- 🔴 Fix broken links to prevent navigation issues
+
 
 
 
@@ -73,7 +98,7 @@ Generated on: 2025-09-24
 
 ## Health Score
 
-**Overall Score**: 99% 🟢
+**Overall Score**: 100% 🟢
 
 ---
 
