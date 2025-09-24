@@ -4,7 +4,7 @@ type: "reference"
 audience: ["developer", "agent"]
 contexts: ["database", "prisma", "schema", "orm"]
 complexity: "intermediate"
-last_updated: "2025-09-23"
+last_updated: "2025-09-24"
 version: "1.0"
 agent_roles: ["database-developer", "backend-engineer", "data-modeler"]
 related:
@@ -16,8 +16,6 @@ dependencies: ["prisma", "postgresql"]
 # Database Schema
 
 Comprehensive database schema documentation for ArqCashflow generated from Prisma schema.
-
-*Testing change.*
 
 ## Context for LLM Agents
 
@@ -426,20 +424,20 @@ model AuditLog {
 |-------|------|-------------|-------------|
 | `id` | String | Primary Key, Required, Has Default | - |
 | `timestamp` | DateTime | Required, Has Default | - |
-| **Who made the change** | | | |
-| `userId` | String | Required | User ID who made the change |
+| `Who` | made | Required | Who made the change |
+| `userId` | String | Required | - |
 | `userEmail` | String | Required | Cached for resilience if user is deleted |
-| `teamId` | String | Required | Team context for the change |
-| **What entity was changed** | | | |
-| `entityType` | String | Required | contract, receivable, expense |
+| `teamId` | String | Required | - |
+| `What` | entity | Required | What entity was changed |
+| `entityType` | String | Required | "contract", "receivable", "expense" |
 | `entityId` | String | Required | The ID of the changed entity |
-| **What kind of change** | | | |
-| `action` | String | Required | created, updated, deleted |
-| **What changed (for updates)** | | | |
-| `changes` | Json | Required | Example: status changes from pending to received |
-| **Complete state snapshot** | | | |
-| `snapshot` | Json? | None | Full entity state after change (optional, for critical changes) |
-| `metadata` | Json? | None | API endpoint, IP address, user agent info |
+| `What` | kind | Required | What kind of change |
+| `action` | String | Required | "created", "updated", "deleted" |
+| `What` | changed | Required | What changed (for updates) |
+| `changes` | Json | Required | { "status": { "from": "pending", "to": "received" } } |
+| `Complete` | state | Required | Complete state snapshot (optional, for critical changes) |
+| `snapshot` | Json? | None | Full entity state after change |
+| `metadata` | Json? | None | { "api_endpoint": "/api/contracts", "ip": "...", "user_agent": "..." } |
 
 #### Relationships
 
@@ -912,4 +910,4 @@ const result = await prisma.model.findMany({
 ---
 
 *This documentation is auto-generated from `prisma/schema.prisma`. For updates, modify the schema file and regenerate.*
-*Last generated: 2025-09-23*
+*Last generated: 2025-09-24*
