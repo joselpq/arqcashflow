@@ -13,16 +13,6 @@ agent_roles: ["api-developer", "integration-engineer"]
 
 Comprehensive API documentation for ArqCashflow REST endpoints.
 
-## Context for LLM Agents
-
-**Scope**: Complete reference for all ArqCashflow REST API endpoints with authentication and team isolation patterns
-**Prerequisites**: Understanding of REST APIs, HTTP methods, and ArqCashflow's team-based architecture
-**Key Patterns**:
-- Team-based data isolation on all endpoints
-- NextAuth.js authentication requirements
-- Standardized response formats and error handling
-- Brazilian locale considerations for financial data
-
 ## Available APIs
 
 - [Ai-assistant API](./ai-assistant.md)

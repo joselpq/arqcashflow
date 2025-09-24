@@ -2,7 +2,7 @@
 title: "LLM Agent Guide: ArqCashflow Project"
 type: "guide"
 audience: ["agent", "developer"]
-contexts: ["automation", "ci-cd", "documentation", "health-monitoring", "code-validation"]
+contexts: ["automation", "ci-cd", "documentation", "health-monitoring", "code-validation", "search"]
 complexity: "intermediate"
 last_updated: "2025-09-24"
 version: "2.0"
@@ -11,7 +11,7 @@ related:
   - docs/docs-site/docs/agents/llm-agent-guide.md
   - DOCUMENTATION_STRATEGY_PROPOSAL.md
   - docs/docs-site/scripts/README.md
-dependencies: ["github-actions", "nodejs", "npm", "typescript"]
+dependencies: ["github-actions", "nodejs", "npm", "typescript", "docusaurus-search-local"]
 ---
 
 # LLM Agent Guide: ArqCashflow Project

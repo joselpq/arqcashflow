@@ -2,7 +2,7 @@
 title: "ArqCashflow Documentation Hub"
 type: "index"
 audience: ["user", "developer", "agent", "designer"]
-contexts: ["overview", "navigation"]
+contexts: ["overview", "navigation", "search"]
 complexity: "beginner"
 last_updated: "2025-09-24"
 version: "1.0"
@@ -25,6 +25,7 @@ Welcome to the comprehensive documentation for ArqCashflow - the LLM-agent-optim
 - Documentation structure patterns
 - Audience-specific navigation
 - Context-aware document discovery
+- Local search functionality (2.8MB index covering all 64 files)
 
 ## Quick Navigation
 
