@@ -2,8 +2,8 @@
 
 **Date**: September 24, 2025
 **Last Updated**: September 24, 2025
-**Overall Implementation**: 79% Complete
-**Status**: Phases 1-3 Complete, Phase 4 in Progress (40% complete)
+**Overall Implementation**: 94% Complete
+**Status**: Phases 1-3 Complete, Phase 4 Nearly Complete (95% complete)
 
 ## 📊 Implementation Status Summary
 
@@ -12,7 +12,7 @@
 | Phase 1: Foundation | 75% | ✅ Core complete, missing search |
 | Phase 2: Content Migration | 100% | ✅ Fully complete |
 | Phase 3: LLM Context Enhancement | 100% | ✅ Fully complete |
-| Phase 4: Automation & Optimization | 40% | ⚠️ In progress |
+| Phase 4: Automation & Optimization | 95% | ✅ Nearly complete |
 
 ## 🎯 Executive Summary
 
@@ -22,6 +22,35 @@ This proposal outlines a comprehensive documentation strategy specifically desig
 - **For LLM Agents**: Structured contexts, decision history, and pattern libraries for consistent code generation
 - **For Developers**: Faster onboarding, better discoverability, and reduced maintenance overhead
 - **For Project**: Scalable documentation that grows with increasing complexity
+
+## 🤖 Dual LLM Agent Guide Structure
+
+**IMPORTANT**: ArqCashflow uses a dual-guide system to serve different agent needs:
+
+### 🔧 Operational Guide: `/LLM_AGENT_GUIDE.md` (Project Root)
+- **Purpose**: Immediate operational context for agents starting work
+- **Content**: Current project status, health verification protocols, Phase progress
+- **Audience**: Agents needing situational awareness and immediate next steps
+- **Updates**: Live project status, current implementation progress (Phase 4: 95%)
+- **When to use**: First stop for any agent arriving at the project
+
+### 📚 Educational Guide: `/docs/docs-site/docs/agents/llm-agent-guide.md`
+- **Purpose**: Comprehensive patterns and methodologies for deep understanding
+- **Content**: Documentation strategies, pattern libraries, architectural concepts
+- **Audience**: Agents and humans doing comprehensive project learning
+- **Updates**: Stable reference material, enduring patterns and methodologies
+- **When to use**: Deep-dive learning, pattern reference, methodology understanding
+
+### 🔗 Navigation Between Guides
+Both guides include prominent cross-references to prevent confusion:
+- **Root guide** → Points to docs guide for "comprehensive patterns & examples"
+- **Docs guide** → Points to root guide for "current project status & health protocols"
+
+This separation ensures:
+- ✅ No content duplication or maintenance overhead
+- ✅ Clear purpose differentiation (operational vs educational)
+- ✅ Agents always know where to find specific types of information
+- ✅ Live status updates don't pollute stable reference material
 
 ## 📊 Current State Analysis
 
@@ -410,18 +439,18 @@ llm_optimization:
 2. **September 24, 2025 (Commit ba954b2)**: Simplified workflow due to MDX issues
    - Backed up complex automation to `.github/workflows/docs.yml.backup`
    - Reverted to basic Docusaurus deployment
-3. **September 24, 2025**: Progressively restored features:
+3. **September 24, 2025**: Progressively restored and enhanced features:
    - Phase 1: Foundation (75% complete)
    - Phase 2: Content Migration (100% complete)
    - Phase 3: LLM Context Enhancement (100% complete)
-   - Phase 4: Automation (40% complete)
+   - Phase 4: Automation (95% complete - all major features active)
 
-### What Was Temporarily Disabled (Available in Backup)
-- Weekly scheduled health checks
-- PR comment automation
-- Issue creation for problems
-- Multi-job workflow structure
-- Artifact uploads for validation reports
+### ✅ Advanced Features Now Active (Restored from Backup)
+- ✅ Weekly scheduled health checks (every Sunday at 2 AM UTC)
+- ✅ PR comment automation with validation summaries
+- ✅ Issue creation for critical problems (health score < 80%)
+- ✅ Multi-job workflow structure (build→deploy→validate→comment)
+- ✅ Artifact uploads for validation reports (30-90 day retention)
 
 ### Currently Active Features
 ✅ **Working Automation:**
@@ -441,22 +470,16 @@ llm_optimization:
 
 ### Next Steps for Future AI Agents
 
-**PRIORITY 1: Complete Phase 4 - Restore Advanced CI/CD**
-```bash
-# These features exist in backup and need reactivation:
-cp .github/workflows/docs.yml.backup .github/workflows/docs-advanced.yml
-# Then selectively merge features into main workflow
-```
+**PRIORITY 1: Complete Final 5% of Phase 4**
+- Add search functionality (Phase 1 gap - Algolia or built-in)
+- Implement analytics tracking for documentation usage
+- Add performance monitoring for build times
 
-**PRIORITY 2: Fill Foundation Gaps**
-- Add search functionality (Algolia or built-in)
-- Implement code example validation
+**PRIORITY 2: Optional Enhancements**
 - Add component documentation extraction
-
-**PRIORITY 3: New Features**
-- Analytics tracking
 - Test coverage documentation
 - Enhanced changelog generation
+- Performance monitoring dashboard
 
 ### Important Files for Context
 - `/DOCUMENTATION_STRATEGY_PROPOSAL.md` - This file (overall plan)

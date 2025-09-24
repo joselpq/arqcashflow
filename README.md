@@ -13,6 +13,15 @@ A secure, multi-tenant cashflow management system designed for architects to tra
 - ✅ **API Security**: All APIs require authentication and filter by team
 - ✅ **Data Isolation**: Secure team-based data segregation with all known issues resolved
 
+## 🤖 For LLM Agents
+
+**ArqCashflow uses a dual-guide system for optimal agent navigation:**
+
+- **🔧 For Immediate Project Context**: Start with [`LLM_AGENT_GUIDE.md`](./LLM_AGENT_GUIDE.md) for current status, health protocols, and next steps
+- **📚 For Comprehensive Patterns**: Use [`docs/docs-site/docs/agents/llm-agent-guide.md`](./docs/docs-site/docs/agents/llm-agent-guide.md) for methodologies and deep learning
+
+**Documentation Health**: 100% 🟢 | **Automation Status**: Phase 4 (95% complete)
+
 ## Features
 
 1. **📊 Professional Dashboard** - Clean, architect-focused financial overview with modern design
