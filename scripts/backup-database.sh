@@ -29,8 +29,8 @@ if [ -z "$DATABASE_URL" ]; then
 fi
 
 # Extract database connection details from DATABASE_URL
-# Format: postgresql://user:password@host/database
-DB_URL_REGEX="postgresql://([^:]+):([^@]+)@([^/]+)/(.+)"
+# Format: postgresql://user:password@host/database?params
+DB_URL_REGEX="postgresql://([^:]+):([^@]+)@([^/]+)/([^?]+)"
 
 if [[ $DATABASE_URL =~ $DB_URL_REGEX ]]; then
     DB_USER="${BASH_REMATCH[1]}"
@@ -39,12 +39,12 @@ if [[ $DATABASE_URL =~ $DB_URL_REGEX ]]; then
     DB_NAME="${BASH_REMATCH[4]}"
 else
     echo -e "${RED}❌ ERROR: Invalid DATABASE_URL format${NC}"
-    echo "Expected format: postgresql://user:password@host/database"
+    echo "Expected format: postgresql://user:password@host/database?params"
     exit 1
 fi
 
-# Remove SSL and other parameters from host
-DB_HOST=$(echo "$DB_HOST" | cut -d'?' -f1)
+# Remove SSL and other parameters from host (already handled by regex)
+# DB_HOST=$(echo "$DB_HOST" | cut -d'?' -f1)
 
 echo -e "${YELLOW}📊 Database connection details:${NC}"
 echo "Host: $DB_HOST"
@@ -58,7 +58,7 @@ export PGPASSWORD="$DB_PASS"
 # Create the backup
 echo -e "${YELLOW}🔽 Creating database backup...${NC}"
 
-if pg_dump -h "$DB_HOST" -U "$DB_USER" -d "$DB_NAME" --verbose --clean --if-exists --create > "$BACKUP_DIR/$BACKUP_FILE"; then
+if PGSSLMODE=require pg_dump -h "$DB_HOST" -U "$DB_USER" -d "$DB_NAME" --verbose --clean --if-exists --create --no-version-check > "$BACKUP_DIR/$BACKUP_FILE"; then
     echo -e "${GREEN}✅ Database backup completed successfully!${NC}"
     echo -e "${GREEN}📁 Backup saved to: $BACKUP_DIR/$BACKUP_FILE${NC}"
 
