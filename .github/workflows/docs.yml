@@ -14,11 +14,15 @@ on:
     paths:
       - 'docs/**'
   workflow_dispatch: # Allow manual trigger
+  schedule:
+    # Run weekly validation on Sundays at 2 AM UTC
+    - cron: '0 2 * * 0'
 
 permissions:
   contents: read
   pages: write
   id-token: write
+  issues: write
 
 # Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
 concurrency:
@@ -28,6 +32,7 @@ concurrency:
 jobs:
   deploy:
     name: Deploy to GitHub Pages
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -89,3 +94,63 @@ jobs:
           path: docs/docs-site/validation-report.md
           retention-days: 30
           if-no-files-found: ignore
+
+  # Weekly health check job - runs on schedule for automated monitoring
+  validate:
+    name: Weekly Documentation Health Check
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: './docs/docs-site/package-lock.json'
+
+      - name: Install dependencies
+        run: |
+          cd docs/docs-site
+          npm ci
+
+      - name: Run comprehensive validation
+        run: |
+          cd docs/docs-site/scripts
+          node validate-docs.js
+        continue-on-error: true
+
+      - name: Upload weekly report
+        uses: actions/upload-artifact@v4
+        with:
+          name: weekly-docs-health-report
+          path: docs/docs-site/validation-report.md
+          retention-days: 90
+          if-no-files-found: ignore
+
+      - name: Create issue for critical problems
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const reportPath = 'docs/docs-site/validation-report.md';
+
+            if (fs.existsSync(reportPath)) {
+              const report = fs.readFileSync(reportPath, 'utf8');
+              const healthMatch = report.match(/Overall Score.*?(\d+)%/);
+              const score = healthMatch ? parseInt(healthMatch[1]) : 0;
+
+              if (score < 80) {
+                await github.rest.issues.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title: `📚 Documentation Health Alert (${score}%)`,
+                  body: `## Weekly Documentation Health Check Failed\n\nThe automated documentation validation found critical issues that need attention.\n\n**Health Score**: ${score}% 🔴\n\n### Action Required\n- Review the validation report in the artifacts\n- Fix broken links and missing metadata\n- Update stale content\n\n[View Run](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`,
+                  labels: ['documentation', 'maintenance', 'automated']
+                });
+              }
+            }
