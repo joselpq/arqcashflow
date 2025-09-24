@@ -4,7 +4,7 @@ type: "index"
 audience: ["user", "developer", "agent", "designer"]
 contexts: ["overview", "navigation"]
 complexity: "beginner"
-last_updated: "2025-09-22"
+last_updated: "2025-09-24"
 version: "1.0"
 agent_roles: ["navigation-assistant", "context-provider"]
 related:

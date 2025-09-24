@@ -1,3 +1,19 @@
+---
+title: "ArqCashflow Documentation Automation"
+type: "reference"
+audience: ["developer", "agent"]
+contexts: ["automation", "ci-cd", "documentation", "health-monitoring", "code-validation"]
+complexity: "advanced"
+last_updated: "2025-09-24"
+version: "2.0"
+agent_roles: ["automation-specialist", "documentation-maintainer", "ci-cd-engineer"]
+related:
+  - ../../LLM_AGENT_GUIDE.md
+  - ../../DOCUMENTATION_STRATEGY_PROPOSAL.md
+  - ../.github/workflows/docs.yml
+dependencies: ["nodejs", "npm", "github-actions", "typescript", "docusaurus"]
+---
+
 # ArqCashflow Documentation Automation
 
 Comprehensive automation suite for generating, validating, and maintaining ArqCashflow documentation with LLM-agent optimization.
@@ -59,7 +75,23 @@ node validate-docs.js
 
 **Output**: `../validation-report.md`
 
-### 4. Changelog Generator
+### 4. Code Example Validator
+**File**: `validate-code-examples-fast.js`
+
+```bash
+node validate-code-examples-fast.js
+```
+
+**Features**:
+- Fast syntax validation for TypeScript/JavaScript code blocks
+- Smart skipping of documentation snippets vs real code
+- Bracket matching and basic syntax error detection
+- Integration with CI/CD for automated code quality checks
+- 85.3% success rate with comprehensive reporting
+
+**Output**: `../code-validation-report.md`
+
+### 5. Changelog Generator
 **File**: `generate-changelog.js`
 
 ```bash
@@ -99,7 +131,10 @@ npm run docs:schema
 # Validate documentation
 npm run docs:validate
 
-# Full build and validation
+# Validate code examples
+npm run docs:validate-code
+
+# Full build and validation (docs + code + build)
 npm run docs:check
 
 # Clean and regenerate
@@ -147,13 +182,14 @@ npm run docs:watch
 
 ## 📊 Validation Results
 
-**Current Health Score**: 69% 🔴
+**Current Health Score**: 100% 🟢
 
-### Issues Found
-- **Broken links**: 24
-- **Missing metadata**: 8
-- **Format inconsistencies**: 12
-- **Orphaned files**: 20
+### Recent Validation Results
+- **Broken links**: 0
+- **Missing metadata**: 0
+- **Format inconsistencies**: 0
+- **Orphaned files**: 16
+- **Code validation**: 85.3% success rate (29/34 validated blocks)
 
 ### Recommendations
 1. **High Priority**: Fix broken links and missing metadata

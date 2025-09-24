@@ -1,3 +1,19 @@
+---
+title: "LLM Agent Guide: ArqCashflow Project"
+type: "guide"
+audience: ["agent", "developer"]
+contexts: ["automation", "ci-cd", "documentation", "health-monitoring", "code-validation"]
+complexity: "intermediate"
+last_updated: "2025-09-24"
+version: "2.0"
+agent_roles: ["documentation-maintainer", "automation-specialist", "health-monitor"]
+related:
+  - docs/docs-site/docs/agents/llm-agent-guide.md
+  - DOCUMENTATION_STRATEGY_PROPOSAL.md
+  - docs/docs-site/scripts/README.md
+dependencies: ["github-actions", "nodejs", "npm", "typescript"]
+---
+
 # LLM Agent Guide: ArqCashflow Project
 
 **Quick Context**: ArqCashflow is a financial management system for architects built with Next.js, TypeScript, and Claude AI, optimized for LLM-agent collaborative development.
@@ -15,6 +31,17 @@
 - API and schema generation working
 - Advanced features in `.github/workflows/docs.yml.backup`
 - See `/DOCUMENTATION_STRATEGY_PROPOSAL.md` for complete status
+
+## Context for LLM Agents
+
+**Scope**: Complete documentation automation framework with health monitoring, PR automation, and code validation for ArqCashflow financial management system
+**Prerequisites**: Understanding of GitHub Actions, Node.js, TypeScript, documentation workflows, and CI/CD automation
+**Key Patterns**:
+- Health verification protocol before starting work (100% health score currently)
+- Multi-job workflow structure (build→deploy→validate→comment)
+- Code example validation with smart skipping of documentation snippets
+- Weekly automated health checks with issue creation for scores < 80%
+- PR comment automation with both documentation and code validation results
 
 ## 🎯 For LLM Agents: How to Use This Documentation Efficiently
 
