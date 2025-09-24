@@ -4,7 +4,7 @@ Generated on: 2025-09-24
 
 ## Summary
 
-- **Total files validated**: 64
+- **Total files validated**: 65
 - **Broken links**: 0
 - **Stale content**: 0
 - **Missing metadata**: 0
