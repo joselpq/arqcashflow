@@ -11,7 +11,7 @@ decision_status: "accepted"
 decision_date: "2024-12-12"
 related:
   - developer/architecture/database.md
-  - adr-001-team-based-isolation.md
+  - developer/architecture/decisions/adr-001-team-based-isolation.md
 dependencies: ["@prisma/client", "prisma", "postgresql"]
 ---
 
