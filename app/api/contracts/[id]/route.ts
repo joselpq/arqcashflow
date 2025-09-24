@@ -1,9 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { withTeamContext } from '@/lib/middleware/team-context'
 import { createDateForStorage } from '@/lib/date-utils'
 import { createAuditContextFromAPI, auditUpdate, auditDelete, safeAudit, captureEntityState } from '@/lib/audit-middleware'
 import { prisma } from '@/lib/prisma'
+import { withServiceLayerFlag } from '@/lib/feature-flags'
+import { ContractService } from '@/lib/services/ContractService'
 
 const UpdateContractSchema = z.object({
   clientName: z.string().optional(),
@@ -20,19 +22,39 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  return withTeamContext(async ({ teamScopedPrisma }) => {
+  return withTeamContext(async (context) => {
+    const { teamScopedPrisma } = context
     const { id } = await params
 
-    const contract = await teamScopedPrisma.contract.findFirst({
-      where: { id },
-      include: { receivables: true },
-    })
+    return await withServiceLayerFlag(
+      // Service layer implementation
+      async () => {
+        const contractService = new ContractService({ ...context, request })
+        const contract = await contractService.findById(id)
 
-    if (!contract) {
-      throw new Error('Contract not found')
-    }
+        if (!contract) {
+          throw new Error('Contract not found')
+        }
 
-    return contract
+        return contract
+      },
+
+      // Legacy implementation
+      async () => {
+        const contract = await teamScopedPrisma.contract.findFirst({
+          where: { id },
+          include: { receivables: true },
+        })
+
+        if (!contract) {
+          throw new Error('Contract not found')
+        }
+
+        return contract
+      },
+      `/api/contracts/${id}`,
+      'GET'
+    )
   })
 }
 
@@ -40,50 +62,70 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  return withTeamContext(async ({ teamScopedPrisma, user, teamId }) => {
+  return withTeamContext(async (context) => {
+    const { teamScopedPrisma, user, teamId } = context
     const { id } = await params
-
     const body = await request.json()
-    const validatedData = UpdateContractSchema.parse(body)
 
-    // Capture state before update for audit (using raw prisma for audit)
-    const beforeState = await captureEntityState('contract', id, prisma)
-    if (!beforeState || beforeState.teamId !== teamId) {
-      throw new Error('Contract not found')
-    }
+    return await withServiceLayerFlag(
+      // Service layer implementation
+      async () => {
+        const contractService = new ContractService({ ...context, request })
+        const validatedData = UpdateContractSchema.parse(body)
 
-    const updateData: any = { ...validatedData }
-    if (validatedData.signedDate && validatedData.signedDate.trim() !== '') {
-      updateData.signedDate = createDateForStorage(validatedData.signedDate)
-    }
+        const updatedContract = await contractService.update(id, validatedData)
 
-    const contract = await teamScopedPrisma.contract.updateMany({
-      where: { id },
-      data: updateData,
-    })
+        return {
+          contract: updatedContract
+        }
+      },
 
-    if (contract.count === 0) {
-      throw new Error('Contract not found')
-    }
+      // Legacy implementation
+      async () => {
+        const validatedData = UpdateContractSchema.parse(body)
 
-    const updatedContract = await teamScopedPrisma.contract.findFirst({
-      where: { id },
-      include: { receivables: true }
-    })
+        // Capture state before update for audit (using raw prisma for audit)
+        const beforeState = await captureEntityState('contract', id, prisma)
+        if (!beforeState || beforeState.teamId !== teamId) {
+          throw new Error('Contract not found')
+        }
 
-    // Log audit entry for contract update
-    await safeAudit(async () => {
-      const auditContext = createAuditContextFromAPI(user, teamId, request, {
-        action: 'contract_update',
-        source: 'api',
-        statusChanged: beforeState.status !== (validatedData.status || beforeState.status)
-      })
-      await auditUpdate(auditContext, 'contract', id, beforeState, validatedData, updatedContract)
-    })
+        const updateData: any = { ...validatedData }
+        if (validatedData.signedDate && validatedData.signedDate.trim() !== '') {
+          updateData.signedDate = createDateForStorage(validatedData.signedDate)
+        }
 
-    return {
-      contract: updatedContract
-    }
+        const contract = await teamScopedPrisma.contract.update({
+          where: { id },
+          data: updateData,
+        })
+
+        if (!contract) {
+          throw new Error('Contract not found')
+        }
+
+        const updatedContract = await teamScopedPrisma.contract.findFirst({
+          where: { id },
+          include: { receivables: true }
+        })
+
+        // Log audit entry for contract update
+        await safeAudit(async () => {
+          const auditContext = createAuditContextFromAPI(user, teamId, request, {
+            action: 'contract_update',
+            source: 'api',
+            statusChanged: beforeState.status !== (validatedData.status || beforeState.status)
+          })
+          await auditUpdate(auditContext, 'contract', id, beforeState, validatedData, updatedContract)
+        })
+
+        return {
+          contract: updatedContract
+        }
+      },
+      `/api/contracts/${id}`,
+      'PUT'
+    )
   })
 }
 
@@ -91,33 +133,49 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  return withTeamContext(async ({ teamScopedPrisma, user, teamId }) => {
+  return withTeamContext(async (context) => {
+    const { teamScopedPrisma, user, teamId } = context
     const { id } = await params
 
-    // Capture state before deletion for audit (using raw prisma for audit)
-    const beforeState = await captureEntityState('contract', id, prisma)
-    if (!beforeState || beforeState.teamId !== teamId) {
-      throw new Error('Contract not found')
-    }
+    return await withServiceLayerFlag(
+      // Service layer implementation
+      async () => {
+        const contractService = new ContractService({ ...context, request })
+        await contractService.delete(id)
 
-    const result = await teamScopedPrisma.contract.deleteMany({
-      where: { id },
-    })
+        return { message: 'Contract deleted successfully' }
+      },
 
-    if (result.count === 0) {
-      throw new Error('Contract not found')
-    }
+      // Legacy implementation
+      async () => {
+        // Capture state before deletion for audit (using raw prisma for audit)
+        const beforeState = await captureEntityState('contract', id, prisma)
+        if (!beforeState || beforeState.teamId !== teamId) {
+          throw new Error('Contract not found')
+        }
 
-    // Log audit entry for contract deletion
-    await safeAudit(async () => {
-      const auditContext = createAuditContextFromAPI(user, teamId, request, {
-        action: 'contract_deletion',
-        source: 'api',
-        cascadeDelete: true // Note that this will delete associated receivables
-      })
-      await auditDelete(auditContext, 'contract', id, beforeState)
-    })
+        const result = await teamScopedPrisma.contract.delete({
+          where: { id },
+        })
 
-    return { message: 'Contract deleted successfully' }
+        if (!result) {
+          throw new Error('Contract not found')
+        }
+
+        // Log audit entry for contract deletion
+        await safeAudit(async () => {
+          const auditContext = createAuditContextFromAPI(user, teamId, request, {
+            action: 'contract_deletion',
+            source: 'api',
+            cascadeDelete: true // Note that this will delete associated receivables
+          })
+          await auditDelete(auditContext, 'contract', id, beforeState)
+        })
+
+        return { message: 'Contract deleted successfully' }
+      },
+      `/api/contracts/${id}`,
+      'DELETE'
+    )
   })
 }
