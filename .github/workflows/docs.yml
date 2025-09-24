@@ -57,6 +57,13 @@ jobs:
           node validate-docs.js || echo "Validation completed with warnings"
         continue-on-error: true
 
+      - name: Generate API documentation
+        run: |
+          cd scripts
+          # Skip API generation for now due to MDX bracket escaping issues
+          echo "API docs generation temporarily disabled - fixing bracket escaping"
+        continue-on-error: true
+
       - name: Build website
         run: npm run build
         env:
