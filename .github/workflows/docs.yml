@@ -63,6 +63,8 @@ jobs:
           node generate-api-docs.js || echo "API docs generation skipped or failed"
           # Remove problematic files with {id} patterns that cause MDX issues
           rm -f ../docs/reference/api/*-{id}*.md || true
+          # Also remove references to these files from index.md
+          sed -i 's/.*{id}.*\.md.*//g' ../docs/reference/api/index.md || true
         continue-on-error: true
 
       - name: Build website
