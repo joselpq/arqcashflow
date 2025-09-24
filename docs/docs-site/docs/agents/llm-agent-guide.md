@@ -8,7 +8,6 @@ last_updated: "2025-09-24"
 version: "1.0"
 agent_roles: ["documentation-navigator", "context-provider", "workflow-optimizer"]
 related:
-  - ../../../../LLM_AGENT_GUIDE.md
   - index.md
   - contexts/contract-management.md
   - patterns/testing-strategies.md
@@ -21,7 +20,7 @@ dependencies: []
 
 ## Context for LLM Agents
 
-> **🚨 For Current Project Status & Health Protocols**: See [`/LLM_AGENT_GUIDE.md`](../../../../LLM_AGENT_GUIDE.md) in the project root for live operational status, Phase 4 progress (90%), health verification protocols, and immediate context.
+> **🚨 For Current Project Status & Health Protocols**: See `/LLM_AGENT_GUIDE.md` in the project root for live operational status, Phase 4 progress (90%), health verification protocols, and immediate context.
 >
 > **📖 This Document**: Provides comprehensive patterns, methodologies, and educational content for understanding the project deeply.
 

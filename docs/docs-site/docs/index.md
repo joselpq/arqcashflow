@@ -55,6 +55,13 @@ Key Topics:
 ### 🤖 **For LLM Agents**
 Structured contexts, patterns, and decision records optimized for AI-assisted development.
 
+> **📍 LLM Agent Navigation Guide**:
+>
+> - **🔧 For Current Project Status**: Start with `/LLM_AGENT_GUIDE.md` (project root) for operational context, health protocols, and immediate next steps
+> - **📚 For Comprehensive Patterns**: Use [`/docs/agents/llm-agent-guide.md`](./agents/llm-agent-guide.md) for methodologies, pattern libraries, and deep learning
+>
+> Both guides cross-reference each other to prevent confusion.
+
 **[🎯 Agent Templates →](./meta/templates/document-template.md)**
 
 Key Topics:
