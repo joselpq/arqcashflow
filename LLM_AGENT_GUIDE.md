@@ -45,6 +45,10 @@ dependencies: ["github-actions", "nodejs", "npm", "typescript"]
 
 ## 🎯 For LLM Agents: How to Use This Documentation Efficiently
 
+> **📚 For Comprehensive Patterns & Examples**: See [`/docs/docs-site/docs/agents/llm-agent-guide.md`](docs/docs-site/docs/agents/llm-agent-guide.md) for detailed methodologies, pattern libraries, and educational content.
+>
+> **🔧 This Document**: Provides current operational status, health protocols, and immediate context for project work.
+
 ### Priority Reading Order (Limited Context Optimization)
 
 #### 1. **Immediate Context (Read First - 2 docs)**
