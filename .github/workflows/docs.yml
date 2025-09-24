@@ -1,217 +1,70 @@
-name: Documentation Build and Deploy
+# Official Docusaurus GitHub Actions Deployment
+# Based on: https://docusaurus.io/docs/deployment#deploying-to-github-pages
+
+name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
     paths:
       - 'docs/**'
-      - 'app/api/**/*.ts'
-      - 'prisma/schema.prisma'
       - '.github/workflows/docs.yml'
   pull_request:
-    branches: [ main ]
+    branches: [main]
     paths:
       - 'docs/**'
-      - 'app/api/**/*.ts'
-      - 'prisma/schema.prisma'
   workflow_dispatch: # Allow manual trigger
-  schedule:
-    # Run weekly validation on Sundays at 2 AM UTC
-    - cron: '0 2 * * 0'
 
-# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
-  issues: write
-  pull-requests: write
 
-# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued
+# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
 concurrency:
   group: "pages"
   cancel-in-progress: false
 
 jobs:
-  # Build job - generates and builds documentation
-  build:
-    name: Build Documentation
+  deploy:
+    name: Deploy to GitHub Pages
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     defaults:
       run:
         working-directory: ./docs/docs-site
-
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Fetch all history for proper changelog generation
+          fetch-depth: 0 # Fetch all history for changelog generation
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: 18
           cache: 'npm'
           cache-dependency-path: './docs/docs-site/package-lock.json'
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Generate API documentation
-        if: github.event_name != 'schedule'
-        run: |
-          cd scripts
-          node generate-api-docs.js || echo "API docs generation skipped or failed"
-        continue-on-error: true
-
-      - name: Generate schema documentation
-        if: github.event_name != 'schedule'
-        run: |
-          cd scripts
-          node generate-schema-docs.js || echo "Schema docs generation skipped or failed"
-        continue-on-error: true
-
-      - name: Validate documentation
-        run: |
-          cd scripts
-          node validate-docs.js || echo "Validation completed with warnings"
-        continue-on-error: true
-
-      - name: Build documentation site
-        run: |
-          # Clear any cached builds to ensure fresh compilation
-          rm -rf .docusaurus 2>/dev/null || true
-          npm run build
+      - name: Build website
+        run: npm run build
+        env:
+          # Tell Docusaurus to build for GitHub Pages
+          NODE_ENV: production
 
       - name: Setup Pages
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
         uses: actions/configure-pages@v5
 
       - name: Upload artifact
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
         uses: actions/upload-pages-artifact@v3
         with:
           path: './docs/docs-site/build'
 
-      - name: Upload validation report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: documentation-validation-report
-          path: docs/docs-site/validation-report.md
-          retention-days: 30
-          if-no-files-found: ignore
-
-  # Deploy job - deploys to GitHub Pages
-  deploy:
-    name: Deploy to GitHub Pages
-    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
-    needs: build
-    runs-on: ubuntu-latest
-
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-
-    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-        with:
-          error_count: 0 # Don't fail on warnings
-
-  # Validation job - runs on schedule for health checks
-  validate:
-    name: Weekly Documentation Health Check
-    if: github.event_name == 'schedule'
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: './docs/docs-site/package-lock.json'
-
-      - name: Install dependencies
-        run: |
-          cd docs/docs-site
-          npm ci
-
-      - name: Run comprehensive validation
-        run: |
-          cd docs/docs-site/scripts
-          node validate-docs.js
-        continue-on-error: true
-
-      - name: Upload weekly report
-        uses: actions/upload-artifact@v4
-        with:
-          name: weekly-docs-health-report
-          path: docs/docs-site/validation-report.md
-          retention-days: 90
-          if-no-files-found: ignore
-
-      - name: Create issue for critical problems
-        if: failure()
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            const reportPath = 'docs/docs-site/validation-report.md';
-
-            if (fs.existsSync(reportPath)) {
-              const report = fs.readFileSync(reportPath, 'utf8');
-              const healthMatch = report.match(/Overall Score.*?(\d+)%/);
-              const score = healthMatch ? parseInt(healthMatch[1]) : 0;
-
-              if (score < 80) {
-                await github.rest.issues.create({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  title: `📚 Documentation Health Alert (${score}%)`,
-                  body: `## Weekly Documentation Health Check Failed\n\nThe automated documentation validation found critical issues that need attention.\n\n**Health Score**: ${score}% 🔴\n\n### Action Required\n- Review the validation report in the artifacts\n- Fix broken links and missing metadata\n- Update stale content\n\n[View Run](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`,
-                  labels: ['documentation', 'maintenance', 'automated']
-                });
-              }
-            }
-
-  # PR Comment job - adds validation results to PRs
-  comment-pr:
-    name: Comment PR Results
-    if: github.event_name == 'pull_request'
-    needs: build
-    runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write
-
-    steps:
-      - name: Download validation report
-        uses: actions/download-artifact@v4
-        with:
-          name: documentation-validation-report
-        continue-on-error: true
-
-      - name: Comment on PR
-        if: success()
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-
-            if (fs.existsSync('validation-report.md')) {
-              const report = fs.readFileSync('validation-report.md', 'utf8');
-              const lines = report.split('\n');
-              const summary = lines.slice(0, 20).join('\n');
-
-              await github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: `## 📚 Documentation Build Results\n\n${summary}\n\n[View full report in workflow artifacts](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`
-              });
-            }
