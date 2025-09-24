@@ -2,6 +2,20 @@
 
 **Quick Context**: ArqCashflow is a financial management system for architects built with Next.js, TypeScript, and Claude AI, optimized for LLM-agent collaborative development.
 
+## ⚠️ CRITICAL: Current Documentation State (September 24, 2025)
+
+**Documentation Implementation**: 79% Complete
+- ✅ Phase 1 (Foundation): 75% - Missing search functionality
+- ✅ Phase 2 (Content Migration): 100% - All content migrated
+- ✅ Phase 3 (LLM Context): 100% - All agent docs created
+- ⚠️ Phase 4 (Automation): 40% - Advanced CI/CD disabled but available in backup
+
+**Key Facts:**
+- 64 documentation files with 100% health score
+- API and schema generation working
+- Advanced features in `.github/workflows/docs.yml.backup`
+- See `/DOCUMENTATION_STRATEGY_PROPOSAL.md` for complete status
+
 ## 🎯 For LLM Agents: How to Use This Documentation Efficiently
 
 ### Priority Reading Order (Limited Context Optimization)
@@ -216,22 +230,120 @@ SUCCESS CRITERIA:
 - [Specific measurable outcomes]
 ```
 
-## 🔄 Phase 2 Context (Starting Now)
+## 📚 Documentation Maintenance Protocol
 
-**Current Status**: Phase 1 complete, Phase 2 beginning
-**Phase 2 Goal**: Migrate and enhance existing documentation
-**Approach**:
-1. Copy content to new structure
-2. Add structured metadata
-3. Create cross-references
-4. Enhance with LLM context sections
+### Before Making Changes
+1. **Read Current State**: Check `/DOCUMENTATION_STRATEGY_PROPOSAL.md` Implementation History section
+2. **Run Validation**: `cd docs/docs-site/scripts && npm run docs:validate`
+3. **Check Build**: `cd docs/docs-site && npm run build`
 
-**Files to Migrate**:
-- README.md → user guides + developer setup
-- DEVELOPMENT.md → architecture + testing + deployment
-- DESIGN_PRINCIPLES.md → design system documentation
-- GOOGLE_SHEETS_SIMPLE.md → integration guide
+### When Working on Documentation
+```bash
+# Standard maintenance workflow
+cd docs/docs-site/scripts
+
+# 1. Validate current state
+npm run docs:validate
+
+# 2. If API/schema changed, regenerate
+npm run docs:generate
+
+# 3. Test build locally
+cd .. && npm run build
+
+# 4. Update last_updated fields
+# 5. Ensure "Context for LLM Agents" sections exist
+```
+
+### Common Issues & Solutions
+
+**MDX Build Errors**
+- Problem: Curly braces `{}` in tables
+- Solution: Wrap JSON examples in backticks
+
+**Broken Links**
+- Problem: Incorrect relative paths
+- Solution: Links must be relative from current file location
+
+**Missing LLM Context**
+- Problem: File lacks "Context for LLM Agents" section
+- Solution: Add after main heading with Scope, Prerequisites, Key Patterns
+
+## 🩺 Documentation Health Verification Protocol
+
+**CRITICAL**: Every new LLM agent must verify documentation health before starting work.
+
+### Quick Health Check Sequence
+
+**1. Check Current Health Status**
+```bash
+cd docs/docs-site/scripts
+node validate-docs.js
+```
+Expected Output: `Health score: 100% 🟢`
+
+**2. Verify Recent GitHub Actions**
+```bash
+# Check recent workflow runs
+gh run list --repo joselpq/arqcashflow --limit 5
+
+# Look for any failed runs or health alerts
+gh run list --repo joselpq/arqcashflow --status=failure
+```
+
+**3. Check for Documentation Issues**
+```bash
+# Look for automated health alert issues
+gh issue list --repo joselpq/arqcashflow --label="documentation,maintenance,automated"
+```
+
+**4. One-Liner Quick Check**
+```bash
+cd docs/docs-site/scripts && node validate-docs.js && gh issue list --repo joselpq/arqcashflow --label="documentation" --state=open || echo "No critical documentation issues found"
+```
+
+### Health Score Interpretation
+
+- **100%**: ✅ Perfect - proceed with confidence
+- **85-99%**: ⚠️ Minor issues - check validation report
+- **70-84%**: 🔶 Moderate issues - fix before major changes
+- **<70%**: 🔴 Critical issues - address immediately
+
+### Issue Response Protocol
+
+**If you find health alerts or issues:**
+1. **Read validation report** from GitHub Actions artifacts
+2. **Fix broken links first** (highest priority)
+3. **Update stale content** (check dates > 90 days old)
+4. **Fix missing metadata** (YAML frontmatter)
+5. **Re-run validation** to confirm fixes
+6. **Close automated issue** once resolved
+
+### Weekly Health Reports Location
+
+- **GitHub Actions**: https://github.com/joselpq/arqcashflow/actions
+- **Weekly runs**: "Weekly Documentation Health Check" (every Sunday 2 AM UTC)
+- **Artifacts**: Download "weekly-docs-health-report" (90-day retention)
+- **Issues**: Auto-created if health score < 80%
 
 ---
 
-*This guide provides the minimum context needed for any LLM agent to effectively work on ArqCashflow. Start here, then read only what's needed for your specific task.*
+### Next Priority Tasks (for incoming agents)
+
+1. **Continue Advanced CI/CD** (Phase 4: 50% complete)
+   - ✅ Weekly health checks (DONE)
+   - 🚧 PR comment automation (IN PROGRESS)
+   - ⏳ Multi-job workflow structure
+   - ⏳ Advanced monitoring features
+
+2. **Add Search Functionality**
+   - Configure Algolia DocSearch or
+   - Use Docusaurus built-in search
+
+3. **Implement Code Example Validation**
+   - Extract TypeScript from markdown
+   - Add type-checking to CI/CD
+
+---
+
+*This guide provides the minimum context needed for any LLM agent to effectively work on ArqCashflow. Always check `/DOCUMENTATION_STRATEGY_PROPOSAL.md` for the single source of truth on implementation status.*
