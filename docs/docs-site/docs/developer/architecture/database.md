@@ -431,15 +431,15 @@ model AuditLog {
 | `userEmail` | String | Required | Cached for resilience if user is deleted |
 | `teamId` | String | Required | Team context for the change |
 | **What entity was changed** | | | |
-| `entityType` | String | Required | "contract", "receivable", "expense" |
+| `entityType` | String | Required | contract, receivable, expense |
 | `entityId` | String | Required | The ID of the changed entity |
 | **What kind of change** | | | |
-| `action` | String | Required | "created", "updated", "deleted" |
+| `action` | String | Required | created, updated, deleted |
 | **What changed (for updates)** | | | |
-| `changes` | Json | Required | `{ "status": { "from": "pending", "to": "received" } }` |
+| `changes` | Json | Required | Example: status changes from pending to received |
 | **Complete state snapshot** | | | |
 | `snapshot` | Json? | None | Full entity state after change (optional, for critical changes) |
-| `metadata` | Json? | None | `{ "api_endpoint": "/api/contracts", "ip": "...", "user_agent": "..." }` |
+| `metadata` | Json? | None | API endpoint, IP address, user agent info |
 
 #### Relationships
 
