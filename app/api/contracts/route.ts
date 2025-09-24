@@ -1,11 +1,11 @@
 /**
- * PROOF OF CONCEPT: Contracts API with Team Context Middleware
+ * CONTRACTS API - Service Layer Migration Phase 1
  *
- * This is a side-by-side implementation of the contracts API using
- * the new team context middleware. It should produce identical
- * results to the original /api/contracts route.
+ * This API supports both legacy direct implementation and new service layer
+ * controlled by the USE_SERVICE_LAYER feature flag.
  *
- * SAFETY: This is a separate endpoint that doesn't modify existing functionality
+ * Phase 1: Side-by-side implementation with feature flag control
+ * Phase 2: Full migration to service layer
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -13,6 +13,8 @@ import { z } from 'zod'
 import { withTeamContext } from '@/lib/middleware/team-context'
 import { createDateForStorage } from '@/lib/date-utils'
 import { createAuditContextFromAPI, auditCreate, safeAudit } from '@/lib/audit-middleware'
+import { withServiceLayerFlag } from '@/lib/feature-flags'
+import { ContractService } from '@/lib/services/ContractService'
 
 const ContractSchema = z.object({
   clientName: z.string(),
@@ -26,69 +28,120 @@ const ContractSchema = z.object({
 })
 
 export async function GET(request: NextRequest) {
-  return withTeamContext(async ({ user, teamId, teamScopedPrisma }) => {
+  return withTeamContext(async (context) => {
+    const { user, teamId, teamScopedPrisma } = context
     const searchParams = request.nextUrl.searchParams
+
     const status = searchParams.get('status')
     const category = searchParams.get('category')
     const sortBy = searchParams.get('sortBy') || 'createdAt'
     const sortOrder = searchParams.get('sortOrder') || 'desc'
 
-    // Build where clause - teamId is automatically added by teamScopedPrisma
-    const where: any = {}
-    if (status && status !== 'all') where.status = status
-    if (category && category !== 'all') where.category = category
+    return await withServiceLayerFlag(
+      // Service layer implementation
+      async () => {
+        const contractService = new ContractService({ ...context, request })
 
-    // Valid sort fields (same as original)
-    const validSortFields = ['createdAt', 'signedDate', 'clientName', 'projectName', 'totalValue', 'status']
-    const orderBy: any = {}
+        const filters = {
+          status: status && status !== 'all' ? status : undefined,
+          category: category && category !== 'all' ? category : undefined
+        }
 
-    if (validSortFields.includes(sortBy)) {
-      orderBy[sortBy] = sortOrder === 'asc' ? 'asc' : 'desc'
-    } else {
-      orderBy.createdAt = 'desc'
-    }
+        const options = {
+          sortBy,
+          sortOrder: sortOrder as 'asc' | 'desc'
+        }
 
-    // Use team-scoped prisma - teamId is automatically added
-    const contracts = await teamScopedPrisma.contract.findMany({
-      where,
-      include: {
-        receivables: true,
+        const include = {
+          receivables: true
+        }
+
+        return await contractService.findMany(filters, options, include)
       },
-      orderBy,
-    })
 
-    return contracts
+      // Legacy implementation
+      async () => {
+        // Build where clause - teamId is automatically added by teamScopedPrisma
+        const where: any = {}
+        if (status && status !== 'all') where.status = status
+        if (category && category !== 'all') where.category = category
+
+        // Valid sort fields (same as original)
+        const validSortFields = ['createdAt', 'signedDate', 'clientName', 'projectName', 'totalValue', 'status']
+        const orderBy: any = {}
+
+        if (validSortFields.includes(sortBy)) {
+          orderBy[sortBy] = sortOrder === 'asc' ? 'asc' : 'desc'
+        } else {
+          orderBy.createdAt = 'desc'
+        }
+
+        // Use team-scoped prisma - teamId is automatically added
+        const contracts = await teamScopedPrisma.contract.findMany({
+          where,
+          include: {
+            receivables: true,
+          },
+          orderBy,
+        })
+
+        return contracts
+      },
+      '/api/contracts',
+      'GET'
+    )
   })
 }
 
 export async function POST(request: NextRequest) {
-  return withTeamContext(async ({ user, teamId, teamScopedPrisma }) => {
+  return withTeamContext(async (context) => {
+    const { user, teamId, teamScopedPrisma } = context
     const body = await request.json()
-    const validatedData = ContractSchema.parse(body)
 
-    // Create contract - teamId is automatically added by teamScopedPrisma
-    const contract = await teamScopedPrisma.contract.create({
-      data: {
-        ...validatedData,
-        signedDate: validatedData.signedDate && validatedData.signedDate.trim() !== ''
-          ? createDateForStorage(validatedData.signedDate)
-          : new Date(),
-        // teamId automatically added by teamScopedPrisma
+    return await withServiceLayerFlag(
+      // Service layer implementation
+      async () => {
+        const contractService = new ContractService({ ...context, request })
+        const validatedData = ContractSchema.parse(body)
+
+        const contract = await contractService.create(validatedData)
+
+        return {
+          contract
+        }
       },
-    })
 
-    // Log audit entry for contract creation (same as original)
-    await safeAudit(async () => {
-      const auditContext = createAuditContextFromAPI(user, teamId, request, {
-        action: 'contract_creation',
-        source: 'api'
-      })
-      await auditCreate(auditContext, 'contract', contract.id, contract)
-    })
+      // Legacy implementation
+      async () => {
+        const validatedData = ContractSchema.parse(body)
 
-    return {
-      contract
-    }
+        // Create contract - teamId is automatically added by teamScopedPrisma
+        const contract = await teamScopedPrisma.contract.create({
+          data: {
+            ...validatedData,
+            signedDate: validatedData.signedDate && validatedData.signedDate.trim() !== ''
+              ? createDateForStorage(validatedData.signedDate)
+              : new Date(),
+            // teamId automatically added by teamScopedPrisma
+          },
+        })
+
+        // Log audit entry for contract creation (same as original)
+        await safeAudit(async () => {
+          const auditContext = createAuditContextFromAPI(user, teamId, request, {
+            action: 'contract_creation',
+            source: 'api'
+          })
+          await auditCreate(auditContext, 'contract', contract.id, contract)
+        })
+
+        return {
+          contract
+        }
+      },
+      '/api/contracts',
+      'POST'
+    )
   })
 }
 
