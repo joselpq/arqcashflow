@@ -60,6 +60,12 @@ jobs:
           node validate-docs.js || echo "Validation completed with warnings"
         continue-on-error: true
 
+      - name: Validate code examples
+        run: |
+          cd scripts
+          node validate-code-examples-fast.js || echo "Code validation completed with warnings"
+        continue-on-error: true
+
       - name: Generate API documentation
         run: |
           cd scripts
@@ -72,12 +78,14 @@ jobs:
           # Tell Docusaurus to build for GitHub Pages
           NODE_ENV: production
 
-      - name: Upload validation report
+      - name: Upload validation reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: documentation-validation-report
-          path: docs/docs-site/validation-report.md
+          name: documentation-validation-reports
+          path: |
+            docs/docs-site/validation-report.md
+            docs/docs-site/code-validation-report.md
           retention-days: 30
           if-no-files-found: ignore
 
@@ -130,13 +138,16 @@ jobs:
         run: |
           cd docs/docs-site/scripts
           node validate-docs.js
+          node validate-code-examples-fast.js
         continue-on-error: true
 
-      - name: Upload weekly report
+      - name: Upload weekly reports
         uses: actions/upload-artifact@v4
         with:
-          name: weekly-docs-health-report
-          path: docs/docs-site/validation-report.md
+          name: weekly-docs-health-reports
+          path: |
+            docs/docs-site/validation-report.md
+            docs/docs-site/code-validation-report.md
           retention-days: 90
           if-no-files-found: ignore
 
@@ -174,10 +185,10 @@ jobs:
       pull-requests: write
 
     steps:
-      - name: Download validation report
+      - name: Download validation reports
         uses: actions/download-artifact@v4
         with:
-          name: documentation-validation-report
+          name: documentation-validation-reports
         continue-on-error: true
 
       - name: Comment on PR
@@ -187,15 +198,29 @@ jobs:
           script: |
             const fs = require('fs');
 
+            let commentBody = '## 📚 Documentation Build Results\n\n';
+
+            // Add documentation health report
             if (fs.existsSync('validation-report.md')) {
               const report = fs.readFileSync('validation-report.md', 'utf8');
               const lines = report.split('\n');
               const summary = lines.slice(0, 20).join('\n');
-
-              await github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: `## 📚 Documentation Build Results\n\n${summary}\n\n[View full report in workflow artifacts](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`
-              });
+              commentBody += summary + '\n\n';
             }
+
+            // Add code validation report
+            if (fs.existsSync('code-validation-report.md')) {
+              const codeReport = fs.readFileSync('code-validation-report.md', 'utf8');
+              const codeLines = codeReport.split('\n');
+              const codeSummary = codeLines.slice(0, 15).join('\n');
+              commentBody += '---\n\n## 🔧 Code Example Validation\n\n' + codeSummary + '\n\n';
+            }
+
+            commentBody += `[View full reports in workflow artifacts](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
+
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: commentBody
+            });

@@ -7,11 +7,12 @@
     "docs:api": "node generate-api-docs.js",
     "docs:schema": "node generate-schema-docs.js",
     "docs:validate": "node validate-docs.js",
+    "docs:validate-code": "node validate-code-examples-fast.js",
     "docs:build": "npm run docs:generate && cd .. && npm run build",
-    "docs:check": "npm run docs:validate && npm run docs:build",
+    "docs:check": "npm run docs:validate && npm run docs:validate-code && npm run docs:build",
     "docs:clean": "rm -rf ../docs/reference/api/*.md",
     "docs:fresh": "npm run docs:clean && npm run docs:generate",
-    "docs:ci": "npm run docs:generate && npm run docs:validate",
+    "docs:ci": "npm run docs:generate && npm run docs:validate && npm run docs:validate-code",
     "docs:watch": "nodemon --watch ../../../app/api --watch ../../../prisma --ext ts,prisma --exec 'npm run docs:generate'"
   },
   "devDependencies": {
