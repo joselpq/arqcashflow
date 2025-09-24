@@ -121,3 +121,5 @@ This documentation follows the LLM-Agent-Optimized Framework designed for human-
 ---
 
 *This documentation hub serves as the single source of truth for all ArqCashflow knowledge, optimized for both human comprehension and LLM agent assistance.*
+
+<!-- PR Comment Automation Test: This comment tests the automated PR validation feature -->
