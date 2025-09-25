@@ -236,10 +236,11 @@ async function testMiddlewareEquivalence(): Promise<void> {
 
   console.log(`✅ Original contracts API: ${originalContracts.data.length} records (${originalContracts.responseTime}ms)`)
 
-  // Test creating data
+  // Test creating data with unique names to avoid duplicates
+  const timestamp = Date.now()
   const testContract = {
-    clientName: 'Test Client Middleware',
-    projectName: 'Middleware Test Project',
+    clientName: `Test Client Middleware ${timestamp}`,
+    projectName: `Middleware Test Project ${timestamp}`,
     description: 'Testing middleware implementation',
     totalValue: 50000,
     signedDate: '2024-03-01', // Use YYYY-MM-DD format
@@ -265,10 +266,131 @@ async function testMiddlewareEquivalence(): Promise<void> {
   }
 
   console.log('✅ Created contract has correct team ID')
-
-  // Clean up - delete the test contract
-  // Note: We'd need a DELETE endpoint for proper cleanup
   console.log(`📝 Test contract created with ID: ${createdContract.id}`)
+
+  // Test complete CRUD operations
+  await testCompleteCRUD(session, createdContract.id)
+}
+
+/**
+ * Test complete CRUD operations
+ */
+async function testCompleteCRUD(session: AuthSession, contractId: string): Promise<void> {
+  console.log('\n🧪 Testing complete CRUD operations...')
+
+  try {
+    // Test READ individual contract
+    console.log('\n📖 Testing READ individual contract...')
+    const readResult = await makeAuthenticatedRequest(`/api/contracts/${contractId}`, session, {
+      method: 'GET'
+    })
+
+    if (!readResult.success) {
+      console.log(`❌ READ failed: ${readResult.error}`)
+    } else {
+      console.log(`✅ READ successful - Contract: ${readResult.data.clientName}`)
+      console.log(`   Current value: $${readResult.data.totalValue}`)
+    }
+
+    // Test UPDATE with value change
+    console.log('\n📝 Testing UPDATE with value change...')
+    const updateData = {
+      totalValue: 85000,
+      description: 'Updated during CRUD testing - value increased',
+      category: 'commercial'
+    }
+
+    const updateResult = await makeAuthenticatedRequest(`/api/contracts/${contractId}`, session, {
+      method: 'PUT',
+      body: JSON.stringify(updateData)
+    })
+
+    if (!updateResult.success) {
+      console.log(`❌ UPDATE failed: ${updateResult.error}`)
+    } else {
+      console.log(`✅ UPDATE successful`)
+      console.log(`   New value: $${updateResult.data.contract.totalValue}`)
+      console.log(`   New category: ${updateResult.data.contract.category}`)
+    }
+
+    // Test UPDATE with future date (should be rejected)
+    console.log('\n📝 Testing UPDATE with future date (should be rejected)...')
+    const futureDate = new Date()
+    futureDate.setFullYear(futureDate.getFullYear() + 1)
+    const futureDateStr = futureDate.toISOString().split('T')[0]
+
+    const futureUpdateResult = await makeAuthenticatedRequest(`/api/contracts/${contractId}`, session, {
+      method: 'PUT',
+      body: JSON.stringify({ signedDate: futureDateStr })
+    })
+
+    if (!futureUpdateResult.success) {
+      console.log(`✅ Future date properly rejected: ${futureUpdateResult.error}`)
+    } else {
+      console.log(`❌ Future date should have been rejected!`)
+    }
+
+    // Test UPDATE with past date (should work)
+    console.log('\n📝 Testing UPDATE with past date...')
+    const pastUpdateResult = await makeAuthenticatedRequest(`/api/contracts/${contractId}`, session, {
+      method: 'PUT',
+      body: JSON.stringify({
+        signedDate: '2023-06-15',
+        status: 'completed',
+        notes: 'Contract completed - updated during testing'
+      })
+    })
+
+    if (!pastUpdateResult.success) {
+      console.log(`❌ Past date update failed: ${pastUpdateResult.error}`)
+    } else {
+      console.log(`✅ Past date update successful`)
+      console.log(`   New date: ${pastUpdateResult.data.contract.signedDate}`)
+      console.log(`   New status: ${pastUpdateResult.data.contract.status}`)
+    }
+
+    // Test UPDATE with negative value (should be rejected)
+    console.log('\n📝 Testing UPDATE with negative value (should be rejected)...')
+    const negativeUpdateResult = await makeAuthenticatedRequest(`/api/contracts/${contractId}`, session, {
+      method: 'PUT',
+      body: JSON.stringify({ totalValue: -5000 })
+    })
+
+    if (!negativeUpdateResult.success) {
+      console.log(`✅ Negative value properly rejected: ${negativeUpdateResult.error}`)
+    } else {
+      console.log(`❌ Negative value should have been rejected!`)
+    }
+
+    // Test DELETE
+    console.log('\n🗑️  Testing DELETE operation...')
+    const deleteResult = await makeAuthenticatedRequest(`/api/contracts/${contractId}`, session, {
+      method: 'DELETE'
+    })
+
+    if (!deleteResult.success) {
+      console.log(`❌ DELETE failed: ${deleteResult.error}`)
+    } else {
+      console.log(`✅ DELETE successful`)
+    }
+
+    // Verify deletion
+    console.log('\n📖 Verifying deletion (READ should fail)...')
+    const verifyDeleteResult = await makeAuthenticatedRequest(`/api/contracts/${contractId}`, session, {
+      method: 'GET'
+    })
+
+    if (!verifyDeleteResult.success) {
+      console.log(`✅ Deletion verified - Contract no longer exists`)
+    } else {
+      console.log(`❌ Contract still exists after deletion!`)
+    }
+
+  } catch (error) {
+    console.error('❌ CRUD testing error:', error)
+  }
+
+  console.log('\n✅ Complete CRUD testing finished')
 }
 
 /**

@@ -2,9 +2,9 @@
 title: "Authenticated Testing with Test Users"
 type: "guide"
 audience: ["developer", "agent"]
-contexts: ["testing", "authentication", "middleware", "team-isolation", "service-validation"]
+contexts: ["testing", "authentication", "middleware", "team-isolation", "service-validation", "crud", "uuid", "cuid"]
 complexity: "intermediate"
-last_updated: "2025-09-23"
+last_updated: "2025-09-25"
 version: "1.0"
 agent_roles: ["test-implementer", "middleware-validator", "security-tester"]
 related:
@@ -28,6 +28,9 @@ Comprehensive guide for testing ArqCashflow with authenticated users, team isola
 - Team isolation verification
 - Middleware functionality validation
 - Cross-team security testing
+- Comprehensive CRUD operations testing
+- Business rule validation (date constraints, value validation)
+- UUID/CUID identifier support testing
 
 ## Overview
 

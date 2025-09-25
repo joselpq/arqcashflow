@@ -2,9 +2,9 @@
 title: "Contracts API"
 type: "reference"
 audience: ["developer", "agent"]
-contexts: ["api", "contracts", "rest", "database"]
+contexts: ["api", "contracts", "rest", "database", "service-layer", "crud", "uuid", "cuid"]
 complexity: "intermediate"
-last_updated: "2025-09-24"
+last_updated: "2025-09-25"
 version: "1.0"
 agent_roles: ["api-developer", "integration-engineer"]
 related:
@@ -27,6 +27,9 @@ Comprehensive API reference for contracts management operations.
 - Zod validation for type-safe request/response handling
 - Consistent error handling and response formats
 - Session-based authentication required for all operations
+- Service layer implementation with feature flag (`USE_SERVICE_LAYER=true`)
+- Support for both UUID and CUID format identifiers in validation
+- Comprehensive CRUD operations with business rule validation
 
 ## Endpoint Overview
 
