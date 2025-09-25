@@ -33,14 +33,7 @@ export async function GET(request: NextRequest) {
     }
 
     return await receivableService.findMany(filters, options)
-  }).then(result => NextResponse.json(result))
-    .catch(error => {
-      console.error('RECEIVABLES FETCH ERROR:', error)
-      if (error instanceof Error && error.message === "Unauthorized") {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-      }
-      return NextResponse.json({ error: 'Failed to fetch receivables' }, { status: 500 })
-    })
+  })
 }
 
 export async function POST(request: NextRequest) {

@@ -40,15 +40,14 @@ export async function GET(request: NextRequest) {
       includeSummary: true
     }
 
+    // Handle includeSummary option
+    if (options.includeSummary) {
+      const expenses = await expenseService.findMany(filters, options)
+      const summary = await expenseService.getSummary(filters)
+      return { expenses, summary }
+    }
     return await expenseService.findMany(filters, options)
-  }).then(result => NextResponse.json(result))
-    .catch(error => {
-      console.error('EXPENSES FETCH ERROR:', error)
-      if (error instanceof Error && error.message === "Unauthorized") {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-      }
-      return NextResponse.json({ error: 'Failed to fetch expenses' }, { status: 500 })
-    })
+  })
 }
 
 export async function POST(request: NextRequest) {

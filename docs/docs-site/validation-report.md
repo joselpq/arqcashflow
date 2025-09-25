@@ -4,12 +4,12 @@ Generated on: 2025-09-25
 
 ## Summary
 
-- **Total files validated**: 66
+- **Total files validated**: 67
 - **Broken links**: 0
 - **Stale content**: 0
 - **Missing metadata**: 0
 - **Format inconsistencies**: 1
-- **Orphaned files**: 17
+- **Orphaned files**: 18
 
 ## Issues Found
 
@@ -32,7 +32,7 @@ Generated on: 2025-09-25
   - **Issues**: Missing LLM Context section
 
 
-### 🔍 Orphaned Files (17)
+### 🔍 Orphaned Files (18)
 
 
 - `agents/contexts/validation-layer.md`
@@ -63,6 +63,9 @@ Generated on: 2025-09-25
 
 
 - `decisions/006-service-layer-migration-plan.md`
+
+
+- `decisions/007-event-system-foundation.md`
 
 
 - `developer/architecture/decisions/adr-002-claude-ai-integration.md`

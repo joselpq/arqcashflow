@@ -2,13 +2,15 @@
 title: "LLM Agent Guide: ArqCashflow Project"
 type: "guide"
 audience: ["agent", "developer"]
-contexts: ["automation", "ci-cd", "documentation", "health-monitoring", "code-validation", "search", "service-layer", "api-migration", "auto-generation", "phase3-migration", "receivables-api", "expenses-api", "crud-testing", "precision-validation", "unified-validation", "schema-consolidation"]
+contexts: ["automation", "ci-cd", "documentation", "health-monitoring", "code-validation", "search", "service-layer", "api-migration", "auto-generation", "phase3-migration", "receivables-api", "expenses-api", "crud-testing", "precision-validation", "unified-validation", "schema-consolidation", "event-system", "event-driven-architecture"]
 complexity: "intermediate"
 last_updated: "2025-09-25"
-version: "2.1"
-agent_roles: ["documentation-maintainer", "automation-specialist", "health-monitor", "service-migration-specialist", "api-developer", "validation-architect"]
+version: "2.2"
+agent_roles: ["documentation-maintainer", "automation-specialist", "health-monitor", "service-migration-specialist", "api-developer", "validation-architect", "event-architect"]
 related:
   - docs/docs-site/docs/agents/llm-agent-guide.md
+  - docs/docs-site/docs/decisions/004-no-regrets-architecture-improvements.md
+  - docs/docs-site/docs/decisions/007-event-system-foundation.md
   - DOCUMENTATION_STRATEGY_PROPOSAL.md
   - docs/docs-site/scripts/README.md
 dependencies: ["github-actions", "nodejs", "npm", "typescript", "docusaurus-search-local"]
@@ -89,6 +91,14 @@ Based on your assigned task, read ONLY the relevant section:
 - docs/docs-site/docs/meta/templates/document-template.md
 - docs/docs-site/docs/meta/templates/adr-template.md
 - docs/README.md (documentation structure guide)
+```
+
+**For Event System Foundation (CURRENT PRIORITY):**
+```
+- docs/decisions/007-event-system-foundation.md (implementation plan)
+- docs/decisions/004-no-regrets-architecture-improvements.md (strategic context)
+- lib/services/ (existing service patterns for event integration)
+- lib/validation/ (schemas for event payload validation)
 ```
 
 **For Validation/Schema Work:**
@@ -187,17 +197,32 @@ All validation schemas are centralized in `lib/validation/`. Use existing schema
 ### 5. **Documentation-First Development**
 Write/update docs before implementing features. LLM agents should follow templates.
 
+### 6. **Strategic Development Priorities** 🎯
+Current development follows a phased approach:
+- **Phase 1 (CURRENT)**: Event System Foundation (`lib/events/`)
+- **Phase 2 (NEXT)**: Validation Layer Migration
+- **Phase 3 (FUTURE)**: Platform Product Improvements
+- **Phase 4 (LATER)**: Advanced Features
+
+**Priority Rule**: Complete current phase before starting next phase unless explicitly directed otherwise.
+
 ## 🛡️ Architecture Guardrails (Check Before Coding)
 
 **STOP** - Before writing any code, verify:
 
 ### Mandatory Architecture Compliance Check
+- [ ] **Current Phase**: Am I working on Phase 1 (Event System Foundation)?
+  - Focus: `lib/events/` implementation and event-driven patterns
+  - Check: Strategic roadmap in architecture improvements document
 - [ ] **Validation**: Does `lib/validation/` have what I need?
   - Search: `grep -r "BaseFieldSchemas\|EnumSchemas" lib/validation/`
   - Check: `lib/validation/README.md` for available schemas
 - [ ] **Services**: Is there a service layer for this business logic?
   - Look in: `lib/services/` for existing patterns
   - Check: Similar business operations already implemented
+- [ ] **Events**: Should this trigger or listen to events?
+  - Future: Will integrate with `lib/events/` system
+  - Pattern: Consider event-driven architecture implications
 - [ ] **Middleware**: Am I using team context middleware properly?
   - Required: `withTeamContext` for all authenticated operations
   - Pattern: Import from `@/lib/middleware/team-context`
