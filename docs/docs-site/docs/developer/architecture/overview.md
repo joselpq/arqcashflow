@@ -2,7 +2,7 @@
 title: "Architecture Overview"
 type: "reference"
 audience: ["developer", "agent"]
-contexts: ["architecture", "system-design", "service-layer", "phase3-migration"]
+contexts: ["architecture", "system-design", "service-layer", "phase3-migration", "phase4-completed", "bulk-operations", "ai-integration"]
 complexity: "intermediate"
 last_updated: "2025-09-25"
 version: "1.0"
@@ -10,7 +10,7 @@ agent_roles: ["architecture-reviewer", "system-analyzer"]
 related:
   - developer/setup.md
   - decisions/006-service-layer-migration-plan.md
-dependencies: ["next.js", "prisma", "postgresql", "service-layer"]
+dependencies: ["next.js", "prisma", "postgresql", "service-layer", "bulk-operations", "atomic-transactions"]
 ---
 
 # Architecture Overview

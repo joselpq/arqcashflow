@@ -2,7 +2,7 @@
 title: "Authenticated Testing with Test Users"
 type: "guide"
 audience: ["developer", "agent"]
-contexts: ["testing", "authentication", "middleware", "team-isolation", "service-validation", "crud", "uuid", "cuid"]
+contexts: ["testing", "authentication", "middleware", "team-isolation", "service-validation", "crud", "uuid", "cuid", "bulk-operations", "atomic-transactions"]
 complexity: "intermediate"
 last_updated: "2025-09-25"
 version: "1.0"
@@ -11,7 +11,7 @@ related:
   - testing/strategies.md
   - testing/standardized-test-port.md
   - decisions/005-team-context-middleware-implementation.md
-dependencies: ["next-auth", "prisma", "test-users", "port-3010"]
+dependencies: ["next-auth", "prisma", "test-users", "port-3010", "service-layer", "bulk-operations"]
 ---
 
 # Authenticated Testing with Test Users
