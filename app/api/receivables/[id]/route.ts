@@ -1,161 +1,87 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { z } from 'zod'
-import { withTeamContext } from '@/lib/middleware/team-context'
-import { createDateForStorage } from '@/lib/date-utils'
-import { createAuditContextFromAPI, auditUpdate, auditDelete, safeAudit, captureEntityState } from '@/lib/audit-middleware'
-import { prisma } from '@/lib/prisma'
+/**
+ * Individual Receivable Operations with Service Layer
+ *
+ * Phase 3 service layer migration - migrated from middleware approach to service layer.
+ * Provides GET, PUT, and DELETE operations for individual receivables.
+ */
 
-const UpdateReceivableSchema = z.object({
-  expectedDate: z.string().optional(),
-  amount: z.number().optional(),
-  status: z.string().optional(),
-  receivedDate: z.string().optional().nullable(),
-  receivedAmount: z.number().optional().nullable(),
-  invoiceNumber: z.string().optional().nullable(),
-  category: z.string().optional().nullable(),
-  notes: z.string().optional().nullable(),
-  // New fields for non-contract receivables
-  clientName: z.string().optional().nullable().transform(val => val === '' ? null : val),
-  description: z.string().optional().nullable().transform(val => val === '' ? null : val),
-})
+import { NextRequest, NextResponse } from 'next/server'
+import { withTeamContext } from '@/lib/middleware/team-context'
+import { ReceivableService } from '@/lib/services/ReceivableService'
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  return withTeamContext(async (context) => {
+    const receivableService = new ReceivableService(context)
+    const { id } = await params
+
+    const receivable = await receivableService.findById(id)
+
+    if (!receivable) {
+      return NextResponse.json({ error: 'Receivable not found' }, { status: 404 })
+    }
+
+    return receivable
+  }).then(result => {
+    // If result is already a NextResponse, return it as-is
+    if (result instanceof NextResponse) {
+      return result
+    }
+    return NextResponse.json(result)
+  })
+    .catch(error => {
+      console.error('RECEIVABLE FETCH ERROR:', error)
+      if (error instanceof Error && error.message === "Unauthorized") {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+      return NextResponse.json({ error: 'Failed to fetch receivable' }, { status: 500 })
+    })
+}
 
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  return withTeamContext(async ({ teamScopedPrisma, user, teamId }) => {
-    console.log('🔍 Receivables PUT endpoint called')
+  return withTeamContext(async (context) => {
+    const receivableService = new ReceivableService(context)
     const { id } = await params
-    console.log('📝 Request data:', { userId: user.id, teamId, receivableId: id })
-
     const body = await request.json()
-    console.log('📥 Raw request body:', JSON.stringify(body, null, 2))
 
-    const validatedData = UpdateReceivableSchema.parse(body)
-    console.log('✅ Validated data:', JSON.stringify(validatedData, null, 2))
-
-    // Capture state before update for audit (using raw prisma for audit)
-    const beforeState = await captureEntityState('receivable', id, prisma)
-    if (!beforeState) {
-      throw new Error('Receivable not found')
-    }
-
-    // Verify team ownership
-    const hasAccess = beforeState.teamId === teamId ||
-                     (beforeState.contract && beforeState.contract.teamId === teamId)
-    if (!hasAccess) {
-      throw new Error('Access denied')
-    }
-
-    const updateData: any = { ...validatedData }
-    console.log('🔄 Processing dates...')
-
-    if (validatedData.expectedDate && validatedData.expectedDate.trim() !== '') {
-      console.log('📅 Processing expectedDate:', validatedData.expectedDate)
-      try {
-        updateData.expectedDate = createDateForStorage(validatedData.expectedDate)
-        console.log('✅ expectedDate processed successfully:', updateData.expectedDate)
-      } catch (error) {
-        console.error('❌ Error processing expectedDate:', error)
-        throw error
-      }
-    } else {
-      console.log('⏭️ Skipping expectedDate (empty or undefined)')
-    }
-
-    if (validatedData.receivedDate && validatedData.receivedDate.trim() !== '') {
-      console.log('📅 Processing receivedDate:', validatedData.receivedDate)
-      try {
-        updateData.receivedDate = createDateForStorage(validatedData.receivedDate)
-        console.log('✅ receivedDate processed successfully:', updateData.receivedDate)
-      } catch (error) {
-        console.error('❌ Error processing receivedDate:', error)
-        throw error
-      }
-    } else {
-      console.log('⏭️ Skipping receivedDate (empty or undefined)')
-    }
-
-    // Clean up empty strings for Prisma - it expects null, not empty strings
-    const cleanUpdateData = { ...updateData }
-    if (cleanUpdateData.receivedDate === '') {
-      delete cleanUpdateData.receivedDate
-    }
-    if (cleanUpdateData.expectedDate === '') {
-      delete cleanUpdateData.expectedDate
-    }
-    // Clean up other optional string fields
-    if (cleanUpdateData.invoiceNumber === '') {
-      cleanUpdateData.invoiceNumber = null
-    }
-    if (cleanUpdateData.category === '') {
-      cleanUpdateData.category = null
-    }
-    if (cleanUpdateData.notes === '') {
-      cleanUpdateData.notes = null
-    }
-
-    console.log('📦 Final updateData:', JSON.stringify(updateData, null, 2))
-    console.log('🧹 Cleaned updateData for Prisma:', JSON.stringify(cleanUpdateData, null, 2))
-
-    console.log('💾 Updating receivable in database...')
-    // Use raw prisma for update since we need the exact ID match
-    const receivable = await prisma.receivable.update({
-      where: { id },
-      data: cleanUpdateData,
-      include: { contract: true }
-    })
-    console.log('✅ Receivable updated successfully:', receivable.id)
-
-    // Log audit entry for receivable update
-    await safeAudit(async () => {
-      const auditContext = createAuditContextFromAPI(user, teamId, request, {
-        action: 'receivable_update',
-        source: 'api',
-        contractId: receivable.contractId
-      })
-      await auditUpdate(auditContext, 'receivable', id, beforeState, validatedData, receivable)
-    })
+    const receivable = await receivableService.update(id, body)
 
     return receivable
-  })
+  }).then(result => NextResponse.json(result))
+    .catch(error => {
+      if (error instanceof Error && error.message === "Unauthorized") {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+      if (error.name === 'ZodError') {
+        return NextResponse.json({ error: error.errors }, { status: 400 })
+      }
+      console.error('Receivable update error:', error)
+      return NextResponse.json({ error: 'Failed to update receivable' }, { status: 500 })
+    })
 }
 
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  return withTeamContext(async ({ user, teamId }) => {
+  return withTeamContext(async (context) => {
+    const receivableService = new ReceivableService(context)
     const { id } = await params
 
-    // Capture state before deletion for audit (using raw prisma for audit)
-    const beforeState = await captureEntityState('receivable', id, prisma)
-    if (!beforeState) {
-      throw new Error('Receivable not found')
-    }
-
-    // Verify team ownership
-    const hasAccess = beforeState.teamId === teamId ||
-                     (beforeState.contract && beforeState.contract.teamId === teamId)
-    if (!hasAccess) {
-      throw new Error('Access denied')
-    }
-
-    // Use raw prisma for delete since we need the exact ID
-    await prisma.receivable.delete({
-      where: { id },
-    })
-
-    // Log audit entry for receivable deletion
-    await safeAudit(async () => {
-      const auditContext = createAuditContextFromAPI(user, teamId, request, {
-        action: 'receivable_deletion',
-        source: 'api',
-        contractId: beforeState.contractId
-      })
-      await auditDelete(auditContext, 'receivable', id, beforeState)
-    })
+    await receivableService.delete(id)
 
     return { message: 'Receivable deleted successfully' }
-  })
+  }).then(result => NextResponse.json(result))
+    .catch(error => {
+      if (error instanceof Error && error.message === "Unauthorized") {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+      console.error('Receivable deletion error:', error)
+      return NextResponse.json({ error: 'Failed to delete receivable' }, { status: 500 })
+    })
 }

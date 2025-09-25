@@ -362,11 +362,11 @@ cd docs/docs-site/scripts && node validate-docs.js && gh issue list --repo josel
 
 ### Next Priority Tasks (for incoming agents)
 
-1. **Service Layer Migration - Phase 2** (Phase 1: ✅ Complete)
+1. **Service Layer Migration - Phase 3** (Phases 1-3: ✅ Complete)
    - ✅ Phase 1: Service layer extraction and validation (DEPLOYED)
-   - ⏳ Phase 2: Complete migration of remaining API routes
-   - ⏳ Phase 3: Remove legacy implementation and feature flags
-   - ⏳ Phase 4: Performance optimization and monitoring
+   - ✅ Phase 2: Contract API migration to service layer (DEPLOYED)
+   - ✅ Phase 3: Receivables & Expenses API migration (DEPLOYED)
+   - ⏳ Phase 4: Advanced service features and optimization
 
 2. **Documentation System - Complete** (Phase 4: ✅ 100% Complete)
    - ✅ Weekly health checks with automated issue creation (DONE)
