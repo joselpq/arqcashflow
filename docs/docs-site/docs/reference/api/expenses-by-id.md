@@ -26,13 +26,13 @@ Comprehensive API reference for expenses Item management operations.
 - Team-based data isolation for multi-tenant security
 - Zod validation for type-safe request/response handling
 - Consistent error handling and response formats
-- Session-based authentication required for all operations
+
 
 ## Endpoint Overview
 
 **Base URL**: `/api/expenses/:id`
 **Methods**: GET, PUT, DELETE
-**Authentication**: Required
+**Authentication**: None
 **Team Isolation**: No
 
 
@@ -145,7 +145,7 @@ interface ErrorResponse {
 
 ### Business Logic
 - **Team Isolation**: Not applicable
-- **Authentication**: Required for all operations
+- **Authentication**: Public access
 - **Validation**: Zod schemas ensure type safety
 - **Error Handling**: Consistent error responses across all endpoints
 

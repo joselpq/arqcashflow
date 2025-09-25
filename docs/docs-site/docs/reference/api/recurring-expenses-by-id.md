@@ -10,6 +10,8 @@ agent_roles: ["api-developer", "integration-engineer"]
 related:
   - developer/architecture/overview.md
   - agents/contexts/contract-management.md
+  - decisions/006-service-layer-migration-plan.md
+  - reference/api/recurring-expenses.md
 dependencies: ["next.js", "prisma", "zod"]
 ---
 
@@ -19,21 +21,23 @@ Comprehensive API reference for recurring-expenses Item management operations.
 
 ## Context for LLM Agents
 
-**Scope**: Complete recurring-expenses Item API operations including CRUD, filtering, sorting, and business logic
-**Prerequisites**: Understanding of REST APIs, Next.js App Router, Prisma ORM, and team-based data isolation
+**Scope**: Service layer migrated recurring expense API with full CRUD operations, validation, and audit logging
+**Prerequisites**: Understanding of REST APIs, Next.js App Router, RecurringExpenseService, and team-based data isolation
 **Key Patterns**:
-- RESTful endpoint design with standard HTTP methods
-- Team-based data isolation for multi-tenant security
-- Zod validation for type-safe request/response handling
-- Consistent error handling and response formats
-- Session-based authentication required for all operations
+- Service layer architecture with RecurringExpenseService
+- Team-based data isolation via withTeamContext middleware
+- Unified validation using RecurringExpenseSchemas from lib/validation/financial.ts
+- Consistent error handling via service layer patterns
+- Automatic audit logging for all mutations
+- Business rule validation (date ranges, frequency calculations)
+
 
 ## Endpoint Overview
 
 **Base URL**: `/api/recurring-expenses/:id`
 **Methods**: GET, PUT, DELETE
-**Authentication**: Required
-**Team Isolation**: Yes
+**Authentication**: Required (withTeamContext middleware)
+**Team Isolation**: Yes (automatic via service layer)
 
 
 ## GET /api/recurring-expenses/:id
@@ -140,26 +144,12 @@ interface ErrorResponse {
 | 500 | INTERNAL_ERROR | Server error |
 
 
-## Team Isolation
-
-All recurring-expenses Item operations are automatically filtered by team context:
-
-```typescript
-// All queries include team isolation
-const where = {
-  teamId: session.user.teamId,
-  ...additionalFilters
-};
-```
-
-This ensures complete data separation between teams in the multi-tenant system.
-
 
 ## Implementation Notes
 
 ### Business Logic
-- **Team Isolation**: Enforced at API level
-- **Authentication**: Required for all operations
+- **Team Isolation**: Not applicable
+- **Authentication**: Public access
 - **Validation**: Zod schemas ensure type safety
 - **Error Handling**: Consistent error responses across all endpoints
 

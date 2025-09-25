@@ -2,7 +2,7 @@
 title: "Service Layer Migration Implementation Plan"
 type: "decision"
 audience: ["developer", "agent"]
-contexts: ["architecture", "migration", "service-layer", "business-logic", "api-refactoring", "validation", "team-isolation", "bug-fixes", "uuid", "cuid", "crud-testing", "flexible-validation", "supervisor-warnings", "feature-flag-removal", "legacy-cleanup", "phase3-completed", "receivables-migration", "expenses-migration", "precision-testing", "recurring-expenses", "phase4-completed", "bulk-operations", "atomic-transactions", "ai-integration", "csv-import", "mass-updates"]
+contexts: ["architecture", "migration", "service-layer", "business-logic", "api-refactoring", "validation", "team-isolation", "bug-fixes", "uuid", "cuid", "crud-testing", "flexible-validation", "supervisor-warnings", "feature-flag-removal", "legacy-cleanup", "phase3-completed", "receivables-migration", "expenses-migration", "precision-testing", "recurring-expenses", "recurring-expenses-service", "recurring-expenses-migration-completed", "phase4-completed", "phase5-completed", "bulk-operations", "atomic-transactions", "teamscoped-prisma-fix", "ai-integration", "csv-import", "mass-updates"]
 complexity: "intermediate"
 last_updated: "2025-09-25"
 version: "2.0"

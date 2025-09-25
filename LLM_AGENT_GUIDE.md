@@ -2,7 +2,7 @@
 title: "LLM Agent Guide: ArqCashflow Project"
 type: "guide"
 audience: ["agent", "developer"]
-contexts: ["automation", "ci-cd", "documentation", "health-monitoring", "code-validation", "search", "service-layer", "api-migration", "auto-generation", "phase3-migration", "receivables-api", "expenses-api", "crud-testing", "precision-validation", "unified-validation", "schema-consolidation", "event-system", "event-driven-architecture"]
+contexts: ["automation", "ci-cd", "documentation", "health-monitoring", "code-validation", "search", "service-layer", "api-migration", "auto-generation", "phase3-migration", "receivables-api", "expenses-api", "recurring-expenses-api", "recurring-expenses-service", "bulk-operations-fix", "teamscoped-prisma", "crud-testing", "precision-validation", "unified-validation", "schema-consolidation", "event-system", "event-driven-architecture"]
 complexity: "intermediate"
 last_updated: "2025-09-25"
 version: "2.2"
@@ -462,8 +462,10 @@ cd docs/docs-site/scripts && node validate-docs.js && gh issue list --repo josel
    - ✅ Phase 2: Contract API migration to service layer (DEPLOYED)
    - ✅ Phase 3: Receivables & Expenses API migration (DEPLOYED)
    - ✅ Phase 4: Bulk operations and advanced features (DEPLOYED)
+   - ✅ Phase 5: Recurring Expenses complete migration (DEPLOYED 2025-01-09)
    - ✅ API Route Simplification: 45-65% reduction achieved
    - ✅ Full CRUD testing validated (2025-09-25)
+   - ✅ RecurringExpenseService with bulk operations fix (2025-01-09)
 
 2. **Documentation System - Complete** (Phase 4: ✅ 100% Complete)
    - ✅ Weekly health checks with automated issue creation (DONE)

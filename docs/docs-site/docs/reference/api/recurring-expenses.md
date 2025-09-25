@@ -26,14 +26,14 @@ Comprehensive API reference for recurring-expenses management operations.
 - Team-based data isolation for multi-tenant security
 - Zod validation for type-safe request/response handling
 - Consistent error handling and response formats
-- Session-based authentication required for all operations
+
 
 ## Endpoint Overview
 
 **Base URL**: `/api/recurring-expenses`
 **Methods**: GET, POST
-**Authentication**: Required
-**Team Isolation**: Yes
+**Authentication**: None
+**Team Isolation**: No
 
 
 ## GET /api/recurring-expenses
@@ -46,7 +46,6 @@ Retrieve recurring-expenses records with optional filtering and sorting.
 |-----------|------|-------------|---------|
 | `sortBy` | string | Sort field | `createdAt` |
 | `sortOrder` | string | Sort direction (`asc`/`desc`) | `desc` |
-| `status` | string | Filter by status | `all` |
 | `category` | string | Filter by category | `all` |
 
 ### Example Request
@@ -79,17 +78,6 @@ Create a new recurring-expenses record.
 
 ### Request Body
 
-
-Schema validation using Zod:
-
-```typescript
-const RecurringExpenseSchema = z.object({
-  description: z.string().min(1, 'Description is required'),
-  amount: z.number().positive('Amount must be positive'),
-  category: z.string().min(1, 'Category is required'),
-  frequency: z.enum(['weekly', 'monthly', 'quarterly', 'annual'], {
-    errorMap: () => ({ message: 'Frequency must be weekly, monthly, quarterly, or annual' });
-```
 
 
 ### Example Request
@@ -139,26 +127,12 @@ interface ErrorResponse {
 | 500 | INTERNAL_ERROR | Server error |
 
 
-## Team Isolation
-
-All recurring-expenses operations are automatically filtered by team context:
-
-```typescript
-// All queries include team isolation
-const where = {
-  teamId: session.user.teamId,
-  ...additionalFilters
-};
-```
-
-This ensures complete data separation between teams in the multi-tenant system.
-
 
 ## Implementation Notes
 
 ### Business Logic
-- **Team Isolation**: Enforced at API level
-- **Authentication**: Required for all operations
+- **Team Isolation**: Not applicable
+- **Authentication**: Public access
 - **Validation**: Zod schemas ensure type safety
 - **Error Handling**: Consistent error responses across all endpoints
 
