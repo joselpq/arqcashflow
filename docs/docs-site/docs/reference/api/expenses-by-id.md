@@ -33,7 +33,7 @@ Comprehensive API reference for expenses Item management operations.
 **Base URL**: `/api/expenses/:id`
 **Methods**: GET, PUT, DELETE
 **Authentication**: Required
-**Team Isolation**: Yes
+**Team Isolation**: No
 
 
 ## GET /api/expenses/:id
@@ -44,8 +44,7 @@ Retrieve expenses Item records with optional filtering and sorting.
 
 | Parameter | Type | Description | Default |
 |-----------|------|-------------|---------|
-| `status` | string | Filter by status | `all` |
-| `category` | string | Filter by category | `all` |
+
 
 ### Example Request
 
@@ -141,25 +140,11 @@ interface ErrorResponse {
 | 500 | INTERNAL_ERROR | Server error |
 
 
-## Team Isolation
-
-All expenses Item operations are automatically filtered by team context:
-
-```typescript
-// All queries include team isolation
-const where = {
-  teamId: session.user.teamId,
-  ...additionalFilters
-};
-```
-
-This ensures complete data separation between teams in the multi-tenant system.
-
 
 ## Implementation Notes
 
 ### Business Logic
-- **Team Isolation**: Enforced at API level
+- **Team Isolation**: Not applicable
 - **Authentication**: Required for all operations
 - **Validation**: Zod schemas ensure type safety
 - **Error Handling**: Consistent error responses across all endpoints

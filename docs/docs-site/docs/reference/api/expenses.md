@@ -2,7 +2,7 @@
 title: "Expenses API"
 type: "reference"
 audience: ["developer", "agent"]
-contexts: ["api", "expenses", "rest", "database"]
+contexts: ["api", "expenses", "rest", "database", "service-layer", "phase3-migration", "recurring-expenses"]
 complexity: "intermediate"
 last_updated: "2025-09-25"
 version: "1.0"
@@ -19,21 +19,21 @@ Comprehensive API reference for expenses management operations.
 
 ## Context for LLM Agents
 
-**Scope**: Complete expenses API operations including CRUD, filtering, sorting, and business logic
-**Prerequisites**: Understanding of REST APIs, Next.js App Router, Prisma ORM, and team-based data isolation
+**Scope**: Complete expenses API operations including CRUD, filtering, sorting, and business logic via ExpenseService layer
+**Prerequisites**: Understanding of REST APIs, Next.js App Router, service layer architecture, and team-based data isolation
 **Key Patterns**:
-- RESTful endpoint design with standard HTTP methods
-- Team-based data isolation for multi-tenant security
-- Zod validation for type-safe request/response handling
-- Consistent error handling and response formats
-- Session-based authentication required for all operations
+- Service layer architecture with ExpenseService for business logic
+- Support for both one-time and recurring expense operations
+- Team-based data isolation enforced at service level
+- Clean API routes that delegate to service methods
+- Comprehensive validation and summary calculations in service layer
 
 ## Endpoint Overview
 
 **Base URL**: `/api/expenses`
 **Methods**: GET, POST
 **Authentication**: Required
-**Team Isolation**: Yes
+**Team Isolation**: No
 
 
 ## GET /api/expenses
@@ -79,28 +79,6 @@ Create a new expenses record.
 
 ### Request Body
 
-
-Schema validation using Zod:
-
-```typescript
-const ExpenseSchema = z.object({
-  description: z.string().min(1, 'Description is required'),
-  amount: z.number().positive('Amount must be positive'),
-  dueDate: z.string().transform((str) => createDateForStorage(str)),
-  category: z.string().min(1, 'Category is required'),
-  contractId: z.string().optional().nullable().transform(val => val === '' ? null : val),
-  vendor: z.string().optional().nullable().transform(val => val === '' ? null : val),
-  invoiceNumber: z.string().optional().nullable().transform(val => val === '' ? null : val),
-  type: z.enum(['operational', 'project', 'administrative']).optional().nullable(),
-  isRecurring: z.boolean().default(false),
-  notes: z.string().optional().nullable().transform(val => val === '' ? null : val),
-  receiptUrl: z.string().optional().nullable().transform(val => val === '' ? null : val),
-  status: z.enum(['pending', 'paid', 'overdue', 'cancelled']).default('pending'),
-  paidDate: z.union([z.string(), z.date()]).nullable().optional().transform(val => {
-    if (val === '' || val === null || val === undefined) return null
-    return val instanceof Date ? val : createDateForStorage(val)
-  });
-```
 
 
 ### Example Request
@@ -150,25 +128,11 @@ interface ErrorResponse {
 | 500 | INTERNAL_ERROR | Server error |
 
 
-## Team Isolation
-
-All expenses operations are automatically filtered by team context:
-
-```typescript
-// All queries include team isolation
-const where = {
-  teamId: session.user.teamId,
-  ...additionalFilters
-};
-```
-
-This ensures complete data separation between teams in the multi-tenant system.
-
 
 ## Implementation Notes
 
 ### Business Logic
-- **Team Isolation**: Enforced at API level
+- **Team Isolation**: Not applicable
 - **Authentication**: Required for all operations
 - **Validation**: Zod schemas ensure type safety
 - **Error Handling**: Consistent error responses across all endpoints

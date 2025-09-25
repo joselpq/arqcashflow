@@ -26,15 +26,47 @@ Comprehensive API reference for receivables Item management operations.
 - Team-based data isolation for multi-tenant security
 - Zod validation for type-safe request/response handling
 - Consistent error handling and response formats
-
+- Session-based authentication required for all operations
 
 ## Endpoint Overview
 
 **Base URL**: `/api/receivables/:id`
-**Methods**: PUT, DELETE
-**Authentication**: None
-**Team Isolation**: Yes
+**Methods**: GET, PUT, DELETE
+**Authentication**: Required
+**Team Isolation**: No
 
+
+## GET /api/receivables/:id
+
+Retrieve receivables Item records with optional filtering and sorting.
+
+### Query Parameters
+
+| Parameter | Type | Description | Default |
+|-----------|------|-------------|---------|
+
+
+### Example Request
+
+```bash
+curl -X GET "http://localhost:3000/api/receivables/:id?status=active&sortBy=createdAt&sortOrder=desc" \
+  -H "Content-Type: application/json"
+```
+
+### Response Format
+
+```typescript
+interface Receivables ItemResponse {
+  data: Receivables Item[];
+  total: number;
+  filters: {
+    status: string;
+    category?: string;
+    sortBy: string;
+    sortOrder: 'asc' | 'desc';
+  };
+}
+```
 
 
 
@@ -108,26 +140,12 @@ interface ErrorResponse {
 | 500 | INTERNAL_ERROR | Server error |
 
 
-## Team Isolation
-
-All receivables Item operations are automatically filtered by team context:
-
-```typescript
-// All queries include team isolation
-const where = {
-  teamId: session.user.teamId,
-  ...additionalFilters
-};
-```
-
-This ensures complete data separation between teams in the multi-tenant system.
-
 
 ## Implementation Notes
 
 ### Business Logic
-- **Team Isolation**: Enforced at API level
-- **Authentication**: Public access
+- **Team Isolation**: Not applicable
+- **Authentication**: Required for all operations
 - **Validation**: Zod schemas ensure type safety
 - **Error Handling**: Consistent error responses across all endpoints
 

@@ -2,14 +2,15 @@
 title: "Architecture Overview"
 type: "reference"
 audience: ["developer", "agent"]
-contexts: ["architecture", "system-design"]
+contexts: ["architecture", "system-design", "service-layer", "phase3-migration"]
 complexity: "intermediate"
-last_updated: "2025-09-22"
+last_updated: "2025-09-25"
 version: "1.0"
 agent_roles: ["architecture-reviewer", "system-analyzer"]
 related:
   - developer/setup.md
-dependencies: ["next.js", "prisma", "postgresql"]
+  - decisions/006-service-layer-migration-plan.md
+dependencies: ["next.js", "prisma", "postgresql", "service-layer"]
 ---
 
 # Architecture Overview

@@ -2,7 +2,7 @@
 title: "Contracts API"
 type: "reference"
 audience: ["developer", "agent"]
-contexts: ["api", "contracts", "rest", "database", "service-layer", "business-logic", "flexible-validation"]
+contexts: ["api", "contracts", "rest", "database"]
 complexity: "intermediate"
 last_updated: "2025-09-25"
 version: "1.0"
@@ -19,14 +19,10 @@ Comprehensive API reference for contracts management operations.
 
 ## Context for LLM Agents
 
-**Scope**: Complete contracts API operations using service layer architecture with flexible validation and business logic
-**Prerequisites**: Understanding of REST APIs, Next.js App Router, service layer pattern, and team-based data isolation
+**Scope**: Complete contracts API operations including CRUD, filtering, sorting, and business logic
+**Prerequisites**: Understanding of REST APIs, Next.js App Router, Prisma ORM, and team-based data isolation
 **Key Patterns**:
 - RESTful endpoint design with standard HTTP methods
-- Service layer architecture for centralized business logic
-- Flexible validation with supervisor warning system
-- Team-scoped operations with automatic isolation
-- Comprehensive audit logging for all mutations
 - Team-based data isolation for multi-tenant security
 - Zod validation for type-safe request/response handling
 - Consistent error handling and response formats

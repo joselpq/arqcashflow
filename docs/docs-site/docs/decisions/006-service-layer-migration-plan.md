@@ -2,7 +2,7 @@
 title: "Service Layer Migration Implementation Plan"
 type: "decision"
 audience: ["developer", "agent"]
-contexts: ["architecture", "migration", "service-layer", "business-logic", "api-refactoring", "validation", "team-isolation", "bug-fixes", "uuid", "cuid", "crud-testing", "flexible-validation", "supervisor-warnings", "feature-flag-removal", "legacy-cleanup"]
+contexts: ["architecture", "migration", "service-layer", "business-logic", "api-refactoring", "validation", "team-isolation", "bug-fixes", "uuid", "cuid", "crud-testing", "flexible-validation", "supervisor-warnings", "feature-flag-removal", "legacy-cleanup", "phase3-completed", "receivables-migration", "expenses-migration", "precision-testing", "recurring-expenses"]
 complexity: "intermediate"
 last_updated: "2025-09-25"
 version: "2.0"
@@ -13,7 +13,7 @@ related:
   - decisions/004-no-regrets-architecture-improvements.md
   - decisions/005-team-context-middleware-implementation.md
   - developer/architecture/overview.md
-dependencies: ["service-layer-extraction", "team-context-middleware", "next.js", "prisma", "typescript", "flexible-validation-system", "audit-logging"]
+dependencies: ["service-layer-extraction", "team-context-middleware", "next.js", "prisma", "typescript", "flexible-validation-system", "audit-logging", "receivable-service", "expense-service", "authenticated-testing"]
 ---
 
 # Service Layer Migration Implementation Plan

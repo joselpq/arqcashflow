@@ -2,7 +2,7 @@
 title: "Receivables API"
 type: "reference"
 audience: ["developer", "agent"]
-contexts: ["api", "receivables", "rest", "database"]
+contexts: ["api", "receivables", "rest", "database", "service-layer", "phase3-migration"]
 complexity: "intermediate"
 last_updated: "2025-09-25"
 version: "1.0"
@@ -19,21 +19,21 @@ Comprehensive API reference for receivables management operations.
 
 ## Context for LLM Agents
 
-**Scope**: Complete receivables API operations including CRUD, filtering, sorting, and business logic
-**Prerequisites**: Understanding of REST APIs, Next.js App Router, Prisma ORM, and team-based data isolation
+**Scope**: Complete receivables API operations including CRUD, filtering, sorting, and business logic via ReceivableService layer
+**Prerequisites**: Understanding of REST APIs, Next.js App Router, service layer architecture, and team-based data isolation
 **Key Patterns**:
-- RESTful endpoint design with standard HTTP methods
-- Team-based data isolation for multi-tenant security
-- Zod validation for type-safe request/response handling
-- Consistent error handling and response formats
-- Session-based authentication required for all operations
+- Service layer architecture with ReceivableService for business logic
+- Team-based data isolation enforced at service level
+- Clean API routes that delegate to service methods
+- Comprehensive validation and error handling in service layer
+- Supports both contract-linked and standalone receivables
 
 ## Endpoint Overview
 
 **Base URL**: `/api/receivables`
 **Methods**: GET, POST
 **Authentication**: Required
-**Team Isolation**: Yes
+**Team Isolation**: No
 
 
 ## GET /api/receivables
@@ -79,25 +79,6 @@ Create a new receivables record.
 
 ### Request Body
 
-
-Schema validation using Zod:
-
-```typescript
-const ReceivableSchema = z.object({
-  contractId: z.string().optional().nullable().transform(val => val === '' ? null : val),
-  expectedDate: z.string(),
-  amount: z.number(),
-  status: z.string().optional(),
-  receivedDate: z.string().optional().nullable(),
-  receivedAmount: z.number().optional().nullable(),
-  invoiceNumber: z.string().optional().nullable(),
-  category: z.string().optional().nullable(),
-  notes: z.string().optional().nullable(),
-  // New fields for non-contract receivables
-  clientName: z.string().optional().nullable().transform(val => val === '' ? null : val),
-  description: z.string().optional().nullable().transform(val => val === '' ? null : val),
-});
-```
 
 
 ### Example Request
@@ -147,25 +128,11 @@ interface ErrorResponse {
 | 500 | INTERNAL_ERROR | Server error |
 
 
-## Team Isolation
-
-All receivables operations are automatically filtered by team context:
-
-```typescript
-// All queries include team isolation
-const where = {
-  teamId: session.user.teamId,
-  ...additionalFilters
-};
-```
-
-This ensures complete data separation between teams in the multi-tenant system.
-
 
 ## Implementation Notes
 
 ### Business Logic
-- **Team Isolation**: Enforced at API level
+- **Team Isolation**: Not applicable
 - **Authentication**: Required for all operations
 - **Validation**: Zod schemas ensure type safety
 - **Error Handling**: Consistent error responses across all endpoints
