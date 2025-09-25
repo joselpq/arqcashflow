@@ -33,7 +33,7 @@ Comprehensive API reference for contracts Item management operations.
 **Base URL**: `/api/contracts/:id`
 **Methods**: GET, PUT, DELETE
 **Authentication**: None
-**Team Isolation**: Yes
+**Team Isolation**: No
 
 
 ## GET /api/contracts/:id
@@ -140,25 +140,11 @@ interface ErrorResponse {
 | 500 | INTERNAL_ERROR | Server error |
 
 
-## Team Isolation
-
-All contracts Item operations are automatically filtered by team context:
-
-```typescript
-// All queries include team isolation
-const where = {
-  teamId: session.user.teamId,
-  ...additionalFilters
-};
-```
-
-This ensures complete data separation between teams in the multi-tenant system.
-
 
 ## Implementation Notes
 
 ### Business Logic
-- **Team Isolation**: Enforced at API level
+- **Team Isolation**: Not applicable
 - **Authentication**: Public access
 - **Validation**: Zod schemas ensure type safety
 - **Error Handling**: Consistent error responses across all endpoints
