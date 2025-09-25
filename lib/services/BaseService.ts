@@ -38,6 +38,32 @@ export interface BaseFilters {
   [key: string]: any
 }
 
+export interface BulkOptions {
+  skipValidation?: boolean
+  continueOnError?: boolean
+}
+
+export interface BulkItemResult<T> {
+  success: boolean
+  data?: T
+  error?: string
+  index: number
+}
+
+export interface BulkOperationResult<T> {
+  success: boolean
+  totalItems: number
+  successCount: number
+  failureCount: number
+  results: BulkItemResult<T>[]
+  errors: string[]
+}
+
+export interface BulkUpdateItem<T> {
+  id: string
+  data: T
+}
+
 export abstract class BaseService<TEntity, TCreateData, TUpdateData, TFilters extends BaseFilters = BaseFilters> {
   protected context: ServiceContext
   protected entityName: string
@@ -242,6 +268,279 @@ export abstract class BaseService<TEntity, TCreateData, TUpdateData, TFilters ex
     })
 
     return true
+  }
+
+  /**
+   * Bulk create entities with atomic transaction and audit logging
+   */
+  async bulkCreate(items: TCreateData[], options: BulkOptions = {}): Promise<BulkOperationResult<TEntity>> {
+    const result: BulkOperationResult<TEntity> = {
+      success: false,
+      totalItems: items.length,
+      successCount: 0,
+      failureCount: 0,
+      results: [],
+      errors: []
+    }
+
+    if (items.length === 0) {
+      result.success = true
+      return result
+    }
+
+    const model = (this.context.teamScopedPrisma as any)[this.entityName]
+    if (!model) {
+      throw new ServiceError(`Model ${this.entityName} not found`, 'MODEL_NOT_FOUND', 500)
+    }
+
+    // Use transaction for atomicity
+    await this.context.teamScopedPrisma.raw.$transaction(async (tx) => {
+      const txModel = (tx as any)[this.entityName]
+
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i]
+        const itemResult: BulkItemResult<TEntity> = {
+          success: false,
+          index: i
+        }
+
+        try {
+          // Validate business rules if not skipped
+          if (!options.skipValidation) {
+            await this.validateBusinessRules(item)
+          }
+
+          // Create entity (add teamId manually since we're in transaction)
+          // Transform date fields to proper format
+          const transformedData = this.transformDatesForPrisma({ ...item, teamId: this.context.teamId })
+          const entity = await txModel.create({
+            data: transformedData
+          })
+
+          itemResult.success = true
+          itemResult.data = entity
+          result.successCount++
+
+          // Log audit entry (outside transaction for performance)
+          setImmediate(async () => {
+            await this.logAudit(async () => {
+              const auditContext = this.createAuditContext(`${this.entityName}_bulk_creation`)
+              await auditCreate(auditContext, this.entityName, entity.id, entity)
+            })
+          })
+
+        } catch (error) {
+          itemResult.error = error instanceof Error ? error.message : 'Unknown error'
+          result.failureCount++
+          result.errors.push(`Item ${i}: ${itemResult.error}`)
+
+          if (!options.continueOnError) {
+            throw error // This will rollback the entire transaction
+          }
+        }
+
+        result.results.push(itemResult)
+      }
+    })
+
+    result.success = result.failureCount === 0
+    return result
+  }
+
+  /**
+   * Bulk update entities by IDs with atomic transaction and audit logging
+   */
+  async bulkUpdate(updates: BulkUpdateItem<TUpdateData>[], options: BulkOptions = {}): Promise<BulkOperationResult<TEntity>> {
+    const result: BulkOperationResult<TEntity> = {
+      success: false,
+      totalItems: updates.length,
+      successCount: 0,
+      failureCount: 0,
+      results: [],
+      errors: []
+    }
+
+    if (updates.length === 0) {
+      result.success = true
+      return result
+    }
+
+    const model = (this.context.teamScopedPrisma as any)[this.entityName]
+    if (!model) {
+      throw new ServiceError(`Model ${this.entityName} not found`, 'MODEL_NOT_FOUND', 500)
+    }
+
+    // Use transaction for atomicity
+    await this.context.teamScopedPrisma.raw.$transaction(async (tx) => {
+      const txModel = (tx as any)[this.entityName]
+
+      for (let i = 0; i < updates.length; i++) {
+        const { id, data } = updates[i]
+        const itemResult: BulkItemResult<TEntity> = {
+          success: false,
+          index: i
+        }
+
+        try {
+          // Get before state for audit (ensure team isolation)
+          const beforeState = await txModel.findFirst({
+            where: { id, teamId: this.context.teamId }
+          })
+
+          if (!beforeState) {
+            throw new ServiceError(`Entity with ID ${id} not found`, 'NOT_FOUND')
+          }
+
+          // Validate business rules if not skipped
+          if (!options.skipValidation) {
+            await this.validateBusinessRules(data)
+          }
+
+          // Update entity (ensure team isolation)
+          // Transform date fields to proper format
+          const transformedData = this.transformDatesForPrisma(data)
+          const entity = await txModel.update({
+            where: { id, teamId: this.context.teamId },
+            data: transformedData
+          })
+
+          itemResult.success = true
+          itemResult.data = entity
+          result.successCount++
+
+          // Log audit entry (outside transaction for performance)
+          setImmediate(async () => {
+            await this.logAudit(async () => {
+              const auditContext = this.createAuditContext(`${this.entityName}_bulk_update`)
+              await auditUpdate(auditContext, this.entityName, id, beforeState, data, entity)
+            })
+          })
+
+        } catch (error) {
+          itemResult.error = error instanceof Error ? error.message : 'Unknown error'
+          result.failureCount++
+          result.errors.push(`Item ${i} (ID: ${id}): ${itemResult.error}`)
+
+          if (!options.continueOnError) {
+            throw error // This will rollback the entire transaction
+          }
+        }
+
+        result.results.push(itemResult)
+      }
+    })
+
+    result.success = result.failureCount === 0
+    return result
+  }
+
+  /**
+   * Bulk delete entities by IDs with atomic transaction and audit logging
+   */
+  async bulkDelete(ids: string[], options: BulkOptions = {}): Promise<BulkOperationResult<boolean>> {
+    const result: BulkOperationResult<boolean> = {
+      success: false,
+      totalItems: ids.length,
+      successCount: 0,
+      failureCount: 0,
+      results: [],
+      errors: []
+    }
+
+    if (ids.length === 0) {
+      result.success = true
+      return result
+    }
+
+    const model = (this.context.teamScopedPrisma as any)[this.entityName]
+    if (!model) {
+      throw new ServiceError(`Model ${this.entityName} not found`, 'MODEL_NOT_FOUND', 500)
+    }
+
+    // Use transaction for atomicity
+    await this.context.teamScopedPrisma.raw.$transaction(async (tx) => {
+      const txModel = (tx as any)[this.entityName]
+
+      for (let i = 0; i < ids.length; i++) {
+        const id = ids[i]
+        const itemResult: BulkItemResult<boolean> = {
+          success: false,
+          index: i
+        }
+
+        try {
+          // Get before state for audit (ensure team isolation)
+          const beforeState = await txModel.findFirst({
+            where: { id, teamId: this.context.teamId }
+          })
+
+          if (!beforeState) {
+            if (options.continueOnError) {
+              itemResult.error = `Entity with ID ${id} not found`
+              result.failureCount++
+              result.errors.push(`Item ${i} (ID: ${id}): ${itemResult.error}`)
+              result.results.push(itemResult)
+              continue
+            } else {
+              throw new ServiceError(`Entity with ID ${id} not found`, 'NOT_FOUND')
+            }
+          }
+
+          // Delete entity (ensure team isolation)
+          await txModel.delete({
+            where: { id, teamId: this.context.teamId }
+          })
+
+          itemResult.success = true
+          itemResult.data = true
+          result.successCount++
+
+          // Log audit entry (outside transaction for performance)
+          setImmediate(async () => {
+            await this.logAudit(async () => {
+              const auditContext = this.createAuditContext(`${this.entityName}_bulk_deletion`)
+              await auditDelete(auditContext, this.entityName, id, beforeState)
+            })
+          })
+
+        } catch (error) {
+          itemResult.error = error instanceof Error ? error.message : 'Unknown error'
+          result.failureCount++
+          result.errors.push(`Item ${i} (ID: ${id}): ${itemResult.error}`)
+
+          if (!options.continueOnError) {
+            throw error // This will rollback the entire transaction
+          }
+        }
+
+        result.results.push(itemResult)
+      }
+    })
+
+    result.success = result.failureCount === 0
+    return result
+  }
+
+  /**
+   * Transform date fields from string to proper Date format for Prisma
+   */
+  protected transformDatesForPrisma(data: any): any {
+    const transformed = { ...data }
+
+    // Common date fields that need transformation
+    const dateFields = ['signedDate', 'dueDate', 'receivedDate', 'paidDate', 'expectedDate']
+
+    dateFields.forEach(field => {
+      if (transformed[field] && typeof transformed[field] === 'string') {
+        // Convert YYYY-MM-DD to ISO-8601 DateTime
+        const dateStr = transformed[field]
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+          transformed[field] = new Date(dateStr + 'T15:00:00.000Z')
+        }
+      }
+    })
+
+    return transformed
   }
 
   /**

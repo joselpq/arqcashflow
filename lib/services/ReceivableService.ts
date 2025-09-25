@@ -426,4 +426,206 @@ export class ReceivableService extends BaseService<
 
     return receivables
   }
+
+  // ===============================
+  // BULK OPERATIONS (PHASE 4)
+  // ===============================
+
+  /**
+   * Bulk import receivables from CSV/Excel data
+   */
+  async bulkImport(
+    csvData: Array<{
+      clientName: string
+      description?: string
+      amount: string | number
+      dueDate: string
+      status?: string
+      category?: string
+      contractId?: string
+      invoiceNumber?: string
+      notes?: string
+    }>,
+    options: import('./BaseService').BulkOptions & { validateContracts?: boolean } = {}
+  ): Promise<import('./BaseService').BulkOperationResult<ReceivableWithContract>> {
+    // Transform and validate CSV data
+    const transformedData: ReceivableCreateData[] = []
+
+    for (let index = 0; index < csvData.length; index++) {
+      const row = csvData[index]
+      try {
+        // Validate contract ID if provided
+        if (row.contractId && options.validateContracts) {
+          const contractExists = await this.context.teamScopedPrisma.contract.findFirst({
+            where: { id: row.contractId }
+          })
+          if (!contractExists) {
+            throw new ServiceError(`Contract ${row.contractId} not found`, 'CONTRACT_NOT_FOUND')
+          }
+        }
+
+        transformedData.push({
+          clientName: row.clientName?.trim(),
+          description: row.description?.trim() || null,
+          amount: typeof row.amount === 'string'
+            ? parseFloat(row.amount.replace(/[^\d.-]/g, ''))
+            : row.amount,
+          dueDate: createDateForStorage(row.dueDate),
+          status: row.status?.trim() || 'pending',
+          category: row.category?.trim() || 'general',
+          contractId: row.contractId?.trim() || null,
+          invoiceNumber: row.invoiceNumber?.trim() || null,
+          notes: row.notes?.trim() || null
+        })
+      } catch (error) {
+        throw new ServiceError(
+          `Invalid data in row ${index + 1}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          'INVALID_CSV_DATA',
+          400
+        )
+      }
+    }
+
+    const result = await this.bulkCreate(transformedData, options)
+    return result as import('./BaseService').BulkOperationResult<ReceivableWithContract>
+  }
+
+  /**
+   * Bulk mark receivables as received
+   */
+  async bulkMarkAsReceived(
+    receivableUpdates: Array<{
+      id: string
+      receivedAmount: number
+      receivedDate?: string
+    }>,
+    options: import('./BaseService').BulkOptions = {}
+  ): Promise<import('./BaseService').BulkOperationResult<ReceivableWithContract>> {
+    // Validate each receivable first
+    const updates: import('./BaseService').BulkUpdateItem<ReceivableUpdateData>[] = []
+
+    for (const update of receivableUpdates) {
+      const receivable = await this.findById(update.id)
+      if (!receivable) {
+        if (options.continueOnError) continue
+        throw new ServiceError(`Receivable ${update.id} not found`, 'NOT_FOUND', 404)
+      }
+
+      if (update.receivedAmount > receivable.amount) {
+        if (options.continueOnError) continue
+        throw new ServiceError(
+          `Received amount ${update.receivedAmount} cannot exceed expected amount ${receivable.amount}`,
+          'INVALID_AMOUNT',
+          400
+        )
+      }
+
+      updates.push({
+        id: update.id,
+        data: {
+          status: 'received',
+          receivedAmount: update.receivedAmount,
+          receivedDate: update.receivedDate || new Date().toISOString()
+        }
+      })
+    }
+
+    return await this.bulkUpdate(updates, options)
+  }
+
+  /**
+   * Bulk update receivable statuses
+   */
+  async bulkUpdateStatus(
+    ids: string[],
+    status: string,
+    options: import('./BaseService').BulkOptions = {}
+  ): Promise<import('./BaseService').BulkOperationResult<ReceivableWithContract>> {
+    const updates = ids.map(id => ({
+      id,
+      data: { status } as ReceivableUpdateData
+    }))
+
+    return await this.bulkUpdate(updates, options)
+  }
+
+  /**
+   * Bulk update receivable categories
+   */
+  async bulkUpdateCategory(
+    ids: string[],
+    category: string,
+    options: import('./BaseService').BulkOptions = {}
+  ): Promise<import('./BaseService').BulkOperationResult<ReceivableWithContract>> {
+    const updates = ids.map(id => ({
+      id,
+      data: { category } as ReceivableUpdateData
+    }))
+
+    return await this.bulkUpdate(updates, options)
+  }
+
+  /**
+   * Bulk generate receivables from contract
+   */
+  async bulkGenerateFromContract(
+    contractId: string,
+    installments: Array<{
+      description: string
+      amount: number
+      dueDate: string
+      invoiceNumber?: string
+      category?: string
+    }>,
+    options: import('./BaseService').BulkOptions = {}
+  ): Promise<import('./BaseService').BulkOperationResult<ReceivableWithContract>> {
+    // Validate contract exists
+    const contract = await this.context.teamScopedPrisma.contract.findFirst({
+      where: { id: contractId }
+    })
+
+    if (!contract) {
+      throw new ServiceError('Contract not found', 'CONTRACT_NOT_FOUND', 404)
+    }
+
+    // Transform installments to receivables
+    const receivablesData: ReceivableCreateData[] = installments.map(installment => ({
+      clientName: contract.clientName,
+      description: installment.description,
+      amount: installment.amount,
+      dueDate: createDateForStorage(installment.dueDate),
+      status: 'pending',
+      category: installment.category || 'contract',
+      contractId: contractId,
+      invoiceNumber: installment.invoiceNumber || null,
+      notes: `Generated from contract: ${contract.projectName}`
+    }))
+
+    const result = await this.bulkCreate(receivablesData, options)
+    return result as import('./BaseService').BulkOperationResult<ReceivableWithContract>
+  }
+
+  /**
+   * Bulk delete overdue receivables older than specified days
+   */
+  async bulkDeleteOverdue(
+    olderThanDays: number = 365,
+    options: import('./BaseService').BulkOptions = {}
+  ): Promise<import('./BaseService').BulkOperationResult<boolean>> {
+    const cutoffDate = new Date()
+    cutoffDate.setDate(cutoffDate.getDate() - olderThanDays)
+
+    const overdueReceivables = await this.context.teamScopedPrisma.receivable.findMany({
+      where: {
+        AND: [
+          { dueDate: { lt: cutoffDate.toISOString() } },
+          { status: { not: 'received' } }
+        ]
+      },
+      select: { id: true }
+    })
+
+    const ids = overdueReceivables.map(r => r.id)
+    return await this.bulkDelete(ids, options)
+  }
 }

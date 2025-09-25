@@ -549,4 +549,227 @@ export class ExpenseService extends BaseService<
       ...data
     })).sort((a, b) => a.month.localeCompare(b.month))
   }
+
+  // ===============================
+  // BULK OPERATIONS (PHASE 4)
+  // ===============================
+
+  /**
+   * Bulk import expenses from CSV/Excel data
+   */
+  async bulkImport(
+    csvData: Array<{
+      description: string
+      amount: string | number
+      dueDate: string
+      vendor?: string
+      category?: string
+      contractId?: string
+      invoiceNumber?: string
+      type?: 'project' | 'operational'
+      status?: string
+      notes?: string
+    }>,
+    options: import('./BaseService').BulkOptions & { validateContracts?: boolean } = {}
+  ): Promise<import('./BaseService').BulkOperationResult<ExpenseWithRelations>> {
+    // Transform and validate CSV data
+    const transformedData: ExpenseCreateData[] = []
+
+    for (let index = 0; index < csvData.length; index++) {
+      const row = csvData[index]
+      try {
+        // Validate contract ID if provided
+        if (row.contractId && options.validateContracts) {
+          const contractExists = await this.context.teamScopedPrisma.contract.findFirst({
+            where: { id: row.contractId }
+          })
+          if (!contractExists) {
+            throw new ServiceError(`Contract ${row.contractId} not found`, 'CONTRACT_NOT_FOUND')
+          }
+        }
+
+        transformedData.push({
+          description: row.description?.trim(),
+          amount: typeof row.amount === 'string'
+            ? parseFloat(row.amount.replace(/[^\d.-]/g, ''))
+            : row.amount,
+          dueDate: createDateForStorage(row.dueDate),
+          vendor: row.vendor?.trim() || null,
+          category: row.category?.trim() || 'general',
+          contractId: row.contractId?.trim() || null,
+          invoiceNumber: row.invoiceNumber?.trim() || null,
+          type: (row.type as 'project' | 'operational') || 'operational',
+          status: row.status?.trim() || 'pending',
+          notes: row.notes?.trim() || null
+        })
+      } catch (error) {
+        throw new ServiceError(
+          `Invalid data in row ${index + 1}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          'INVALID_CSV_DATA',
+          400
+        )
+      }
+    }
+
+    const result = await this.bulkCreate(transformedData, options)
+    return result as import('./BaseService').BulkOperationResult<ExpenseWithRelations>
+  }
+
+  /**
+   * Bulk mark expenses as paid
+   */
+  async bulkMarkAsPaid(
+    expenseUpdates: Array<{
+      id: string
+      paidAmount: number
+      paidDate?: string
+    }>,
+    options: import('./BaseService').BulkOptions = {}
+  ): Promise<import('./BaseService').BulkOperationResult<ExpenseWithRelations>> {
+    // Validate each expense first
+    const updates: import('./BaseService').BulkUpdateItem<ExpenseUpdateData>[] = []
+
+    for (const update of expenseUpdates) {
+      const expense = await this.findById(update.id)
+      if (!expense) {
+        if (options.continueOnError) continue
+        throw new ServiceError(`Expense ${update.id} not found`, 'NOT_FOUND', 404)
+      }
+
+      if (update.paidAmount > expense.amount) {
+        if (options.continueOnError) continue
+        throw new ServiceError(
+          `Paid amount ${update.paidAmount} cannot exceed total amount ${expense.amount}`,
+          'INVALID_AMOUNT',
+          400
+        )
+      }
+
+      updates.push({
+        id: update.id,
+        data: {
+          status: 'paid',
+          paidAmount: update.paidAmount,
+          paidDate: update.paidDate || new Date().toISOString()
+        }
+      })
+    }
+
+    return await this.bulkUpdate(updates, options)
+  }
+
+  /**
+   * Bulk update expense statuses
+   */
+  async bulkUpdateStatus(
+    ids: string[],
+    status: string,
+    options: import('./BaseService').BulkOptions = {}
+  ): Promise<import('./BaseService').BulkOperationResult<ExpenseWithRelations>> {
+    const updates = ids.map(id => ({
+      id,
+      data: { status } as ExpenseUpdateData
+    }))
+
+    return await this.bulkUpdate(updates, options)
+  }
+
+  /**
+   * Bulk update expense categories
+   */
+  async bulkUpdateCategory(
+    ids: string[],
+    category: string,
+    options: import('./BaseService').BulkOptions = {}
+  ): Promise<import('./BaseService').BulkOperationResult<ExpenseWithRelations>> {
+    const updates = ids.map(id => ({
+      id,
+      data: { category } as ExpenseUpdateData
+    }))
+
+    return await this.bulkUpdate(updates, options)
+  }
+
+  /**
+   * Bulk update expense vendors
+   */
+  async bulkUpdateVendor(
+    ids: string[],
+    vendor: string,
+    options: import('./BaseService').BulkOptions = {}
+  ): Promise<import('./BaseService').BulkOperationResult<ExpenseWithRelations>> {
+    const updates = ids.map(id => ({
+      id,
+      data: { vendor } as ExpenseUpdateData
+    }))
+
+    return await this.bulkUpdate(updates, options)
+  }
+
+  /**
+   * Bulk generate recurring expenses
+   */
+  async bulkGenerateRecurring(
+    recurringExpenseId: string,
+    generateForMonths: number = 12,
+    options: import('./BaseService').BulkOptions = {}
+  ): Promise<import('./BaseService').BulkOperationResult<ExpenseWithRelations>> {
+    // Get the recurring expense template
+    const recurringExpense = await this.context.teamScopedPrisma.recurringExpense.findFirst({
+      where: { id: recurringExpenseId }
+    })
+
+    if (!recurringExpense) {
+      throw new ServiceError('Recurring expense not found', 'NOT_FOUND', 404)
+    }
+
+    // Generate expenses for the specified months
+    const expensesData: ExpenseCreateData[] = []
+    const startDate = new Date()
+
+    for (let i = 0; i < generateForMonths; i++) {
+      const dueDate = new Date(startDate)
+      dueDate.setMonth(dueDate.getMonth() + i)
+
+      expensesData.push({
+        description: `${recurringExpense.description} (${dueDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })})`,
+        amount: recurringExpense.amount,
+        dueDate: dueDate.toISOString(),
+        vendor: recurringExpense.vendor,
+        category: recurringExpense.category,
+        contractId: recurringExpense.contractId,
+        type: 'operational',
+        status: 'pending',
+        notes: `Generated from recurring expense: ${recurringExpense.description}`,
+        recurringExpenseId: recurringExpenseId
+      })
+    }
+
+    const result = await this.bulkCreate(expensesData, options)
+    return result as import('./BaseService').BulkOperationResult<ExpenseWithRelations>
+  }
+
+  /**
+   * Bulk delete old paid expenses
+   */
+  async bulkDeleteOldPaid(
+    olderThanDays: number = 365,
+    options: import('./BaseService').BulkOptions = {}
+  ): Promise<import('./BaseService').BulkOperationResult<boolean>> {
+    const cutoffDate = new Date()
+    cutoffDate.setDate(cutoffDate.getDate() - olderThanDays)
+
+    const oldPaidExpenses = await this.context.teamScopedPrisma.expense.findMany({
+      where: {
+        AND: [
+          { paidDate: { lt: cutoffDate.toISOString() } },
+          { status: 'paid' }
+        ]
+      },
+      select: { id: true }
+    })
+
+    const ids = oldPaidExpenses.map(e => e.id)
+    return await this.bulkDelete(ids, options)
+  }
 }

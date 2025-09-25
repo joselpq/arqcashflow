@@ -2,7 +2,7 @@
 title: "Receivables API"
 type: "reference"
 audience: ["developer", "agent"]
-contexts: ["api", "receivables", "rest", "database", "service-layer", "phase3-migration"]
+contexts: ["api", "receivables", "rest", "database"]
 complexity: "intermediate"
 last_updated: "2025-09-25"
 version: "1.0"
@@ -19,14 +19,14 @@ Comprehensive API reference for receivables management operations.
 
 ## Context for LLM Agents
 
-**Scope**: Complete receivables API operations including CRUD, filtering, sorting, and business logic via ReceivableService layer
-**Prerequisites**: Understanding of REST APIs, Next.js App Router, service layer architecture, and team-based data isolation
+**Scope**: Complete receivables API operations including CRUD, filtering, sorting, and business logic
+**Prerequisites**: Understanding of REST APIs, Next.js App Router, Prisma ORM, and team-based data isolation
 **Key Patterns**:
-- Service layer architecture with ReceivableService for business logic
-- Team-based data isolation enforced at service level
-- Clean API routes that delegate to service methods
-- Comprehensive validation and error handling in service layer
-- Supports both contract-linked and standalone receivables
+- RESTful endpoint design with standard HTTP methods
+- Team-based data isolation for multi-tenant security
+- Zod validation for type-safe request/response handling
+- Consistent error handling and response formats
+- Session-based authentication required for all operations
 
 ## Endpoint Overview
 
