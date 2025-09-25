@@ -2,7 +2,7 @@
 title: "No-Regrets Architecture Improvements for Dual-Interface Stage"
 type: "decision"
 audience: ["developer", "agent"]
-contexts: ["architecture", "refactoring", "optimization", "tech-debt"]
+contexts: ["architecture", "refactoring", "optimization", "tech-debt", "validation", "unified-schemas"]
 complexity: "intermediate"
 last_updated: "2025-09-25"
 version: "1.1"
@@ -10,7 +10,7 @@ agent_roles: ["refactoring-assistant", "architecture-optimizer"]
 related:
   - decisions/003-strategic-architecture-evolution.md
   - developer/architecture/overview.md
-dependencies: ["next.js", "prisma", "zod", "typescript"]
+dependencies: ["next.js", "prisma", "zod", "typescript", "unified-validation-layer"]
 ---
 
 # No-Regrets Architecture Improvements for Dual-Interface Stage
@@ -21,6 +21,7 @@ dependencies: ["next.js", "prisma", "zod", "typescript"]
 **Prerequisites**: Understanding of current codebase structure and strategic evolution plan
 **Key Patterns**:
 - Service layer extraction from API routes
+- Unified validation layer with centralized schemas (`lib/validation/`)
 - Shared validation and business logic
 - Event-driven architecture foundation
 - Team context centralization
@@ -387,9 +388,14 @@ app/api/
 - ✅ Removed unnecessary googleapis dependency
 - ✅ Export functionality works via CSV generation (simpler approach)
 
-**5. Unified Validation Layer** - **NOT STARTED**
-- Zod schemas still scattered across files
-- Target: `lib/validation/` directory structure
+**5. Unified Validation Layer** - **COMPLETE** ✅
+- ✅ Created `lib/validation/` directory structure with comprehensive schemas
+- ✅ BaseFieldSchemas, EnumSchemas, and RefinedFieldSchemas implemented
+- ✅ Financial entity schemas (contracts, receivables, expenses) centralized
+- ✅ API-specific validation schemas for requests/responses
+- ✅ Business rule validation functions and error handling utilities
+- ✅ Type-safe schema inference and validation helpers
+- ✅ Ready for incremental migration (current system still uses inline validation)
 
 **6. Event System Foundation** - **NOT STARTED**
 - No event bus implemented yet

@@ -2,14 +2,15 @@
 title: "LLM Agent Guide: ArqCashflow Project"
 type: "guide"
 audience: ["agent"]
-contexts: ["llm-optimization", "documentation", "context-management", "agent-workflows"]
+contexts: ["llm-optimization", "documentation", "context-management", "agent-workflows", "validation-layer"]
 complexity: "intermediate"
-last_updated: "2025-09-24"
+last_updated: "2025-09-25"
 version: "1.0"
 agent_roles: ["documentation-navigator", "context-provider", "workflow-optimizer"]
 related:
   - index.md
   - contexts/contract-management.md
+  - contexts/validation-layer.md
   - patterns/testing-strategies.md
 dependencies: []
 ---

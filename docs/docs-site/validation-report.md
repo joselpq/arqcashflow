@@ -4,12 +4,12 @@ Generated on: 2025-09-25
 
 ## Summary
 
-- **Total files validated**: 65
+- **Total files validated**: 66
 - **Broken links**: 0
 - **Stale content**: 0
 - **Missing metadata**: 0
 - **Format inconsistencies**: 1
-- **Orphaned files**: 16
+- **Orphaned files**: 17
 
 ## Issues Found
 
@@ -32,7 +32,10 @@ Generated on: 2025-09-25
   - **Issues**: Missing LLM Context section
 
 
-### 🔍 Orphaned Files (16)
+### 🔍 Orphaned Files (17)
+
+
+- `agents/contexts/validation-layer.md`
 
 
 - `agents/examples/ai-document-processing.md`

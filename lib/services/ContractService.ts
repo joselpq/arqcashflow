@@ -62,7 +62,7 @@ export interface ContractSummary {
   averageContractValue: number
 }
 
-// Validation schema (extracted from API route)
+// Validation schema (extracted from API route) - TEMP: keep original until migration is stable
 export const ContractSchema = z.object({
   clientName: z.string().min(1, 'Client name is required'),
   projectName: z.string().min(1, 'Project name is required'),

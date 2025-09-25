@@ -2,11 +2,11 @@
 title: "LLM Agent Guide: ArqCashflow Project"
 type: "guide"
 audience: ["agent", "developer"]
-contexts: ["automation", "ci-cd", "documentation", "health-monitoring", "code-validation", "search", "service-layer", "api-migration", "auto-generation", "phase3-migration", "receivables-api", "expenses-api", "crud-testing", "precision-validation"]
+contexts: ["automation", "ci-cd", "documentation", "health-monitoring", "code-validation", "search", "service-layer", "api-migration", "auto-generation", "phase3-migration", "receivables-api", "expenses-api", "crud-testing", "precision-validation", "unified-validation", "schema-consolidation"]
 complexity: "intermediate"
 last_updated: "2025-09-25"
-version: "2.0"
-agent_roles: ["documentation-maintainer", "automation-specialist", "health-monitor", "service-migration-specialist", "api-developer"]
+version: "2.1"
+agent_roles: ["documentation-maintainer", "automation-specialist", "health-monitor", "service-migration-specialist", "api-developer", "validation-architect"]
 related:
   - docs/docs-site/docs/agents/llm-agent-guide.md
   - DOCUMENTATION_STRATEGY_PROPOSAL.md
@@ -73,6 +73,7 @@ Based on your assigned task, read ONLY the relevant section:
 ```
 - docs/docs-site/docs/developer/setup.md
 - docs/docs-site/docs/developer/architecture/overview.md
+- lib/validation/README.md (for validation schemas)
 - Look for similar existing features in codebase
 ```
 
@@ -89,6 +90,20 @@ Based on your assigned task, read ONLY the relevant section:
 - docs/docs-site/docs/meta/templates/adr-template.md
 - docs/README.md (documentation structure guide)
 ```
+
+**For Validation/Schema Work:**
+```
+- lib/validation/README.md (unified validation layer guide)
+- lib/validation/index.ts (main validation exports)
+- agents/contexts/validation-layer.md (agent-specific validation patterns)
+- docs/decisions/004-no-regrets-architecture-improvements.md
+```
+
+**⚠️ CRITICAL VALIDATION REMINDER:**
+Before creating ANY validation schemas:
+1. Search `lib/validation/` directory first
+2. Check `grep -r "BaseFieldSchemas\|EnumSchemas" lib/validation/`
+3. Only create new schemas if truly novel functionality needed
 
 ### Efficient Navigation Strategy
 
@@ -166,8 +181,54 @@ Users scrolling over number inputs accidentally changed values. Solution: `onWhe
 ### 3. **AI Integration**
 Claude API processes documents, natural language queries, and assists with data entry.
 
-### 4. **Documentation-First Development**
+### 4. **Unified Validation Layer**
+All validation schemas are centralized in `lib/validation/`. Use existing schemas instead of creating new ones.
+
+### 5. **Documentation-First Development**
 Write/update docs before implementing features. LLM agents should follow templates.
+
+## 🛡️ Architecture Guardrails (Check Before Coding)
+
+**STOP** - Before writing any code, verify:
+
+### Mandatory Architecture Compliance Check
+- [ ] **Validation**: Does `lib/validation/` have what I need?
+  - Search: `grep -r "BaseFieldSchemas\|EnumSchemas" lib/validation/`
+  - Check: `lib/validation/README.md` for available schemas
+- [ ] **Services**: Is there a service layer for this business logic?
+  - Look in: `lib/services/` for existing patterns
+  - Check: Similar business operations already implemented
+- [ ] **Middleware**: Am I using team context middleware properly?
+  - Required: `withTeamContext` for all authenticated operations
+  - Pattern: Import from `@/lib/middleware/team-context`
+- [ ] **Patterns**: Have I checked for similar existing implementations?
+  - Search: Existing API routes, components, or services
+  - Follow: Established patterns rather than creating new approaches
+
+### 🚨 Critical Rules
+1. **NEVER create inline Zod schemas** when `lib/validation/` equivalents exist
+2. **ALWAYS use service layer** for business logic, not API routes directly
+3. **REQUIRED team context** for all authenticated operations
+4. **FOLLOW existing patterns** - check similar implementations first
+
+**If you answer "no" to any checklist items, STOP and read the relevant documentation first.**
+
+### 🎯 Quick Architecture Discovery Commands
+Use these commands to quickly check compliance:
+
+```bash
+# Check for existing validation schemas
+find lib/validation -name "*.ts" | head -10
+
+# Search for similar field validation
+grep -r "BaseFieldSchemas\." lib/validation/
+
+# Find existing service patterns
+ls lib/services/
+
+# Check API route patterns
+find app/api -name "route.ts" | head -5
+```
 
 ## 📋 Common Agent Tasks & Required Context
 
@@ -180,11 +241,20 @@ Read Order:
 ```
 
 ### Task: "Add new feature to expenses"
+
+**🛡️ ARCHITECTURE COMPLIANCE CHECK FIRST:**
+- [ ] Validation: Check `lib/validation/financial.ts` for expense schemas
+- [ ] Services: Review `lib/services/ExpenseService.ts` for business logic patterns
+- [ ] Middleware: Ensure `withTeamContext` usage for team isolation
+- [ ] Patterns: Find similar expense features already implemented
+
 ```
 Read Order:
-1. app/api/expenses/route.ts (understand current implementation)
-2. app/components/forms/ExpenseForm.tsx (UI pattern)
-3. prisma/schema.prisma (database structure)
+1. lib/validation/financial.ts (expense validation schemas)
+2. lib/services/ExpenseService.ts (business logic patterns)
+3. app/api/expenses/route.ts (understand current implementation)
+4. app/components/forms/ExpenseForm.tsx (UI pattern)
+5. prisma/schema.prisma (database structure)
 ```
 
 ### Task: "Improve documentation"
