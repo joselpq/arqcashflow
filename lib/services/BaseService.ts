@@ -112,6 +112,7 @@ export abstract class BaseService<TEntity, TCreateData, TUpdateData, TFilters ex
       // For non-API operations (AI, background tasks, etc.)
       return {
         userId: this.context.user.id,
+        userEmail: this.context.user.email,
         teamId: this.context.teamId,
         action,
         source,
