@@ -21,7 +21,6 @@
     "date-fns": "^4.1.0",
     "dotenv": "^17.2.2",
     "exceljs": "^4.4.0",
-    "googleapis": "^159.0.0",
     "langchain": "^0.3.33",
     "next": "15.5.3",
     "next-auth": "^4.24.11",

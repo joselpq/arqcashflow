@@ -382,9 +382,10 @@ app/api/
 
 ### 🔄 In Progress / Pending
 
-**4. Google Sheets Consolidation** - **NOT STARTED**
-- Still have 3 separate implementations (28KB total)
-- Target: Single configurable service (~10KB)
+**4. Google Sheets Cleanup** - **COMPLETE** ✅
+- ✅ Deleted 3 unused implementations (28KB removed)
+- ✅ Removed unnecessary googleapis dependency
+- ✅ Export functionality works via CSV generation (simpler approach)
 
 **5. Unified Validation Layer** - **NOT STARTED**
 - Zod schemas still scattered across files
