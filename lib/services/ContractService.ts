@@ -88,6 +88,7 @@ export class ContractService extends BaseService<
 
   /**
    * Validate business rules for contract operations
+   * Uses flexible validation: block clearly wrong data, warn about unusual patterns
    */
   async validateBusinessRules(data: ContractCreateData | ContractUpdateData): Promise<void> {
     // Validate using Zod schema
@@ -96,27 +97,30 @@ export class ContractService extends BaseService<
       ContractSchema.parse(data)
     }
 
-    // Business rule: Total value must be positive
+    // BLOCKING: Total value must be positive (clearly wrong)
     if (data.totalValue !== undefined) {
       ValidationUtils.validatePositiveNumber(data.totalValue, 'Total value')
     }
 
-    // Business rule: Signed date cannot be in the future
+    // WARNING: Future signed date (unusual but may be intentional)
     if (data.signedDate) {
       const signedDate = new Date(data.signedDate)
       const today = new Date()
       today.setHours(23, 59, 59, 999) // End of today
 
       if (signedDate > today) {
-        throw new ServiceError(
-          'Signed date cannot be in the future',
-          'INVALID_SIGNED_DATE',
-          400
-        )
+        // Log warning for analytics/supervisor dashboard
+        await this.logBusinessRuleWarning({
+          rule: 'FUTURE_SIGNED_DATE',
+          message: `Contract signed date is in the future: ${data.signedDate}`,
+          data: { signedDate: data.signedDate, today: today.toISOString() },
+          severity: 'warning'
+        })
+        // Continue - allow the operation but track it
       }
     }
 
-    // Business rule: Check for duplicate contracts (same client + project)
+    // BLOCKING: Check for exact duplicate contracts (clearly wrong)
     if (data.clientName && data.projectName) {
       const existing = await this.context.teamScopedPrisma.contract.findFirst({
         where: {
@@ -133,6 +137,35 @@ export class ContractService extends BaseService<
         )
       }
     }
+  }
+
+  /**
+   * Log business rule warnings for supervisor dashboard
+   */
+  private async logBusinessRuleWarning(warning: {
+    rule: string
+    message: string
+    data?: any
+    severity: 'info' | 'warning' | 'attention'
+  }) {
+    await this.logAudit(async () => {
+      const auditContext = this.createAuditContext('business_rule_warning')
+      // Store in audit log with special 'warning' type for supervisor dashboard
+      await this.context.teamScopedPrisma.auditLog.create({
+        data: {
+          ...auditContext,
+          entityType: 'contract',
+          action: warning.rule,
+          metadata: {
+            warning: true,
+            severity: warning.severity,
+            message: warning.message,
+            data: warning.data,
+            needsReview: warning.severity === 'attention'
+          }
+        }
+      })
+    })
   }
 
   /**
