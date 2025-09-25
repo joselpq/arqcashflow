@@ -5,39 +5,26 @@
  * Provides GET, PUT, and DELETE operations for individual expenses.
  */
 
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { withTeamContext } from '@/lib/middleware/team-context'
 import { ExpenseService } from '@/lib/services/ExpenseService'
 
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   return withTeamContext(async (context) => {
-    const expenseService = new ExpenseService(context)
     const { id } = await params
 
+    const expenseService = new ExpenseService(context)
     const expense = await expenseService.findById(id)
 
     if (!expense) {
-      return NextResponse.json({ error: 'Expense not found' }, { status: 404 })
+      throw new Error('Expense not found')
     }
 
     return expense
-  }).then(result => {
-    // If result is already a NextResponse, return it as-is
-    if (result instanceof NextResponse) {
-      return result
-    }
-    return NextResponse.json(result)
   })
-    .catch(error => {
-      console.error('EXPENSE FETCH ERROR:', error)
-      if (error instanceof Error && error.message === "Unauthorized") {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-      }
-      return NextResponse.json({ error: 'Failed to fetch expense' }, { status: 500 })
-    })
 }
 
 export async function PUT(
@@ -45,45 +32,36 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   return withTeamContext(async (context) => {
-    const expenseService = new ExpenseService(context)
     const { id } = await params
     const body = await request.json()
 
+    const expenseService = new ExpenseService(context)
     const expense = await expenseService.update(id, body)
 
-    return expense
-  }).then(result => NextResponse.json(result))
-    .catch(error => {
-      if (error instanceof Error && error.message === "Unauthorized") {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-      }
-      if (error.name === 'ZodError') {
-        return NextResponse.json({ error: error.errors }, { status: 400 })
-      }
-      console.error('Expense update error:', error)
-      return NextResponse.json({ error: 'Failed to update expense' }, { status: 500 })
-    })
+    if (!expense) {
+      throw new Error('Expense not found')
+    }
+
+    return { expense }
+  })
 }
 
 export async function DELETE(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   return withTeamContext(async (context) => {
-    const expenseService = new ExpenseService(context)
     const { id } = await params
 
-    await expenseService.delete(id)
+    const expenseService = new ExpenseService(context)
+    const success = await expenseService.delete(id)
+
+    if (!success) {
+      throw new Error('Expense not found')
+    }
 
     return { message: 'Expense deleted successfully' }
-  }).then(result => NextResponse.json(result))
-    .catch(error => {
-      if (error instanceof Error && error.message === "Unauthorized") {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-      }
-      console.error('Expense deletion error:', error)
-      return NextResponse.json({ error: 'Failed to delete expense' }, { status: 500 })
-    })
+  })
 }
 
 /**

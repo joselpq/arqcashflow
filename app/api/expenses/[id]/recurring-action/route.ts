@@ -12,10 +12,11 @@
  * - Security: Enhanced protection for bulk operations
  */
 
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { withTeamContext } from '@/lib/middleware/team-context'
 import { createAuditContextFromAPI, auditUpdate, auditDelete, safeAudit } from '@/lib/audit-middleware'
+import { prisma } from '@/lib/prisma'
 
 const RecurringActionSchema = z.object({
   action: z.enum(['edit', 'delete']),
@@ -37,6 +38,7 @@ export async function POST(
   return withTeamContext(async ({ user, teamId, teamScopedPrisma }) => {
     const { id } = await params
     const body = await request.json()
+
     const { action, scope, updatedData } = RecurringActionSchema.parse(body)
 
     // Get the target expense and verify it's recurring - using team-scoped prisma
@@ -45,11 +47,11 @@ export async function POST(
     })
 
     if (!expense) {
-      return NextResponse.json({ error: 'Expense not found' }, { status: 404 })
+      throw new Error('Expense not found')
     }
 
     if (!expense.recurringExpenseId) {
-      return NextResponse.json({ error: 'This expense is not part of a recurring series' }, { status: 400 })
+      throw new Error('This expense is not part of a recurring series')
     }
 
     // Get the recurring expense - using team-scoped prisma for automatic team isolation
@@ -58,18 +60,18 @@ export async function POST(
     })
 
     if (!recurringExpense) {
-      return NextResponse.json({ error: 'Recurring expense not found' }, { status: 404 })
+      throw new Error('Recurring expense not found')
     }
 
     let result = { updated: 0, deleted: 0 }
 
     if (action === 'delete') {
-      result = await handleRecurringDelete(expense, recurringExpense, scope, teamScopedPrisma)
+      result = await handleRecurringDelete(expense, recurringExpense, scope, teamScopedPrisma, teamId)
     } else if (action === 'edit') {
       if (!updatedData) {
-        return NextResponse.json({ error: 'Updated data is required for edit action' }, { status: 400 })
+        throw new Error('Updated data is required for edit action')
       }
-      result = await handleRecurringEdit(expense, recurringExpense, scope, updatedData, teamScopedPrisma)
+      result = await handleRecurringEdit(expense, recurringExpense, scope, updatedData, teamScopedPrisma, teamId)
     }
 
     // Log audit entry
@@ -94,28 +96,15 @@ export async function POST(
       scope,
       result
     }
-  }).then(result => NextResponse.json(result))
-    .catch(error => {
-      if (error instanceof Error && error.message === "Unauthorized") {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-      }
-      if (error instanceof z.ZodError) {
-        return NextResponse.json(
-          { error: 'Validation failed', details: error.errors },
-          { status: 400 }
-        )
-      }
-
-      console.error('Recurring action error:', error)
-      return NextResponse.json({ error: 'Failed to perform recurring action' }, { status: 500 })
-    })
+  })
 }
 
 async function handleRecurringDelete(
   expense: any,
   recurringExpense: any,
   scope: 'this' | 'future' | 'all',
-  teamScopedPrisma: any
+  teamScopedPrisma: any,
+  teamId: string
 ) {
   let deleted = 0
 
@@ -130,9 +119,10 @@ async function handleRecurringDelete(
 
     case 'future':
       // Delete this expense and all future ones from the same recurring series
-      // Team scoping is automatic via teamScopedPrisma
-      const deleteResult = await teamScopedPrisma.expense.deleteMany({
+      // Use regular prisma with manual team filtering for bulk operations
+      const deleteResult = await prisma.expense.deleteMany({
         where: {
+          teamId: teamId, // Ensure team isolation
           recurringExpenseId: expense.recurringExpenseId,
           dueDate: {
             gte: expense.dueDate // This and future
@@ -150,9 +140,10 @@ async function handleRecurringDelete(
 
     case 'all':
       // Delete all expenses from the recurring series
-      // Team scoping is automatic via teamScopedPrisma
-      const deleteAllResult = await teamScopedPrisma.expense.deleteMany({
+      // Use regular prisma with manual team filtering for bulk operations
+      const deleteAllResult = await prisma.expense.deleteMany({
         where: {
+          teamId: teamId, // Ensure team isolation
           recurringExpenseId: expense.recurringExpenseId
         }
       })
@@ -173,7 +164,8 @@ async function handleRecurringEdit(
   recurringExpense: any,
   scope: 'this' | 'future' | 'all',
   updatedData: any,
-  teamScopedPrisma: any
+  teamScopedPrisma: any,
+  teamId: string
 ) {
   let updated = 0
 
@@ -189,9 +181,10 @@ async function handleRecurringEdit(
 
     case 'future':
       // Update this expense and all future ones
-      // Team scoping is automatic via teamScopedPrisma
-      const updateFutureResult = await teamScopedPrisma.expense.updateMany({
+      // Use regular prisma with manual team filtering for bulk operations
+      const updateFutureResult = await prisma.expense.updateMany({
         where: {
+          teamId: teamId, // Ensure team isolation
           recurringExpenseId: expense.recurringExpenseId,
           dueDate: {
             gte: expense.dueDate // This and future
@@ -216,9 +209,10 @@ async function handleRecurringEdit(
 
     case 'all':
       // Update all expenses from the recurring series
-      // Team scoping is automatic via teamScopedPrisma
-      const updateAllResult = await teamScopedPrisma.expense.updateMany({
+      // Use regular prisma with manual team filtering for bulk operations
+      const updateAllResult = await prisma.expense.updateMany({
         where: {
+          teamId: teamId, // Ensure team isolation
           recurringExpenseId: expense.recurringExpenseId
         },
         data: updatedData
