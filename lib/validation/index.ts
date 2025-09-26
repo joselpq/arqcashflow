@@ -44,6 +44,18 @@ export {
   MiddlewareSchemas,
 } from './api'
 
+// Context-aware validation system
+export {
+  ValidationLevel,
+  ValidationContext,
+  DEFAULT_CONTEXTS,
+  ContextAwareSchema,
+  ValidationContextDetector,
+  validateWithContext,
+  createContextValidator,
+  validationMiddleware,
+} from './context'
+
 // Re-export Zod for convenience
 export { z } from 'zod'
 

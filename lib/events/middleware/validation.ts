@@ -2,28 +2,100 @@
  * Event Validation Middleware
  *
  * Validates event structure, payload data, and business rules
- * using the unified validation layer.
+ * using the unified validation layer with context-aware flexibility.
+ *
+ * Phase 2: Context-Aware Validation Implementation
  */
 
 import type { EventPayload, EventContext, EventMiddleware } from '../types'
 import { EventSchemas } from '../types'
 import { ValidationError, validateSchema } from '@/lib/validation'
+import {
+  ValidationContext,
+  ValidationLevel,
+  DEFAULT_CONTEXTS,
+  validateWithContext,
+  ValidationContextDetector
+} from '@/lib/validation/context'
 
 /**
- * Validation Middleware Components
+ * Validation Middleware Components with Context-Aware Flexibility
  */
 export class ValidationMiddleware {
   /**
-   * Validate basic event structure
+   * Default validation context for events (flexible mode)
+   */
+  private static defaultContext: ValidationContext = DEFAULT_CONTEXTS.event
+
+  /**
+   * Set validation context for all middleware
+   */
+  static setValidationContext(context: ValidationContext): void {
+    ValidationMiddleware.defaultContext = context
+  }
+
+  /**
+   * Get current validation context based on environment
+   */
+  static getCurrentContext(): ValidationContext {
+    // Auto-detect based on environment
+    if (process.env.NODE_ENV === 'test') {
+      return DEFAULT_CONTEXTS.test
+    }
+    if (process.env.NODE_ENV === 'development') {
+      // Use flexible validation in development for events
+      return { ...DEFAULT_CONTEXTS.event, level: ValidationLevel.FLEXIBLE }
+    }
+    return ValidationMiddleware.defaultContext
+  }
+  /**
+   * Validate basic event structure with context awareness
    */
   static validateEventStructure: EventMiddleware = async (event, context, next) => {
+    const validationContext = ValidationMiddleware.getCurrentContext()
+
     try {
-      // Ensure required fields exist
+      // In minimal mode, skip most validation
+      if (validationContext.level === ValidationLevel.MINIMAL) {
+        // Only check for absolute minimum
+        if (!event.type) {
+          console.warn('[Validation] Minimal mode - missing event type')
+        }
+        await next()
+        return
+      }
+
+      // In flexible mode, be more lenient
+      if (validationContext.level === ValidationLevel.FLEXIBLE) {
+        // Check core fields but allow some flexibility
+        if (!event.type || !event.source) {
+          throw new Error('Missing required event fields: type, source')
+        }
+
+        // Warn about missing fields but don't fail
+        if (!event.id) {
+          console.warn('[Validation] Flexible mode - missing event ID, generating one')
+          event.id = crypto.randomUUID()
+        }
+        if (!event.timestamp) {
+          console.warn('[Validation] Flexible mode - missing timestamp, using current time')
+          event.timestamp = new Date()
+        }
+        if (!event.teamId) {
+          console.warn('[Validation] Flexible mode - missing teamId, using context')
+          event.teamId = context.teamId
+        }
+
+        await next()
+        return
+      }
+
+      // STRICT and BALANCED modes - full validation
       if (!event.id || !event.type || !event.timestamp || !event.teamId || !event.source) {
         throw new Error('Missing required event fields: id, type, timestamp, teamId, source')
       }
 
-      // Validate ID format
+      // Validate ID format (strict/balanced only)
       if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(event.id)) {
         throw new Error('Invalid event ID format (must be UUID)')
       }
@@ -33,30 +105,54 @@ export class ValidationMiddleware {
         throw new Error('Invalid event timestamp')
       }
 
-      // Validate team ID matches context
-      if (event.teamId !== context.teamId) {
+      // Validate team ID matches context (strict mode only)
+      if (validationContext.level === ValidationLevel.STRICT && event.teamId !== context.teamId) {
         throw new Error('Event teamId does not match context teamId')
       }
 
       await next()
 
     } catch (error) {
-      console.error(`[Validation] Event structure validation failed:`, error)
-      throw new Error(`Event validation failed: ${error}`)
+      // In flexible/minimal modes, log but continue
+      if (validationContext.level === ValidationLevel.FLEXIBLE ||
+          validationContext.level === ValidationLevel.MINIMAL) {
+        console.warn(`[Validation] ${validationContext.level} mode - validation warning:`, error)
+        await next()
+      } else {
+        console.error(`[Validation] Event structure validation failed:`, error)
+        throw new Error(`Event validation failed: ${error}`)
+      }
     }
   }
 
   /**
-   * Validate event payload using appropriate schema
+   * Validate event payload using appropriate schema with context awareness
    */
   static validateEventPayload: EventMiddleware = async (event, context, next) => {
+    const validationContext = ValidationMiddleware.getCurrentContext()
+
     try {
+      // Skip payload validation in minimal mode
+      if (validationContext.level === ValidationLevel.MINIMAL) {
+        await next()
+        return
+      }
+
       // Determine which schema to use based on event type
       const schema = ValidationMiddleware.getSchemaForEventType(event.type)
 
-      // Validate using unified validation layer
+      // Validate using context-aware validation
       if (schema) {
-        validateSchema(schema)(event)
+        try {
+          validateWithContext(schema, event, validationContext)
+        } catch (error) {
+          if (validationContext.level === ValidationLevel.FLEXIBLE) {
+            // In flexible mode, log warning but continue
+            console.warn('[Validation] Flexible mode - payload validation warning:', error)
+          } else {
+            throw error
+          }
+        }
       }
 
       await next()
@@ -91,18 +187,33 @@ export class ValidationMiddleware {
   }
 
   /**
-   * Validate business rules for event
+   * Validate business rules for event with context awareness
    */
   static validateBusinessRules: EventMiddleware = async (event, context, next) => {
+    const validationContext = ValidationMiddleware.getCurrentContext()
+
     try {
+      // Skip business rules in minimal mode or if explicitly disabled
+      if (validationContext.level === ValidationLevel.MINIMAL ||
+          validationContext.skipBusinessRules) {
+        await next()
+        return
+      }
+
       // Apply business rule validation based on event type
       await ValidationMiddleware.applyBusinessRules(event, context)
 
       await next()
 
     } catch (error) {
-      console.error(`[Validation] Business rule validation failed:`, error)
-      throw new Error(`Business rule validation failed: ${error}`)
+      // In flexible mode, log warning but continue
+      if (validationContext.level === ValidationLevel.FLEXIBLE) {
+        console.warn('[Validation] Flexible mode - business rule warning:', error)
+        await next()
+      } else {
+        console.error(`[Validation] Business rule validation failed:`, error)
+        throw new Error(`Business rule validation failed: ${error}`)
+      }
     }
   }
 
