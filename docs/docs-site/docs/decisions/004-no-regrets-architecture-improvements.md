@@ -4,7 +4,7 @@ type: "decision"
 audience: ["developer", "agent"]
 contexts: ["architecture", "refactoring", "optimization", "tech-debt", "validation", "unified-schemas", "event-system", "validation-flexibility"]
 complexity: "intermediate"
-last_updated: "2025-09-25"
+last_updated: "2025-09-26"
 version: "1.1"
 agent_roles: ["refactoring-assistant", "architecture-optimizer"]
 related:

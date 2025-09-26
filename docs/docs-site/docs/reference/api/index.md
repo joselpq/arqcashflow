@@ -4,7 +4,7 @@ type: "reference"
 audience: ["developer", "agent"]
 contexts: ["api", "rest", "documentation"]
 complexity: "intermediate"
-last_updated: "2025-09-25"
+last_updated: "2025-09-26"
 version: "1.0"
 agent_roles: ["api-developer", "integration-engineer"]
 ---
@@ -59,4 +59,4 @@ All data operations are automatically filtered by team context for multi-tenant 
 
 ---
 
-*This documentation is auto-generated from the codebase. Last updated: 2025-09-25*
+*This documentation is auto-generated from the codebase. Last updated: 2025-09-26*

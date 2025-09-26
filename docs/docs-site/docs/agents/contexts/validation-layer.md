@@ -2,16 +2,16 @@
 title: "Validation Layer Context for LLM Agents"
 type: "context"
 audience: ["agent", "developer"]
-contexts: ["validation", "schemas", "unified-validation", "zod", "type-safety"]
+contexts: ["validation", "schemas", "unified-validation", "zod", "type-safety", "cuid-validation", "id-format-validation"]
 complexity: "intermediate"
-last_updated: "2025-09-25"
+last_updated: "2025-09-26"
 version: "1.0"
 agent_roles: ["validation-architect", "api-developer", "schema-maintainer"]
 related:
   - decisions/004-no-regrets-architecture-improvements.md
   - agents/patterns/error-handling.md
   - developer/architecture/overview.md
-dependencies: ["zod", "typescript", "unified-validation-layer"]
+dependencies: ["zod", "typescript", "unified-validation-layer", "cuid", "base-field-schemas"]
 ---
 
 # Validation Layer Context for LLM Agents
@@ -122,6 +122,12 @@ BaseFieldSchemas.description     // Optional descriptions
 BaseFieldSchemas.dateString      // Date validation (YYYY-MM-DD)
 BaseFieldSchemas.url             // URL validation
 BaseFieldSchemas.invoiceNumber   // Invoice/reference numbers
+
+// ✅ CUID ID Validation (Updated 2025-09-26)
+BaseFieldSchemas.id              // CUID format (25 chars, /^c[a-z0-9]{24}$/)
+BaseFieldSchemas.teamId          // Team CUID validation
+BaseFieldSchemas.userId          // User CUID validation
+BaseFieldSchemas.contractId      // Contract CUID validation (optional/nullable)
 ```
 
 ### 2. Enum Schemas (`EnumSchemas`)
