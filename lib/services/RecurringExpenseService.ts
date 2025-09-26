@@ -13,12 +13,13 @@
  * - Business rule validation
  */
 
-import { RecurringExpense, Contract, User } from '@prisma/client'
+import { RecurringExpense, Contract, User, Expense } from '@prisma/client'
 import { BaseService, ServiceContext, ServiceError, ValidationUtils } from './BaseService'
 import { RecurringExpenseSchemas, BusinessRuleValidation } from '@/lib/validation/financial'
 import { createDateForStorage } from '@/lib/date-utils'
 import { auditCreate, auditUpdate, auditDelete } from '@/lib/audit-middleware'
 import { z } from 'zod'
+import { addMonths, addWeeks, addYears, isBefore, isAfter, startOfDay, endOfDay } from 'date-fns'
 
 // Type definitions
 export interface RecurringExpenseWithRelations extends RecurringExpense {
@@ -88,6 +89,24 @@ export interface RecurringExpenseSummary {
   byFrequency: Record<string, { count: number; amount: number }>
   byCategory: Record<string, { count: number; amount: number }>
   byType: Record<string, { count: number; amount: number }>
+}
+
+export interface SeriesGenerationOptions {
+  maxYears?: number // Maximum years to generate (default: 2)
+  maxInstances?: number // Maximum instances to generate (default: 100)
+  generatePast?: boolean // Whether to generate past expenses (default: true)
+}
+
+export interface SeriesUpdateScope {
+  scope: 'single' | 'future' | 'all'
+  targetExpenseId?: string // Required for 'single' scope
+}
+
+export interface SeriesGenerationResult {
+  recurringExpenseId: string
+  generatedCount: number
+  expenses: Expense[]
+  errors?: string[]
 }
 
 /**
@@ -219,7 +238,18 @@ export class RecurringExpenseService extends BaseService {
       await auditCreate(auditContext, 'recurring_expense', recurringExpense.id, recurringExpense)
     })
 
-    return recurringExpense as RecurringExpenseWithRelations
+    // Generate full series of expenses
+    const seriesResult = await this.generateFullSeries(recurringExpense.id)
+
+    // Return recurring expense with generated expenses
+    const recurringExpenseWithSeries = await this.findById(recurringExpense.id, {
+      includeContract: true,
+      includeUser: true,
+      includeExpenses: true,
+      expensesLimit: 10
+    })
+
+    return recurringExpenseWithSeries as RecurringExpenseWithRelations
   }
 
   /**
@@ -507,5 +537,311 @@ export class RecurringExpenseService extends BaseService {
     }
 
     return summary
+  }
+
+  /**
+   * Generate full series of expenses for a recurring expense
+   */
+  async generateFullSeries(
+    recurringExpenseId: string,
+    options: SeriesGenerationOptions = {}
+  ): Promise<SeriesGenerationResult> {
+    const {
+      maxYears = 2,
+      maxInstances = 100,
+      generatePast = true
+    } = options
+
+    const result: SeriesGenerationResult = {
+      recurringExpenseId,
+      generatedCount: 0,
+      expenses: [],
+      errors: []
+    }
+
+    try {
+      // Get the recurring expense
+      const recurringExpense = await this.findById(recurringExpenseId)
+      if (!recurringExpense) {
+        throw new ServiceError('Recurring expense not found', 'NOT_FOUND')
+      }
+
+      const now = new Date()
+      const startDate = new Date(recurringExpense.startDate)
+      const maxEndDate = addYears(now, maxYears)
+
+      // Determine the actual end date
+      let endDate = maxEndDate
+      if (recurringExpense.endDate && isBefore(recurringExpense.endDate, maxEndDate)) {
+        endDate = recurringExpense.endDate
+      }
+
+      // Generate expenses
+      let currentDate = new Date(startDate)
+      let instanceCount = 0
+
+      while (
+        !isAfter(currentDate, endDate) &&
+        instanceCount < maxInstances &&
+        (!recurringExpense.maxOccurrences || instanceCount < recurringExpense.maxOccurrences)
+      ) {
+        // Skip past expenses if generatePast is false
+        if (!generatePast && isBefore(currentDate, now)) {
+          currentDate = this.calculateNextDue(
+            currentDate,
+            recurringExpense.frequency,
+            recurringExpense.interval,
+            recurringExpense.dayOfMonth || undefined
+          )
+          continue
+        }
+
+        // Check if expense already exists for this date
+        const existingExpense = await this.context.teamScopedPrisma.expense.findFirst({
+          where: {
+            recurringExpenseId: recurringExpense.id,
+            dueDate: {
+              gte: startOfDay(currentDate),
+              lte: endOfDay(currentDate)
+            }
+          }
+        })
+
+        if (!existingExpense) {
+          // Generate expense description with date context
+          const dateStr = currentDate.toLocaleDateString('pt-BR')
+          const description = `${recurringExpense.description} (${dateStr})`
+
+          // Determine if past expense should be marked as paid
+          const isPastExpense = isBefore(currentDate, now)
+
+          // Create the expense
+          const expense = await this.context.teamScopedPrisma.expense.create({
+            data: {
+              description,
+              amount: recurringExpense.amount,
+              dueDate: currentDate,
+              category: recurringExpense.category,
+              status: isPastExpense && generatePast ? 'paid' : 'pending',
+              paidDate: isPastExpense && generatePast ? currentDate : null,
+              paidAmount: isPastExpense && generatePast ? recurringExpense.amount : null,
+              vendor: recurringExpense.vendor,
+              invoiceNumber: recurringExpense.invoiceNumber ?
+                `${recurringExpense.invoiceNumber}-${currentDate.getMonth() + 1}${currentDate.getFullYear()}` :
+                null,
+              type: recurringExpense.type,
+              isRecurring: true,
+              notes: isPastExpense && generatePast ?
+                `Generated from recurring expense: ${recurringExpense.description} (auto-marked as paid)` :
+                `Generated from recurring expense: ${recurringExpense.description}`,
+              recurringExpenseId: recurringExpense.id,
+              contractId: recurringExpense.contractId,
+              teamId: this.context.teamId
+            }
+          })
+
+          result.expenses.push(expense)
+          result.generatedCount++
+        }
+
+        instanceCount++
+
+        // Calculate next date
+        currentDate = this.calculateNextDue(
+          currentDate,
+          recurringExpense.frequency,
+          recurringExpense.interval,
+          recurringExpense.dayOfMonth || undefined
+        )
+      }
+
+      // Update recurring expense with generation info
+      await this.context.teamScopedPrisma.recurringExpense.update({
+        where: { id: recurringExpenseId },
+        data: {
+          generatedCount: result.generatedCount,
+          lastGenerated: now,
+          nextDue: currentDate // Next due after all generated
+        }
+      })
+
+    } catch (error) {
+      console.error('Error generating full series:', error)
+      result.errors?.push(error instanceof Error ? error.message : 'Unknown error')
+      throw error
+    }
+
+    return result
+  }
+
+  /**
+   * Update series of expenses with different scopes
+   */
+  async updateExpenseSeries(
+    recurringExpenseId: string,
+    data: RecurringExpenseUpdateData,
+    updateScope: SeriesUpdateScope
+  ): Promise<{ updatedCount: number }> {
+    // Get the recurring expense
+    const recurringExpense = await this.findById(recurringExpenseId)
+    if (!recurringExpense) {
+      throw new ServiceError('Recurring expense not found', 'NOT_FOUND')
+    }
+
+    let updatedCount = 0
+    const now = new Date()
+
+    // Build the where clause based on scope
+    const whereClause: any = {
+      recurringExpenseId,
+      teamId: this.context.teamId
+    }
+
+    switch (updateScope.scope) {
+      case 'single':
+        if (!updateScope.targetExpenseId) {
+          throw new ServiceError('Target expense ID required for single update', 'INVALID_REQUEST')
+        }
+        whereClause.id = updateScope.targetExpenseId
+        break
+
+      case 'future':
+        whereClause.dueDate = { gte: now }
+        whereClause.status = 'pending' // Only update unpaid future expenses
+        break
+
+      case 'all':
+        // No additional filters - update all expenses in the series
+        break
+    }
+
+    // Prepare update data for expenses
+    const expenseUpdateData: any = {}
+    if (data.amount !== undefined) expenseUpdateData.amount = data.amount
+    if (data.description !== undefined) expenseUpdateData.description = data.description
+    if (data.category !== undefined) expenseUpdateData.category = data.category
+    if (data.vendor !== undefined) expenseUpdateData.vendor = data.vendor
+    if (data.type !== undefined) expenseUpdateData.type = data.type
+    if (data.notes !== undefined) expenseUpdateData.notes = data.notes
+
+    // Update the expenses
+    const updateResult = await this.context.teamScopedPrisma.expense.updateMany({
+      where: whereClause,
+      data: expenseUpdateData
+    })
+
+    updatedCount = updateResult.count
+
+    // If updating all or future, also update the recurring expense template
+    if (updateScope.scope !== 'single') {
+      await this.update(recurringExpenseId, data)
+    }
+
+    // Audit logging
+    await this.logAudit(async () => {
+      const auditContext = this.createAuditContext('expense_series_update')
+      await auditUpdate(auditContext, 'expense_series', recurringExpenseId, {
+        scope: updateScope.scope,
+        updatedCount,
+        ...data
+      }, null)
+    })
+
+    return { updatedCount }
+  }
+
+  /**
+   * Delete series of expenses with different scopes
+   */
+  async deleteExpenseSeries(
+    recurringExpenseId: string,
+    deleteScope: SeriesUpdateScope
+  ): Promise<{ deletedCount: number }> {
+    // Get the recurring expense
+    const recurringExpense = await this.findById(recurringExpenseId)
+    if (!recurringExpense) {
+      throw new ServiceError('Recurring expense not found', 'NOT_FOUND')
+    }
+
+    let deletedCount = 0
+    const now = new Date()
+
+    // Build the where clause based on scope
+    const whereClause: any = {
+      recurringExpenseId,
+      teamId: this.context.teamId
+    }
+
+    switch (deleteScope.scope) {
+      case 'single':
+        if (!deleteScope.targetExpenseId) {
+          throw new ServiceError('Target expense ID required for single deletion', 'INVALID_REQUEST')
+        }
+        whereClause.id = deleteScope.targetExpenseId
+        break
+
+      case 'future':
+        whereClause.dueDate = { gte: now }
+        whereClause.status = 'pending' // Only delete unpaid future expenses
+        break
+
+      case 'all':
+        // Delete all expenses in the series
+        break
+    }
+
+    // Delete the expenses
+    const deleteResult = await this.context.teamScopedPrisma.expense.deleteMany({
+      where: whereClause
+    })
+
+    deletedCount = deleteResult.count
+
+    // If deleting all, also delete the recurring expense template
+    if (deleteScope.scope === 'all') {
+      await this.delete(recurringExpenseId)
+    } else if (deleteScope.scope === 'future') {
+      // If deleting future, mark recurring expense as inactive
+      await this.update(recurringExpenseId, { isActive: false })
+    }
+
+    // Audit logging
+    await this.logAudit(async () => {
+      const auditContext = this.createAuditContext('expense_series_deletion')
+      await auditDelete(auditContext, 'expense_series', recurringExpenseId, {
+        scope: deleteScope.scope,
+        deletedCount
+      })
+    })
+
+    return { deletedCount }
+  }
+
+  /**
+   * Regenerate series when frequency/interval changes
+   */
+  async regenerateSeries(
+    recurringExpenseId: string,
+    preservePaidExpenses = true
+  ): Promise<SeriesGenerationResult> {
+    // Get the recurring expense
+    const recurringExpense = await this.findById(recurringExpenseId)
+    if (!recurringExpense) {
+      throw new ServiceError('Recurring expense not found', 'NOT_FOUND')
+    }
+
+    // Delete future unpaid expenses
+    const deleteScope: SeriesUpdateScope = {
+      scope: preservePaidExpenses ? 'future' : 'all'
+    }
+
+    await this.deleteExpenseSeries(recurringExpenseId, deleteScope)
+
+    // Generate new series
+    const result = await this.generateFullSeries(recurringExpenseId, {
+      generatePast: !preservePaidExpenses
+    })
+
+    return result
   }
 }

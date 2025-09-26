@@ -53,7 +53,20 @@ The DOING section tracks **active work with detailed progress**:
 ### 🔄 DOING (Currently In Progress)
 *Active work with real-time progress tracking. Can persist between sessions if work is incomplete.*
 
-**Currently empty - all priorities completed**
+#### Recurring Expenses Full Series Generation
+**Status**: 80% complete - Backend done, UI pending
+**Started**: 2025-09-26
+**Sub-tasks**:
+- [x] Analyze current implementation
+- [x] Design full series generation approach
+- [x] Update RecurringExpenseService with new methods
+- [x] Add API endpoints for series management
+- [x] Implement series update/delete with scopes
+- [x] Test with multiple scenarios
+- [x] Create documentation
+- [ ] Update UI components for series visualization
+- [ ] Add user controls for update/delete scope selection
+**Next step**: UI implementation for series management
 
 ---
 
@@ -68,15 +81,7 @@ The DOING section tracks **active work with detailed progress**:
 - **Files**: New decision document, agent implementations
 - **Added**: 2025-09-26 from product strategy discussion
 
-#### 2. **Recurring Expenses Full Series Generation**
-- **Problem**: Currently creates past expenses + cron for future, should create full series upfront
-- **Context**: Users need to see complete financial timeline immediately
-- **Solution**: Generate all recurring expense instances when creating recurring expense
-- **Priority**: HIGH
-- **Files**: `RecurringExpenseService.ts`, related APIs
-- **Added**: 2025-09-26 from product improvement list
-
-#### 3. **Advanced Filtering & Date Navigation**
+#### 2. **Advanced Filtering & Date Navigation**
 - **Problem**: Current filtering limited, recurring expenses may pollute views
 - **Context**: Users need user-friendly way to filter by dates, projects, clients
 - **Solution**: Smart date ranges, context-aware filters, quick navigation
@@ -84,7 +89,7 @@ The DOING section tracks **active work with detailed progress**:
 - **Files**: Filter components, API query parameters
 - **Added**: 2025-09-26 from product improvement list
 
-#### 4. **Multi-Document Processing in Onboarding**
+#### 3. **Multi-Document Processing in Onboarding**
 - **Problem**: Currently single document upload, need multiple document processing
 - **Context**: Users want to upload multiple contracts/invoices during setup
 - **Solution**: Batch document processing with AI extraction
@@ -92,7 +97,7 @@ The DOING section tracks **active work with detailed progress**:
 - **Files**: Onboarding flow, document processing APIs
 - **Added**: 2025-09-26 from product improvement list
 
-#### 5. **Email Verification Implementation**
+#### 4. **Email Verification Implementation**
 - **Problem**: No email verification during onboarding
 - **Context**: Security and user validation requirement
 - **Solution**: Email verification flow with confirmation links

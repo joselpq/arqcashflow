@@ -44,7 +44,9 @@ export interface TeamScopedPrismaClient {
     findFirst: (args?: any) => Promise<any>
     create: (args: any) => Promise<any>
     update: (args: any) => Promise<any>
+    updateMany: (args: any) => Promise<any>
     delete: (args: any) => Promise<any>
+    deleteMany: (args: any) => Promise<any>
     count: (args?: any) => Promise<number>
   }
   recurringExpense: {
@@ -129,9 +131,17 @@ export function createTeamScopedPrisma(teamId: string): TeamScopedPrismaClient {
       const scopedArgs = ensureTeamScope(args)
       return (prisma[entityName] as any).update(scopedArgs)
     },
+    updateMany: (args: any) => {
+      const scopedArgs = ensureTeamScope(args)
+      return (prisma[entityName] as any).updateMany(scopedArgs)
+    },
     delete: (args: any) => {
       const scopedArgs = ensureTeamScope(args)
       return (prisma[entityName] as any).delete(scopedArgs)
+    },
+    deleteMany: (args: any) => {
+      const scopedArgs = ensureTeamScope(args)
+      return (prisma[entityName] as any).deleteMany(scopedArgs)
     },
     count: (args?: any) => {
       const scopedArgs = ensureTeamScope(args)
