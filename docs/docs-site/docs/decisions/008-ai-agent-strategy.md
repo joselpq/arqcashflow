@@ -313,7 +313,7 @@ await eventBus.emit({
 ## 🎯 **Success Metrics**
 
 ### **User Experience Metrics**
-- **Time to Value**: Onboarding completion time (target: <15 minutes)
+- **Time to Value**: Onboarding completion time (target: `<15` minutes)
 - **Query Resolution**: % of questions answered accurately without clarification
 - **Error Prevention**: % of data issues caught before user notices
 - **Insight Relevance**: User rating of business insights provided

@@ -414,8 +414,13 @@ cd .. && npm run build
 ### Common Issues & Solutions
 
 **MDX Build Errors**
-- Problem: Curly braces `{}` in tables
-- Solution: Wrap JSON examples in backticks
+- Problem: Curly braces `{}` in tables and special characters `<`, `>` followed by numbers
+- Solution: Wrap JSON examples and comparison operators in backticks
+- Examples:
+  - `{key: "value"}` instead of {key: "value"}
+  - `<15` instead of <15
+  - `>100` instead of >100
+  - `≥3MB` instead of ≥3MB (when followed by potential tag-like patterns)
 
 **Broken Links**
 - Problem: Incorrect relative paths
