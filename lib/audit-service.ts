@@ -82,12 +82,41 @@ export async function logStatusChange(
 /**
  * Helper function to detect changes between old and new data
  * Returns only the fields that actually changed
+ *
+ * This function is designed to be defensive against null/undefined inputs
+ * to prevent audit logging failures from breaking main operations.
  */
 export function detectChanges(
-  oldData: Record<string, any>,
-  newData: Record<string, any>
+  oldData: Record<string, any> | null | undefined,
+  newData: Record<string, any> | null | undefined
 ): Record<string, { from: any; to: any }> {
   const changes: Record<string, { from: any; to: any }> = {}
+
+  // Handle null/undefined inputs gracefully
+  if (!newData || typeof newData !== 'object') {
+    // If newData is null/undefined but oldData exists, it means data was deleted/cleared
+    if (oldData && typeof oldData === 'object') {
+      // Record all old fields as being cleared
+      for (const [key, oldValue] of Object.entries(oldData)) {
+        changes[key] = {
+          from: oldValue,
+          to: null
+        }
+      }
+    }
+    return changes
+  }
+
+  if (!oldData || typeof oldData !== 'object') {
+    // If oldData is null/undefined but newData exists, all fields are new
+    for (const [key, newValue] of Object.entries(newData)) {
+      changes[key] = {
+        from: null,
+        to: newValue
+      }
+    }
+    return changes
+  }
 
   // Check each field in newData for changes
   for (const [key, newValue] of Object.entries(newData)) {

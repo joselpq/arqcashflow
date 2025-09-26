@@ -737,14 +737,15 @@ export class RecurringExpenseService extends BaseService {
       await this.update(recurringExpenseId, data)
     }
 
-    // Audit logging
+    // Audit logging for bulk series update
     await this.logAudit(async () => {
       const auditContext = this.createAuditContext('expense_series_update')
-      await auditUpdate(auditContext, 'expense_series', recurringExpenseId, {
+      await auditUpdate(auditContext, 'recurring_expense', recurringExpenseId, null, {
+        action: 'bulk_update_series',
         scope: updateScope.scope,
         updatedCount,
-        ...data
-      }, null)
+        updateData: data
+      })
     })
 
     return { updatedCount }
@@ -805,10 +806,11 @@ export class RecurringExpenseService extends BaseService {
       await this.update(recurringExpenseId, { isActive: false })
     }
 
-    // Audit logging
+    // Audit logging for bulk series deletion
     await this.logAudit(async () => {
       const auditContext = this.createAuditContext('expense_series_deletion')
-      await auditDelete(auditContext, 'expense_series', recurringExpenseId, {
+      await auditDelete(auditContext, 'recurring_expense', recurringExpenseId, {
+        action: 'bulk_delete_series',
         scope: deleteScope.scope,
         deletedCount
       })
