@@ -12,7 +12,7 @@
  * - AI ready: Clean interfaces for Claude integration
  */
 
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { withTeamContext } from '@/lib/middleware/team-context'
 import { ExpenseService } from '@/lib/services/ExpenseService'
 
@@ -58,17 +58,7 @@ export async function POST(request: NextRequest) {
     const expense = await expenseService.create(body)
 
     return { expense }
-  }).then(result => NextResponse.json(result, { status: 201 }))
-    .catch(error => {
-      if (error instanceof Error && error.message === "Unauthorized") {
-        return NextResponse.json({ error: 'Unauthorized - User must belong to a team' }, { status: 401 })
-      }
-      if (error.name === 'ZodError') {
-        return NextResponse.json({ error: error.errors }, { status: 400 })
-      }
-      console.error('Expense creation error:', error)
-      return NextResponse.json({ error: 'Failed to create expense' }, { status: 500 })
-    })
+  })
 }
 
 /**

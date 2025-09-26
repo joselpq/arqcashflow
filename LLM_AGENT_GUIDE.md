@@ -313,9 +313,34 @@ npm run dev
 npx prisma studio         # View database
 npx prisma migrate dev     # Run migrations
 
-# Testing
+# Testing (CRITICAL: ALWAYS use port 3010 for testing)
+PORT=3010 npm run dev      # Start test server
 npm run build             # Test production build
 npm run lint              # Check code quality
+
+# Testing Protocol Commands
+lsof -ti:3010 | xargs kill -9 2>/dev/null  # Clear port 3010 before testing
+```
+
+### 🧪 **CRITICAL: Testing Protocol**
+
+**MANDATORY TESTING RULES:**
+1. **ALWAYS** use port 3010 for testing (never 3000, never 3001)
+2. **ALWAYS** clear port 3010 before starting tests: `lsof -ti:3010 | xargs kill -9`
+3. **ALWAYS** start test server with: `PORT=3010 npm run dev`
+4. **ALWAYS** use `http://localhost:3010` in test scripts
+5. **NEVER** use default port 3000 for testing (reserved for production dev)
+
+**Testing Sequence:**
+```bash
+# 1. Clear port
+lsof -ti:3010 | xargs kill -9 2>/dev/null
+
+# 2. Start test server
+PORT=3010 npm run dev
+
+# 3. Run tests (in another terminal)
+npx tsx test-crud-operations.ts
 ```
 
 ### Documentation
