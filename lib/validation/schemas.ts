@@ -12,10 +12,19 @@ import { z } from 'zod'
  */
 export const BaseFieldSchemas = {
   // Identity and references
-  id: z.string().uuid('Invalid ID format'),
-  teamId: z.string().uuid('Invalid team ID format'),
-  userId: z.string().min(1, 'User ID is required'),
-  contractId: z.string().uuid('Invalid contract ID format').optional().nullable()
+  id: z.string()
+    .length(25, 'Invalid ID format')
+    .regex(/^c[a-z0-9]{24}$/, 'Invalid CUID format'),
+  teamId: z.string()
+    .length(25, 'Invalid team ID format')
+    .regex(/^c[a-z0-9]{24}$/, 'Invalid CUID team ID format'),
+  userId: z.string()
+    .length(25, 'Invalid user ID format')
+    .regex(/^c[a-z0-9]{24}$/, 'Invalid CUID user ID format'),
+  contractId: z.string()
+    .length(25, 'Invalid contract ID format')
+    .regex(/^c[a-z0-9]{24}$/, 'Invalid CUID contract ID format')
+    .optional().nullable()
     .transform(val => val === '' ? null : val),
 
   // Financial fields

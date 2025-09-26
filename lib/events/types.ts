@@ -13,11 +13,11 @@ import { BaseFieldSchemas, EnumSchemas } from '@/lib/validation'
  * All events must extend this base structure
  */
 export const BaseEventSchema = z.object({
-  id: z.string().uuid(),
+  id: BaseFieldSchemas.id,
   type: z.string().min(1),
   timestamp: z.date(),
   teamId: BaseFieldSchemas.teamId,
-  userId: z.string().optional(),
+  userId: BaseFieldSchemas.userId.optional(),
   source: z.enum(['api', 'service', 'ui', 'ai', 'system']),
   metadata: z.record(z.unknown()).optional(),
 })

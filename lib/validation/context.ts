@@ -192,7 +192,7 @@ export class ContextAwareSchema<T extends z.ZodType> {
         return schema
 
       case ValidationLevel.FLEXIBLE:
-        // Make more fields optional, allow coercion
+        // Make more fields optional, allow coercion, relax validation constraints
         let flexibleSchema = schema
         if (context.allowPartialData) {
           flexibleSchema = this.makePartial(flexibleSchema)
@@ -200,6 +200,7 @@ export class ContextAwareSchema<T extends z.ZodType> {
         if (context.coerceTypes) {
           flexibleSchema = this.addTypeCoercion(flexibleSchema)
         }
+        // Note: UUID constraint relaxation removed - now using proper CUID validation
         return flexibleSchema
 
       case ValidationLevel.MINIMAL:
@@ -375,6 +376,9 @@ export class ContextAwareSchema<T extends z.ZodType> {
 
     return schema
   }
+
+  // Note: UUID validation constraint relaxation methods removed
+  // The root cause (UUID vs CUID mismatch) has been fixed in BaseFieldSchemas
 }
 
 /**

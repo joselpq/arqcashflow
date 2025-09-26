@@ -6,7 +6,7 @@
  */
 
 import { EventEmitter } from 'events'
-import { v4 as uuidv4 } from 'uuid'
+import cuid from 'cuid'
 import { prisma } from '@/lib/prisma'
 import type {
   EventBus,
@@ -17,7 +17,7 @@ import type {
 } from './types'
 import { EventTypes } from './types'
 import { EventSchemas } from './types'
-import { ValidationError, validateSchema } from '@/lib/validation'
+import { ValidationError, validateSchema, validateWithContext, DEFAULT_CONTEXTS } from '@/lib/validation'
 
 /**
  * Event Persistence Interface
@@ -254,9 +254,9 @@ export class ArqEventBus implements EventBus {
         schema = EventSchemas.system
     }
 
-    // Validate using unified validation layer
+    // Validate using context-aware flexible validation for events
     try {
-      validateSchema(schema)(event)
+      validateWithContext(schema, event, DEFAULT_CONTEXTS.event)
     } catch (error) {
       throw new Error(`Event validation failed: ${error}`)
     }
@@ -316,7 +316,7 @@ export class ArqEventBus implements EventBus {
   private async emitSystemError(originalEvent: EventPayload, error: Error): Promise<void> {
     try {
       const errorEvent: EventPayload = {
-        id: uuidv4(),
+        id: cuid(),
         type: EventTypes.SERVICE_ERROR,
         timestamp: new Date(),
         teamId: originalEvent.teamId,
@@ -394,7 +394,7 @@ export function createTeamEventBus(teamId: string, userId?: string) {
       eventData: T & { source: EventPayload['source'] }
     ): Promise<void> {
       const event: EventPayload = {
-        id: uuidv4(),
+        id: cuid(),
         timestamp: new Date(),
         teamId,
         userId,

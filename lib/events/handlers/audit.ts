@@ -10,6 +10,24 @@ import { EventTypes } from '../types'
 import { prisma } from '@/lib/prisma'
 
 /**
+ * Helper function to get user email from userId
+ */
+async function getUserEmail(userId: string | undefined): Promise<string> {
+  if (!userId) return 'system@arqcashflow.com'
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true }
+    })
+    return user?.email || 'unknown@arqcashflow.com'
+  } catch (error) {
+    console.warn(`[Audit] Failed to fetch user email for userId ${userId}:`, error)
+    return 'unknown@arqcashflow.com'
+  }
+}
+
+/**
  * Audit Trail Handlers
  */
 class AuditTrailHandlers {
@@ -22,15 +40,19 @@ class AuditTrailHandlers {
     console.log(`[Audit] Logging financial event: ${event.type} - ${event.id}`)
 
     try {
+      const userEmail = await getUserEmail(context.userId)
+
       await prisma.auditLog.create({
         data: {
           id: `audit_${event.id}`,
           teamId: context.teamId,
-          userId: context.userId,
+          userId: context.userId || 'system',
+          userEmail,
           entityType: event.type.split('.')[0], // contract, receivable, expense
           entityId: AuditTrailHandlers.extractEntityId(event),
           action: event.type.split('.')[1], // created, updated, paid, etc.
           timestamp: context.timestamp,
+          changes: event.payload || {},
           metadata: {
             eventId: event.id,
             eventType: event.type,
@@ -65,15 +87,19 @@ class AuditTrailHandlers {
     console.log(`[Audit] Logging auth event: ${event.type} - ${event.id}`)
 
     try {
+      const userEmail = await getUserEmail(context.userId)
+
       await prisma.auditLog.create({
         data: {
           id: `audit_${event.id}`,
           teamId: context.teamId,
-          userId: context.userId,
+          userId: context.userId || 'system',
+          userEmail,
           entityType: 'authentication',
           entityId: context.userId || 'unknown',
           action: event.type,
           timestamp: context.timestamp,
+          changes: event.payload || {},
           metadata: {
             eventId: event.id,
             eventType: event.type,
@@ -104,15 +130,19 @@ class AuditTrailHandlers {
     console.log(`[Audit] Logging AI event: ${event.type} - ${event.id}`)
 
     try {
+      const userEmail = await getUserEmail(context.userId)
+
       await prisma.auditLog.create({
         data: {
           id: `audit_${event.id}`,
           teamId: context.teamId,
-          userId: context.userId,
+          userId: context.userId || 'system',
+          userEmail,
           entityType: 'ai_processing',
           entityId: event.payload?.documentId || event.id,
           action: event.type,
           timestamp: context.timestamp,
+          changes: event.payload || {},
           metadata: {
             eventId: event.id,
             eventType: event.type,
@@ -220,15 +250,19 @@ class SecurityMonitoringHandlers {
       console.log(`[Security] Large bulk operation detected: ${payload.itemCount} items`)
 
       // Log high-volume operation
+      const userEmail = await getUserEmail(context.userId)
+
       await prisma.auditLog.create({
         data: {
           id: `security_${event.id}`,
           teamId: context.teamId,
-          userId: context.userId,
+          userId: context.userId || 'system',
+          userEmail,
           entityType: 'security_alert',
           entityId: event.id,
           action: 'bulk_operation_alert',
           timestamp: context.timestamp,
+          changes: { alertType: 'bulk_operation', itemCount: payload.itemCount },
           metadata: {
             alertType: 'high_volume_operation',
             itemCount: payload.itemCount,
@@ -258,15 +292,19 @@ class SecurityMonitoringHandlers {
 
     console.log(`[Security] High-value transaction detected: $${amount}`)
 
+    const userEmail = await getUserEmail(context.userId)
+
     await prisma.auditLog.create({
       data: {
         id: `security_${event.id}`,
         teamId: context.teamId,
-        userId: context.userId,
+        userId: context.userId || 'system',
+        userEmail,
         entityType: 'security_alert',
         entityId: event.id,
         action: 'high_value_transaction',
         timestamp: context.timestamp,
+        changes: { amount, threshold: 50000, eventType: event.type },
         metadata: {
           alertType: 'high_value_transaction',
           amount,
@@ -294,15 +332,19 @@ class PerformanceMonitoringHandlers {
       if (processingTime > 5000) { // Slow event processing (>5s)
         console.log(`[Performance] Slow event processing detected: ${processingTime}ms for ${event.type}`)
 
+        const userEmail = await getUserEmail(context.userId)
+
         await prisma.auditLog.create({
           data: {
             id: `perf_${event.id}`,
             teamId: context.teamId,
-            userId: context.userId,
+            userId: context.userId || 'system',
+            userEmail,
             entityType: 'performance_alert',
             entityId: event.id,
             action: 'slow_processing',
             timestamp: context.timestamp,
+            changes: { processingTime, threshold: 5000 },
             metadata: {
               alertType: 'slow_event_processing',
               processingTime,
