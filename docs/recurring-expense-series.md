@@ -1,5 +1,16 @@
 # Recurring Expense Full Series Generation
 
+## Context for LLM Agents
+
+**Scope**: Complete implementation of recurring expense full series generation, replacing cron-based future generation with immediate upfront creation
+**Prerequisites**: Understanding of RecurringExpenseService architecture, team-scoped Prisma operations, and audit logging patterns
+**Key Patterns**:
+- Immediate full series generation (2-year cap or endDate limit)
+- Scope-based operations (single, future, all) for updates/deletions
+- Defensive programming for audit logging with null/undefined inputs
+- Team isolation enforcement for all bulk operations
+- Status-based expense management (past=paid, future=pending)
+
 ## Overview
 
 The ArqCashflow platform now supports **full series generation** for recurring expenses. When you create a recurring expense, the system immediately generates all expense instances upfront (up to 2 years or until the specified end date), providing complete visibility of your financial timeline.

@@ -1,8 +1,8 @@
 ---
-title: "Receivables API"
+title: "Series API"
 type: "reference"
 audience: ["developer", "agent"]
-contexts: ["api", "receivables", "rest", "database"]
+contexts: ["api", "series", "rest", "database"]
 complexity: "intermediate"
 last_updated: "2025-09-26"
 version: "1.0"
@@ -10,16 +10,19 @@ agent_roles: ["api-developer", "integration-engineer"]
 related:
   - developer/architecture/overview.md
   - agents/contexts/contract-management.md
+  - decisions/008-ai-agent-strategy.md
+  - reference/api/recurring-expenses-by-id.md
+  - reference/api/recurring-expenses.md
 dependencies: ["next.js", "prisma", "zod"]
 ---
 
-# Receivables API
+# Series API
 
-Comprehensive API reference for receivables management operations.
+Comprehensive API reference for series management operations.
 
 ## Context for LLM Agents
 
-**Scope**: Complete receivables API operations including CRUD, filtering, sorting, and business logic
+**Scope**: Complete series API operations including CRUD, filtering, sorting, and business logic
 **Prerequisites**: Understanding of REST APIs, Next.js App Router, Prisma ORM, and team-based data isolation
 **Key Patterns**:
 - RESTful endpoint design with standard HTTP methods
@@ -30,52 +33,17 @@ Comprehensive API reference for receivables management operations.
 
 ## Endpoint Overview
 
-**Base URL**: `/api/receivables`
-**Methods**: GET, POST
+**Base URL**: `/api/recurring-expenses/:id/series`
+**Methods**: PATCH, DELETE, POST
 **Authentication**: None
 **Team Isolation**: No
 
 
-## GET /api/receivables
-
-Retrieve receivables records with optional filtering and sorting.
-
-### Query Parameters
-
-| Parameter | Type | Description | Default |
-|-----------|------|-------------|---------|
-| `sortBy` | string | Sort field | `createdAt` |
-| `sortOrder` | string | Sort direction (`asc`/`desc`) | `desc` |
-| `status` | string | Filter by status | `all` |
-| `category` | string | Filter by category | `all` |
-
-### Example Request
-
-```bash
-curl -X GET "http://localhost:3000/api/receivables?status=active&sortBy=createdAt&sortOrder=desc" \
-  -H "Content-Type: application/json"
-```
-
-### Response Format
-
-```typescript
-interface ReceivablesResponse {
-  data: Receivables[];
-  total: number;
-  filters: {
-    status: string;
-    category?: string;
-    sortBy: string;
-    sortOrder: 'asc' | 'desc';
-  };
-}
-```
 
 
+## POST /api/recurring-expenses/:id/series
 
-## POST /api/receivables
-
-Create a new receivables record.
+Create a new series record.
 
 ### Request Body
 
@@ -84,10 +52,10 @@ Create a new receivables record.
 ### Example Request
 
 ```bash
-curl -X POST "http://localhost:3000/api/receivables" \
+curl -X POST "http://localhost:3000/api/recurring-expenses/:id/series" \
   -H "Content-Type: application/json" \
   -d '{
-    "example": "Request body will be populated based on the specific receivables schema"
+    "example": "Request body will be populated based on the specific series schema"
   }'
 ```
 
@@ -95,7 +63,7 @@ curl -X POST "http://localhost:3000/api/receivables" \
 
 ```typescript
 interface CreateResponse {
-  data: Receivables;
+  data: Series;
   alerts?: AIAlert[];
 }
 ```
@@ -103,6 +71,24 @@ interface CreateResponse {
 
 
 
+
+## DELETE /api/recurring-expenses/:id/`{id}`
+
+Delete a series record.
+
+⚠️ **Warning**: This operation may cascade to related records. Use with caution.
+
+### Path Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `id` | string | Series ID |
+
+### Example Request
+
+```bash
+curl -X DELETE "http://localhost:3000/api/recurring-expenses/:id/series/clx123456789"
+```
 
 
 ## Error Handling

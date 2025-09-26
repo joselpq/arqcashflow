@@ -2,9 +2,9 @@
 title: "LLM Agent Guide: ArqCashflow Project"
 type: "guide"
 audience: ["agent", "developer"]
-contexts: ["automation", "ci-cd", "documentation", "health-monitoring", "code-validation", "search", "service-layer", "api-migration", "auto-generation", "phase3-migration", "receivables-api", "expenses-api", "recurring-expenses-api", "recurring-expenses-service", "bulk-operations-fix", "teamscoped-prisma", "crud-testing", "precision-validation", "unified-validation", "schema-consolidation", "event-system", "event-driven-architecture"]
+contexts: ["automation", "ci-cd", "documentation", "health-monitoring", "code-validation", "search", "service-layer", "api-migration", "auto-generation", "phase3-migration", "receivables-api", "expenses-api", "recurring-expenses-api", "recurring-expenses-service", "bulk-operations-fix", "teamscoped-prisma", "crud-testing", "precision-validation", "unified-validation", "schema-consolidation", "event-system", "event-driven-architecture", "recurring-expense-series", "full-series-generation", "audit-logging", "mdx-compilation", "defensive-programming"]
 complexity: "intermediate"
-last_updated: "2025-09-25"
+last_updated: "2025-09-26"
 version: "2.2"
 agent_roles: ["documentation-maintainer", "automation-specialist", "health-monitor", "service-migration-specialist", "api-developer", "validation-architect", "event-architect"]
 related:

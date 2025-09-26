@@ -38,6 +38,7 @@ Comprehensive API documentation for ArqCashflow REST endpoints.
 - [Receivables API](./receivables.md)
 - [Recurring-expenses-by-id-generate API](./recurring-expenses-by-id-generate.md)
 - [Recurring-expenses-by-id API](./recurring-expenses-by-id.md)
+- [Recurring-expenses-by-id-series API](./recurring-expenses-by-id-series.md)
 - [Recurring-expenses API](./recurring-expenses.md)
 
 ## General Information
