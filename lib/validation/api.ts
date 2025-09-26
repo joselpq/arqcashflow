@@ -204,7 +204,11 @@ export const FileSchemas = {
 
   // Multiple file upload
   uploadMultiple: z.object({
-    files: z.array(FileSchemas.upload.shape.file).max(5, 'Cannot upload more than 5 files at once'),
+    files: z.array(z.object({
+      name: z.string().min(1, 'File name is required'),
+      type: z.string().min(1, 'File type is required'),
+      size: z.number().max(50 * 1024 * 1024, 'File size must be less than 50MB'),
+    })).max(5, 'Cannot upload more than 5 files at once'),
     category: z.enum(['receipt', 'contract', 'invoice', 'document']).optional(),
     description: BaseFieldSchemas.description,
   }),

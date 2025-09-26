@@ -33,7 +33,7 @@ export async function PUT(
 ) {
   return withTeamContext(async (context) => {
     const { id } = await params
-    const body = await request.json()
+    const body = await (request as any).json()
 
     const expenseService = new ExpenseService(context)
     const expense = await expenseService.update(id, body)

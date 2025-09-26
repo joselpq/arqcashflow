@@ -10,8 +10,6 @@ agent_roles: ["api-developer", "integration-engineer"]
 related:
   - developer/architecture/overview.md
   - agents/contexts/contract-management.md
-  - decisions/006-service-layer-migration-plan.md
-  - reference/api/recurring-expenses.md
 dependencies: ["next.js", "prisma", "zod"]
 ---
 
@@ -21,23 +19,21 @@ Comprehensive API reference for recurring-expenses Item management operations.
 
 ## Context for LLM Agents
 
-**Scope**: Service layer migrated recurring expense API with full CRUD operations, validation, and audit logging
-**Prerequisites**: Understanding of REST APIs, Next.js App Router, RecurringExpenseService, and team-based data isolation
+**Scope**: Complete recurring-expenses Item API operations including CRUD, filtering, sorting, and business logic
+**Prerequisites**: Understanding of REST APIs, Next.js App Router, Prisma ORM, and team-based data isolation
 **Key Patterns**:
-- Service layer architecture with RecurringExpenseService
-- Team-based data isolation via withTeamContext middleware
-- Unified validation using RecurringExpenseSchemas from lib/validation/financial.ts
-- Consistent error handling via service layer patterns
-- Automatic audit logging for all mutations
-- Business rule validation (date ranges, frequency calculations)
+- RESTful endpoint design with standard HTTP methods
+- Team-based data isolation for multi-tenant security
+- Zod validation for type-safe request/response handling
+- Consistent error handling and response formats
 
 
 ## Endpoint Overview
 
 **Base URL**: `/api/recurring-expenses/:id`
 **Methods**: GET, PUT, DELETE
-**Authentication**: Required (withTeamContext middleware)
-**Team Isolation**: Yes (automatic via service layer)
+**Authentication**: None
+**Team Isolation**: No
 
 
 ## GET /api/recurring-expenses/:id
