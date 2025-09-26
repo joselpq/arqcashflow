@@ -123,7 +123,7 @@ function extractInfoFromFilename(filename: string) {
 }
 
 // Process documents using OpenAI Vision API
-async function processDocuments(files: any[], teamId: string) {
+async function processDocuments(files: any[], _teamId: string) {
   const results = []
 
   for (const file of files) {
@@ -444,7 +444,7 @@ async function createReceivableFromData(data: any, teamId: string) {
 }
 
 // Handle different intents
-async function handleIntent(intent: string, message: string, files: any[], teamId: string, history: any[] = [], pendingAction: any = null) {
+async function handleIntent(intent: string, message: string, files: any[], teamId: string, history: any[] = [], _pendingAction: any = null) {
   switch (intent) {
     case 'query':
       // Use existing query system
@@ -811,7 +811,7 @@ export async function POST(request: NextRequest) {
     const { teamId } = await requireAuth()
 
     if (!process.env.CLAUDE_API_KEY) {
-      return NextResponse.json(
+      return Response.json(
         { error: 'Claude API key not configured' },
         { status: 500 }
       )
@@ -823,13 +823,13 @@ export async function POST(request: NextRequest) {
     let history: any[] = []
     let pendingAction = null
 
-    const contentType = request.headers.get('content-type') || ''
+    const contentType = (request as Request).headers.get('content-type') || ''
 
     if (contentType.includes('multipart/form-data')) {
       // Handle multipart form-data for large files
       console.log('📦 Processing multipart form-data request')
 
-      const formData = await request.formData()
+      const formData = await (request as Request).formData()
       message = formData.get('message') as string || ''
 
       // Parse history if provided
@@ -863,7 +863,7 @@ export async function POST(request: NextRequest) {
     } else {
       // Handle traditional JSON requests for smaller files
       console.log('📄 Processing JSON request')
-      const body = await request.json()
+      const body = await (request as Request).json()
       const parsedBody = AssistantRequestSchema.parse(body)
       message = parsedBody.message || ''
       files = parsedBody.files || []
@@ -886,12 +886,12 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Invalid request format' }, { status: 400 })
+      return Response.json({ error: 'Invalid request format' }, { status: 400 })
     }
 
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     console.error('AI Assistant error:', errorMessage)
-    return NextResponse.json(
+    return Response.json(
       { error: 'Failed to process request. Please try again.' },
       { status: 500 }
     )
