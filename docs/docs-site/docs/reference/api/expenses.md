@@ -2,7 +2,7 @@
 title: "Expenses API"
 type: "reference"
 audience: ["developer", "agent"]
-contexts: ["api", "expenses", "rest", "database"]
+contexts: ["api", "expenses", "rest", "database", "filtering", "date-range"]
 complexity: "intermediate"
 last_updated: "2025-09-26"
 version: "1.0"
@@ -48,11 +48,24 @@ Retrieve expenses records with optional filtering and sorting.
 | `sortOrder` | string | Sort direction (`asc`/`desc`) | `desc` |
 | `status` | string | Filter by status | `all` |
 | `category` | string | Filter by category | `all` |
+| `contractId` | string | Filter by contract ID | `all` |
+| `recurrenceType` | string | Filter by recurrence type | `all` |
+| `startDate` | string | Filter expenses after this date (YYYY-MM-DD) | - |
+| `endDate` | string | Filter expenses before this date (YYYY-MM-DD) | - |
 
 ### Example Request
 
 ```bash
-curl -X GET "http://localhost:3000/api/expenses?status=active&sortBy=createdAt&sortOrder=desc" \
+# Basic filtering by status
+curl -X GET "http://localhost:3000/api/expenses?status=pending&sortBy=dueDate&sortOrder=asc" \
+  -H "Content-Type: application/json"
+
+# Date range filtering
+curl -X GET "http://localhost:3000/api/expenses?startDate=2025-09-01&endDate=2025-09-30" \
+  -H "Content-Type: application/json"
+
+# Combined filters
+curl -X GET "http://localhost:3000/api/expenses?status=pending&contractId=123&startDate=2025-09-01" \
   -H "Content-Type: application/json"
 ```
 
@@ -60,11 +73,15 @@ curl -X GET "http://localhost:3000/api/expenses?status=active&sortBy=createdAt&s
 
 ```typescript
 interface ExpensesResponse {
-  data: Expenses[];
+  expenses: Expense[];
   total: number;
   filters: {
     status: string;
     category?: string;
+    contractId?: string;
+    recurrenceType?: string;
+    startDate?: string;
+    endDate?: string;
     sortBy: string;
     sortOrder: 'asc' | 'desc';
   };

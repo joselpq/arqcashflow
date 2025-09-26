@@ -4,12 +4,12 @@ Generated on: 2025-09-26
 
 ## Summary
 
-- **Total files validated**: 68
+- **Total files validated**: 71
 - **Broken links**: 0
 - **Stale content**: 0
 - **Missing metadata**: 0
 - **Format inconsistencies**: 1
-- **Orphaned files**: 19
+- **Orphaned files**: 21
 
 ## Issues Found
 
@@ -32,7 +32,7 @@ Generated on: 2025-09-26
   - **Issues**: Missing LLM Context section
 
 
-### 🔍 Orphaned Files (19)
+### 🔍 Orphaned Files (21)
 
 
 - `agents/contexts/validation-layer.md`
@@ -71,6 +71,9 @@ Generated on: 2025-09-26
 - `decisions/008-ai-agent-strategy.md`
 
 
+- `decisions/009-advanced-date-filtering.md`
+
+
 - `developer/architecture/decisions/adr-002-claude-ai-integration.md`
 
 
@@ -81,6 +84,9 @@ Generated on: 2025-09-26
 
 
 - `developer/integrations/google-sheets.md`
+
+
+- `developer/testing/authenticated-api-testing-guide.md`
 
 
 - `intro.md`

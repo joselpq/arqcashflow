@@ -10,9 +10,6 @@ agent_roles: ["api-developer", "integration-engineer"]
 related:
   - developer/architecture/overview.md
   - agents/contexts/contract-management.md
-  - decisions/008-ai-agent-strategy.md
-  - reference/api/recurring-expenses-by-id.md
-  - reference/api/recurring-expenses.md
 dependencies: ["next.js", "prisma", "zod"]
 ---
 

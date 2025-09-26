@@ -7,10 +7,17 @@
  * Features:
  * - Team-scoped expense operations
  * - One-time and recurring expense support
- * - Advanced filtering, sorting, and summaries
+ * - Advanced filtering with date range support (startDate/endDate)
+ * - Prisma date filter transformation (dueAfter/dueBefore → dueDate.gte/lte)
+ * - Smart sorting and comprehensive summaries
  * - Audit logging for all mutations
  * - Business rule validation
  * - Status calculation based on dates and payments
+ *
+ * Date Filtering:
+ * - Supports startDate/endDate parameters for user-friendly date range filtering
+ * - Automatically transforms raw date filters to Prisma-compatible format
+ * - Prevents validation conflicts by cleaning raw properties before transformation
  */
 
 import { Expense, Contract, RecurringExpense } from '@prisma/client'
