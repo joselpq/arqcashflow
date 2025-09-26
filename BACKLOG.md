@@ -60,7 +60,45 @@ The DOING section tracks **active work with detailed progress**:
 ### 📋 TO DO (Immediate Priorities)
 *Ready to implement. Start here unless directed otherwise.*
 
-**Currently empty - all immediate priorities completed**
+#### 1. **AI Agent Strategy Implementation**
+- **Problem**: Need to define and implement AI agent architecture for the platform
+- **Context**: Core product improvement to create "wow" factor for users
+- **Solution**: Design and implement specialized AI agents with clear purposes
+- **Priority**: HIGH
+- **Files**: New decision document, agent implementations
+- **Added**: 2025-09-26 from product strategy discussion
+
+#### 2. **Recurring Expenses Full Series Generation**
+- **Problem**: Currently creates past expenses + cron for future, should create full series upfront
+- **Context**: Users need to see complete financial timeline immediately
+- **Solution**: Generate all recurring expense instances when creating recurring expense
+- **Priority**: HIGH
+- **Files**: `RecurringExpenseService.ts`, related APIs
+- **Added**: 2025-09-26 from product improvement list
+
+#### 3. **Advanced Filtering & Date Navigation**
+- **Problem**: Current filtering limited, recurring expenses may pollute views
+- **Context**: Users need user-friendly way to filter by dates, projects, clients
+- **Solution**: Smart date ranges, context-aware filters, quick navigation
+- **Priority**: HIGH
+- **Files**: Filter components, API query parameters
+- **Added**: 2025-09-26 from product improvement list
+
+#### 4. **Multi-Document Processing in Onboarding**
+- **Problem**: Currently single document upload, need multiple document processing
+- **Context**: Users want to upload multiple contracts/invoices during setup
+- **Solution**: Batch document processing with AI extraction
+- **Priority**: MEDIUM
+- **Files**: Onboarding flow, document processing APIs
+- **Added**: 2025-09-26 from product improvement list
+
+#### 5. **Email Verification Implementation**
+- **Problem**: No email verification during onboarding
+- **Context**: Security and user validation requirement
+- **Solution**: Email verification flow with confirmation links
+- **Priority**: MEDIUM
+- **Files**: Auth system, email services
+- **Added**: 2025-09-26 from product improvement list
 
 ---
 
