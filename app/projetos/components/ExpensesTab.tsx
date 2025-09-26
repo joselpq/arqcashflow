@@ -6,6 +6,7 @@ import { formatDateForInput, formatDateFull as formatDateForDisplay, getTodayDat
 import Modal from '../../components/Modal'
 import EnhancedExpenseForm from '../../components/forms/EnhancedExpenseForm'
 import RecurringExpenseActionModal from '../../components/RecurringExpenseActionModal'
+import DateRangePicker, { DateRange } from '../../components/DateRangePicker'
 
 export default function ExpensesTab() {
   const searchParams = useSearchParams()
@@ -42,8 +43,11 @@ export default function ExpensesTab() {
     recurrenceType: 'all', // 'all', 'regular', 'recurring'
     sortBy: 'dueDate',
     sortOrder: 'asc',
+    startDate: '',
+    endDate: '',
   })
   const [searchQuery, setSearchQuery] = useState('')
+  const [selectedDateRange, setSelectedDateRange] = useState<DateRange | null>(null)
 
   const expenseCategories = [
     'Salários', 'Escritório', 'Software', 'Marketing', 'Transporte', 'Equipamentos', 'Impostos', 'Outros'
@@ -117,6 +121,14 @@ export default function ExpensesTab() {
       }
       // Remove recurrenceType as it's not an API filter
       delete apiFilters.recurrenceType
+
+      // Add date range filters
+      if (filters.startDate) {
+        apiFilters.startDate = filters.startDate
+      }
+      if (filters.endDate) {
+        apiFilters.endDate = filters.endDate
+      }
 
       const params = new URLSearchParams(apiFilters)
       const res = await fetch(`/api/expenses?${params.toString()}`)
@@ -427,6 +439,22 @@ export default function ExpensesTab() {
         </div>
       </div>
 
+      {/* Date Range Filter */}
+      <div className="mb-4 p-4 bg-white border-2 border-neutral-300 rounded-lg">
+        <h3 className="text-sm font-medium text-neutral-900 mb-3">📅 Filtrar por período</h3>
+        <DateRangePicker
+          selectedRange={selectedDateRange}
+          onRangeChange={(range) => {
+            setSelectedDateRange(range)
+            setFilters({
+              ...filters,
+              startDate: range?.startDate || '',
+              endDate: range?.endDate || ''
+            })
+          }}
+        />
+      </div>
+
       {/* Filters - Horizontal Bar */}
       <div className="flex flex-wrap items-center gap-3 mb-6 p-4 bg-neutral-50 rounded-lg border border-neutral-200">
         <div className="flex items-center gap-2">
@@ -519,11 +547,12 @@ export default function ExpensesTab() {
           </select>
         </div>
 
-        {(filters.contractId !== 'all' || filters.status !== 'pending' || filters.category !== 'all' || filters.recurrenceType !== 'all' || searchQuery) && (
+        {(filters.contractId !== 'all' || filters.status !== 'pending' || filters.category !== 'all' || filters.recurrenceType !== 'all' || selectedDateRange || searchQuery) && (
           <button
             onClick={() => {
-              setFilters({ contractId: 'all', status: 'pending', category: 'all', recurrenceType: 'all', sortBy: 'dueDate', sortOrder: 'asc' })
+              setFilters({ contractId: 'all', status: 'pending', category: 'all', recurrenceType: 'all', sortBy: 'dueDate', sortOrder: 'asc', startDate: '', endDate: '' })
               setSearchQuery('')
+              setSelectedDateRange(null)
             }}
             className="ml-2 text-sm text-blue-600 hover:text-blue-800 font-medium"
           >

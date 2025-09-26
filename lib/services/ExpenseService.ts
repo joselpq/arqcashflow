@@ -194,6 +194,10 @@ export class ExpenseService extends BaseService<
   protected buildFilters(filters: ExpenseFilters): any {
     const where = super.buildFilters(filters)
 
+    // Remove raw date filter properties to avoid Prisma conflicts
+    delete where.dueAfter
+    delete where.dueBefore
+
     // Date range filtering
     if (filters.dueAfter || filters.dueBefore) {
       where.dueDate = {}
