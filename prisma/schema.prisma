@@ -192,6 +192,26 @@ model Team {
   users             User[]
   auditLogs         AuditLog[]         // Audit logs for this team
   recurringExpenses RecurringExpense[] // Recurring expense templates
+  events            Event[]            // Events for this team
+}
+
+model Event {
+  id        String   @id @default(cuid())
+  type      String   // Event type (e.g., 'contract.created', 'receivable.paid')
+  timestamp DateTime @default(now())
+  teamId    String
+  userId    String?  // Optional - system events may not have a user
+  source    String   // 'api', 'service', 'ui', 'ai', 'system'
+  payload   Json     // Event-specific data
+  metadata  Json?    // Additional context (IP, user agent, etc.)
+
+  // Relations
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@index([teamId])
+  @@index([type])
+  @@index([timestamp])
+  @@index([teamId, type]) // Composite index for team-scoped queries by type
 }
 
 model User {

@@ -2,7 +2,7 @@
 title: "No-Regrets Architecture Improvements for Dual-Interface Stage"
 type: "decision"
 audience: ["developer", "agent"]
-contexts: ["architecture", "refactoring", "optimization", "tech-debt", "validation", "unified-schemas"]
+contexts: ["architecture", "refactoring", "optimization", "tech-debt", "validation", "unified-schemas", "event-system", "validation-flexibility"]
 complexity: "intermediate"
 last_updated: "2025-09-25"
 version: "1.1"
@@ -11,7 +11,7 @@ related:
   - decisions/003-strategic-architecture-evolution.md
   - decisions/007-event-system-foundation.md
   - developer/architecture/overview.md
-dependencies: ["next.js", "prisma", "zod", "typescript", "unified-validation-layer"]
+dependencies: ["next.js", "prisma", "zod", "typescript", "unified-validation-layer", "event-system", "prisma-event-model"]
 ---
 
 # No-Regrets Architecture Improvements for Dual-Interface Stage
@@ -21,11 +21,18 @@ dependencies: ["next.js", "prisma", "zod", "typescript", "unified-validation-lay
 **Scope**: Immediate improvements that reduce complexity while supporting both traditional and AI-first paradigms
 **Prerequisites**: Understanding of current codebase structure and strategic evolution plan
 **Key Patterns**:
-- Service layer extraction from API routes
-- Unified validation layer with centralized schemas (`lib/validation/`)
+- Service layer extraction from API routes (✅ Complete)
+- Unified validation layer with centralized schemas (`lib/validation/`) (✅ Complete)
 - Shared validation and business logic
-- Event-driven architecture foundation
-- Team context centralization
+- Event-driven architecture foundation (✅ Complete - Phase 1)
+- Team context centralization (✅ Complete)
+- Context-aware validation levels for different use cases
+
+**Validation Lessons Learned**:
+- **Database operations**: Need strict validation for data integrity
+- **Event notifications**: Need flexible validation for developer productivity
+- **API boundaries**: Need balanced validation for usability
+- **Testing/Development**: Need minimal validation for rapid iteration
 
 ## Current State Analysis
 

@@ -63,7 +63,8 @@ generator client {
 | Expense | Project costs and operational spending | contract, team, recurringExpense |
 | RecurringExpense | Automated recurring cost management | team, user, contract, expenses |
 | AuditLog | System activity tracking and compliance | user, team |
-| Team | Multi-tenant team organization | contracts, expenses, receivables, users, auditLogs, recurringExpenses |
+| Team | Multi-tenant team organization | contracts, expenses, receivables, users, auditLogs, recurringExpenses, events |
+| Event | Data management entity | team |
 | User | User authentication and profile management | team, auditLogs, recurringExpenses |
 
 ### Contract
@@ -471,6 +472,7 @@ model Team {
   users        User[] 
   auditLogs    AuditLog[]  // Audit logs for this team
   recurringExpenses RecurringExpense[]  // Recurring expense templates
+  events       Event[]  // Events for this team
 
 }
 ```
@@ -495,6 +497,7 @@ model Team {
 | `users` | User[] | Required | - |
 | `auditLogs` | AuditLog[] | Required | Audit logs for this team |
 | `recurringExpenses` | RecurringExpense[] | Required | Recurring expense templates |
+| `events` | Event[] | Required | Events for this team |
 
 #### Relationships
 
@@ -506,11 +509,56 @@ model Team {
 | `users` | User[] | One-to-Many | Related User records |
 | `auditLogs` | AuditLog[] | One-to-Many | Audit logs for this team |
 | `recurringExpenses` | RecurringExpense[] | One-to-Many | Recurring expense templates |
+| `events` | Event[] | One-to-Many | Events for this team |
 
 #### Business Rules
 - Provides data isolation boundary
 - All user data must reference teamId
 - Cannot be deleted if it has associated data
+
+### Event
+
+
+
+```prisma
+model Event {
+  id           String @id @default(cuid()
+  type         String  // Event type (e.g., 'contract.created', 'receivable.paid')
+  timestamp    DateTime @default(now()
+  teamId       String 
+  userId       String?  // Optional - system events may not have a user
+  source       String  // 'api', 'service', 'ui', 'ai', 'system'
+  payload      Json  // Event-specific data
+  metadata     Json?  // Additional context (IP, user agent, etc.)
+  team         Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  @@index([teamId])
+  @@index([type])
+  @@index([timestamp])
+  @@index([teamId, type]) // Composite index for team-scoped queries by type
+}
+```
+
+#### Fields
+
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| `id` | String | Primary Key, Required, Has Default | - |
+| `type` | String | Required | Event type (e.g., 'contract.created', 'receivable.paid') |
+| `timestamp` | DateTime | Required, Has Default | - |
+| `teamId` | String | Required | - |
+| `userId` | String? | None | Optional - system events may not have a user |
+| `source` | String | Required | 'api', 'service', 'ui', 'ai', 'system' |
+| `payload` | Json | Required | Event-specific data |
+| `metadata` | Json? | None | Additional context (IP, user agent, etc.) |
+
+#### Relationships
+
+| Field | Type | Relationship | Description |
+|-------|------|--------------|-------------|
+| `team` | Team | Many-to-One | Related Team records |
+
+#### Business Rules
+- Standard CRUD operations apply
 
 ### User
 
@@ -592,6 +640,8 @@ Team ||--o{ Receivable : has many
 Team ||--o{ User : has many
 Team ||--o{ AuditLog : has many
 Team ||--o{ RecurringExpense : has many
+Team ||--o{ Event : has many
+Team ||--|| Event : belongs to
 Team ||--|| User : belongs to
 User ||--o{ AuditLog : has many
 User ||--o{ RecurringExpense : has many
@@ -649,6 +699,11 @@ User ||--o{ RecurringExpense : has many
 - **Team** → **RecurringExpense**: One Team can have multiple RecurringExpense records
   - Delete strategy: Cascade
   - Business rule: Deleting Team removes all related RecurringExpense records
+
+
+- **Team** → **Event**: One Team can have multiple Event records
+  - Delete strategy: Cascade
+  - Business rule: Deleting Team removes all related Event records
 
 
 - **User** → **AuditLog**: One User can have multiple AuditLog records
@@ -718,6 +773,11 @@ User ||--o{ RecurringExpense : has many
   - Business rule: AuditLog must be linked to Team
 
 
+- **Event** → **Team**: Multiple Event records can belong to one Team
+  - Optional: No
+  - Business rule: Event must be linked to Team
+
+
 - **User** → **Team**: Multiple User records can belong to one Team
   - Optional: No
   - Business rule: User must be linked to Team
@@ -733,6 +793,7 @@ User ||--o{ RecurringExpense : has many
 - **RecurringExpense**: `id` (String)
 - **AuditLog**: `id` (String)
 - **Team**: `id` (String)
+- **Event**: `id` (String)
 - **User**: `id` (String)
 
 ### Secondary Indexes
@@ -813,6 +874,12 @@ User ||--o{ RecurringExpense : has many
 
 
 - **Team.updatedAt**: Performance optimization
+
+
+- **Event.teamId**: Foreign key relationship
+
+
+- **Event.userId**: Foreign key relationship
 
 
 - **User.email**: User authentication lookup
