@@ -83,7 +83,7 @@ export default function OnboardingPage() {
 
       formData.append("file", firstFile);
 
-      const response = await fetch("/api/ai/setup-assistant-direct", {
+      const response = await fetch("/api/ai/setup-assistant-v2", {
         method: "POST",
         body: formData,
       });

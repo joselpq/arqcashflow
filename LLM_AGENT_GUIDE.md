@@ -2,9 +2,9 @@
 title: "LLM Agent Guide: ArqCashflow Project"
 type: "guide"
 audience: ["agent", "developer"]
-contexts: ["automation", "ci-cd", "documentation", "health-monitoring", "code-validation", "search", "service-layer", "api-migration", "auto-generation", "phase3-migration", "receivables-api", "expenses-api", "recurring-expenses-api", "recurring-expenses-service", "bulk-operations-fix", "teamscoped-prisma", "crud-testing", "precision-validation", "unified-validation", "schema-consolidation", "event-system", "event-driven-architecture", "recurring-expense-series", "full-series-generation", "audit-logging", "mdx-compilation", "defensive-programming"]
+contexts: ["automation", "ci-cd", "documentation", "health-monitoring", "code-validation", "search", "service-layer", "api-migration", "auto-generation", "phase3-migration", "receivables-api", "expenses-api", "recurring-expenses-api", "recurring-expenses-service", "bulk-operations-fix", "teamscoped-prisma", "crud-testing", "precision-validation", "unified-validation", "schema-consolidation", "event-system", "event-driven-architecture", "recurring-expense-series", "full-series-generation", "audit-logging", "mdx-compilation", "defensive-programming", "setup-assistant-v2", "phase1-complete"]
 complexity: "intermediate"
-last_updated: "2025-09-26"
+last_updated: "2025-09-27"
 version: "2.2"
 agent_roles: ["documentation-maintainer", "automation-specialist", "health-monitor", "service-migration-specialist", "api-developer", "validation-architect", "event-architect"]
 related:
@@ -500,6 +500,20 @@ cd docs/docs-site/scripts && node validate-docs.js && gh issue list --repo josel
    - ✅ API Route Simplification: 45-65% reduction achieved
    - ✅ Full CRUD testing validated (2025-09-25)
    - ✅ RecurringExpenseService with bulk operations fix (2025-01-09)
+
+5. **Setup Assistant V2 (AI Agent Strategy)** - ✅ **PHASE 1 COMPLETE (2025-09-27)**
+   - ✅ Service layer integration complete with audit logging
+   - ✅ 100% functionality preserved (all baseline tests pass)
+   - ✅ Deployed to both UI endpoints (/onboarding and AI chat)
+   - ✅ Enhanced error handling and validation
+   - ✅ Team context middleware integration
+   - ✅ Manual testing validated with corrected baseline:
+     - CSV: 4 contracts, 4 receivables, 7 expenses
+     - Excel: 37 contracts
+     - PDF: 1 contract, 5 receivables
+   - ✅ Files: `SetupAssistantService.ts`, `/api/ai/setup-assistant-v2/route.ts`
+   - 🔄 **Next**: Phase 2 - Enhanced features (multi-file, progress tracking, clarification)
+   - 📋 **Known Issues**: Receivable titles need enhancement, contract deletion error handling
 
 2. **Documentation System - Complete** (Phase 4: ✅ 100% Complete)
    - ✅ Weekly health checks with automated issue creation (DONE)

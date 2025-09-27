@@ -370,8 +370,8 @@ export default function EnhancedAIChatPage() {
         const formData = new FormData()
         formData.append('file', setupFile)
 
-        // Use direct Claude approach - simpler and more reliable
-        const response = await fetch('/api/ai/setup-assistant-direct', {
+        // Use V2 service layer approach - includes audit logging and better error handling
+        const response = await fetch('/api/ai/setup-assistant-v2', {
           method: 'POST',
           body: formData
         })
