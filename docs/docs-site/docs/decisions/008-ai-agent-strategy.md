@@ -4,7 +4,7 @@ type: "decision"
 audience: ["developer", "agent", "product"]
 contexts: ["ai-agents", "product-strategy", "financial-intelligence", "user-experience", "automation", "small-business", "professional-services", "document-processing", "business-insights"]
 complexity: "advanced"
-last_updated: "2025-09-26"
+last_updated: "2025-09-27"
 version: "1.0"
 agent_roles: ["ai-architect", "product-strategist", "business-analyst"]
 related:
@@ -22,10 +22,17 @@ dependencies: ["claude-api", "next.js", "service-layer", "event-system", "team-c
 **Prerequisites**: Understanding of service layer architecture, event system, and financial business domain
 **Key Patterns**:
 - Specialized agents over generalist approaches
-- Native multimodal capabilities (images, documents, spreadsheets)
+- Native multimodal capabilities (images, PDFs via Claude; Excel via preprocessing)
 - Business context-aware reasoning
 - API-driven integration with platform services
 - Progressive disclosure of complexity
+
+**Implementation Status (2025-09-27)**:
+- ✅ CSV processing: 100% success rate
+- ✅ PDF processing: Native Claude support working
+- ❌ Excel processing: Requires preprocessing (Claude limitation)
+- ✅ Entity creation: Fixed circular reference, 100% success
+- ⚠️ JSON parsing: Prompt tuning needed for structured responses
 
 ## 🎯 **Strategic Overview**
 
@@ -419,21 +426,41 @@ class OnboardingIntelligenceAgent extends BaseService {
 
 ## 🔧 **Technical Implementation Challenges**
 
-### **File Type Processing Issues**
+### **File Type Processing Solutions**
 
-#### **Excel Files (.xlsx)**
-- **Issue**: Claude Vision API receives base64 but can't interpret Excel structure
-- **Solution Options**:
-  1. Parse XLSX to JSON/CSV before sending to Claude
-  2. Use specialized XLSX library (e.g., xlsx, exceljs)
-  3. Convert to CSV format internally before processing
+#### **PDF Files - ✅ RESOLVED**
+- **✅ Claude Native Support**: Claude Sonnet 4 has native PDF processing via document API
+- **✅ Correct Implementation**: Use `type: 'document'` with `media_type: 'application/pdf'`
+- **✅ Test Results**: Successfully processes PDFs up to 992KB+ with intelligent content analysis
+- **⚠️ JSON Response**: Requires prompt tuning to ensure structured JSON output
 
-#### **PDF Files**
-- **Issue**: Large PDFs (4MB+) may exceed token limits or contain non-text content
-- **Solution Options**:
-  1. Extract text using PDF parsing library (pdf-parse, pdfjs)
-  2. Split multi-page PDFs and process page by page
-  3. Use OCR for image-based PDFs
+```typescript
+// ✅ CORRECT PDF API usage
+content.push({
+  type: 'document',  // Not 'image'
+  source: {
+    type: 'base64',
+    media_type: 'application/pdf',
+    data: file.base64
+  }
+})
+```
+
+#### **Excel Files (.xlsx) - ❌ LIMITED SUPPORT**
+- **❌ No Native Support**: Claude document API only accepts `application/pdf`, not Excel
+- **✅ Confirmed Limitation**: Testing shows `400` error for Excel media types
+- **✅ Working Solution**: Use preprocessing with xlsx libraries before Claude
+- **📋 Current Approach**: Existing assistant uses filename fallback for Excel files
+
+#### **CSV Files - ✅ WORKING**
+- **✅ Perfect Results**: 100% success rate (15/15 entities extracted and created)
+- **✅ Text Processing**: Direct text analysis works flawlessly
+- **✅ Complex Data**: Handles mixed contracts, expenses, receivables correctly
+
+#### **Image Files - ✅ SUPPORTED**
+- **✅ Claude Vision**: Native support via `type: 'image'` API
+- **✅ Media Types**: Supports JPEG, PNG, GIF, WebP formats
+- **⚠️ Untested**: Implementation correct based on existing assistant patterns
 
 ### **Interactive Clarification Design**
 

@@ -1,7 +1,7 @@
 # ArqCashflow Development Backlog
 
 **Purpose**: Central source of truth for project priorities and development status
-**Last Updated**: 2025-09-26 (Session 2 - Phase 1A partial implementation)
+**Last Updated**: 2025-09-27 (Session 3 - Phase 1A breakthrough: 100% CSV success, PDF support, circular reference fix)
 **Update Frequency**: Every LLM session MUST update this document when completing tasks or discovering new requirements
 
 ## 🚨 CRITICAL INSTRUCTIONS FOR LLM AGENTS
@@ -54,7 +54,7 @@ The DOING section tracks **active work with detailed progress**:
 *Active work with real-time progress tracking. Can persist between sessions if work is incomplete.*
 
 #### Phase 1A: Onboarding Intelligence Agent Implementation
-**Status**: 75% complete
+**Status**: 90% complete
 **Started**: 2025-09-26
 **Sub-tasks completed**:
 - [x] Basic agent implementation with Claude AI integration
@@ -62,25 +62,28 @@ The DOING section tracks **active work with detailed progress**:
 - [x] API endpoint with authentication and team isolation
 - [x] Fixed receivable validation (added clientName requirement)
 - [x] Enhanced error logging and debugging
-- [x] **FIXED** Excel file extraction (corrected MIME type routing)
-- [x] **FIXED** PDF file extraction (corrected Claude API call structure)
+- [x] **FIXED** Circular reference bug in team-scoped Prisma context
+- [x] **FIXED** PDF file extraction using correct Claude document API
+- [x] **RESEARCHED** Claude Sonnet 4 document processing capabilities
 
 **Sub-tasks pending**:
+- [ ] Excel file preprocessing (Claude doesn't support Excel natively)
 - [ ] Interactive follow-up questions for missing/confusing fields
-- [ ] Multi-file batch processing verification
-- [ ] Review clientName requirement in Contracts/Receivables APIs
+- [ ] JSON response parsing improvements for PDF processing
 
-**Recent fixes (2025-09-26)**:
-- Fixed Excel files (.xlsx/.xls) routing to Claude Vision instead of fallback preprocessing
-- Fixed PDF files using correct Claude API format (type: 'image' not 'document')
-- Removed unnecessary preprocessing logic, following "Claude handles documents natively" principle
-- All file types now properly route to Claude's native document processing capabilities
+**Major breakthrough (2025-09-27)**:
+- **✅ Fixed critical bug**: Team-scoped Prisma context creating circular references
+- **✅ PDF processing working**: Claude Sonnet 4 natively supports PDF via document API
+- **✅ 100% entity creation**: All CSV entities now successfully created in database
+- **❌ Excel limitation discovered**: Claude only supports PDF documents, not Excel files
+- **✅ Architecture compliance**: Proper service layer integration and team isolation
 
-**Current issues**:
-- No mechanism for handling ambiguous or incomplete data
-- Multi-file processing needs verification
+**Current test results**:
+- CSV files: 15/15 entities extracted, 15/15 created (100% success)
+- PDF files: Successfully processed with Claude, needs JSON prompt tuning
+- Excel files: Requires preprocessing (xlsx parsing) before Claude processing
 
-**Next step**: Implement interactive clarification for missing/ambiguous fields
+**Next step**: Implement Excel preprocessing to achieve 100% file type support
 
 ---
 
