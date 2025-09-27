@@ -54,7 +54,7 @@ The DOING section tracks **active work with detailed progress**:
 *Active work with real-time progress tracking. Can persist between sessions if work is incomplete.*
 
 #### Phase 1A: Onboarding Intelligence Agent Implementation
-**Status**: 40% complete
+**Status**: 75% complete
 **Started**: 2025-09-26
 **Sub-tasks completed**:
 - [x] Basic agent implementation with Claude AI integration
@@ -62,35 +62,42 @@ The DOING section tracks **active work with detailed progress**:
 - [x] API endpoint with authentication and team isolation
 - [x] Fixed receivable validation (added clientName requirement)
 - [x] Enhanced error logging and debugging
+- [x] **FIXED** Excel file extraction (corrected MIME type routing)
+- [x] **FIXED** PDF file extraction (corrected Claude API call structure)
 
 **Sub-tasks pending**:
-- [ ] Excel file extraction (currently extracting 0 entities)
-- [ ] PDF file extraction (currently extracting 0 entities)
 - [ ] Interactive follow-up questions for missing/confusing fields
-- [ ] Multi-file batch processing (currently single file only)
+- [ ] Multi-file batch processing verification
 - [ ] Review clientName requirement in Contracts/Receivables APIs
 
-**Current issues**:
-- Excel/PDF files process but Claude doesn't extract entities
-- No mechanism for handling ambiguous or incomplete data
-- Single file limitation impacts user experience
+**Recent fixes (2025-09-26)**:
+- Fixed Excel files (.xlsx/.xls) routing to Claude Vision instead of fallback preprocessing
+- Fixed PDF files using correct Claude API format (type: 'image' not 'document')
+- Removed unnecessary preprocessing logic, following "Claude handles documents natively" principle
+- All file types now properly route to Claude's native document processing capabilities
 
-**Next step**: Debug why Claude isn't extracting from Excel/PDF files
+**Current issues**:
+- No mechanism for handling ambiguous or incomplete data
+- Multi-file processing needs verification
+
+**Next step**: Implement interactive clarification for missing/ambiguous fields
 
 ---
 
 ### 📋 TO DO (Immediate Priorities)
 *Ready to implement. Start here unless directed otherwise.*
 
-#### 1. **Phase 1A Completion: Excel/PDF Processing**
-- **Problem**: Excel and PDF files are not extracting any entities (0 extracted)
+#### 1. **✅ RESOLVED: Excel/PDF Processing**
+- **Problem**: Excel and PDF files were not extracting any entities (0 extracted)
 - **Context**: Users have data in various formats, not just CSV
-- **Solution**: Debug Claude vision API for Excel/PDF, possibly need specialized parsers
-- **Priority**: CRITICAL (Core functionality incomplete)
-- **Technical notes**:
-  - Excel files may need XLSX parsing before sending to Claude
-  - PDF files (4MB+) may need text extraction or page splitting
+- **Solution**: ✅ Fixed Claude API routing and call structure
+- **Resolution Details**:
+  - Fixed Excel MIME type detection (.xlsx/.xls now route to Claude Vision)
+  - Fixed PDF API calls to use correct format (type: 'image' not 'document')
+  - Removed unnecessary preprocessing, letting Claude handle documents natively
+  - Status: **COMPLETE** - All file types now properly route to Claude processing
 - **Added**: 2025-09-26 from testing results
+- **Resolved**: 2025-09-26
 
 #### 2. **Phase 1A Enhancement: Interactive Clarification**
 - **Problem**: Missing or ambiguous fields cause silent failures

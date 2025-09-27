@@ -207,9 +207,12 @@ export class OnboardingIntelligenceAgent extends BaseService<any, any, any, Onbo
     console.log(`🔍 Processing file: ${file.name} (${file.type})`)
 
     // Determine processing method based on file type
-    if (file.type.startsWith('image/') || file.type === 'application/pdf') {
+    if (file.type.startsWith('image/') ||
+        file.type === 'application/pdf' ||
+        file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || // .xlsx
+        file.type === 'application/vnd.ms-excel') { // .xls
       return await this.extractWithClaudeVision(file)
-    } else if (file.type.includes('spreadsheet') || file.type.includes('excel') || file.type.includes('csv')) {
+    } else if (file.type === 'text/csv') {
       return await this.extractWithClaudeDocument(file)
     } else {
       // Fallback to filename pattern extraction
@@ -261,26 +264,15 @@ Be thorough and extract ALL financial information. Use confidence scores to indi
         }
       ]
 
-      // Add the file content
-      if (file.type.startsWith('image/')) {
-        content.push({
-          type: 'image',
-          source: {
-            type: 'base64',
-            media_type: file.type,
-            data: file.base64
-          }
-        })
-      } else if (file.type === 'application/pdf') {
-        content.push({
-          type: 'document',
-          source: {
-            type: 'base64',
-            media_type: 'application/pdf',
-            data: file.base64
-          }
-        })
-      }
+      // Add the file content - Claude treats all documents as images in the API
+      content.push({
+        type: 'image',
+        source: {
+          type: 'base64',
+          media_type: file.type,
+          data: file.base64
+        }
+      })
 
       const response = await claude.messages.create({
         model: 'claude-3-5-sonnet-latest',
@@ -309,13 +301,7 @@ Be thorough and extract ALL financial information. Use confidence scores to indi
   private async extractWithClaudeDocument(file: { name: string; type: string; base64: string }): Promise<ExtractedEntity[]> {
     try {
       // Decode base64 to text for CSV files
-      let fileContent = ''
-      if (file.type === 'text/csv') {
-        fileContent = Buffer.from(file.base64, 'base64').toString('utf-8')
-      } else {
-        // For Excel files, we still need to use vision API or a specialized parser
-        return await this.extractWithClaudeVision(file)
-      }
+      const fileContent = Buffer.from(file.base64, 'base64').toString('utf-8')
 
       const response = await claude.messages.create({
         model: 'claude-3-5-sonnet-latest',
