@@ -4,7 +4,7 @@ type: "reference"
 audience: ["developer", "agent"]
 contexts: ["api", "status", "rest", "database"]
 complexity: "intermediate"
-last_updated: "2025-09-26"
+last_updated: "2025-09-27"
 version: "1.0"
 agent_roles: ["api-developer", "integration-engineer"]
 related:
