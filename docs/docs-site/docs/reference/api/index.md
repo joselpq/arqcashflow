@@ -15,6 +15,7 @@ Comprehensive API documentation for ArqCashflow REST endpoints.
 
 ## Available APIs
 
+- [Agents-onboarding API](./agents-onboarding.md)
 - [Ai-assistant API](./ai-assistant.md)
 - [Ai-query API](./ai-query.md)
 - [Ai-setup-assistant-direct API](./ai-setup-assistant-direct.md)

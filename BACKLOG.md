@@ -1,7 +1,7 @@
 # ArqCashflow Development Backlog
 
 **Purpose**: Central source of truth for project priorities and development status
-**Last Updated**: 2025-09-26
+**Last Updated**: 2025-09-26 (Session 2 - Phase 1A partial implementation)
 **Update Frequency**: Every LLM session MUST update this document when completing tasks or discovering new requirements
 
 ## 🚨 CRITICAL INSTRUCTIONS FOR LLM AGENTS
@@ -53,34 +53,113 @@ The DOING section tracks **active work with detailed progress**:
 ### 🔄 DOING (Currently In Progress)
 *Active work with real-time progress tracking. Can persist between sessions if work is incomplete.*
 
-**Currently empty - all immediate priorities completed**
+#### Phase 1A: Onboarding Intelligence Agent Implementation
+**Status**: 40% complete
+**Started**: 2025-09-26
+**Sub-tasks completed**:
+- [x] Basic agent implementation with Claude AI integration
+- [x] CSV file processing with 100% success rate (15/15 entities)
+- [x] API endpoint with authentication and team isolation
+- [x] Fixed receivable validation (added clientName requirement)
+- [x] Enhanced error logging and debugging
+
+**Sub-tasks pending**:
+- [ ] Excel file extraction (currently extracting 0 entities)
+- [ ] PDF file extraction (currently extracting 0 entities)
+- [ ] Interactive follow-up questions for missing/confusing fields
+- [ ] Multi-file batch processing (currently single file only)
+- [ ] Review clientName requirement in Contracts/Receivables APIs
+
+**Current issues**:
+- Excel/PDF files process but Claude doesn't extract entities
+- No mechanism for handling ambiguous or incomplete data
+- Single file limitation impacts user experience
+
+**Next step**: Debug why Claude isn't extracting from Excel/PDF files
 
 ---
 
 ### 📋 TO DO (Immediate Priorities)
 *Ready to implement. Start here unless directed otherwise.*
 
-#### 1. **AI Agent Strategy Implementation**
-- **Problem**: Need to define and implement AI agent architecture for the platform
-- **Context**: Core product improvement to create "wow" factor for users
-- **Solution**: Design and implement specialized AI agents with clear purposes
-- **Priority**: HIGH
-- **Files**: New decision document, agent implementations
-- **Added**: 2025-09-26 from product strategy discussion
+#### 1. **Phase 1A Completion: Excel/PDF Processing**
+- **Problem**: Excel and PDF files are not extracting any entities (0 extracted)
+- **Context**: Users have data in various formats, not just CSV
+- **Solution**: Debug Claude vision API for Excel/PDF, possibly need specialized parsers
+- **Priority**: CRITICAL (Core functionality incomplete)
+- **Technical notes**:
+  - Excel files may need XLSX parsing before sending to Claude
+  - PDF files (4MB+) may need text extraction or page splitting
+- **Added**: 2025-09-26 from testing results
 
-#### 2. **Multi-Document Processing in Onboarding**
-- **Problem**: Currently single document upload, need multiple document processing
-- **Context**: Users want to upload multiple contracts/invoices during setup
-- **Solution**: Batch document processing with AI extraction
-- **Priority**: MEDIUM
-- **Files**: Onboarding flow, document processing APIs
-- **Added**: 2025-09-26 from product improvement list
+#### 2. **Phase 1A Enhancement: Interactive Clarification**
+- **Problem**: Missing or ambiguous fields cause silent failures
+- **Context**: Users need guidance when data is incomplete
+- **Solution**: Return structured follow-up questions for missing required fields
+- **Priority**: HIGH (User experience)
+- **Example**: "We found 4 receivables but couldn't identify the client names. Please specify..."
+- **Added**: 2025-09-26 from testing insights
 
-#### 3. **Email Verification Implementation**
+#### 3. **Phase 1A Enhancement: Multi-File Processing**
+- **Problem**: Currently limited to single file upload
+- **Context**: Users typically have multiple documents to process
+- **Solution**: Already supports array of files in API, need to test and verify
+- **Priority**: HIGH (User efficiency)
+- **Note**: Current implementation already accepts `files[]` array
+- **Added**: 2025-09-26 from requirements review
+
+#### 4. **API Review: ClientName Requirement**
+- **Problem**: clientName is required for standalone receivables but may not always be available
+- **Context**: Receivables can be linked to contracts OR standalone
+- **Solution**: Review business logic - should clientName be optional when contractId exists?
+- **Priority**: MEDIUM (API design)
+- **Files**: `lib/services/ReceivableService.ts`, validation schemas
+- **Added**: 2025-09-26 from validation errors
+
+#### 5. **Phase 1B: Agent Framework Foundation**
+- **Problem**: Need reusable patterns for future agents
+- **Context**: Extract common patterns from working Onboarding Agent
+- **Solution**: Create base agent classes and business context service
+- **Priority**: HIGH (Foundation for all future agents)
+- **Architecture**: `AgentService` extending `BaseService`, `BusinessContextService` for intelligence
+- **Files**:
+  - `lib/agents/base/AgentService.ts`
+  - `lib/services/BusinessContextService.ts`
+  - `lib/validation/agents.ts`
+- **Dependencies**: Completed Phase 1A implementation
+- **Added**: 2025-09-26 from refined AI agent strategy
+
+#### 3. **Phase 1C: Financial Query Agent Enhancement**
+- **Problem**: Existing query system lacks business context and conversation memory
+- **Context**: Users need intelligent financial insights and analysis
+- **Solution**: Refactor existing `/api/ai/query` into agent framework with enhanced capabilities
+- **Priority**: MEDIUM (Enhancement of existing feature)
+- **Architecture**: Maintain backward compatibility, add business context integration
+- **Files**:
+  - `lib/agents/FinancialQueryAgent.ts`
+  - Enhanced `/api/ai/query/route.ts`
+  - Business context integration
+- **Dependencies**: Phase 1B framework foundation
+- **Added**: 2025-09-26 from refined AI agent strategy
+
+#### 4. **Phase 1D: Financial Audit Agent**
+- **Problem**: Users don't catch data quality issues until too late
+- **Context**: Proactive quality assurance and anomaly detection
+- **Solution**: Background monitoring agent that alerts users to potential issues
+- **Priority**: MEDIUM (Quality assurance feature)
+- **Architecture**: Background monitoring service with dashboard integration
+- **Files**:
+  - `lib/agents/FinancialAuditAgent.ts`
+  - `app/api/agents/audit/route.ts`
+  - Dashboard audit alerts components
+- **Dependencies**: Phase 1B framework foundation
+- **Added**: 2025-09-26 from refined AI agent strategy
+
+#### 5. **Email Verification Implementation**
 - **Problem**: No email verification during onboarding
 - **Context**: Security and user validation requirement
 - **Solution**: Email verification flow with confirmation links
-- **Priority**: MEDIUM
+- **Priority**: LOW (Security enhancement)
 - **Files**: Auth system, email services
 - **Added**: 2025-09-26 from product improvement list
 
@@ -133,7 +212,28 @@ The DOING section tracks **active work with detailed progress**:
    - Priority: LOW
 
 #### AI & Automation
-1. **AI Workflow Automation**
+
+**Note**: Multi-Document Processing previously listed here is now covered by **Phase 1A: Onboarding Intelligence Agent** in the TO DO section.
+
+1. **Phase 2: Business Insights Agent**
+   - Strategic CFO-level business intelligence and recommendations
+   - Trend analysis, performance insights, competitive intelligence
+   - Priority: MEDIUM (Phase 2)
+   - Dependencies: Phase 1 completion
+
+2. **Phase 2: Agent Coordinator**
+   - AI Traffic Controller for optimal agent routing
+   - Intent classification and context transfer between agents
+   - Priority: MEDIUM (Phase 2)
+   - Dependencies: Multiple agents implemented
+
+3. **Phase 3: Tax Intelligence Agent**
+   - Proactive tax planning and compliance management
+   - Tax optimization recommendations and calculations
+   - Priority: LOW (Phase 3)
+   - Dependencies: Core agents established
+
+4. **AI Workflow Automation**
    - Implement intelligent business process automation
    - Use event system for AI-triggered workflows
    - Priority: MEDIUM (Phase 2)
@@ -201,7 +301,27 @@ The DOING section tracks **active work with detailed progress**:
 ### ✅ DONE (Completed Items)
 *Completed work for reference. Newest first.*
 
-#### September 26, 2025
+#### September 26, 2025 (Session 2)
+
+- **Phase 1A: Onboarding Intelligence Agent - Partial Implementation** ⚠️
+  - Implemented core OnboardingIntelligenceAgent with Claude AI integration
+  - Created API endpoint with authentication and team isolation
+  - CSV processing working with 100% success rate (15/15 entities)
+  - Fixed receivable validation by adding clientName to Claude prompts
+  - Enhanced error logging for debugging entity creation failures
+  - Fixed JSON parsing issues with Claude responses
+  - **Issues identified**:
+    - Excel files process but extract 0 entities
+    - PDF files process but extract 0 entities
+    - No interactive clarification for missing fields
+    - Multi-file processing not tested
+  - **Test results**:
+    - CSV: 15/15 entities (100% success) ✅
+    - Excel: 0 entities extracted ❌
+    - PDF: 0 entities extracted ❌
+  - References: OnboardingIntelligenceAgent.ts, /api/agents/onboarding/route.ts
+
+#### September 26, 2025 (Session 1)
 
 - **Advanced Filtering & Date Navigation** ✅
   - Implemented user-friendly date filtering to solve recurring expense pollution

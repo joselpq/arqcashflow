@@ -290,25 +290,169 @@ await eventBus.emit({
 
 ## 📊 **Implementation Roadmap**
 
-### **Phase 1: Foundation (Weeks 1-4)**
-1. **Onboarding Intelligence Agent** - Core differentiator
-2. **Financial Query Agent** - Immediate utility value
-3. **Agent framework and security** - Platform foundation
+### **🎯 REVISED IMPLEMENTATION STRATEGY**
 
-### **Phase 2: Intelligence (Weeks 5-8)**
-1. **Financial Audit Agent** - Proactive value
-2. **Business Insights Agent** - Strategic value
-3. **Agent coordination system** - Seamless UX
+**Architecture Decision**: Build agents first, extract framework later based on real usage patterns.
+**Priority**: Focus on immediate user value and revenue impact over abstract infrastructure.
+
+### **📈 Current Implementation Status (2025-09-26)**
+
+#### **Phase 1A: Onboarding Intelligence Agent - 40% Complete**
+
+**✅ Completed**:
+- Core agent implementation with Claude AI integration
+- API endpoint with authentication and team isolation
+- CSV file processing with 100% success rate (15/15 entities)
+- Service layer integration (ContractService, ExpenseService, ReceivableService)
+- Bulk operations with audit logging
+- Fixed validation issues (clientName requirement for receivables)
+
+**❌ Pending**:
+- Excel file extraction (currently 0 entities extracted)
+- PDF file extraction (currently 0 entities extracted)
+- Interactive clarification for missing/ambiguous fields
+- Multi-file batch processing verification
+- Review clientName requirement in API design
+
+**🔍 Key Findings**:
+- CSV processing works perfectly with proper text extraction
+- Excel/PDF files need specialized handling before Claude processing
+- Validation errors need user-friendly feedback mechanism
+- Current single-file limitation impacts user experience
+
+### **Phase 1A: Onboarding Intelligence Agent (Week 1)**
+**Goal**: Deliver immediate "wow factor" for new users
+
+1. **Onboarding Intelligence Agent** - PRIMARY FOCUS
+   - **Strategy**: Build using existing service patterns (`ContractService`, `ExpenseService`, `ReceivableService`)
+   - **Integration**: Leverage existing `withTeamContext`, `BaseFieldSchemas`, audit logging
+   - **Validation**: Use proven validation schemas, no new framework needed initially
+   - **Target**: `<15` minute setup time with bulk data import
+
+### **Phase 1B: Framework Extraction (Week 2)**
+**Goal**: Extract patterns from working agent into reusable framework
+
+2. **Agent Framework Foundation**
+   - **Strategy**: Extract common patterns discovered during Phase 1A implementation
+   - **Base Classes**: `AgentService` extending `BaseService` for consistency
+   - **Validation Layer**: Agent-specific schemas using existing `BaseFieldSchemas`
+   - **Context Service**: `BusinessContextService` for business intelligence
+
+### **Phase 1C: Query Enhancement (Week 3)**
+**Goal**: Enhance existing query capabilities with agent architecture
+
+3. **Financial Query Agent Enhancement**
+   - **Strategy**: Refactor existing `/api/ai/query` into agent framework
+   - **Integration**: Maintain backward compatibility with existing UI
+   - **Enhancement**: Add business context and conversation memory
+
+### **Phase 1D: Proactive Intelligence (Week 4)**
+**Goal**: Add proactive monitoring and quality assurance
+
+4. **Financial Audit Agent**
+   - **Strategy**: New agent for proactive anomaly detection
+   - **Integration**: Background monitoring of data quality
+   - **Alerts**: Dashboard integration for quality issues
+
+### **Phase 2: Intelligence & Coordination (Weeks 5-8)**
+1. **Business Insights Agent** - Strategic value
+2. **Agent Coordinator** - Optimal routing and seamless UX
+3. **Performance optimization** - Scale preparation
 
 ### **Phase 3: Advanced Features (Weeks 9-12)**
 1. **Tax Intelligence Agent** - Compliance value
-2. **Agent Coordinator** - Optimal routing
-3. **Performance optimization** - Scale preparation
+2. **Specialist marketplace** - Industry-specific agents
+3. **Third-party integrations** - Ecosystem expansion
 
 ### **Phase 4: Expansion (Future)**
-1. **Specialist marketplace** - Industry-specific agents
-2. **Custom agent builder** - User-defined agents
-3. **Third-party integrations** - Ecosystem expansion
+1. **Custom agent builder** - User-defined agents
+2. **Advanced business intelligence** - Predictive analytics
+3. **Multi-industry expansion** - Beyond architecture firms
+
+## 🏗️ **Architecture Integration Strategy**
+
+### **Compliance with Existing Patterns**
+Our agent implementation fully leverages the existing architectural foundation:
+
+#### **Service Layer Integration**
+- **Pattern**: Agents extend `BaseService` for consistent team-scoped operations
+- **Security**: All agents use `withTeamContext` middleware for team isolation
+- **Audit Trail**: Automatic audit logging through existing `auditCreate`, `auditUpdate`, `auditDelete`
+- **Validation**: Leverage existing `BaseFieldSchemas` and `EnumSchemas`
+
+#### **Team Context Middleware**
+```typescript
+// All agent operations respect team boundaries
+withTeamContext(async (context) => {
+  const onboardingAgent = new OnboardingIntelligenceAgent(context)
+  return await onboardingAgent.processDocuments(files, teamId)
+})
+```
+
+#### **Validation Schema Reuse**
+```typescript
+// Agent requests validate using existing schemas
+const documentRequest = z.object({
+  files: z.array(FileSchemas.uploadedFile),
+  teamId: BaseFieldSchemas.teamId,
+  extractionType: EnumSchemas.documentType
+})
+```
+
+#### **Service Dependencies**
+```typescript
+// Agents use existing services, no duplication
+class OnboardingIntelligenceAgent extends BaseService {
+  private contractService: ContractService
+  private expenseService: ExpenseService
+  private receivableService: ReceivableService
+
+  // Leverages existing CRUD operations, bulk operations, validation
+}
+```
+
+### **Implementation Philosophy**
+1. **No Reinvention**: Use existing service patterns, don't rebuild
+2. **Incremental Enhancement**: Enhance current capabilities, don't replace
+3. **Backward Compatibility**: New agents integrate with existing UI and APIs
+4. **Security First**: Team isolation and audit logging from day one
+
+## 🔧 **Technical Implementation Challenges**
+
+### **File Type Processing Issues**
+
+#### **Excel Files (.xlsx)**
+- **Issue**: Claude Vision API receives base64 but can't interpret Excel structure
+- **Solution Options**:
+  1. Parse XLSX to JSON/CSV before sending to Claude
+  2. Use specialized XLSX library (e.g., xlsx, exceljs)
+  3. Convert to CSV format internally before processing
+
+#### **PDF Files**
+- **Issue**: Large PDFs (4MB+) may exceed token limits or contain non-text content
+- **Solution Options**:
+  1. Extract text using PDF parsing library (pdf-parse, pdfjs)
+  2. Split multi-page PDFs and process page by page
+  3. Use OCR for image-based PDFs
+
+### **Interactive Clarification Design**
+
+```typescript
+interface ClarificationRequest {
+  missingFields: {
+    entity: string
+    field: string
+    reason: string
+    suggestions?: string[]
+  }[]
+  ambiguousData: {
+    entity: string
+    field: string
+    currentValue: any
+    possibleInterpretations: any[]
+  }[]
+}
+```
 
 ## 🎯 **Success Metrics**
 

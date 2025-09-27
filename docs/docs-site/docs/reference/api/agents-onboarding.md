@@ -1,8 +1,8 @@
 ---
-title: "Expenses API"
+title: "Onboarding API"
 type: "reference"
 audience: ["developer", "agent"]
-contexts: ["api", "expenses", "rest", "database"]
+contexts: ["api", "onboarding", "rest", "database"]
 complexity: "intermediate"
 last_updated: "2025-09-26"
 version: "1.0"
@@ -13,13 +13,13 @@ related:
 dependencies: ["next.js", "prisma", "zod"]
 ---
 
-# Expenses API
+# Onboarding API
 
-Comprehensive API reference for expenses management operations.
+Comprehensive API reference for onboarding management operations.
 
 ## Context for LLM Agents
 
-**Scope**: Complete expenses API operations including CRUD, filtering, sorting, and business logic
+**Scope**: Complete onboarding API operations including CRUD, filtering, sorting, and business logic
 **Prerequisites**: Understanding of REST APIs, Next.js App Router, Prisma ORM, and team-based data isolation
 **Key Patterns**:
 - RESTful endpoint design with standard HTTP methods
@@ -30,37 +30,34 @@ Comprehensive API reference for expenses management operations.
 
 ## Endpoint Overview
 
-**Base URL**: `/api/expenses`
-**Methods**: GET, POST
+**Base URL**: `/api/agents/onboarding`
+**Methods**: POST, GET
 **Authentication**: None
-**Team Isolation**: No
+**Team Isolation**: Yes
 
 
-## GET /api/expenses
+## GET /api/agents/onboarding
 
-Retrieve expenses records with optional filtering and sorting.
+Retrieve onboarding records with optional filtering and sorting.
 
 ### Query Parameters
 
 | Parameter | Type | Description | Default |
 |-----------|------|-------------|---------|
-| `sortBy` | string | Sort field | `createdAt` |
-| `sortOrder` | string | Sort direction (`asc`/`desc`) | `desc` |
-| `status` | string | Filter by status | `all` |
-| `category` | string | Filter by category | `all` |
+
 
 ### Example Request
 
 ```bash
-curl -X GET "http://localhost:3000/api/expenses?status=active&sortBy=createdAt&sortOrder=desc" \
+curl -X GET "http://localhost:3000/api/agents/onboarding?status=active&sortBy=createdAt&sortOrder=desc" \
   -H "Content-Type: application/json"
 ```
 
 ### Response Format
 
 ```typescript
-interface ExpensesResponse {
-  data: Expenses[];
+interface OnboardingResponse {
+  data: Onboarding[];
   total: number;
   filters: {
     status: string;
@@ -73,21 +70,33 @@ interface ExpensesResponse {
 
 
 
-## POST /api/expenses
+## POST /api/agents/onboarding
 
-Create a new expenses record.
+Create a new onboarding record.
 
 ### Request Body
 
+
+Schema validation using Zod:
+
+```typescript
+const OnboardingAPIRequestSchema = z.object({
+  files: z.array(z.object({
+    name: z.string().min(1),
+    type: z.string().min(1),
+    base64: z.string().min(1),
+    size: z.number().optional()
+  });
+```
 
 
 ### Example Request
 
 ```bash
-curl -X POST "http://localhost:3000/api/expenses" \
+curl -X POST "http://localhost:3000/api/agents/onboarding" \
   -H "Content-Type: application/json" \
   -d '{
-    "example": "Request body will be populated based on the specific expenses schema"
+    "example": "Request body will be populated based on the specific onboarding schema"
   }'
 ```
 
@@ -95,7 +104,7 @@ curl -X POST "http://localhost:3000/api/expenses" \
 
 ```typescript
 interface CreateResponse {
-  data: Expenses;
+  data: Onboarding;
   alerts?: AIAlert[];
 }
 ```
@@ -128,11 +137,25 @@ interface ErrorResponse {
 | 500 | INTERNAL_ERROR | Server error |
 
 
+## Team Isolation
+
+All onboarding operations are automatically filtered by team context:
+
+```typescript
+// All queries include team isolation
+const where = {
+  teamId: session.user.teamId,
+  ...additionalFilters
+};
+```
+
+This ensures complete data separation between teams in the multi-tenant system.
+
 
 ## Implementation Notes
 
 ### Business Logic
-- **Team Isolation**: Not applicable
+- **Team Isolation**: Enforced at API level
 - **Authentication**: Public access
 - **Validation**: Zod schemas ensure type safety
 - **Error Handling**: Consistent error responses across all endpoints
