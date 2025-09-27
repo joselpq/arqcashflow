@@ -1,0 +1,12 @@
+{
+  "fileName": "Testando.xlsx",
+  "timestamp": "2025-09-27T17:52:42.947Z",
+  "processingTime": 72758,
+  "contractsCreated": 37,
+  "receivablesCreated": 0,
+  "expensesCreated": 0,
+  "contractsFound": 37,
+  "receivablesFound": 0,
+  "expensesFound": 0,
+  "analysis": "Found 37 architectural contracts spanning from 2020 to 2024. All entries appear to be contracts - no separate receivables or expenses sections were found. Most projects appear to be residential, with a few commercial spaces (like Galeria Lume). Contract values range from R$1,200 to R$41,500. Status is either 'completed' or 'active', with no cancelled projects."
+}

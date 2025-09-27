@@ -18,13 +18,14 @@
  * - Bulk API registration via existing services
  */
 
-import { BaseService, ServiceContext, ServiceError } from '../services/BaseService'
+import { ServiceContext, ServiceError } from '../services/BaseService'
 import { ContractService } from '../services/ContractService'
 import { ExpenseService } from '../services/ExpenseService'
 import { ReceivableService } from '../services/ReceivableService'
 import { BaseFieldSchemas, EnumSchemas } from '../validation'
 import { z } from 'zod'
 import Anthropic from '@anthropic-ai/sdk'
+import * as XLSX from 'xlsx'
 
 // Initialize Claude AI client
 const claude = new Anthropic({
@@ -64,25 +65,42 @@ export const OnboardingAgentSchemas = {
       contracts: z.number().default(0),
       expenses: z.number().default(0),
       receivables: z.number().default(0)
-    })
+    }),
+    clarificationRequests: z.array(z.object({
+      fileName: z.string(),
+      field: z.string(),
+      question: z.string(),
+      suggestions: z.array(z.string()).optional(),
+      entityType: z.enum(['contract', 'expense', 'receivable'])
+    })).optional().default([])
+  }),
+
+  clarificationRequest: z.object({
+    fileName: z.string(),
+    field: z.string(),
+    question: z.string(),
+    suggestions: z.array(z.string()).optional(),
+    entityType: z.enum(['contract', 'expense', 'receivable'])
   })
 }
 
 export type DocumentRequest = z.infer<typeof OnboardingAgentSchemas.documentRequest>
 export type ExtractedEntity = z.infer<typeof OnboardingAgentSchemas.extractedEntity>
 export type ProcessingResult = z.infer<typeof OnboardingAgentSchemas.processingResult>
+export type ClarificationRequest = z.infer<typeof OnboardingAgentSchemas.clarificationRequest>
 
 export interface OnboardingFilters {
   // Placeholder for future filtering capabilities
 }
 
-export class OnboardingIntelligenceAgent extends BaseService<any, any, any, OnboardingFilters> {
+export class OnboardingIntelligenceAgent {
+  private context: ServiceContext
   private contractService: ContractService
   private expenseService: ExpenseService
   private receivableService: ReceivableService
 
   constructor(context: ServiceContext) {
-    super(context, 'onboardingAgent', ['createdAt'])
+    this.context = context
 
     // Initialize dependent services
     this.contractService = new ContractService(context)
@@ -103,7 +121,8 @@ export class OnboardingIntelligenceAgent extends BaseService<any, any, any, Onbo
       extractedEntities: 0,
       createdEntities: 0,
       errors: [],
-      summary: { contracts: 0, expenses: 0, receivables: 0 }
+      summary: { contracts: 0, expenses: 0, receivables: 0 },
+      clarificationRequests: []
     }
 
     if (validatedRequest.files.length === 0) {
@@ -128,21 +147,31 @@ export class OnboardingIntelligenceAgent extends BaseService<any, any, any, Onbo
     result.extractedEntities = extractedEntities.length
     console.log(`📊 Extracted ${extractedEntities.length} entities from ${result.processedFiles} files`)
 
-    // Step 2: Group entities by type for bulk operations
-    const contractData = extractedEntities.filter(e => e.type === 'contract').map(e => e.data)
-    const expenseData = extractedEntities.filter(e => e.type === 'expense').map(e => e.data)
-    const receivableData = extractedEntities.filter(e => e.type === 'receivable').map(e => e.data)
+    // Step 3: Validate entities and collect clarification requests
+    const validatedEntities = { contracts: [], expenses: [], receivables: [] }
 
-    // Step 3: Bulk create using existing services (with audit logging)
+    for (const entity of extractedEntities) {
+      const clarifications = this.validateEntityAndGetClarifications(entity)
+      if (clarifications.length > 0) {
+        result.clarificationRequests.push(...clarifications)
+      } else {
+        // Entity is valid, add to appropriate list
+        if (entity.type === 'contract') validatedEntities.contracts.push(entity.data)
+        else if (entity.type === 'expense') validatedEntities.expenses.push(entity.data)
+        else if (entity.type === 'receivable') validatedEntities.receivables.push(entity.data)
+      }
+    }
+
+    // Step 4: Bulk create using existing services (with audit logging)
     try {
       // Create contracts first (receivables may depend on them)
-      if (contractData.length > 0) {
-        console.log(`🔍 Attempting to create ${contractData.length} contracts:`)
-        contractData.forEach((contract, index) => {
+      if (validatedEntities.contracts.length > 0) {
+        console.log(`🔍 Attempting to create ${validatedEntities.contracts.length} contracts:`)
+        validatedEntities.contracts.forEach((contract, index) => {
           console.log(`   ${index + 1}. ${JSON.stringify(contract, null, 2)}`)
         })
 
-        const contractResults = await this.contractService.bulkCreate(contractData, { continueOnError: true })
+        const contractResults = await this.contractService.bulkCreate(validatedEntities.contracts, { continueOnError: true })
         result.summary.contracts = contractResults.successCount
         result.createdEntities += contractResults.successCount
         if (contractResults.errors.length > 0) {
@@ -153,8 +182,8 @@ export class OnboardingIntelligenceAgent extends BaseService<any, any, any, Onbo
       }
 
       // Create expenses
-      if (expenseData.length > 0) {
-        const expenseResults = await this.expenseService.bulkCreate(expenseData, { continueOnError: true })
+      if (validatedEntities.expenses.length > 0) {
+        const expenseResults = await this.expenseService.bulkCreate(validatedEntities.expenses, { continueOnError: true })
         result.summary.expenses = expenseResults.successCount
         result.createdEntities += expenseResults.successCount
         if (expenseResults.errors.length > 0) {
@@ -163,13 +192,13 @@ export class OnboardingIntelligenceAgent extends BaseService<any, any, any, Onbo
       }
 
       // Create receivables
-      if (receivableData.length > 0) {
-        console.log(`🔍 Attempting to create ${receivableData.length} receivables:`)
-        receivableData.forEach((receivable, index) => {
+      if (validatedEntities.receivables.length > 0) {
+        console.log(`🔍 Attempting to create ${validatedEntities.receivables.length} receivables:`)
+        validatedEntities.receivables.forEach((receivable, index) => {
           console.log(`   ${index + 1}. ${JSON.stringify(receivable, null, 2)}`)
         })
 
-        const receivableResults = await this.receivableService.bulkCreate(receivableData, { continueOnError: true })
+        const receivableResults = await this.receivableService.bulkCreate(validatedEntities.receivables, { continueOnError: true })
         result.summary.receivables = receivableResults.successCount
         result.createdEntities += receivableResults.successCount
         if (receivableResults.errors.length > 0) {
@@ -184,20 +213,79 @@ export class OnboardingIntelligenceAgent extends BaseService<any, any, any, Onbo
       result.errors.push(`Bulk creation failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
 
-    // Log successful onboarding completion
-    await this.logAudit(async () => {
-      const auditContext = this.createAuditContext('onboarding_completion', 'agent')
-      auditContext.metadata = {
-        totalFiles: result.totalFiles,
-        createdEntities: result.createdEntities,
-        summary: result.summary,
-        processingTime: Date.now()
-      }
-    })
+    // Log completion for debugging
+    console.log(`📊 OnboardingAgent Summary: Processed ${result.totalFiles} files, extracted ${result.extractedEntities} entities, created ${result.createdEntities} entities`)
+
+    if (result.clarificationRequests && result.clarificationRequests.length > 0) {
+      console.log(`❓ Clarification requests: ${result.clarificationRequests.length} missing fields need user input`)
+      result.clarificationRequests.forEach(req => {
+        console.log(`   - ${req.fileName}: ${req.field} (${req.question})`)
+      })
+    }
 
     console.log(`✅ OnboardingAgent: Created ${result.createdEntities} entities (${result.summary.contracts} contracts, ${result.summary.expenses} expenses, ${result.summary.receivables} receivables)`)
 
     return result
+  }
+
+  /**
+   * Get the improved extraction prompt with flexible rules
+   */
+  private getImprovedExtractionPrompt(): string {
+    return `Analyze this financial document and extract all contracts, expenses, and receivables.
+
+IMPORTANT: Return ONLY a valid JSON array with no additional text or explanations. The response must start with [ and end with ].
+
+EXTRACTION RULES:
+1. For contracts: If projectName is missing, use clientName. If clientName is missing, use projectName.
+2. For receivables: If clientName is missing, use projectName or any available client/project identifier.
+3. For expenses: Intelligently infer the category based on the expense description:
+   - "materiais": construction materials, supplies, materials
+   - "mão-de-obra": labor, workers, salaries, services
+   - "equipamentos": equipment, tools, machinery
+   - "transporte": fuel, transportation, delivery, combustível
+   - "escritório": rent, utilities, office supplies, aluguel
+   - "software": licenses, subscriptions, digital services
+   - "outros": anything else
+
+Use this exact JSON structure:
+[
+  {
+    "type": "contract|expense|receivable",
+    "confidence": 0.0-1.0,
+    "data": {
+      // Required fields only - leave optional fields out if not found
+
+      // For contracts (required: clientName, projectName, totalValue, signedDate):
+      "clientName": "string",
+      "projectName": "string",
+      "totalValue": number,
+      "signedDate": "YYYY-MM-DD",
+      "description": "string (optional)",
+      "category": "Residencial|Comercial|Restaurante|Loja (optional)",
+
+      // For expenses (required: description, amount, dueDate, category):
+      "description": "string",
+      "amount": number,
+      "dueDate": "YYYY-MM-DD",
+      "category": "materiais|mão-de-obra|equipamentos|transporte|escritório|software|outros",
+      "vendor": "string (optional)",
+
+      // For receivables (required: expectedDate, amount, clientName):
+      "expectedDate": "YYYY-MM-DD",
+      "amount": number,
+      "clientName": "string (use project name if client not available)",
+      "description": "string (optional)",
+      "category": "string (optional)"
+    }
+  }
+]
+
+DATE CONVERSION: Convert any date format to YYYY-MM-DD (e.g., "15/03/2024" becomes "2024-03-15", "23/Oct/20" becomes "2020-10-23")
+AMOUNT HANDLING: Extract numeric values, removing currency symbols (R$) and converting commas to periods if needed
+CONFIDENCE: Use high confidence (0.8-1.0) when data is clear, lower (0.3-0.7) when inferring or guessing
+
+Be thorough and extract ALL financial information found in the document.`
   }
 
   /**
@@ -207,11 +295,13 @@ export class OnboardingIntelligenceAgent extends BaseService<any, any, any, Onbo
     console.log(`🔍 Processing file: ${file.name} (${file.type})`)
 
     // Determine processing method based on file type
-    if (file.type.startsWith('image/') ||
-        file.type === 'application/pdf' ||
-        file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || // .xlsx
-        file.type === 'application/vnd.ms-excel') { // .xls
+    if (file.type.startsWith('image/')) {
       return await this.extractWithClaudeVision(file)
+    } else if (file.type === 'application/pdf') {
+      return await this.extractWithClaudeDocument(file)
+    } else if (file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || // .xlsx
+               file.type === 'application/vnd.ms-excel') { // .xls
+      return await this.extractFromExcelFile(file)
     } else if (file.type === 'text/csv') {
       return await this.extractWithClaudeDocument(file)
     } else {
@@ -221,58 +311,24 @@ export class OnboardingIntelligenceAgent extends BaseService<any, any, any, Onbo
   }
 
   /**
-   * Extract entities using Claude's vision capabilities (images, PDFs)
+   * Extract entities using Claude's vision capabilities (images only)
    */
   private async extractWithClaudeVision(file: { name: string; type: string; base64: string }): Promise<ExtractedEntity[]> {
     try {
       const content: any[] = [
         {
           type: 'text',
-          text: `Analyze this financial document and extract all contracts, expenses, and receivables. Return a JSON array of entities with this structure:
-
-[
-  {
-    "type": "contract|expense|receivable",
-    "confidence": 0.0-1.0,
-    "data": {
-      // For contracts:
-      "clientName": "string",
-      "projectName": "string",
-      "totalValue": number,
-      "signedDate": "YYYY-MM-DD",
-      "description": "string",
-      "category": "Residencial|Comercial|Restaurante|Loja",
-
-      // For expenses:
-      "description": "string",
-      "amount": number,
-      "dueDate": "YYYY-MM-DD",
-      "category": "materiais|mão-de-obra|equipamentos|transporte|escritório|software|outros",
-      "vendor": "string",
-
-      // For receivables:
-      "expectedDate": "YYYY-MM-DD",
-      "amount": number,
-      "description": "string",
-      "clientName": "string",
-      "category": "project work|consultation|commission"
-    }
-  }
-]
-
-Be thorough and extract ALL financial information. Use confidence scores to indicate certainty.`
+          text: this.getImprovedExtractionPrompt()
+        },
+        {
+          type: 'image',
+          source: {
+            type: 'base64',
+            media_type: file.type,
+            data: file.base64
+          }
         }
       ]
-
-      // Add the file content - Claude treats all documents as images in the API
-      content.push({
-        type: 'image',
-        source: {
-          type: 'base64',
-          media_type: file.type,
-          data: file.base64
-        }
-      })
 
       const response = await claude.messages.create({
         model: 'claude-3-5-sonnet-latest',
@@ -296,54 +352,40 @@ Be thorough and extract ALL financial information. Use confidence scores to indi
   }
 
   /**
-   * Extract entities using Claude's document processing (spreadsheets, CSVs)
+   * Extract entities using Claude's document processing (CSVs, PDFs)
    */
   private async extractWithClaudeDocument(file: { name: string; type: string; base64: string }): Promise<ExtractedEntity[]> {
     try {
-      // Decode base64 to text for CSV files
-      const fileContent = Buffer.from(file.base64, 'base64').toString('utf-8')
+      let content: any[] = [
+        {
+          type: 'text',
+          text: this.getImprovedExtractionPrompt()
+        }
+      ]
+
+      // Handle different file types
+      if (file.type === 'text/csv') {
+        // For CSV files, decode base64 to text and include in message
+        const fileContent = Buffer.from(file.base64, 'base64').toString('utf-8')
+        content[0].text += `\n\nCSV Content:\n${fileContent}\n\nThe data uses Brazilian Portuguese terms. Map Portuguese terms to the appropriate categories.`
+      } else if (file.type === 'application/pdf') {
+        // For PDF files, use Claude's native document processing
+        content.push({
+          type: 'document',
+          source: {
+            type: 'base64',
+            media_type: 'application/pdf',
+            data: file.base64
+          }
+        })
+      }
 
       const response = await claude.messages.create({
         model: 'claude-3-5-sonnet-latest',
         max_tokens: 2000,
         messages: [{
           role: 'user',
-          content: `Analyze this CSV financial data and extract all contracts, expenses, and receivables. Return a JSON array of entities with this structure:
-
-[
-  {
-    "type": "contract|expense|receivable",
-    "confidence": 0.0-1.0,
-    "data": {
-      // For contracts:
-      "clientName": "string",
-      "projectName": "string",
-      "totalValue": number,
-      "signedDate": "YYYY-MM-DD",
-      "description": "string",
-      "category": "Residencial|Comercial|Restaurante|Loja",
-
-      // For expenses:
-      "description": "string",
-      "amount": number,
-      "dueDate": "YYYY-MM-DD",
-      "category": "materiais|mão-de-obra|equipamentos|transporte|escritório|software|outros",
-      "vendor": "string",
-
-      // For receivables:
-      "expectedDate": "YYYY-MM-DD",
-      "amount": number,
-      "description": "string",
-      "clientName": "string",
-      "category": "project work|consultation|commission"
-    }
-  }
-]
-
-CSV Content:
-${fileContent}
-
-Be thorough and extract ALL financial information. Use confidence scores to indicate certainty. The CSV uses Brazilian Portuguese terms.`
+          content
         }]
       })
 
@@ -355,6 +397,59 @@ Be thorough and extract ALL financial information. Use confidence scores to indi
 
     } catch (error) {
       console.error(`❌ Claude Document extraction failed for ${file.name}:`, error)
+      return []
+    }
+  }
+
+  /**
+   * Extract entities from Excel files by converting to text first
+   */
+  private async extractFromExcelFile(file: { name: string; type: string; base64: string }): Promise<ExtractedEntity[]> {
+    try {
+      console.log(`📊 Processing Excel file: ${file.name}`)
+
+      // Decode base64 to buffer
+      const buffer = Buffer.from(file.base64, 'base64')
+
+      // Parse Excel file using xlsx library
+      const workbook = XLSX.read(buffer, { type: 'buffer' })
+
+      // Convert all sheets to text
+      let extractedText = `Excel File: ${file.name}\n\n`
+
+      workbook.SheetNames.forEach((sheetName, index) => {
+        const sheet = workbook.Sheets[sheetName]
+        const csvText = XLSX.utils.sheet_to_csv(sheet)
+
+        if (csvText.trim()) {
+          extractedText += `Sheet ${index + 1}: ${sheetName}\n`
+          extractedText += csvText + '\n\n'
+        }
+      })
+
+      if (extractedText.length < 50) {
+        console.warn(`⚠️ Excel file ${file.name} appears to be empty or unreadable`)
+        return []
+      }
+
+      // Now send the extracted text to Claude for processing
+      const response = await claude.messages.create({
+        model: 'claude-3-5-sonnet-latest',
+        max_tokens: 2000,
+        messages: [{
+          role: 'user',
+          content: this.getImprovedExtractionPrompt() + `\n\nExcel Content:\n${extractedText}\n\nThe data uses Brazilian Portuguese terms. Map Portuguese terms to the appropriate categories.`
+        }]
+      })
+
+      const responseText = response.content[0]?.type === 'text' ? response.content[0].text : ''
+      const entities = this.parseExtractedEntities(responseText, file.name, 'claude-document')
+
+      console.log(`📊 Extracted ${entities.length} entities from Excel file ${file.name}`)
+      return entities
+
+    } catch (error) {
+      console.error(`❌ Excel processing failed for ${file.name}:`, error)
       return []
     }
   }
@@ -412,42 +507,207 @@ Be thorough and extract ALL financial information. Use confidence scores to indi
    */
   private parseExtractedEntities(responseText: string, fileName: string, method: 'claude-vision' | 'claude-document' | 'filename-pattern'): ExtractedEntity[] {
     try {
+      console.log(`🔍 Parsing response from ${fileName} (length: ${responseText.length})`)
+
       // Extract JSON from the response text - look for array pattern
-      let jsonText = responseText
+      let jsonText = responseText.trim()
 
-      // Remove markdown code blocks
-      jsonText = jsonText.replace(/```json\s*/, '').replace(/```\s*$/, '').trim()
+      // Remove markdown code blocks (more comprehensive patterns)
+      jsonText = jsonText.replace(/```(?:json)?\s*/g, '').replace(/```\s*$/g, '').trim()
 
-      // Try to find JSON array in the response
+      // Remove common prefixes that Claude might add
+      jsonText = jsonText.replace(/^(?:Here's the extracted data:|Here are the extracted entities:|Based on the document, here are the financial entities:|The extracted financial information is:)\s*/i, '').trim()
+
+      // Try multiple patterns to find JSON array
+      let extractedJson = ''
+
+      // Pattern 1: Look for array with square brackets
       const arrayStartIndex = jsonText.indexOf('[')
       const arrayEndIndex = jsonText.lastIndexOf(']')
 
       if (arrayStartIndex !== -1 && arrayEndIndex !== -1 && arrayEndIndex > arrayStartIndex) {
-        jsonText = jsonText.substring(arrayStartIndex, arrayEndIndex + 1)
+        extractedJson = jsonText.substring(arrayStartIndex, arrayEndIndex + 1)
+      } else {
+        // Pattern 2: Look for individual objects and wrap them in array
+        const objectPattern = /\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/g
+        const objects = jsonText.match(objectPattern)
+        if (objects && objects.length > 0) {
+          extractedJson = '[' + objects.join(',') + ']'
+        } else {
+          console.warn(`No valid JSON structure found in response from ${fileName}`)
+          console.warn('Response preview:', responseText.substring(0, 200) + '...')
+          return []
+        }
       }
 
-      const parsedData = JSON.parse(jsonText)
+      // Attempt to parse the extracted JSON
+      let parsedData
+      try {
+        parsedData = JSON.parse(extractedJson)
+      } catch (parseError) {
+        // Try to fix common JSON issues
+        let fixedJson = extractedJson
+          .replace(/,\s*]/g, ']') // Remove trailing commas in arrays
+          .replace(/,\s*}/g, '}') // Remove trailing commas in objects
+          .replace(/'/g, '"') // Replace single quotes with double quotes
+          .replace(/([{,]\s*)(\w+)(\s*:)/g, '$1"$2"$3') // Quote unquoted keys
+
+        console.log(`🔧 Attempting to fix JSON for ${fileName}`)
+        parsedData = JSON.parse(fixedJson)
+      }
 
       if (!Array.isArray(parsedData)) {
         console.warn(`Expected array from Claude, got: ${typeof parsedData}`)
-        return []
+        // If it's a single object, wrap it in array
+        if (typeof parsedData === 'object' && parsedData !== null) {
+          parsedData = [parsedData]
+        } else {
+          return []
+        }
       }
 
-      return parsedData.map((item: any) => ({
-        type: item.type,
-        confidence: item.confidence || 0.8,
-        data: item.data,
-        source: {
-          fileName,
-          extractionMethod: method
-        }
-      }))
+      const entities = parsedData
+        .filter((item: any) => item && typeof item === 'object') // Filter out invalid items
+        .map((item: any) => {
+          // Validate required fields
+          if (!item.type || !item.data) {
+            console.warn(`Invalid entity structure in ${fileName}:`, item)
+            return null
+          }
+
+          return {
+            type: item.type,
+            confidence: typeof item.confidence === 'number' ? item.confidence : 0.8,
+            data: item.data,
+            source: {
+              fileName,
+              extractionMethod: method
+            }
+          }
+        })
+        .filter((entity: any) => entity !== null) // Remove invalid entities
+
+      console.log(`✅ Successfully parsed ${entities.length} entities from ${fileName}`)
+      return entities
 
     } catch (error) {
       console.error(`❌ Failed to parse entities from ${fileName}:`, error)
-      console.error('Response text:', responseText)
+      console.error('Response text preview:', responseText.substring(0, 500))
+
+      // Return empty array but log details for debugging
+      console.error('Full response text:', responseText)
       return []
     }
+  }
+
+  /**
+   * Validate extracted entity and generate clarification requests for missing fields
+   */
+  private validateEntityAndGetClarifications(entity: ExtractedEntity): ClarificationRequest[] {
+    const clarifications: ClarificationRequest[] = []
+    const { data, source, type } = entity
+
+    // Check required fields based on entity type
+    if (type === 'contract') {
+      if (!data.clientName || data.clientName.trim() === '') {
+        clarifications.push({
+          fileName: source.fileName,
+          field: 'clientName',
+          question: 'What is the client name for this contract?',
+          suggestions: ['Cliente A', 'João Silva', 'Empresa XYZ'],
+          entityType: 'contract'
+        })
+      }
+      if (!data.projectName || data.projectName.trim() === '') {
+        clarifications.push({
+          fileName: source.fileName,
+          field: 'projectName',
+          question: 'What is the project name for this contract?',
+          suggestions: ['Projeto Residencial', 'Reforma Apartamento', 'Casa Nova'],
+          entityType: 'contract'
+        })
+      }
+      if (!data.totalValue || data.totalValue <= 0) {
+        clarifications.push({
+          fileName: source.fileName,
+          field: 'totalValue',
+          question: 'What is the total contract value?',
+          suggestions: ['R$ 50.000', 'R$ 100.000', 'R$ 200.000'],
+          entityType: 'contract'
+        })
+      }
+      if (!data.category || !['Residencial', 'Comercial', 'Restaurante', 'Loja'].includes(data.category)) {
+        clarifications.push({
+          fileName: source.fileName,
+          field: 'category',
+          question: 'What type of project is this contract for?',
+          suggestions: ['Residencial', 'Comercial', 'Restaurante', 'Loja'],
+          entityType: 'contract'
+        })
+      }
+    }
+
+    if (type === 'expense') {
+      if (!data.description || data.description.trim() === '') {
+        clarifications.push({
+          fileName: source.fileName,
+          field: 'description',
+          question: 'What is this expense for?',
+          suggestions: ['Material de construção', 'Mão de obra', 'Equipamentos'],
+          entityType: 'expense'
+        })
+      }
+      if (!data.amount || data.amount <= 0) {
+        clarifications.push({
+          fileName: source.fileName,
+          field: 'amount',
+          question: 'What is the expense amount?',
+          suggestions: ['R$ 500', 'R$ 1.000', 'R$ 2.500'],
+          entityType: 'expense'
+        })
+      }
+      if (!data.category || !['materiais', 'mão-de-obra', 'equipamentos', 'transporte', 'escritório', 'software', 'outros'].includes(data.category)) {
+        clarifications.push({
+          fileName: source.fileName,
+          field: 'category',
+          question: 'What category does this expense belong to?',
+          suggestions: ['materiais', 'mão-de-obra', 'equipamentos', 'outros'],
+          entityType: 'expense'
+        })
+      }
+    }
+
+    if (type === 'receivable') {
+      if (!data.clientName || data.clientName.trim() === '') {
+        clarifications.push({
+          fileName: source.fileName,
+          field: 'clientName',
+          question: 'Who is the client for this receivable?',
+          suggestions: ['Cliente A', 'João Silva', 'Empresa XYZ'],
+          entityType: 'receivable'
+        })
+      }
+      if (!data.amount || data.amount <= 0) {
+        clarifications.push({
+          fileName: source.fileName,
+          field: 'amount',
+          question: 'What is the receivable amount?',
+          suggestions: ['R$ 5.000', 'R$ 10.000', 'R$ 25.000'],
+          entityType: 'receivable'
+        })
+      }
+      if (!data.description || data.description.trim() === '') {
+        clarifications.push({
+          fileName: source.fileName,
+          field: 'description',
+          question: 'What is this receivable for?',
+          suggestions: ['Pagamento do projeto', 'Consultoria', 'Comissão'],
+          entityType: 'receivable'
+        })
+      }
+    }
+
+    return clarifications
   }
 
   /**
