@@ -1,0 +1,22 @@
+
+> architech-cashflow-temp@0.1.0 dev
+> next dev --turbopack
+
+ ⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of /Users/jose.lyra/Desktop/Code/Cursor Claude/package-lock.json as the root directory.
+ To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
+ Detected additional lockfiles: 
+   * /Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/package-lock.json
+
+ ⚠ Port 3000 is in use by process 92954, using available port 3002 instead.
+   ▲ Next.js 15.5.3 (Turbopack)
+   - Local:        http://localhost:3002
+   - Network:      http://192.168.0.219:3002
+   - Environments: .env.local, .env
+
+ ✓ Starting...
+ ✓ Compiled middleware in 168ms
+ ✓ Ready in 1260ms
+ ✓ Compiled middleware in 1ms
+ ✓ Compiled middleware in 1ms

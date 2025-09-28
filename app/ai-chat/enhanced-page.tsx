@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import MultiFileSetupAssistant from '../components/setup-assistant/MultiFileSetupAssistant'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -636,7 +637,7 @@ export default function EnhancedAIChatPage() {
 
         {/* Tab Content */}
         {activeTab === 'setup' ? (
-          <SetupAssistant />
+          <MultiFileSetupAssistant />
         ) : (
           <div>
         {/* Quick Actions */}

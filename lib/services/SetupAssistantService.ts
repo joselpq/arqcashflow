@@ -49,6 +49,36 @@ export interface ProcessingResult {
   }
 }
 
+export interface FileProcessingResult extends ProcessingResult {
+  fileName: string
+  fileSize: number
+  processingTime: number
+  status: 'success' | 'error'
+  error?: string
+}
+
+export interface MultiFileProcessingResult {
+  totalFiles: number
+  successfulFiles: number
+  failedFiles: number
+  fileResults: FileProcessingResult[]
+  combinedSummary: {
+    totalContractsCreated: number
+    totalReceivablesCreated: number
+    totalExpensesCreated: number
+    totalErrors: number
+  }
+  totalProcessingTime: number
+}
+
+export interface ProcessingProgress {
+  currentFile: number
+  totalFiles: number
+  currentFileName: string
+  status: 'processing' | 'completed' | 'error'
+  estimatedTimeRemaining?: number
+}
+
 interface ExtractedData {
   analysis: string
   data: {
@@ -70,6 +100,180 @@ export class SetupAssistantService extends BaseService<any, any, any, any> {
     this.contractService = new ContractService(context)
     this.expenseService = new ExpenseService(context)
     this.receivableService = new ReceivableService(context)
+  }
+
+  /**
+   * Process multiple files sequentially with progress tracking
+   * Phase 2 Enhancement: Multi-file support
+   */
+  async processMultipleFiles(
+    files: File[],
+    progressCallback?: (progress: ProcessingProgress) => void
+  ): Promise<MultiFileProcessingResult> {
+    const startTime = Date.now()
+    const fileResults: FileProcessingResult[] = []
+    const avgTimePerFile = 60000 // 60 seconds average
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i]
+      const fileStartTime = Date.now()
+
+      // Update progress
+      if (progressCallback) {
+        progressCallback({
+          currentFile: i + 1,
+          totalFiles: files.length,
+          currentFileName: file.name,
+          status: 'processing',
+          estimatedTimeRemaining: (files.length - i - 1) * avgTimePerFile / 1000
+        })
+      }
+
+      try {
+        // Process individual file
+        const result = await this.processFile(file)
+
+        fileResults.push({
+          ...result,
+          fileName: file.name,
+          fileSize: file.size,
+          processingTime: Date.now() - fileStartTime,
+          status: 'success'
+        })
+
+        // Update progress
+        if (progressCallback) {
+          progressCallback({
+            currentFile: i + 1,
+            totalFiles: files.length,
+            currentFileName: file.name,
+            status: 'completed'
+          })
+        }
+      } catch (error) {
+        console.error(`Error processing file ${file.name}:`, error)
+
+        // Check if it's a recoverable error (rate limiting)
+        const isRateLimitError = error instanceof Error &&
+          (error.message.includes('429') || error.message.includes('rate limit'))
+
+        if (isRateLimitError && i > 0) {
+          // Wait longer before retrying
+          console.log('Rate limit detected, waiting 5 seconds before retry...')
+          await new Promise(resolve => setTimeout(resolve, 5000))
+
+          // Retry once
+          try {
+            const result = await this.processFile(file)
+            fileResults.push({
+              ...result,
+              fileName: file.name,
+              fileSize: file.size,
+              processingTime: Date.now() - fileStartTime,
+              status: 'success'
+            })
+          } catch (retryError) {
+            // Failed even after retry
+            fileResults.push({
+              message: 'Erro no processamento',
+              analysis: '',
+              results: {
+                contracts: { created: 0, errors: [] },
+                receivables: { created: 0, errors: [] },
+                expenses: { created: 0, errors: [] }
+              },
+              summary: {
+                contractsCreated: 0,
+                receivablesCreated: 0,
+                expensesCreated: 0,
+                contractsFound: 0,
+                receivablesFound: 0,
+                expensesFound: 0,
+                errors: [String(retryError)]
+              },
+              fileName: file.name,
+              fileSize: file.size,
+              processingTime: Date.now() - fileStartTime,
+              status: 'error',
+              error: String(retryError)
+            })
+          }
+        } else {
+          // Non-recoverable error or first file failed
+          fileResults.push({
+            message: 'Erro no processamento',
+            analysis: '',
+            results: {
+              contracts: { created: 0, errors: [] },
+              receivables: { created: 0, errors: [] },
+              expenses: { created: 0, errors: [] }
+            },
+            summary: {
+              contractsCreated: 0,
+              receivablesCreated: 0,
+              expensesCreated: 0,
+              contractsFound: 0,
+              receivablesFound: 0,
+              expensesFound: 0,
+              errors: [String(error)]
+            },
+            fileName: file.name,
+            fileSize: file.size,
+            processingTime: Date.now() - fileStartTime,
+            status: 'error',
+            error: String(error)
+          })
+        }
+
+        // Update progress with error status
+        if (progressCallback) {
+          progressCallback({
+            currentFile: i + 1,
+            totalFiles: files.length,
+            currentFileName: file.name,
+            status: 'error'
+          })
+        }
+      }
+
+      // Small delay between files to avoid overwhelming the API
+      if (i < files.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 1000))
+      }
+    }
+
+    // Calculate combined summary
+    const combinedSummary = {
+      totalContractsCreated: 0,
+      totalReceivablesCreated: 0,
+      totalExpensesCreated: 0,
+      totalErrors: 0
+    }
+
+    let successfulFiles = 0
+    let failedFiles = 0
+
+    fileResults.forEach(result => {
+      if (result.status === 'success') {
+        successfulFiles++
+        combinedSummary.totalContractsCreated += result.summary.contractsCreated
+        combinedSummary.totalReceivablesCreated += result.summary.receivablesCreated
+        combinedSummary.totalExpensesCreated += result.summary.expensesCreated
+        combinedSummary.totalErrors += result.summary.errors.length
+      } else {
+        failedFiles++
+        combinedSummary.totalErrors++
+      }
+    })
+
+    return {
+      totalFiles: files.length,
+      successfulFiles,
+      failedFiles,
+      fileResults,
+      combinedSummary,
+      totalProcessingTime: Date.now() - startTime
+    }
   }
 
   /**

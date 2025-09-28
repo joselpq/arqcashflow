@@ -1,0 +1,440 @@
+[dotenv@17.2.2] injecting env (0) from .env -- tip: 📡 observe env with Radar: https://dotenvx.com/radar
+🤖 OnboardingIntelligenceAgent Test Suite
+==================================================
+✅ Claude API key found
+
+=== Testing OnboardingIntelligenceAgent Directly ===
+
+✅ Using test team: cmfvsa8tt0000t0imqr96svt4
+✅ Using test user: cmfvsa8v00002t0im966k7o90
+
+
+📄 Testing file: sample_data.csv
+==================================================
+📊 File type: text/csv
+📏 File size: 3.03 KB (base64)
+🤖 OnboardingAgent: Processing 1 files for team cmfvsa8tt0000t0imqr96svt4
+🔍 Processing file: sample_data.csv (text/csv)
+🔍 Parsing response from sample_data.csv (length: 4062)
+✅ Successfully parsed 15 entities from sample_data.csv
+📄 Extracted 15 entities from sample_data.csv using Claude Document Processing
+📊 Extracted 15 entities from 1 files
+🔍 Attempting to create 4 contracts:
+   1. {
+  "clientName": "Livia Assan",
+  "projectName": "LF - Livia Assan",
+  "totalValue": 85000,
+  "signedDate": "2024-03-15",
+  "description": "Projeto residencial apartamento 120m2",
+  "category": "Residencial"
+}
+   2. {
+  "clientName": "Rosa Lyra Isabel de Castela",
+  "projectName": "RL-IC - Rosa Lyra Isabel de Castela",
+  "totalValue": 150000,
+  "signedDate": "2024-01-22",
+  "description": "Casa de campo 250m2",
+  "category": "Residencial"
+}
+   3. {
+  "clientName": "Carlos Botelho",
+  "projectName": "CB (REST) - Carlos Botelho",
+  "totalValue": 220000,
+  "signedDate": "2024-02-05",
+  "description": "Restaurante italiano centro",
+  "category": "Restaurante"
+}
+   4. {
+  "clientName": "Marina Gonzalez",
+  "projectName": "MG-LOJA - Marina Gonzalez",
+  "totalValue": 95000,
+  "signedDate": "2024-04-18",
+  "description": "Loja de roupas shopping",
+  "category": "Comercial"
+}
+Audit operation failed: {
+  error: "Cannot read properties of undefined (reading 'id')",
+  timestamp: '2025-09-27T12:50:32.323Z',
+  stack: "TypeError: Cannot read properties of undefined (reading 'id')\n" +
+    '    at ContractService.createAuditContext (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:114:35)\n' +
+    '    at <anonymous> (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:328:41)\n' +
+    '    at safeAudit (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/audit-middleware.ts:144:11)\n' +
+    '    at ContractService.logAudit (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:134:11)\n' +
+    '    at Immediate.<anonymous> (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:327:24)\n' +
+    '    at process.processImmediate (node:internal/timers:485:21)'
+}
+Audit operation failed: {
+  error: "Cannot read properties of undefined (reading 'id')",
+  timestamp: '2025-09-27T12:50:32.342Z',
+  stack: "TypeError: Cannot read properties of undefined (reading 'id')\n" +
+    '    at ContractService.createAuditContext (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:114:35)\n' +
+    '    at <anonymous> (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:328:41)\n' +
+    '    at safeAudit (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/audit-middleware.ts:144:11)\n' +
+    '    at ContractService.logAudit (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:134:11)\n' +
+    '    at Immediate.<anonymous> (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:327:24)\n' +
+    '    at process.processImmediate (node:internal/timers:485:21)'
+}
+Audit operation failed: {
+  error: "Cannot read properties of undefined (reading 'id')",
+  timestamp: '2025-09-27T12:50:32.361Z',
+  stack: "TypeError: Cannot read properties of undefined (reading 'id')\n" +
+    '    at ContractService.createAuditContext (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:114:35)\n' +
+    '    at <anonymous> (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:328:41)\n' +
+    '    at safeAudit (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/audit-middleware.ts:144:11)\n' +
+    '    at ContractService.logAudit (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:134:11)\n' +
+    '    at Immediate.<anonymous> (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:327:24)\n' +
+    '    at process.processImmediate (node:internal/timers:485:21)'
+}
+Audit operation failed: {
+  error: "Cannot read properties of undefined (reading 'id')",
+  timestamp: '2025-09-27T12:50:32.381Z',
+  stack: "TypeError: Cannot read properties of undefined (reading 'id')\n" +
+    '    at ContractService.createAuditContext (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:114:35)\n' +
+    '    at <anonymous> (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:328:41)\n' +
+    '    at safeAudit (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/audit-middleware.ts:144:11)\n' +
+    '    at ContractService.logAudit (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:134:11)\n' +
+    '    at Immediate.<anonymous> (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:327:24)\n' +
+    '    at process.processImmediate (node:internal/timers:485:21)'
+}
+Audit operation failed: {
+  error: "Cannot read properties of undefined (reading 'id')",
+  timestamp: '2025-09-27T12:50:32.435Z',
+  stack: "TypeError: Cannot read properties of undefined (reading 'id')\n" +
+    '    at ExpenseService.createAuditContext (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:114:35)\n' +
+    '    at <anonymous> (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:328:41)\n' +
+    '    at safeAudit (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/audit-middleware.ts:144:11)\n' +
+    '    at ExpenseService.logAudit (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:134:11)\n' +
+    '    at Immediate.<anonymous> (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:327:24)\n' +
+    '    at process.processImmediate (node:internal/timers:485:21)'
+}
+Audit operation failed: {
+  error: "Cannot read properties of undefined (reading 'id')",
+  timestamp: '2025-09-27T12:50:32.445Z',
+  stack: "TypeError: Cannot read properties of undefined (reading 'id')\n" +
+    '    at ExpenseService.createAuditContext (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:114:35)\n' +
+    '    at <anonymous> (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:328:41)\n' +
+    '    at safeAudit (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/audit-middleware.ts:144:11)\n' +
+    '    at ExpenseService.logAudit (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:134:11)\n' +
+    '    at Immediate.<anonymous> (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:327:24)\n' +
+    '    at process.processImmediate (node:internal/timers:485:21)'
+}
+Audit operation failed: {
+  error: "Cannot read properties of undefined (reading 'id')",
+  timestamp: '2025-09-27T12:50:32.456Z',
+  stack: "TypeError: Cannot read properties of undefined (reading 'id')\n" +
+    '    at ExpenseService.createAuditContext (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:114:35)\n' +
+    '    at <anonymous> (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:328:41)\n' +
+    '    at safeAudit (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/audit-middleware.ts:144:11)\n' +
+    '    at ExpenseService.logAudit (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:134:11)\n' +
+    '    at Immediate.<anonymous> (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:327:24)\n' +
+    '    at process.processImmediate (node:internal/timers:485:21)'
+}
+Audit operation failed: {
+  error: "Cannot read properties of undefined (reading 'id')",
+  timestamp: '2025-09-27T12:50:32.468Z',
+  stack: "TypeError: Cannot read properties of undefined (reading 'id')\n" +
+    '    at ExpenseService.createAuditContext (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:114:35)\n' +
+    '    at <anonymous> (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:328:41)\n' +
+    '    at safeAudit (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/audit-middleware.ts:144:11)\n' +
+    '    at ExpenseService.logAudit (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:134:11)\n' +
+    '    at Immediate.<anonymous> (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:327:24)\n' +
+    '    at process.processImmediate (node:internal/timers:485:21)'
+}
+Audit operation failed: {
+  error: "Cannot read properties of undefined (reading 'id')",
+  timestamp: '2025-09-27T12:50:32.477Z',
+  stack: "TypeError: Cannot read properties of undefined (reading 'id')\n" +
+    '    at ExpenseService.createAuditContext (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:114:35)\n' +
+    '    at <anonymous> (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:328:41)\n' +
+    '    at safeAudit (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/audit-middleware.ts:144:11)\n' +
+    '    at ExpenseService.logAudit (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:134:11)\n' +
+    '    at Immediate.<anonymous> (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:327:24)\n' +
+    '    at process.processImmediate (node:internal/timers:485:21)'
+}
+Audit operation failed: {
+  error: "Cannot read properties of undefined (reading 'id')",
+  timestamp: '2025-09-27T12:50:32.487Z',
+  stack: "TypeError: Cannot read properties of undefined (reading 'id')\n" +
+    '    at ExpenseService.createAuditContext (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:114:35)\n' +
+    '    at <anonymous> (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:328:41)\n' +
+    '    at safeAudit (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/audit-middleware.ts:144:11)\n' +
+    '    at ExpenseService.logAudit (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:134:11)\n' +
+    '    at Immediate.<anonymous> (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:327:24)\n' +
+    '    at process.processImmediate (node:internal/timers:485:21)'
+}
+Audit operation failed: {
+  error: "Cannot read properties of undefined (reading 'id')",
+  timestamp: '2025-09-27T12:50:32.497Z',
+  stack: "TypeError: Cannot read properties of undefined (reading 'id')\n" +
+    '    at ExpenseService.createAuditContext (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:114:35)\n' +
+    '    at <anonymous> (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:328:41)\n' +
+    '    at safeAudit (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/audit-middleware.ts:144:11)\n' +
+    '    at ExpenseService.logAudit (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:134:11)\n' +
+    '    at Immediate.<anonymous> (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:327:24)\n' +
+    '    at process.processImmediate (node:internal/timers:485:21)'
+}
+🔍 Attempting to create 4 receivables:
+   1. {
+  "expectedDate": "2024-04-30",
+  "amount": 25000,
+  "clientName": "Livia Assan",
+  "description": "Primeira parcela projeto LF",
+  "category": "Residencial"
+}
+   2. {
+  "expectedDate": "2024-02-15",
+  "amount": 45000,
+  "clientName": "Rosa Lyra Isabel de Castela",
+  "description": "Parcela inicial casa de campo",
+  "category": "Residencial"
+}
+   3. {
+  "expectedDate": "2024-03-20",
+  "amount": 110000,
+  "clientName": "Carlos Botelho",
+  "description": "50% do valor do restaurante",
+  "category": "Restaurante"
+}
+   4. {
+  "expectedDate": "2024-04-25",
+  "amount": 35000,
+  "clientName": "Marina Gonzalez",
+  "description": "Pagamento final loja",
+  "category": "Comercial"
+}
+Audit operation failed: {
+  error: "Cannot read properties of undefined (reading 'id')",
+  timestamp: '2025-09-27T12:50:32.544Z',
+  stack: "TypeError: Cannot read properties of undefined (reading 'id')\n" +
+    '    at ReceivableService.createAuditContext (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:114:35)\n' +
+    '    at <anonymous> (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:328:41)\n' +
+    '    at safeAudit (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/audit-middleware.ts:144:11)\n' +
+    '    at ReceivableService.logAudit (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:134:11)\n' +
+    '    at Immediate.<anonymous> (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:327:24)\n' +
+    '    at process.processImmediate (node:internal/timers:485:21)'
+}
+Audit operation failed: {
+  error: "Cannot read properties of undefined (reading 'id')",
+  timestamp: '2025-09-27T12:50:32.554Z',
+  stack: "TypeError: Cannot read properties of undefined (reading 'id')\n" +
+    '    at ReceivableService.createAuditContext (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:114:35)\n' +
+    '    at <anonymous> (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:328:41)\n' +
+    '    at safeAudit (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/audit-middleware.ts:144:11)\n' +
+    '    at ReceivableService.logAudit (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:134:11)\n' +
+    '    at Immediate.<anonymous> (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:327:24)\n' +
+    '    at process.processImmediate (node:internal/timers:485:21)'
+}
+Audit operation failed: {
+  error: "Cannot read properties of undefined (reading 'id')",
+  timestamp: '2025-09-27T12:50:32.563Z',
+  stack: "TypeError: Cannot read properties of undefined (reading 'id')\n" +
+    '    at ReceivableService.createAuditContext (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:114:35)\n' +
+    '    at <anonymous> (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:328:41)\n' +
+    '    at safeAudit (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/audit-middleware.ts:144:11)\n' +
+    '    at ReceivableService.logAudit (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:134:11)\n' +
+    '    at Immediate.<anonymous> (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:327:24)\n' +
+    '    at process.processImmediate (node:internal/timers:485:21)'
+}
+Audit operation failed: {
+  error: "Cannot read properties of undefined (reading 'id')",
+  timestamp: '2025-09-27T12:50:32.573Z',
+  stack: "TypeError: Cannot read properties of undefined (reading 'id')\n" +
+    '    at ReceivableService.createAuditContext (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:114:35)\n' +
+    '    at <anonymous> (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:328:41)\n' +
+    '    at safeAudit (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/audit-middleware.ts:144:11)\n' +
+    '    at ReceivableService.logAudit (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:134:11)\n' +
+    '    at Immediate.<anonymous> (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:327:24)\n' +
+    '    at process.processImmediate (node:internal/timers:485:21)'
+}
+📊 OnboardingAgent Summary: Processed 1 files, extracted 15 entities, created 15 entities
+✅ OnboardingAgent: Created 15 entities (4 contracts, 7 expenses, 4 receivables)
+
+📊 Extraction Results:
+- Total files: 1
+- Processed files: 1
+- Extracted entities: 15
+- Created entities: 15
+
+📈 Entity Breakdown:
+- Contracts: 4
+- Expenses: 7
+- Receivables: 4
+
+📄 Testing file: Testando.xlsx
+==================================================
+📊 File type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+📏 File size: 43.61 KB (base64)
+🤖 OnboardingAgent: Processing 1 files for team cmfvsa8tt0000t0imqr96svt4
+🔍 Processing file: Testando.xlsx (application/vnd.openxmlformats-officedocument.spreadsheetml.sheet)
+📊 Processing Excel file: Testando.xlsx
+🔍 Parsing response from Testando.xlsx (length: 1979)
+✅ Successfully parsed 9 entities from Testando.xlsx
+📊 Extracted 9 entities from Excel file Testando.xlsx
+📊 Extracted 9 entities from 1 files
+🔍 Attempting to create 1 contracts:
+   1. {
+  "clientName": "Positive Ventures",
+  "projectName": "PV - Positive Ventures",
+  "totalValue": 1800,
+  "signedDate": "2021-10-28",
+  "category": "Comercial"
+}
+Audit operation failed: {
+  error: "Cannot read properties of undefined (reading 'id')",
+  timestamp: '2025-09-27T12:50:43.755Z',
+  stack: "TypeError: Cannot read properties of undefined (reading 'id')\n" +
+    '    at ContractService.createAuditContext (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:114:35)\n' +
+    '    at <anonymous> (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:328:41)\n' +
+    '    at safeAudit (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/audit-middleware.ts:144:11)\n' +
+    '    at ContractService.logAudit (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:134:11)\n' +
+    '    at Immediate.<anonymous> (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:327:24)\n' +
+    '    at process.processImmediate (node:internal/timers:485:21)'
+}
+📊 OnboardingAgent Summary: Processed 1 files, extracted 9 entities, created 1 entities
+❓ Clarification requests: 8 missing fields need user input
+   - Testando.xlsx: category (What type of project is this contract for?)
+   - Testando.xlsx: category (What type of project is this contract for?)
+   - Testando.xlsx: category (What type of project is this contract for?)
+   - Testando.xlsx: category (What type of project is this contract for?)
+   - Testando.xlsx: category (What type of project is this contract for?)
+   - Testando.xlsx: category (What type of project is this contract for?)
+   - Testando.xlsx: category (What type of project is this contract for?)
+   - Testando.xlsx: category (What type of project is this contract for?)
+✅ OnboardingAgent: Created 1 entities (1 contracts, 0 expenses, 0 receivables)
+
+📊 Extraction Results:
+- Total files: 1
+- Processed files: 1
+- Extracted entities: 9
+- Created entities: 1
+
+📈 Entity Breakdown:
+- Contracts: 1
+- Expenses: 0
+- Receivables: 0
+
+❓ Clarification Requests:
+  - Testando.xlsx: category - What type of project is this contract for?
+  - Testando.xlsx: category - What type of project is this contract for?
+  - Testando.xlsx: category - What type of project is this contract for?
+  - Testando.xlsx: category - What type of project is this contract for?
+  - Testando.xlsx: category - What type of project is this contract for?
+  - Testando.xlsx: category - What type of project is this contract for?
+  - Testando.xlsx: category - What type of project is this contract for?
+  - Testando.xlsx: category - What type of project is this contract for?
+
+📄 Testing file: teste_pdf.pdf
+==================================================
+📊 File type: application/pdf
+📏 File size: 5640.85 KB (base64)
+🤖 OnboardingAgent: Processing 1 files for team cmfvsa8tt0000t0imqr96svt4
+🔍 Processing file: teste_pdf.pdf (application/pdf)
+🔍 Parsing response from teste_pdf.pdf (length: 1616)
+✅ Successfully parsed 7 entities from teste_pdf.pdf
+📄 Extracted 7 entities from teste_pdf.pdf using Claude Document Processing
+📊 Extracted 7 entities from 1 files
+🔍 Attempting to create 1 contracts:
+   1. {
+  "clientName": "Renata e Filipe",
+  "projectName": "Projeto de Arquitetura e Interiores",
+  "totalValue": 30575,
+  "signedDate": "2024-11-13",
+  "description": "Projeto residencial de 150m² na Rua Bastos Pereira, 285 - Vila Nova Conceição - São Paulo, SP",
+  "category": "Residencial"
+}
+Audit operation failed: {
+  error: "Cannot read properties of undefined (reading 'id')",
+  timestamp: '2025-09-27T12:50:59.778Z',
+  stack: "TypeError: Cannot read properties of undefined (reading 'id')\n" +
+    '    at ContractService.createAuditContext (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:114:35)\n' +
+    '    at <anonymous> (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:328:41)\n' +
+    '    at safeAudit (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/audit-middleware.ts:144:11)\n' +
+    '    at ContractService.logAudit (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:134:11)\n' +
+    '    at Immediate.<anonymous> (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:327:24)\n' +
+    '    at process.processImmediate (node:internal/timers:485:21)'
+}
+Audit operation failed: {
+  error: "Cannot read properties of undefined (reading 'id')",
+  timestamp: '2025-09-27T12:50:59.819Z',
+  stack: "TypeError: Cannot read properties of undefined (reading 'id')\n" +
+    '    at ExpenseService.createAuditContext (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:114:35)\n' +
+    '    at <anonymous> (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:328:41)\n' +
+    '    at safeAudit (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/audit-middleware.ts:144:11)\n' +
+    '    at ExpenseService.logAudit (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:134:11)\n' +
+    '    at Immediate.<anonymous> (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:327:24)\n' +
+    '    at process.processImmediate (node:internal/timers:485:21)'
+}
+Audit operation failed: {
+  error: "Cannot read properties of undefined (reading 'id')",
+  timestamp: '2025-09-27T12:50:59.828Z',
+  stack: "TypeError: Cannot read properties of undefined (reading 'id')\n" +
+    '    at ExpenseService.createAuditContext (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:114:35)\n' +
+    '    at <anonymous> (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:328:41)\n' +
+    '    at safeAudit (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/audit-middleware.ts:144:11)\n' +
+    '    at ExpenseService.logAudit (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:134:11)\n' +
+    '    at Immediate.<anonymous> (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:327:24)\n' +
+    '    at process.processImmediate (node:internal/timers:485:21)'
+}
+Audit operation failed: {
+  error: "Cannot read properties of undefined (reading 'id')",
+  timestamp: '2025-09-27T12:50:59.839Z',
+  stack: "TypeError: Cannot read properties of undefined (reading 'id')\n" +
+    '    at ExpenseService.createAuditContext (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:114:35)\n' +
+    '    at <anonymous> (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:328:41)\n' +
+    '    at safeAudit (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/audit-middleware.ts:144:11)\n' +
+    '    at ExpenseService.logAudit (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:134:11)\n' +
+    '    at Immediate.<anonymous> (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:327:24)\n' +
+    '    at process.processImmediate (node:internal/timers:485:21)'
+}
+Audit operation failed: {
+  error: "Cannot read properties of undefined (reading 'id')",
+  timestamp: '2025-09-27T12:50:59.849Z',
+  stack: "TypeError: Cannot read properties of undefined (reading 'id')\n" +
+    '    at ExpenseService.createAuditContext (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:114:35)\n' +
+    '    at <anonymous> (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:328:41)\n' +
+    '    at safeAudit (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/audit-middleware.ts:144:11)\n' +
+    '    at ExpenseService.logAudit (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:134:11)\n' +
+    '    at Immediate.<anonymous> (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:327:24)\n' +
+    '    at process.processImmediate (node:internal/timers:485:21)'
+}
+Audit operation failed: {
+  error: "Cannot read properties of undefined (reading 'id')",
+  timestamp: '2025-09-27T12:50:59.859Z',
+  stack: "TypeError: Cannot read properties of undefined (reading 'id')\n" +
+    '    at ExpenseService.createAuditContext (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:114:35)\n' +
+    '    at <anonymous> (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:328:41)\n' +
+    '    at safeAudit (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/audit-middleware.ts:144:11)\n' +
+    '    at ExpenseService.logAudit (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:134:11)\n' +
+    '    at Immediate.<anonymous> (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:327:24)\n' +
+    '    at process.processImmediate (node:internal/timers:485:21)'
+}
+Audit operation failed: {
+  error: "Cannot read properties of undefined (reading 'id')",
+  timestamp: '2025-09-27T12:50:59.868Z',
+  stack: "TypeError: Cannot read properties of undefined (reading 'id')\n" +
+    '    at ExpenseService.createAuditContext (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:114:35)\n' +
+    '    at <anonymous> (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:328:41)\n' +
+    '    at safeAudit (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/audit-middleware.ts:144:11)\n' +
+    '    at ExpenseService.logAudit (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:134:11)\n' +
+    '    at Immediate.<anonymous> (/Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/lib/services/BaseService.ts:327:24)\n' +
+    '    at process.processImmediate (node:internal/timers:485:21)'
+}
+📊 OnboardingAgent Summary: Processed 1 files, extracted 7 entities, created 7 entities
+✅ OnboardingAgent: Created 7 entities (1 contracts, 6 expenses, 0 receivables)
+
+📊 Extraction Results:
+- Total files: 1
+- Processed files: 1
+- Extracted entities: 7
+- Created entities: 7
+
+📈 Entity Breakdown:
+- Contracts: 1
+- Expenses: 6
+- Receivables: 0
+
+
+📦 Testing All Files Together
+==================================================
+🤖 OnboardingAgent: Processing 3 files for team cmfvsa8tt0000t0imqr96svt4
+🔍 Processing file: sample_data.csv (text/csv)

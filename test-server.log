@@ -1,0 +1,2964 @@
+
+> architech-cashflow-temp@0.1.0 dev
+> next dev --turbopack
+
+ ⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of /Users/jose.lyra/Desktop/Code/Cursor Claude/package-lock.json as the root directory.
+ To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
+ Detected additional lockfiles: 
+   * /Users/jose.lyra/Desktop/Code/Cursor Claude/arqcashflow/package-lock.json
+
+   ▲ Next.js 15.5.3 (Turbopack)
+   - Local:        http://localhost:3010
+   - Network:      http://192.168.0.219:3010
+   - Environments: .env.local, .env
+
+ ✓ Starting...
+ ✓ Compiled middleware in 180ms
+ ✓ Ready in 1197ms
+ ○ Compiling /api/auth/[...nextauth] ...
+ ✓ Compiled /api/auth/[...nextauth] in 1154ms
+ GET /api/auth/csrf 200 in 2152ms
+ POST /api/auth/callback/credentials 200 in 1164ms
+ GET /api/auth/session 200 in 244ms
+ ✓ Compiled /api/ai/setup-assistant-direct in 437ms
+📁 Processing file with DIRECT Claude approach: Testando.xlsx Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+🤖 Calling Claude directly
+📄 Processing text document
+📏 Content size: 9346 characters
+The model 'claude-3-5-sonnet-20241022' is deprecated and will reach end-of-life on October 22, 2025
+Please migrate to a newer model. Visit https://docs.anthropic.com/en/docs/resources/model-deprecations for more information.
+Claude processing error: Error: 529 {"type":"error","error":{"type":"overloaded_error","message":"Overloaded"},"request_id":null}
+    at APIError.generate (../src/core/error.ts:91:14)
+    at Anthropic.makeStatusError (src/client.ts:422:28)
+    at Anthropic.makeRequest (src/client.ts:657:24)
+    at async POST (app/api/ai/setup-assistant-direct/route.ts:434:24)
+  432 |         while (retries <= maxRetries) {
+  433 |           try {
+> 434 |             response = await anthropic.messages.create({
+      |                        ^
+  435 |               model: 'claude-3-5-sonnet-20241022', // Using latest available model
+  436 |               max_tokens: 8192,
+  437 |               messages: [{ {
+  status: 529,
+  headers: Headers {
+    date: 'Sat, 27 Sep 2025 17:50:47 GMT',
+    'content-type': 'application/json',
+    'content-length': '93',
+    connection: 'keep-alive',
+    'cf-ray': '985cd8411ab94ee3-GRU',
+    'x-should-retry': 'true',
+    'request-id': 'req_011CTZL3iMHbVkpqqmsjvnMA',
+    'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',
+    'anthropic-organization-id': 'e8cbc805-f7d6-474d-b29f-7bb8ce2d14c5',
+    'x-envoy-upstream-service-time': '6193',
+    via: '1.1 google',
+    'cf-cache-status': 'DYNAMIC',
+    'x-robots-tag': 'none',
+    server: 'cloudflare'
+  },
+  requestID: 'req_011CTZL3iMHbVkpqqmsjvnMA',
+  error: [Object]
+}
+ POST /api/ai/setup-assistant-direct 500 in 21441ms
+ GET /api/auth/csrf 200 in 245ms
+ POST /api/auth/callback/credentials 200 in 636ms
+ GET /api/auth/session 200 in 239ms
+📁 Processing file with DIRECT Claude approach: Testando.xlsx Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+🤖 Calling Claude directly
+📄 Processing text document
+📏 Content size: 9346 characters
+The model 'claude-3-5-sonnet-20241022' is deprecated and will reach end-of-life on October 22, 2025
+Please migrate to a newer model. Visit https://docs.anthropic.com/en/docs/resources/model-deprecations for more information.
+✅ Claude response received
+📏 Response length: 14245 characters
+📏 Text content length: 12407 characters
+📏 JSON match length: 12407 characters
+📊 Claude found:
+  Contracts: 37
+  Receivables: 0
+  Expenses: 0
+
+📝 Sample contracts Claude extracted:
+  1. Livia Assan - LF - R$3500 - 2020-10-23
+  2. Paula Saad - PS - R$28560 - 2020-10-28
+  3. Livia Assan - LF (BAN) - R$1500 - 2020-12-23
+  4. Gustavo Tourinho - GM - R$24600 - 2021-01-20
+  5. Positive Ventures - PV - R$1800 - 2021-10-28
+  ... and 32 more
+Creating contracts...
+📝 Creating contract: {
+  clientName: 'Livia Assan',
+  projectName: 'LF',
+  totalValue: 3500,
+  signedDate: '2020-10-23'
+}
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Paula Saad',
+  projectName: 'PS',
+  totalValue: 28560,
+  signedDate: '2020-10-28'
+}
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Livia Assan',
+  projectName: 'LF (BAN)',
+  totalValue: 1500,
+  signedDate: '2020-12-23'
+}
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Gustavo Tourinho',
+  projectName: 'GM',
+  totalValue: 24600,
+  signedDate: '2021-01-20'
+}
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Positive Ventures',
+  projectName: 'PV',
+  totalValue: 1800,
+  signedDate: '2021-10-28'
+}
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Sertão do Una',
+  projectName: 'SU',
+  totalValue: 4500,
+  signedDate: '2022-02-07'
+}
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Renata Mayer',
+  projectName: 'RM',
+  totalValue: 17500,
+  signedDate: '2022-02-23'
+}
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Andrea Rivetti',
+  projectName: 'AR',
+  totalValue: 34600,
+  signedDate: '2022-04-14'
+}
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Villa Piva',
+  projectName: 'VP',
+  totalValue: 8400,
+  signedDate: '2022-04-19'
+}
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Camila Borges',
+  projectName: 'CB',
+  totalValue: 2250,
+  signedDate: '2022-04-26'
+}
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Louise Farias',
+  projectName: 'LF',
+  totalValue: 6000,
+  signedDate: '2022-07-28'
+}
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Marcia e Eduardo',
+  projectName: 'EM',
+  totalValue: 41500,
+  signedDate: '2022-08-01'
+}
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Juliana Ma',
+  projectName: 'JM',
+  totalValue: 3400,
+  signedDate: '2022-08-22'
+}
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Fernando e Fernanda Hamaoui',
+  projectName: 'FH',
+  totalValue: 39400,
+  signedDate: '2022-10-03'
+}
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Galeria Lume',
+  projectName: 'GL',
+  totalValue: 2040,
+  signedDate: '2022-10-17'
+}
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Ryan Martin',
+  projectName: 'RYM',
+  totalValue: 5250,
+  signedDate: '2022-11-15'
+}
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Penélope e Ivan',
+  projectName: 'PI',
+  totalValue: 35100,
+  signedDate: '2023-01-12'
+}
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Fernando e Lais',
+  projectName: 'FL',
+  totalValue: 22000,
+  signedDate: '2023-01-18'
+}
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'M3 Capital',
+  projectName: 'M3',
+  totalValue: 15000,
+  signedDate: '2023-02-06'
+}
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Julia Melardi',
+  projectName: 'JM',
+  totalValue: 8250,
+  signedDate: '2023-04-25'
+}
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Nidia',
+  projectName: 'NM',
+  totalValue: 18400,
+  signedDate: '2023-05-11'
+}
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Galeria Lume Loja',
+  projectName: 'GL',
+  totalValue: 3825,
+  signedDate: '2023-07-04'
+}
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Lais França',
+  projectName: 'LM',
+  totalValue: 7000,
+  signedDate: '2023-08-07'
+}
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Maria Eduarda',
+  projectName: 'ME',
+  totalValue: 3325,
+  signedDate: '2023-10-18'
+}
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Sauna',
+  projectName: 'FL',
+  totalValue: 1200,
+  signedDate: '2023-10-27'
+}
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Helena Orlandi',
+  projectName: 'HO',
+  totalValue: 15150,
+  signedDate: '2023-11-01'
+}
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Mila e Lucas',
+  projectName: 'ML',
+  totalValue: 15675,
+  signedDate: '2024-02-08'
+}
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Tais Campos',
+  projectName: 'TC',
+  totalValue: 6200,
+  signedDate: '2024-03-08'
+}
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Hyde e Igor',
+  projectName: 'HI',
+  totalValue: 5980,
+  signedDate: '2024-03-15'
+}
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Rosa Lyra Isabel de Castela',
+  projectName: 'RL-IC',
+  totalValue: 24480,
+  signedDate: '2024-04-01'
+}
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Tais Campos',
+  projectName: 'TC',
+  totalValue: 1800,
+  signedDate: '2024-04-02'
+}
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Jade e Rodrigo',
+  projectName: 'JR',
+  totalValue: 36765,
+  signedDate: '2024-04-05'
+}
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Rosa Lyra Dina Claire',
+  projectName: 'RL-DC',
+  totalValue: 33120,
+  signedDate: '2024-07-11'
+}
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Beatriz Bianco e Vitor Nagata',
+  projectName: 'BB',
+  totalValue: 31040,
+  signedDate: '2024-08-14'
+}
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Renata e Victor',
+  projectName: 'RV',
+  totalValue: 23500,
+  signedDate: '2024-09-03'
+}
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Rosa Lyra Tietê',
+  projectName: 'RL-TI',
+  totalValue: 5000,
+  signedDate: '2024-09-06'
+}
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Giulianna e Pedro',
+  projectName: 'GP',
+  totalValue: 9802,
+  signedDate: '2024-09-27'
+}
+✅ Contract created successfully
+ POST /api/ai/setup-assistant-direct 200 in 72754ms
+ ✓ Compiled middleware in 1ms
+ GET /api/auth/csrf 200 in 317ms
+ POST /api/auth/callback/credentials 200 in 1197ms
+ GET /api/auth/session 200 in 242ms
+ ✓ Compiled /api/ai/setup-assistant-v2 in 197ms
+📁 [V2] Processing file with service layer: Testando.xlsx Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+📁 Processing file with SetupAssistantService: Testando.xlsx Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+📄 Processing text document
+📏 Content size: 9346 characters
+🤖 Calling Claude AI for extraction
+The model 'claude-3-5-sonnet-20241022' is deprecated and will reach end-of-life on October 22, 2025
+Please migrate to a newer model. Visit https://docs.anthropic.com/en/docs/resources/model-deprecations for more information.
+✅ Claude response received
+📊 Claude found:
+  Contracts: 37
+  Receivables: 0
+  Expenses: 0
+Creating contracts...
+📝 Creating contract: {
+  clientName: 'Livia Assan',
+  projectName: 'LF',
+  totalValue: 3500,
+  signedDate: '2020-10-23'
+}
+❌ Error creating contract: Error [ZodError]: [
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "null",
+    "path": [
+      "description"
+    ],
+    "message": "Expected string, received null"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "date",
+    "path": [
+      "signedDate"
+    ],
+    "message": "Expected string, received date"
+  }
+]
+    at ContractService.validateBusinessRules (lib/services/ContractService.ts:97:22)
+    at ContractService.create (lib/services/ContractService.ts:210:16)
+    at SetupAssistantService.createContractsWithService (lib/services/SetupAssistantService.ts:511:36)
+    at SetupAssistantService.createEntitiesFromData (lib/services/SetupAssistantService.ts:447:38)
+    at SetupAssistantService.processFile (lib/services/SetupAssistantService.ts:125:32)
+    at async (app/api/ai/setup-assistant-v2/route.ts:51:22)
+    at async withTeamContext (lib/middleware/team-context.ts:185:20)
+   95 |     if ('clientName' in data && 'projectName' in data) {
+   96 |       // This is create data - validate all required fields
+>  97 |       ContractSchema.parse(data)
+      |                      ^
+   98 |     }
+   99 |
+  100 |     // BLOCKING: Total value must be positive (clearly wrong) {
+  issues: [Array],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)]
+}
+📝 Creating contract: {
+  clientName: 'Paula Saad',
+  projectName: 'PS',
+  totalValue: 28560,
+  signedDate: '2020-10-28'
+}
+❌ Error creating contract: Error [ZodError]: [
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "null",
+    "path": [
+      "description"
+    ],
+    "message": "Expected string, received null"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "date",
+    "path": [
+      "signedDate"
+    ],
+    "message": "Expected string, received date"
+  }
+]
+    at ContractService.validateBusinessRules (lib/services/ContractService.ts:97:22)
+    at ContractService.create (lib/services/ContractService.ts:210:16)
+    at SetupAssistantService.createContractsWithService (lib/services/SetupAssistantService.ts:511:36)
+    at async SetupAssistantService.createEntitiesFromData (lib/services/SetupAssistantService.ts:447:27)
+    at async SetupAssistantService.processFile (lib/services/SetupAssistantService.ts:125:21)
+    at async (app/api/ai/setup-assistant-v2/route.ts:51:22)
+    at async withTeamContext (lib/middleware/team-context.ts:185:20)
+   95 |     if ('clientName' in data && 'projectName' in data) {
+   96 |       // This is create data - validate all required fields
+>  97 |       ContractSchema.parse(data)
+      |                      ^
+   98 |     }
+   99 |
+  100 |     // BLOCKING: Total value must be positive (clearly wrong) {
+  issues: [Array],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)]
+}
+📝 Creating contract: {
+  clientName: 'Livia Assan',
+  projectName: 'LF (BAN)',
+  totalValue: 1500,
+  signedDate: '2020-12-23'
+}
+❌ Error creating contract: Error [ZodError]: [
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "null",
+    "path": [
+      "description"
+    ],
+    "message": "Expected string, received null"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "date",
+    "path": [
+      "signedDate"
+    ],
+    "message": "Expected string, received date"
+  }
+]
+    at ContractService.validateBusinessRules (lib/services/ContractService.ts:97:22)
+    at ContractService.create (lib/services/ContractService.ts:210:16)
+    at SetupAssistantService.createContractsWithService (lib/services/SetupAssistantService.ts:511:36)
+    at async SetupAssistantService.createEntitiesFromData (lib/services/SetupAssistantService.ts:447:27)
+    at async SetupAssistantService.processFile (lib/services/SetupAssistantService.ts:125:21)
+    at async (app/api/ai/setup-assistant-v2/route.ts:51:22)
+    at async withTeamContext (lib/middleware/team-context.ts:185:20)
+   95 |     if ('clientName' in data && 'projectName' in data) {
+   96 |       // This is create data - validate all required fields
+>  97 |       ContractSchema.parse(data)
+      |                      ^
+   98 |     }
+   99 |
+  100 |     // BLOCKING: Total value must be positive (clearly wrong) {
+  issues: [Array],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)]
+}
+📝 Creating contract: {
+  clientName: 'Gustavo Tourinho',
+  projectName: 'GM',
+  totalValue: 24600,
+  signedDate: '2021-01-20'
+}
+❌ Error creating contract: Error [ZodError]: [
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "null",
+    "path": [
+      "description"
+    ],
+    "message": "Expected string, received null"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "date",
+    "path": [
+      "signedDate"
+    ],
+    "message": "Expected string, received date"
+  }
+]
+    at ContractService.validateBusinessRules (lib/services/ContractService.ts:97:22)
+    at ContractService.create (lib/services/ContractService.ts:210:16)
+    at SetupAssistantService.createContractsWithService (lib/services/SetupAssistantService.ts:511:36)
+    at async SetupAssistantService.createEntitiesFromData (lib/services/SetupAssistantService.ts:447:27)
+    at async SetupAssistantService.processFile (lib/services/SetupAssistantService.ts:125:21)
+    at async (app/api/ai/setup-assistant-v2/route.ts:51:22)
+    at async withTeamContext (lib/middleware/team-context.ts:185:20)
+   95 |     if ('clientName' in data && 'projectName' in data) {
+   96 |       // This is create data - validate all required fields
+>  97 |       ContractSchema.parse(data)
+      |                      ^
+   98 |     }
+   99 |
+  100 |     // BLOCKING: Total value must be positive (clearly wrong) {
+  issues: [Array],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)]
+}
+📝 Creating contract: {
+  clientName: 'Positive Ventures',
+  projectName: 'PV',
+  totalValue: 1800,
+  signedDate: '2021-10-28'
+}
+❌ Error creating contract: Error [ZodError]: [
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "null",
+    "path": [
+      "description"
+    ],
+    "message": "Expected string, received null"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "date",
+    "path": [
+      "signedDate"
+    ],
+    "message": "Expected string, received date"
+  }
+]
+    at ContractService.validateBusinessRules (lib/services/ContractService.ts:97:22)
+    at ContractService.create (lib/services/ContractService.ts:210:16)
+    at SetupAssistantService.createContractsWithService (lib/services/SetupAssistantService.ts:511:36)
+    at async SetupAssistantService.createEntitiesFromData (lib/services/SetupAssistantService.ts:447:27)
+    at async SetupAssistantService.processFile (lib/services/SetupAssistantService.ts:125:21)
+    at async (app/api/ai/setup-assistant-v2/route.ts:51:22)
+    at async withTeamContext (lib/middleware/team-context.ts:185:20)
+   95 |     if ('clientName' in data && 'projectName' in data) {
+   96 |       // This is create data - validate all required fields
+>  97 |       ContractSchema.parse(data)
+      |                      ^
+   98 |     }
+   99 |
+  100 |     // BLOCKING: Total value must be positive (clearly wrong) {
+  issues: [Array],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)]
+}
+📝 Creating contract: {
+  clientName: 'Sertão do Una',
+  projectName: 'SU',
+  totalValue: 4500,
+  signedDate: '2022-02-07'
+}
+❌ Error creating contract: Error [ZodError]: [
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "null",
+    "path": [
+      "description"
+    ],
+    "message": "Expected string, received null"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "date",
+    "path": [
+      "signedDate"
+    ],
+    "message": "Expected string, received date"
+  }
+]
+    at ContractService.validateBusinessRules (lib/services/ContractService.ts:97:22)
+    at ContractService.create (lib/services/ContractService.ts:210:16)
+    at SetupAssistantService.createContractsWithService (lib/services/SetupAssistantService.ts:511:36)
+    at async SetupAssistantService.createEntitiesFromData (lib/services/SetupAssistantService.ts:447:27)
+    at async SetupAssistantService.processFile (lib/services/SetupAssistantService.ts:125:21)
+    at async (app/api/ai/setup-assistant-v2/route.ts:51:22)
+    at async withTeamContext (lib/middleware/team-context.ts:185:20)
+   95 |     if ('clientName' in data && 'projectName' in data) {
+   96 |       // This is create data - validate all required fields
+>  97 |       ContractSchema.parse(data)
+      |                      ^
+   98 |     }
+   99 |
+  100 |     // BLOCKING: Total value must be positive (clearly wrong) {
+  issues: [Array],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)]
+}
+📝 Creating contract: {
+  clientName: 'Renata Mayer',
+  projectName: 'RM',
+  totalValue: 17500,
+  signedDate: '2022-02-23'
+}
+❌ Error creating contract: Error [ZodError]: [
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "null",
+    "path": [
+      "description"
+    ],
+    "message": "Expected string, received null"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "date",
+    "path": [
+      "signedDate"
+    ],
+    "message": "Expected string, received date"
+  }
+]
+    at ContractService.validateBusinessRules (lib/services/ContractService.ts:97:22)
+    at ContractService.create (lib/services/ContractService.ts:210:16)
+    at SetupAssistantService.createContractsWithService (lib/services/SetupAssistantService.ts:511:36)
+    at async SetupAssistantService.createEntitiesFromData (lib/services/SetupAssistantService.ts:447:27)
+    at async SetupAssistantService.processFile (lib/services/SetupAssistantService.ts:125:21)
+    at async (app/api/ai/setup-assistant-v2/route.ts:51:22)
+    at async withTeamContext (lib/middleware/team-context.ts:185:20)
+   95 |     if ('clientName' in data && 'projectName' in data) {
+   96 |       // This is create data - validate all required fields
+>  97 |       ContractSchema.parse(data)
+      |                      ^
+   98 |     }
+   99 |
+  100 |     // BLOCKING: Total value must be positive (clearly wrong) {
+  issues: [Array],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)]
+}
+📝 Creating contract: {
+  clientName: 'Andrea Rivetti',
+  projectName: 'AR',
+  totalValue: 34600,
+  signedDate: '2022-04-14'
+}
+❌ Error creating contract: Error [ZodError]: [
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "null",
+    "path": [
+      "description"
+    ],
+    "message": "Expected string, received null"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "date",
+    "path": [
+      "signedDate"
+    ],
+    "message": "Expected string, received date"
+  }
+]
+    at ContractService.validateBusinessRules (lib/services/ContractService.ts:97:22)
+    at ContractService.create (lib/services/ContractService.ts:210:16)
+    at SetupAssistantService.createContractsWithService (lib/services/SetupAssistantService.ts:511:36)
+    at async SetupAssistantService.createEntitiesFromData (lib/services/SetupAssistantService.ts:447:27)
+    at async SetupAssistantService.processFile (lib/services/SetupAssistantService.ts:125:21)
+    at async (app/api/ai/setup-assistant-v2/route.ts:51:22)
+    at async withTeamContext (lib/middleware/team-context.ts:185:20)
+   95 |     if ('clientName' in data && 'projectName' in data) {
+   96 |       // This is create data - validate all required fields
+>  97 |       ContractSchema.parse(data)
+      |                      ^
+   98 |     }
+   99 |
+  100 |     // BLOCKING: Total value must be positive (clearly wrong) {
+  issues: [Array],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)]
+}
+📝 Creating contract: {
+  clientName: 'Villa Piva',
+  projectName: 'VP',
+  totalValue: 8400,
+  signedDate: '2022-04-19'
+}
+❌ Error creating contract: Error [ZodError]: [
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "null",
+    "path": [
+      "description"
+    ],
+    "message": "Expected string, received null"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "date",
+    "path": [
+      "signedDate"
+    ],
+    "message": "Expected string, received date"
+  }
+]
+    at ContractService.validateBusinessRules (lib/services/ContractService.ts:97:22)
+    at ContractService.create (lib/services/ContractService.ts:210:16)
+    at SetupAssistantService.createContractsWithService (lib/services/SetupAssistantService.ts:511:36)
+    at async SetupAssistantService.createEntitiesFromData (lib/services/SetupAssistantService.ts:447:27)
+    at async SetupAssistantService.processFile (lib/services/SetupAssistantService.ts:125:21)
+    at async (app/api/ai/setup-assistant-v2/route.ts:51:22)
+    at async withTeamContext (lib/middleware/team-context.ts:185:20)
+   95 |     if ('clientName' in data && 'projectName' in data) {
+   96 |       // This is create data - validate all required fields
+>  97 |       ContractSchema.parse(data)
+      |                      ^
+   98 |     }
+   99 |
+  100 |     // BLOCKING: Total value must be positive (clearly wrong) {
+  issues: [Array],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)]
+}
+📝 Creating contract: {
+  clientName: 'Camila Borges',
+  projectName: 'CB',
+  totalValue: 2250,
+  signedDate: '2022-04-26'
+}
+❌ Error creating contract: Error [ZodError]: [
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "null",
+    "path": [
+      "description"
+    ],
+    "message": "Expected string, received null"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "date",
+    "path": [
+      "signedDate"
+    ],
+    "message": "Expected string, received date"
+  }
+]
+    at ContractService.validateBusinessRules (lib/services/ContractService.ts:97:22)
+    at ContractService.create (lib/services/ContractService.ts:210:16)
+    at SetupAssistantService.createContractsWithService (lib/services/SetupAssistantService.ts:511:36)
+    at async SetupAssistantService.createEntitiesFromData (lib/services/SetupAssistantService.ts:447:27)
+    at async SetupAssistantService.processFile (lib/services/SetupAssistantService.ts:125:21)
+    at async (app/api/ai/setup-assistant-v2/route.ts:51:22)
+    at async withTeamContext (lib/middleware/team-context.ts:185:20)
+   95 |     if ('clientName' in data && 'projectName' in data) {
+   96 |       // This is create data - validate all required fields
+>  97 |       ContractSchema.parse(data)
+      |                      ^
+   98 |     }
+   99 |
+  100 |     // BLOCKING: Total value must be positive (clearly wrong) {
+  issues: [Array],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)]
+}
+📝 Creating contract: {
+  clientName: 'Louise Farias',
+  projectName: 'LF',
+  totalValue: 6000,
+  signedDate: '2022-07-28'
+}
+❌ Error creating contract: Error [ZodError]: [
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "null",
+    "path": [
+      "description"
+    ],
+    "message": "Expected string, received null"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "date",
+    "path": [
+      "signedDate"
+    ],
+    "message": "Expected string, received date"
+  }
+]
+    at ContractService.validateBusinessRules (lib/services/ContractService.ts:97:22)
+    at ContractService.create (lib/services/ContractService.ts:210:16)
+    at SetupAssistantService.createContractsWithService (lib/services/SetupAssistantService.ts:511:36)
+    at async SetupAssistantService.createEntitiesFromData (lib/services/SetupAssistantService.ts:447:27)
+    at async SetupAssistantService.processFile (lib/services/SetupAssistantService.ts:125:21)
+    at async (app/api/ai/setup-assistant-v2/route.ts:51:22)
+    at async withTeamContext (lib/middleware/team-context.ts:185:20)
+   95 |     if ('clientName' in data && 'projectName' in data) {
+   96 |       // This is create data - validate all required fields
+>  97 |       ContractSchema.parse(data)
+      |                      ^
+   98 |     }
+   99 |
+  100 |     // BLOCKING: Total value must be positive (clearly wrong) {
+  issues: [Array],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)]
+}
+📝 Creating contract: {
+  clientName: 'Marcia e Eduardo',
+  projectName: 'EM',
+  totalValue: 41500,
+  signedDate: '2022-08-01'
+}
+❌ Error creating contract: Error [ZodError]: [
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "null",
+    "path": [
+      "description"
+    ],
+    "message": "Expected string, received null"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "date",
+    "path": [
+      "signedDate"
+    ],
+    "message": "Expected string, received date"
+  }
+]
+    at ContractService.validateBusinessRules (lib/services/ContractService.ts:97:22)
+    at ContractService.create (lib/services/ContractService.ts:210:16)
+    at SetupAssistantService.createContractsWithService (lib/services/SetupAssistantService.ts:511:36)
+    at async SetupAssistantService.createEntitiesFromData (lib/services/SetupAssistantService.ts:447:27)
+    at async SetupAssistantService.processFile (lib/services/SetupAssistantService.ts:125:21)
+    at async (app/api/ai/setup-assistant-v2/route.ts:51:22)
+    at async withTeamContext (lib/middleware/team-context.ts:185:20)
+   95 |     if ('clientName' in data && 'projectName' in data) {
+   96 |       // This is create data - validate all required fields
+>  97 |       ContractSchema.parse(data)
+      |                      ^
+   98 |     }
+   99 |
+  100 |     // BLOCKING: Total value must be positive (clearly wrong) {
+  issues: [Array],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)]
+}
+📝 Creating contract: {
+  clientName: 'Juliana Ma',
+  projectName: 'JM',
+  totalValue: 3400,
+  signedDate: '2022-08-22'
+}
+❌ Error creating contract: Error [ZodError]: [
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "null",
+    "path": [
+      "description"
+    ],
+    "message": "Expected string, received null"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "date",
+    "path": [
+      "signedDate"
+    ],
+    "message": "Expected string, received date"
+  }
+]
+    at ContractService.validateBusinessRules (lib/services/ContractService.ts:97:22)
+    at ContractService.create (lib/services/ContractService.ts:210:16)
+    at SetupAssistantService.createContractsWithService (lib/services/SetupAssistantService.ts:511:36)
+    at async SetupAssistantService.createEntitiesFromData (lib/services/SetupAssistantService.ts:447:27)
+    at async SetupAssistantService.processFile (lib/services/SetupAssistantService.ts:125:21)
+    at async (app/api/ai/setup-assistant-v2/route.ts:51:22)
+    at async withTeamContext (lib/middleware/team-context.ts:185:20)
+   95 |     if ('clientName' in data && 'projectName' in data) {
+   96 |       // This is create data - validate all required fields
+>  97 |       ContractSchema.parse(data)
+      |                      ^
+   98 |     }
+   99 |
+  100 |     // BLOCKING: Total value must be positive (clearly wrong) {
+  issues: [Array],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)]
+}
+📝 Creating contract: {
+  clientName: 'Fernando e Fernanda Hamaoui',
+  projectName: 'FH',
+  totalValue: 39400,
+  signedDate: '2022-10-03'
+}
+❌ Error creating contract: Error [ZodError]: [
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "null",
+    "path": [
+      "description"
+    ],
+    "message": "Expected string, received null"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "date",
+    "path": [
+      "signedDate"
+    ],
+    "message": "Expected string, received date"
+  }
+]
+    at ContractService.validateBusinessRules (lib/services/ContractService.ts:97:22)
+    at ContractService.create (lib/services/ContractService.ts:210:16)
+    at SetupAssistantService.createContractsWithService (lib/services/SetupAssistantService.ts:511:36)
+    at async SetupAssistantService.createEntitiesFromData (lib/services/SetupAssistantService.ts:447:27)
+    at async SetupAssistantService.processFile (lib/services/SetupAssistantService.ts:125:21)
+    at async (app/api/ai/setup-assistant-v2/route.ts:51:22)
+    at async withTeamContext (lib/middleware/team-context.ts:185:20)
+   95 |     if ('clientName' in data && 'projectName' in data) {
+   96 |       // This is create data - validate all required fields
+>  97 |       ContractSchema.parse(data)
+      |                      ^
+   98 |     }
+   99 |
+  100 |     // BLOCKING: Total value must be positive (clearly wrong) {
+  issues: [Array],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)]
+}
+📝 Creating contract: {
+  clientName: 'Galeria Lume',
+  projectName: 'GL',
+  totalValue: 2040,
+  signedDate: '2022-10-17'
+}
+❌ Error creating contract: Error [ZodError]: [
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "null",
+    "path": [
+      "description"
+    ],
+    "message": "Expected string, received null"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "date",
+    "path": [
+      "signedDate"
+    ],
+    "message": "Expected string, received date"
+  }
+]
+    at ContractService.validateBusinessRules (lib/services/ContractService.ts:97:22)
+    at ContractService.create (lib/services/ContractService.ts:210:16)
+    at SetupAssistantService.createContractsWithService (lib/services/SetupAssistantService.ts:511:36)
+    at async SetupAssistantService.createEntitiesFromData (lib/services/SetupAssistantService.ts:447:27)
+    at async SetupAssistantService.processFile (lib/services/SetupAssistantService.ts:125:21)
+    at async (app/api/ai/setup-assistant-v2/route.ts:51:22)
+    at async withTeamContext (lib/middleware/team-context.ts:185:20)
+   95 |     if ('clientName' in data && 'projectName' in data) {
+   96 |       // This is create data - validate all required fields
+>  97 |       ContractSchema.parse(data)
+      |                      ^
+   98 |     }
+   99 |
+  100 |     // BLOCKING: Total value must be positive (clearly wrong) {
+  issues: [Array],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)]
+}
+📝 Creating contract: {
+  clientName: 'Ryan Martin',
+  projectName: 'RYM',
+  totalValue: 5250,
+  signedDate: '2022-11-15'
+}
+❌ Error creating contract: Error [ZodError]: [
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "null",
+    "path": [
+      "description"
+    ],
+    "message": "Expected string, received null"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "date",
+    "path": [
+      "signedDate"
+    ],
+    "message": "Expected string, received date"
+  }
+]
+    at ContractService.validateBusinessRules (lib/services/ContractService.ts:97:22)
+    at ContractService.create (lib/services/ContractService.ts:210:16)
+    at SetupAssistantService.createContractsWithService (lib/services/SetupAssistantService.ts:511:36)
+    at async SetupAssistantService.createEntitiesFromData (lib/services/SetupAssistantService.ts:447:27)
+    at async SetupAssistantService.processFile (lib/services/SetupAssistantService.ts:125:21)
+    at async (app/api/ai/setup-assistant-v2/route.ts:51:22)
+    at async withTeamContext (lib/middleware/team-context.ts:185:20)
+   95 |     if ('clientName' in data && 'projectName' in data) {
+   96 |       // This is create data - validate all required fields
+>  97 |       ContractSchema.parse(data)
+      |                      ^
+   98 |     }
+   99 |
+  100 |     // BLOCKING: Total value must be positive (clearly wrong) {
+  issues: [Array],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)]
+}
+📝 Creating contract: {
+  clientName: 'Penélope e Ivan',
+  projectName: 'PI',
+  totalValue: 35100,
+  signedDate: '2023-01-12'
+}
+❌ Error creating contract: Error [ZodError]: [
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "null",
+    "path": [
+      "description"
+    ],
+    "message": "Expected string, received null"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "date",
+    "path": [
+      "signedDate"
+    ],
+    "message": "Expected string, received date"
+  }
+]
+    at ContractService.validateBusinessRules (lib/services/ContractService.ts:97:22)
+    at ContractService.create (lib/services/ContractService.ts:210:16)
+    at SetupAssistantService.createContractsWithService (lib/services/SetupAssistantService.ts:511:36)
+    at async SetupAssistantService.createEntitiesFromData (lib/services/SetupAssistantService.ts:447:27)
+    at async SetupAssistantService.processFile (lib/services/SetupAssistantService.ts:125:21)
+    at async (app/api/ai/setup-assistant-v2/route.ts:51:22)
+    at async withTeamContext (lib/middleware/team-context.ts:185:20)
+   95 |     if ('clientName' in data && 'projectName' in data) {
+   96 |       // This is create data - validate all required fields
+>  97 |       ContractSchema.parse(data)
+      |                      ^
+   98 |     }
+   99 |
+  100 |     // BLOCKING: Total value must be positive (clearly wrong) {
+  issues: [Array],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)]
+}
+📝 Creating contract: {
+  clientName: 'Fernando e Lais',
+  projectName: 'FL',
+  totalValue: 22000,
+  signedDate: '2023-01-18'
+}
+❌ Error creating contract: Error [ZodError]: [
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "null",
+    "path": [
+      "description"
+    ],
+    "message": "Expected string, received null"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "date",
+    "path": [
+      "signedDate"
+    ],
+    "message": "Expected string, received date"
+  }
+]
+    at ContractService.validateBusinessRules (lib/services/ContractService.ts:97:22)
+    at ContractService.create (lib/services/ContractService.ts:210:16)
+    at SetupAssistantService.createContractsWithService (lib/services/SetupAssistantService.ts:511:36)
+    at async SetupAssistantService.createEntitiesFromData (lib/services/SetupAssistantService.ts:447:27)
+    at async SetupAssistantService.processFile (lib/services/SetupAssistantService.ts:125:21)
+    at async (app/api/ai/setup-assistant-v2/route.ts:51:22)
+    at async withTeamContext (lib/middleware/team-context.ts:185:20)
+   95 |     if ('clientName' in data && 'projectName' in data) {
+   96 |       // This is create data - validate all required fields
+>  97 |       ContractSchema.parse(data)
+      |                      ^
+   98 |     }
+   99 |
+  100 |     // BLOCKING: Total value must be positive (clearly wrong) {
+  issues: [Array],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)]
+}
+📝 Creating contract: {
+  clientName: 'M3 Capital',
+  projectName: 'M3',
+  totalValue: 15000,
+  signedDate: '2023-02-06'
+}
+❌ Error creating contract: Error [ZodError]: [
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "null",
+    "path": [
+      "description"
+    ],
+    "message": "Expected string, received null"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "date",
+    "path": [
+      "signedDate"
+    ],
+    "message": "Expected string, received date"
+  }
+]
+    at ContractService.validateBusinessRules (lib/services/ContractService.ts:97:22)
+    at ContractService.create (lib/services/ContractService.ts:210:16)
+    at SetupAssistantService.createContractsWithService (lib/services/SetupAssistantService.ts:511:36)
+    at async SetupAssistantService.createEntitiesFromData (lib/services/SetupAssistantService.ts:447:27)
+    at async SetupAssistantService.processFile (lib/services/SetupAssistantService.ts:125:21)
+    at async (app/api/ai/setup-assistant-v2/route.ts:51:22)
+    at async withTeamContext (lib/middleware/team-context.ts:185:20)
+   95 |     if ('clientName' in data && 'projectName' in data) {
+   96 |       // This is create data - validate all required fields
+>  97 |       ContractSchema.parse(data)
+      |                      ^
+   98 |     }
+   99 |
+  100 |     // BLOCKING: Total value must be positive (clearly wrong) {
+  issues: [Array],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)]
+}
+📝 Creating contract: {
+  clientName: 'Julia Melardi',
+  projectName: 'JM',
+  totalValue: 8250,
+  signedDate: '2023-04-25'
+}
+❌ Error creating contract: Error [ZodError]: [
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "null",
+    "path": [
+      "description"
+    ],
+    "message": "Expected string, received null"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "date",
+    "path": [
+      "signedDate"
+    ],
+    "message": "Expected string, received date"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "null",
+    "path": [
+      "notes"
+    ],
+    "message": "Expected string, received null"
+  }
+]
+    at ContractService.validateBusinessRules (lib/services/ContractService.ts:97:22)
+    at ContractService.create (lib/services/ContractService.ts:210:16)
+    at SetupAssistantService.createContractsWithService (lib/services/SetupAssistantService.ts:511:36)
+    at async SetupAssistantService.createEntitiesFromData (lib/services/SetupAssistantService.ts:447:27)
+    at async SetupAssistantService.processFile (lib/services/SetupAssistantService.ts:125:21)
+    at async (app/api/ai/setup-assistant-v2/route.ts:51:22)
+    at async withTeamContext (lib/middleware/team-context.ts:185:20)
+   95 |     if ('clientName' in data && 'projectName' in data) {
+   96 |       // This is create data - validate all required fields
+>  97 |       ContractSchema.parse(data)
+      |                      ^
+   98 |     }
+   99 |
+  100 |     // BLOCKING: Total value must be positive (clearly wrong) {
+  issues: [Array],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)]
+}
+📝 Creating contract: {
+  clientName: 'Nidia',
+  projectName: 'NM',
+  totalValue: 18400,
+  signedDate: '2023-05-11'
+}
+❌ Error creating contract: Error [ZodError]: [
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "null",
+    "path": [
+      "description"
+    ],
+    "message": "Expected string, received null"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "date",
+    "path": [
+      "signedDate"
+    ],
+    "message": "Expected string, received date"
+  }
+]
+    at ContractService.validateBusinessRules (lib/services/ContractService.ts:97:22)
+    at ContractService.create (lib/services/ContractService.ts:210:16)
+    at SetupAssistantService.createContractsWithService (lib/services/SetupAssistantService.ts:511:36)
+    at async SetupAssistantService.createEntitiesFromData (lib/services/SetupAssistantService.ts:447:27)
+    at async SetupAssistantService.processFile (lib/services/SetupAssistantService.ts:125:21)
+    at async (app/api/ai/setup-assistant-v2/route.ts:51:22)
+    at async withTeamContext (lib/middleware/team-context.ts:185:20)
+   95 |     if ('clientName' in data && 'projectName' in data) {
+   96 |       // This is create data - validate all required fields
+>  97 |       ContractSchema.parse(data)
+      |                      ^
+   98 |     }
+   99 |
+  100 |     // BLOCKING: Total value must be positive (clearly wrong) {
+  issues: [Array],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)]
+}
+📝 Creating contract: {
+  clientName: 'Galeria Lume Loja',
+  projectName: 'GL',
+  totalValue: 3825,
+  signedDate: '2023-07-04'
+}
+❌ Error creating contract: Error [ZodError]: [
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "null",
+    "path": [
+      "description"
+    ],
+    "message": "Expected string, received null"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "date",
+    "path": [
+      "signedDate"
+    ],
+    "message": "Expected string, received date"
+  }
+]
+    at ContractService.validateBusinessRules (lib/services/ContractService.ts:97:22)
+    at ContractService.create (lib/services/ContractService.ts:210:16)
+    at SetupAssistantService.createContractsWithService (lib/services/SetupAssistantService.ts:511:36)
+    at async SetupAssistantService.createEntitiesFromData (lib/services/SetupAssistantService.ts:447:27)
+    at async SetupAssistantService.processFile (lib/services/SetupAssistantService.ts:125:21)
+    at async (app/api/ai/setup-assistant-v2/route.ts:51:22)
+    at async withTeamContext (lib/middleware/team-context.ts:185:20)
+   95 |     if ('clientName' in data && 'projectName' in data) {
+   96 |       // This is create data - validate all required fields
+>  97 |       ContractSchema.parse(data)
+      |                      ^
+   98 |     }
+   99 |
+  100 |     // BLOCKING: Total value must be positive (clearly wrong) {
+  issues: [Array],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)]
+}
+📝 Creating contract: {
+  clientName: 'Lais França',
+  projectName: 'LM',
+  totalValue: 7000,
+  signedDate: '2023-08-07'
+}
+❌ Error creating contract: Error [ZodError]: [
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "null",
+    "path": [
+      "description"
+    ],
+    "message": "Expected string, received null"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "date",
+    "path": [
+      "signedDate"
+    ],
+    "message": "Expected string, received date"
+  }
+]
+    at ContractService.validateBusinessRules (lib/services/ContractService.ts:97:22)
+    at ContractService.create (lib/services/ContractService.ts:210:16)
+    at SetupAssistantService.createContractsWithService (lib/services/SetupAssistantService.ts:511:36)
+    at async SetupAssistantService.createEntitiesFromData (lib/services/SetupAssistantService.ts:447:27)
+    at async SetupAssistantService.processFile (lib/services/SetupAssistantService.ts:125:21)
+    at async (app/api/ai/setup-assistant-v2/route.ts:51:22)
+    at async withTeamContext (lib/middleware/team-context.ts:185:20)
+   95 |     if ('clientName' in data && 'projectName' in data) {
+   96 |       // This is create data - validate all required fields
+>  97 |       ContractSchema.parse(data)
+      |                      ^
+   98 |     }
+   99 |
+  100 |     // BLOCKING: Total value must be positive (clearly wrong) {
+  issues: [Array],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)]
+}
+📝 Creating contract: {
+  clientName: 'Maria Eduarda',
+  projectName: 'ME',
+  totalValue: 3325,
+  signedDate: '2023-10-18'
+}
+❌ Error creating contract: Error [ZodError]: [
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "null",
+    "path": [
+      "description"
+    ],
+    "message": "Expected string, received null"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "date",
+    "path": [
+      "signedDate"
+    ],
+    "message": "Expected string, received date"
+  }
+]
+    at ContractService.validateBusinessRules (lib/services/ContractService.ts:97:22)
+    at ContractService.create (lib/services/ContractService.ts:210:16)
+    at SetupAssistantService.createContractsWithService (lib/services/SetupAssistantService.ts:511:36)
+    at async SetupAssistantService.createEntitiesFromData (lib/services/SetupAssistantService.ts:447:27)
+    at async SetupAssistantService.processFile (lib/services/SetupAssistantService.ts:125:21)
+    at async (app/api/ai/setup-assistant-v2/route.ts:51:22)
+    at async withTeamContext (lib/middleware/team-context.ts:185:20)
+   95 |     if ('clientName' in data && 'projectName' in data) {
+   96 |       // This is create data - validate all required fields
+>  97 |       ContractSchema.parse(data)
+      |                      ^
+   98 |     }
+   99 |
+  100 |     // BLOCKING: Total value must be positive (clearly wrong) {
+  issues: [Array],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)]
+}
+📝 Creating contract: {
+  clientName: 'Fernando e Lais',
+  projectName: 'FL',
+  totalValue: 1200,
+  signedDate: '2023-10-27'
+}
+❌ Error creating contract: Error [ZodError]: [
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "date",
+    "path": [
+      "signedDate"
+    ],
+    "message": "Expected string, received date"
+  }
+]
+    at ContractService.validateBusinessRules (lib/services/ContractService.ts:97:22)
+    at ContractService.create (lib/services/ContractService.ts:210:16)
+    at SetupAssistantService.createContractsWithService (lib/services/SetupAssistantService.ts:511:36)
+    at async SetupAssistantService.createEntitiesFromData (lib/services/SetupAssistantService.ts:447:27)
+    at async SetupAssistantService.processFile (lib/services/SetupAssistantService.ts:125:21)
+    at async (app/api/ai/setup-assistant-v2/route.ts:51:22)
+    at async withTeamContext (lib/middleware/team-context.ts:185:20)
+   95 |     if ('clientName' in data && 'projectName' in data) {
+   96 |       // This is create data - validate all required fields
+>  97 |       ContractSchema.parse(data)
+      |                      ^
+   98 |     }
+   99 |
+  100 |     // BLOCKING: Total value must be positive (clearly wrong) {
+  issues: [Array],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)]
+}
+📝 Creating contract: {
+  clientName: 'Helena Orlandi',
+  projectName: 'HO',
+  totalValue: 15150,
+  signedDate: '2023-11-01'
+}
+❌ Error creating contract: Error [ZodError]: [
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "null",
+    "path": [
+      "description"
+    ],
+    "message": "Expected string, received null"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "date",
+    "path": [
+      "signedDate"
+    ],
+    "message": "Expected string, received date"
+  }
+]
+    at ContractService.validateBusinessRules (lib/services/ContractService.ts:97:22)
+    at ContractService.create (lib/services/ContractService.ts:210:16)
+    at SetupAssistantService.createContractsWithService (lib/services/SetupAssistantService.ts:511:36)
+    at async SetupAssistantService.createEntitiesFromData (lib/services/SetupAssistantService.ts:447:27)
+    at async SetupAssistantService.processFile (lib/services/SetupAssistantService.ts:125:21)
+    at async (app/api/ai/setup-assistant-v2/route.ts:51:22)
+    at async withTeamContext (lib/middleware/team-context.ts:185:20)
+   95 |     if ('clientName' in data && 'projectName' in data) {
+   96 |       // This is create data - validate all required fields
+>  97 |       ContractSchema.parse(data)
+      |                      ^
+   98 |     }
+   99 |
+  100 |     // BLOCKING: Total value must be positive (clearly wrong) {
+  issues: [Array],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)]
+}
+📝 Creating contract: {
+  clientName: 'Mila e Lucas',
+  projectName: 'ML',
+  totalValue: 15675,
+  signedDate: '2024-02-08'
+}
+❌ Error creating contract: Error [ZodError]: [
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "null",
+    "path": [
+      "description"
+    ],
+    "message": "Expected string, received null"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "date",
+    "path": [
+      "signedDate"
+    ],
+    "message": "Expected string, received date"
+  }
+]
+    at ContractService.validateBusinessRules (lib/services/ContractService.ts:97:22)
+    at ContractService.create (lib/services/ContractService.ts:210:16)
+    at SetupAssistantService.createContractsWithService (lib/services/SetupAssistantService.ts:511:36)
+    at async SetupAssistantService.createEntitiesFromData (lib/services/SetupAssistantService.ts:447:27)
+    at async SetupAssistantService.processFile (lib/services/SetupAssistantService.ts:125:21)
+    at async (app/api/ai/setup-assistant-v2/route.ts:51:22)
+    at async withTeamContext (lib/middleware/team-context.ts:185:20)
+   95 |     if ('clientName' in data && 'projectName' in data) {
+   96 |       // This is create data - validate all required fields
+>  97 |       ContractSchema.parse(data)
+      |                      ^
+   98 |     }
+   99 |
+  100 |     // BLOCKING: Total value must be positive (clearly wrong) {
+  issues: [Array],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)]
+}
+📝 Creating contract: {
+  clientName: 'Tais Campos',
+  projectName: 'TC',
+  totalValue: 6200,
+  signedDate: '2024-03-08'
+}
+❌ Error creating contract: Error [ZodError]: [
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "null",
+    "path": [
+      "description"
+    ],
+    "message": "Expected string, received null"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "date",
+    "path": [
+      "signedDate"
+    ],
+    "message": "Expected string, received date"
+  }
+]
+    at ContractService.validateBusinessRules (lib/services/ContractService.ts:97:22)
+    at ContractService.create (lib/services/ContractService.ts:210:16)
+    at SetupAssistantService.createContractsWithService (lib/services/SetupAssistantService.ts:511:36)
+    at async SetupAssistantService.createEntitiesFromData (lib/services/SetupAssistantService.ts:447:27)
+    at async SetupAssistantService.processFile (lib/services/SetupAssistantService.ts:125:21)
+    at async (app/api/ai/setup-assistant-v2/route.ts:51:22)
+    at async withTeamContext (lib/middleware/team-context.ts:185:20)
+   95 |     if ('clientName' in data && 'projectName' in data) {
+   96 |       // This is create data - validate all required fields
+>  97 |       ContractSchema.parse(data)
+      |                      ^
+   98 |     }
+   99 |
+  100 |     // BLOCKING: Total value must be positive (clearly wrong) {
+  issues: [Array],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)]
+}
+📝 Creating contract: {
+  clientName: 'Hyde e Igor',
+  projectName: 'HI',
+  totalValue: 5980,
+  signedDate: '2024-03-15'
+}
+❌ Error creating contract: Error [ZodError]: [
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "null",
+    "path": [
+      "description"
+    ],
+    "message": "Expected string, received null"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "date",
+    "path": [
+      "signedDate"
+    ],
+    "message": "Expected string, received date"
+  }
+]
+    at ContractService.validateBusinessRules (lib/services/ContractService.ts:97:22)
+    at ContractService.create (lib/services/ContractService.ts:210:16)
+    at SetupAssistantService.createContractsWithService (lib/services/SetupAssistantService.ts:511:36)
+    at async SetupAssistantService.createEntitiesFromData (lib/services/SetupAssistantService.ts:447:27)
+    at async SetupAssistantService.processFile (lib/services/SetupAssistantService.ts:125:21)
+    at async (app/api/ai/setup-assistant-v2/route.ts:51:22)
+    at async withTeamContext (lib/middleware/team-context.ts:185:20)
+   95 |     if ('clientName' in data && 'projectName' in data) {
+   96 |       // This is create data - validate all required fields
+>  97 |       ContractSchema.parse(data)
+      |                      ^
+   98 |     }
+   99 |
+  100 |     // BLOCKING: Total value must be positive (clearly wrong) {
+  issues: [Array],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)]
+}
+📝 Creating contract: {
+  clientName: 'Rosa Lyra Isabel de Castela',
+  projectName: 'RL-IC',
+  totalValue: 24480,
+  signedDate: '2024-04-01'
+}
+❌ Error creating contract: Error [ZodError]: [
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "null",
+    "path": [
+      "description"
+    ],
+    "message": "Expected string, received null"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "date",
+    "path": [
+      "signedDate"
+    ],
+    "message": "Expected string, received date"
+  }
+]
+    at ContractService.validateBusinessRules (lib/services/ContractService.ts:97:22)
+    at ContractService.create (lib/services/ContractService.ts:210:16)
+    at SetupAssistantService.createContractsWithService (lib/services/SetupAssistantService.ts:511:36)
+    at async SetupAssistantService.createEntitiesFromData (lib/services/SetupAssistantService.ts:447:27)
+    at async SetupAssistantService.processFile (lib/services/SetupAssistantService.ts:125:21)
+    at async (app/api/ai/setup-assistant-v2/route.ts:51:22)
+    at async withTeamContext (lib/middleware/team-context.ts:185:20)
+   95 |     if ('clientName' in data && 'projectName' in data) {
+   96 |       // This is create data - validate all required fields
+>  97 |       ContractSchema.parse(data)
+      |                      ^
+   98 |     }
+   99 |
+  100 |     // BLOCKING: Total value must be positive (clearly wrong) {
+  issues: [Array],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)]
+}
+📝 Creating contract: {
+  clientName: 'Tais Campos',
+  projectName: 'TC',
+  totalValue: 1800,
+  signedDate: '2024-04-02'
+}
+❌ Error creating contract: Error [ZodError]: [
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "date",
+    "path": [
+      "signedDate"
+    ],
+    "message": "Expected string, received date"
+  }
+]
+    at ContractService.validateBusinessRules (lib/services/ContractService.ts:97:22)
+    at ContractService.create (lib/services/ContractService.ts:210:16)
+    at SetupAssistantService.createContractsWithService (lib/services/SetupAssistantService.ts:511:36)
+    at async SetupAssistantService.createEntitiesFromData (lib/services/SetupAssistantService.ts:447:27)
+    at async SetupAssistantService.processFile (lib/services/SetupAssistantService.ts:125:21)
+    at async (app/api/ai/setup-assistant-v2/route.ts:51:22)
+    at async withTeamContext (lib/middleware/team-context.ts:185:20)
+   95 |     if ('clientName' in data && 'projectName' in data) {
+   96 |       // This is create data - validate all required fields
+>  97 |       ContractSchema.parse(data)
+      |                      ^
+   98 |     }
+   99 |
+  100 |     // BLOCKING: Total value must be positive (clearly wrong) {
+  issues: [Array],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)]
+}
+📝 Creating contract: {
+  clientName: 'Jade e Rodrigo',
+  projectName: 'JR',
+  totalValue: 36765,
+  signedDate: '2024-04-05'
+}
+❌ Error creating contract: Error [ZodError]: [
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "null",
+    "path": [
+      "description"
+    ],
+    "message": "Expected string, received null"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "date",
+    "path": [
+      "signedDate"
+    ],
+    "message": "Expected string, received date"
+  }
+]
+    at ContractService.validateBusinessRules (lib/services/ContractService.ts:97:22)
+    at ContractService.create (lib/services/ContractService.ts:210:16)
+    at SetupAssistantService.createContractsWithService (lib/services/SetupAssistantService.ts:511:36)
+    at async SetupAssistantService.createEntitiesFromData (lib/services/SetupAssistantService.ts:447:27)
+    at async SetupAssistantService.processFile (lib/services/SetupAssistantService.ts:125:21)
+    at async (app/api/ai/setup-assistant-v2/route.ts:51:22)
+    at async withTeamContext (lib/middleware/team-context.ts:185:20)
+   95 |     if ('clientName' in data && 'projectName' in data) {
+   96 |       // This is create data - validate all required fields
+>  97 |       ContractSchema.parse(data)
+      |                      ^
+   98 |     }
+   99 |
+  100 |     // BLOCKING: Total value must be positive (clearly wrong) {
+  issues: [Array],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)]
+}
+📝 Creating contract: {
+  clientName: 'Rosa Lyra Dina Claire',
+  projectName: 'RL-DC',
+  totalValue: 33120,
+  signedDate: '2024-07-11'
+}
+❌ Error creating contract: Error [ZodError]: [
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "null",
+    "path": [
+      "description"
+    ],
+    "message": "Expected string, received null"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "date",
+    "path": [
+      "signedDate"
+    ],
+    "message": "Expected string, received date"
+  }
+]
+    at ContractService.validateBusinessRules (lib/services/ContractService.ts:97:22)
+    at ContractService.create (lib/services/ContractService.ts:210:16)
+    at SetupAssistantService.createContractsWithService (lib/services/SetupAssistantService.ts:511:36)
+    at async SetupAssistantService.createEntitiesFromData (lib/services/SetupAssistantService.ts:447:27)
+    at async SetupAssistantService.processFile (lib/services/SetupAssistantService.ts:125:21)
+    at async (app/api/ai/setup-assistant-v2/route.ts:51:22)
+    at async withTeamContext (lib/middleware/team-context.ts:185:20)
+   95 |     if ('clientName' in data && 'projectName' in data) {
+   96 |       // This is create data - validate all required fields
+>  97 |       ContractSchema.parse(data)
+      |                      ^
+   98 |     }
+   99 |
+  100 |     // BLOCKING: Total value must be positive (clearly wrong) {
+  issues: [Array],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)]
+}
+📝 Creating contract: {
+  clientName: 'Beatriz Bianco e Vitor Nagata',
+  projectName: 'BB',
+  totalValue: 31040,
+  signedDate: '2024-08-14'
+}
+❌ Error creating contract: Error [ZodError]: [
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "null",
+    "path": [
+      "description"
+    ],
+    "message": "Expected string, received null"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "date",
+    "path": [
+      "signedDate"
+    ],
+    "message": "Expected string, received date"
+  }
+]
+    at ContractService.validateBusinessRules (lib/services/ContractService.ts:97:22)
+    at ContractService.create (lib/services/ContractService.ts:210:16)
+    at SetupAssistantService.createContractsWithService (lib/services/SetupAssistantService.ts:511:36)
+    at async SetupAssistantService.createEntitiesFromData (lib/services/SetupAssistantService.ts:447:27)
+    at async SetupAssistantService.processFile (lib/services/SetupAssistantService.ts:125:21)
+    at async (app/api/ai/setup-assistant-v2/route.ts:51:22)
+    at async withTeamContext (lib/middleware/team-context.ts:185:20)
+   95 |     if ('clientName' in data && 'projectName' in data) {
+   96 |       // This is create data - validate all required fields
+>  97 |       ContractSchema.parse(data)
+      |                      ^
+   98 |     }
+   99 |
+  100 |     // BLOCKING: Total value must be positive (clearly wrong) {
+  issues: [Array],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)]
+}
+📝 Creating contract: {
+  clientName: 'Renata e Victor',
+  projectName: 'RV',
+  totalValue: 23500,
+  signedDate: '2024-09-03'
+}
+❌ Error creating contract: Error [ZodError]: [
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "null",
+    "path": [
+      "description"
+    ],
+    "message": "Expected string, received null"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "date",
+    "path": [
+      "signedDate"
+    ],
+    "message": "Expected string, received date"
+  }
+]
+    at ContractService.validateBusinessRules (lib/services/ContractService.ts:97:22)
+    at ContractService.create (lib/services/ContractService.ts:210:16)
+    at SetupAssistantService.createContractsWithService (lib/services/SetupAssistantService.ts:511:36)
+    at async SetupAssistantService.createEntitiesFromData (lib/services/SetupAssistantService.ts:447:27)
+    at async SetupAssistantService.processFile (lib/services/SetupAssistantService.ts:125:21)
+    at async (app/api/ai/setup-assistant-v2/route.ts:51:22)
+    at async withTeamContext (lib/middleware/team-context.ts:185:20)
+   95 |     if ('clientName' in data && 'projectName' in data) {
+   96 |       // This is create data - validate all required fields
+>  97 |       ContractSchema.parse(data)
+      |                      ^
+   98 |     }
+   99 |
+  100 |     // BLOCKING: Total value must be positive (clearly wrong) {
+  issues: [Array],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)]
+}
+📝 Creating contract: {
+  clientName: 'Rosa Lyra Tietê',
+  projectName: 'RL-TI',
+  totalValue: 5000,
+  signedDate: '2024-09-06'
+}
+❌ Error creating contract: Error [ZodError]: [
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "null",
+    "path": [
+      "description"
+    ],
+    "message": "Expected string, received null"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "date",
+    "path": [
+      "signedDate"
+    ],
+    "message": "Expected string, received date"
+  }
+]
+    at ContractService.validateBusinessRules (lib/services/ContractService.ts:97:22)
+    at ContractService.create (lib/services/ContractService.ts:210:16)
+    at SetupAssistantService.createContractsWithService (lib/services/SetupAssistantService.ts:511:36)
+    at async SetupAssistantService.createEntitiesFromData (lib/services/SetupAssistantService.ts:447:27)
+    at async SetupAssistantService.processFile (lib/services/SetupAssistantService.ts:125:21)
+    at async (app/api/ai/setup-assistant-v2/route.ts:51:22)
+    at async withTeamContext (lib/middleware/team-context.ts:185:20)
+   95 |     if ('clientName' in data && 'projectName' in data) {
+   96 |       // This is create data - validate all required fields
+>  97 |       ContractSchema.parse(data)
+      |                      ^
+   98 |     }
+   99 |
+  100 |     // BLOCKING: Total value must be positive (clearly wrong) {
+  issues: [Array],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)]
+}
+📝 Creating contract: {
+  clientName: 'Giulianna e Pedro',
+  projectName: 'GP',
+  totalValue: 9802,
+  signedDate: '2024-09-27'
+}
+❌ Error creating contract: Error [ZodError]: [
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "null",
+    "path": [
+      "description"
+    ],
+    "message": "Expected string, received null"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "date",
+    "path": [
+      "signedDate"
+    ],
+    "message": "Expected string, received date"
+  }
+]
+    at ContractService.validateBusinessRules (lib/services/ContractService.ts:97:22)
+    at ContractService.create (lib/services/ContractService.ts:210:16)
+    at SetupAssistantService.createContractsWithService (lib/services/SetupAssistantService.ts:511:36)
+    at async SetupAssistantService.createEntitiesFromData (lib/services/SetupAssistantService.ts:447:27)
+    at async SetupAssistantService.processFile (lib/services/SetupAssistantService.ts:125:21)
+    at async (app/api/ai/setup-assistant-v2/route.ts:51:22)
+    at async withTeamContext (lib/middleware/team-context.ts:185:20)
+   95 |     if ('clientName' in data && 'projectName' in data) {
+   96 |       // This is create data - validate all required fields
+>  97 |       ContractSchema.parse(data)
+      |                      ^
+   98 |     }
+   99 |
+  100 |     // BLOCKING: Total value must be positive (clearly wrong) {
+  issues: [Array],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)]
+}
+✅ [V2] File processed successfully
+📊 [V2] Created: 0 contracts, 0 receivables, 0 expenses
+ POST /api/ai/setup-assistant-v2 200 in 49548ms
+ GET /api/auth/csrf 200 in 256ms
+ POST /api/auth/callback/credentials 200 in 648ms
+ GET /api/auth/session 200 in 240ms
+📁 [V2] Processing file with service layer: Testando.xlsx Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+📁 Processing file with SetupAssistantService: Testando.xlsx Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+📄 Processing text document
+📏 Content size: 9346 characters
+🤖 Calling Claude AI for extraction
+The model 'claude-3-5-sonnet-20241022' is deprecated and will reach end-of-life on October 22, 2025
+Please migrate to a newer model. Visit https://docs.anthropic.com/en/docs/resources/model-deprecations for more information.
+✅ Claude response received
+📊 Claude found:
+  Contracts: 37
+  Receivables: 0
+  Expenses: 0
+Creating contracts...
+📝 Creating contract: {
+  clientName: 'Livia Assan',
+  projectName: 'LF',
+  totalValue: 3500,
+  signedDate: '2020-10-23'
+}
+🔧 createDateForStorage called with: 2020-10-23
+✅ createDateForStorage success: 2020-10-23T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Paula Saad',
+  projectName: 'PS',
+  totalValue: 28560,
+  signedDate: '2020-10-28'
+}
+🔧 createDateForStorage called with: 2020-10-28
+✅ createDateForStorage success: 2020-10-28T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Livia Assan',
+  projectName: 'LF (BAN)',
+  totalValue: 1500,
+  signedDate: '2020-12-23'
+}
+🔧 createDateForStorage called with: 2020-12-23
+✅ createDateForStorage success: 2020-12-23T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Gustavo Tourinho',
+  projectName: 'GM',
+  totalValue: 24600,
+  signedDate: '2021-01-20'
+}
+🔧 createDateForStorage called with: 2021-01-20
+✅ createDateForStorage success: 2021-01-20T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Positive Ventures',
+  projectName: 'PV',
+  totalValue: 1800,
+  signedDate: '2021-10-28'
+}
+🔧 createDateForStorage called with: 2021-10-28
+✅ createDateForStorage success: 2021-10-28T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Sertão do Una',
+  projectName: 'SU',
+  totalValue: 4500,
+  signedDate: '2022-02-07'
+}
+🔧 createDateForStorage called with: 2022-02-07
+✅ createDateForStorage success: 2022-02-07T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Renata Mayer',
+  projectName: 'RM',
+  totalValue: 17500,
+  signedDate: '2022-02-23'
+}
+🔧 createDateForStorage called with: 2022-02-23
+✅ createDateForStorage success: 2022-02-23T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Andrea Rivetti',
+  projectName: 'AR',
+  totalValue: 34600,
+  signedDate: '2022-04-14'
+}
+🔧 createDateForStorage called with: 2022-04-14
+✅ createDateForStorage success: 2022-04-14T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Villa Piva',
+  projectName: 'VP',
+  totalValue: 8400,
+  signedDate: '2022-04-19'
+}
+🔧 createDateForStorage called with: 2022-04-19
+✅ createDateForStorage success: 2022-04-19T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Camila Borges',
+  projectName: 'CB',
+  totalValue: 2250,
+  signedDate: '2022-04-26'
+}
+🔧 createDateForStorage called with: 2022-04-26
+✅ createDateForStorage success: 2022-04-26T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Louise Farias',
+  projectName: 'LF',
+  totalValue: 6000,
+  signedDate: '2022-07-28'
+}
+🔧 createDateForStorage called with: 2022-07-28
+✅ createDateForStorage success: 2022-07-28T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Marcia e Eduardo',
+  projectName: 'EM',
+  totalValue: 41500,
+  signedDate: '2022-08-01'
+}
+🔧 createDateForStorage called with: 2022-08-01
+✅ createDateForStorage success: 2022-08-01T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Juliana Ma',
+  projectName: 'JM',
+  totalValue: 3400,
+  signedDate: '2022-08-22'
+}
+🔧 createDateForStorage called with: 2022-08-22
+✅ createDateForStorage success: 2022-08-22T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Fernando e Fernanda Hamaoui',
+  projectName: 'FH',
+  totalValue: 39400,
+  signedDate: '2022-10-03'
+}
+🔧 createDateForStorage called with: 2022-10-03
+✅ createDateForStorage success: 2022-10-03T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Galeria Lume',
+  projectName: 'GL',
+  totalValue: 2040,
+  signedDate: '2022-10-17'
+}
+🔧 createDateForStorage called with: 2022-10-17
+✅ createDateForStorage success: 2022-10-17T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Ryan Martin',
+  projectName: 'RYM',
+  totalValue: 5250,
+  signedDate: '2022-11-15'
+}
+🔧 createDateForStorage called with: 2022-11-15
+✅ createDateForStorage success: 2022-11-15T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Penélope e Ivan',
+  projectName: 'PI',
+  totalValue: 35100,
+  signedDate: '2023-01-12'
+}
+🔧 createDateForStorage called with: 2023-01-12
+✅ createDateForStorage success: 2023-01-12T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Fernando e Lais',
+  projectName: 'FL',
+  totalValue: 22000,
+  signedDate: '2023-01-18'
+}
+🔧 createDateForStorage called with: 2023-01-18
+✅ createDateForStorage success: 2023-01-18T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'M3 Capital',
+  projectName: 'M3',
+  totalValue: 15000,
+  signedDate: '2023-02-06'
+}
+🔧 createDateForStorage called with: 2023-02-06
+✅ createDateForStorage success: 2023-02-06T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Julia Melardi',
+  projectName: 'JM',
+  totalValue: 8250,
+  signedDate: '2023-04-25'
+}
+🔧 createDateForStorage called with: 2023-04-25
+✅ createDateForStorage success: 2023-04-25T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Nidia',
+  projectName: 'NM',
+  totalValue: 18400,
+  signedDate: '2023-05-11'
+}
+🔧 createDateForStorage called with: 2023-05-11
+✅ createDateForStorage success: 2023-05-11T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Galeria Lume Loja',
+  projectName: 'GL',
+  totalValue: 3825,
+  signedDate: '2023-07-04'
+}
+🔧 createDateForStorage called with: 2023-07-04
+✅ createDateForStorage success: 2023-07-04T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Lais França',
+  projectName: 'LM',
+  totalValue: 7000,
+  signedDate: '2023-08-07'
+}
+🔧 createDateForStorage called with: 2023-08-07
+✅ createDateForStorage success: 2023-08-07T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Maria Eduarda',
+  projectName: 'ME',
+  totalValue: 3325,
+  signedDate: '2023-10-18'
+}
+🔧 createDateForStorage called with: 2023-10-18
+✅ createDateForStorage success: 2023-10-18T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Fernando e Lais',
+  projectName: 'FL',
+  totalValue: 1200,
+  signedDate: '2023-10-27'
+}
+❌ Error creating contract: Error [ServiceError]: A contract with this client and project name already exists
+    at ContractService.validateBusinessRules (lib/services/ContractService.ts:133:15)
+    at async ContractService.create (lib/services/ContractService.ts:210:5)
+    at async SetupAssistantService.createContractsWithService (lib/services/SetupAssistantService.ts:512:9)
+    at async SetupAssistantService.createEntitiesFromData (lib/services/SetupAssistantService.ts:447:27)
+    at async SetupAssistantService.processFile (lib/services/SetupAssistantService.ts:125:21)
+    at async (app/api/ai/setup-assistant-v2/route.ts:51:22)
+    at async withTeamContext (lib/middleware/team-context.ts:185:20)
+  131 |
+  132 |       if (existing) {
+> 133 |         throw new ServiceError(
+      |               ^
+  134 |           'A contract with this client and project name already exists',
+  135 |           'DUPLICATE_CONTRACT',
+  136 |           409 {
+  code: 'DUPLICATE_CONTRACT',
+  statusCode: 409,
+  details: undefined
+}
+📝 Creating contract: {
+  clientName: 'Helena Orlandi',
+  projectName: 'HO',
+  totalValue: 15150,
+  signedDate: '2023-11-01'
+}
+🔧 createDateForStorage called with: 2023-11-01
+✅ createDateForStorage success: 2023-11-01T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Mila e Lucas',
+  projectName: 'ML',
+  totalValue: 15675,
+  signedDate: '2024-02-08'
+}
+🔧 createDateForStorage called with: 2024-02-08
+✅ createDateForStorage success: 2024-02-08T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Tais Campos',
+  projectName: 'TC',
+  totalValue: 6200,
+  signedDate: '2024-03-08'
+}
+🔧 createDateForStorage called with: 2024-03-08
+✅ createDateForStorage success: 2024-03-08T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Hyde e Igor',
+  projectName: 'HI',
+  totalValue: 5980,
+  signedDate: '2024-03-15'
+}
+🔧 createDateForStorage called with: 2024-03-15
+✅ createDateForStorage success: 2024-03-15T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Rosa Lyra Isabel de Castela',
+  projectName: 'RL-IC',
+  totalValue: 24480,
+  signedDate: '2024-04-01'
+}
+🔧 createDateForStorage called with: 2024-04-01
+✅ createDateForStorage success: 2024-04-01T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Tais Campos',
+  projectName: 'TC',
+  totalValue: 1800,
+  signedDate: '2024-04-02'
+}
+❌ Error creating contract: Error [ServiceError]: A contract with this client and project name already exists
+    at ContractService.validateBusinessRules (lib/services/ContractService.ts:133:15)
+    at async ContractService.create (lib/services/ContractService.ts:210:5)
+    at async SetupAssistantService.createContractsWithService (lib/services/SetupAssistantService.ts:512:9)
+    at async SetupAssistantService.createEntitiesFromData (lib/services/SetupAssistantService.ts:447:27)
+    at async SetupAssistantService.processFile (lib/services/SetupAssistantService.ts:125:21)
+    at async (app/api/ai/setup-assistant-v2/route.ts:51:22)
+    at async withTeamContext (lib/middleware/team-context.ts:185:20)
+  131 |
+  132 |       if (existing) {
+> 133 |         throw new ServiceError(
+      |               ^
+  134 |           'A contract with this client and project name already exists',
+  135 |           'DUPLICATE_CONTRACT',
+  136 |           409 {
+  code: 'DUPLICATE_CONTRACT',
+  statusCode: 409,
+  details: undefined
+}
+📝 Creating contract: {
+  clientName: 'Jade e Rodrigo',
+  projectName: 'JR',
+  totalValue: 36765,
+  signedDate: '2024-04-05'
+}
+🔧 createDateForStorage called with: 2024-04-05
+✅ createDateForStorage success: 2024-04-05T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Rosa Lyra Dina Claire',
+  projectName: 'RL-DC',
+  totalValue: 33120,
+  signedDate: '2024-07-11'
+}
+🔧 createDateForStorage called with: 2024-07-11
+✅ createDateForStorage success: 2024-07-11T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Beatriz Bianco e Vitor Nagata',
+  projectName: 'BB',
+  totalValue: 31040,
+  signedDate: '2024-08-14'
+}
+🔧 createDateForStorage called with: 2024-08-14
+✅ createDateForStorage success: 2024-08-14T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Renata e Victor',
+  projectName: 'RV',
+  totalValue: 23500,
+  signedDate: '2024-09-03'
+}
+🔧 createDateForStorage called with: 2024-09-03
+✅ createDateForStorage success: 2024-09-03T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Rosa Lyra Tietê',
+  projectName: 'RL-TI',
+  totalValue: 5000,
+  signedDate: '2024-09-06'
+}
+🔧 createDateForStorage called with: 2024-09-06
+✅ createDateForStorage success: 2024-09-06T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Giulianna e Pedro',
+  projectName: 'GP',
+  totalValue: 9802,
+  signedDate: '2024-09-27'
+}
+🔧 createDateForStorage called with: 2024-09-27
+✅ createDateForStorage success: 2024-09-27T15:00:00.000Z
+✅ Contract created successfully
+✅ [V2] File processed successfully
+📊 [V2] Created: 35 contracts, 0 receivables, 0 expenses
+ POST /api/ai/setup-assistant-v2 200 in 56501ms
+ GET /api/auth/csrf 200 in 247ms
+ POST /api/auth/callback/credentials 200 in 645ms
+ GET /api/auth/session 200 in 241ms
+📁 [V2] Processing file with service layer: Testando.xlsx Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+📁 Processing file with SetupAssistantService: Testando.xlsx Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+📄 Processing text document
+📏 Content size: 9346 characters
+🤖 Calling Claude AI for extraction
+The model 'claude-3-5-sonnet-20241022' is deprecated and will reach end-of-life on October 22, 2025
+Please migrate to a newer model. Visit https://docs.anthropic.com/en/docs/resources/model-deprecations for more information.
+✅ Claude response received
+📊 Claude found:
+  Contracts: 37
+  Receivables: 0
+  Expenses: 0
+Creating contracts...
+📝 Creating contract: {
+  clientName: 'Livia Assan',
+  projectName: 'LF',
+  totalValue: 3500,
+  signedDate: '2020-10-23'
+}
+🔧 createDateForStorage called with: 2020-10-23
+✅ createDateForStorage success: 2020-10-23T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Paula Saad',
+  projectName: 'PS',
+  totalValue: 28560,
+  signedDate: '2020-10-28'
+}
+🔧 createDateForStorage called with: 2020-10-28
+✅ createDateForStorage success: 2020-10-28T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Livia Assan',
+  projectName: 'LF (BAN)',
+  totalValue: 1500,
+  signedDate: '2020-12-23'
+}
+🔧 createDateForStorage called with: 2020-12-23
+✅ createDateForStorage success: 2020-12-23T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Gustavo Tourinho',
+  projectName: 'GM',
+  totalValue: 24600,
+  signedDate: '2021-01-20'
+}
+🔧 createDateForStorage called with: 2021-01-20
+✅ createDateForStorage success: 2021-01-20T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Positive Ventures',
+  projectName: 'PV',
+  totalValue: 1800,
+  signedDate: '2021-10-28'
+}
+🔧 createDateForStorage called with: 2021-10-28
+✅ createDateForStorage success: 2021-10-28T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Sertão do Una',
+  projectName: 'SU',
+  totalValue: 4500,
+  signedDate: '2022-02-07'
+}
+🔧 createDateForStorage called with: 2022-02-07
+✅ createDateForStorage success: 2022-02-07T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Renata Mayer',
+  projectName: 'RM',
+  totalValue: 17500,
+  signedDate: '2022-02-23'
+}
+🔧 createDateForStorage called with: 2022-02-23
+✅ createDateForStorage success: 2022-02-23T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Andrea Rivetti',
+  projectName: 'AR',
+  totalValue: 34600,
+  signedDate: '2022-04-14'
+}
+🔧 createDateForStorage called with: 2022-04-14
+✅ createDateForStorage success: 2022-04-14T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Villa Piva',
+  projectName: 'VP',
+  totalValue: 8400,
+  signedDate: '2022-04-19'
+}
+🔧 createDateForStorage called with: 2022-04-19
+✅ createDateForStorage success: 2022-04-19T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Camila Borges',
+  projectName: 'CB',
+  totalValue: 2250,
+  signedDate: '2022-04-26'
+}
+🔧 createDateForStorage called with: 2022-04-26
+✅ createDateForStorage success: 2022-04-26T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Louise Farias',
+  projectName: 'LF',
+  totalValue: 6000,
+  signedDate: '2022-07-28'
+}
+🔧 createDateForStorage called with: 2022-07-28
+✅ createDateForStorage success: 2022-07-28T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Marcia e Eduardo',
+  projectName: 'EM',
+  totalValue: 41500,
+  signedDate: '2022-08-01'
+}
+🔧 createDateForStorage called with: 2022-08-01
+✅ createDateForStorage success: 2022-08-01T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Juliana Ma',
+  projectName: 'JM',
+  totalValue: 3400,
+  signedDate: '2022-08-22'
+}
+🔧 createDateForStorage called with: 2022-08-22
+✅ createDateForStorage success: 2022-08-22T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Fernando e Fernanda Hamaoui',
+  projectName: 'FH',
+  totalValue: 39400,
+  signedDate: '2022-10-03'
+}
+🔧 createDateForStorage called with: 2022-10-03
+✅ createDateForStorage success: 2022-10-03T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Galeria Lume',
+  projectName: 'GL',
+  totalValue: 2040,
+  signedDate: '2022-10-17'
+}
+🔧 createDateForStorage called with: 2022-10-17
+✅ createDateForStorage success: 2022-10-17T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Ryan Martin',
+  projectName: 'RYM',
+  totalValue: 5250,
+  signedDate: '2022-11-15'
+}
+🔧 createDateForStorage called with: 2022-11-15
+✅ createDateForStorage success: 2022-11-15T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Penélope e Ivan',
+  projectName: 'PI',
+  totalValue: 35100,
+  signedDate: '2023-01-12'
+}
+🔧 createDateForStorage called with: 2023-01-12
+✅ createDateForStorage success: 2023-01-12T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Fernando e Lais',
+  projectName: 'FL',
+  totalValue: 22000,
+  signedDate: '2023-01-18'
+}
+🔧 createDateForStorage called with: 2023-01-18
+✅ createDateForStorage success: 2023-01-18T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'M3 Capital',
+  projectName: 'M3',
+  totalValue: 15000,
+  signedDate: '2023-02-06'
+}
+🔧 createDateForStorage called with: 2023-02-06
+✅ createDateForStorage success: 2023-02-06T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Julia Melardi',
+  projectName: 'JM',
+  totalValue: 8250,
+  signedDate: '2023-04-25'
+}
+🔧 createDateForStorage called with: 2023-04-25
+✅ createDateForStorage success: 2023-04-25T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Nidia',
+  projectName: 'NM',
+  totalValue: 18400,
+  signedDate: '2023-05-11'
+}
+🔧 createDateForStorage called with: 2023-05-11
+✅ createDateForStorage success: 2023-05-11T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Galeria Lume Loja',
+  projectName: 'GL',
+  totalValue: 3825,
+  signedDate: '2023-07-04'
+}
+🔧 createDateForStorage called with: 2023-07-04
+✅ createDateForStorage success: 2023-07-04T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Lais França',
+  projectName: 'LM',
+  totalValue: 7000,
+  signedDate: '2023-08-07'
+}
+🔧 createDateForStorage called with: 2023-08-07
+✅ createDateForStorage success: 2023-08-07T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Maria Eduarda',
+  projectName: 'ME',
+  totalValue: 3325,
+  signedDate: '2023-10-18'
+}
+🔧 createDateForStorage called with: 2023-10-18
+✅ createDateForStorage success: 2023-10-18T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Fernando e Lais',
+  projectName: 'FL',
+  totalValue: 1200,
+  signedDate: '2023-10-27'
+}
+❌ Error creating contract: Error [ServiceError]: A contract with this client and project name already exists
+    at ContractService.validateBusinessRules (lib/services/ContractService.ts:133:15)
+    at async ContractService.create (lib/services/ContractService.ts:210:5)
+    at async SetupAssistantService.createContractsWithService (lib/services/SetupAssistantService.ts:512:9)
+    at async SetupAssistantService.createEntitiesFromData (lib/services/SetupAssistantService.ts:447:27)
+    at async SetupAssistantService.processFile (lib/services/SetupAssistantService.ts:125:21)
+    at async (app/api/ai/setup-assistant-v2/route.ts:51:22)
+    at async withTeamContext (lib/middleware/team-context.ts:185:20)
+  131 |
+  132 |       if (existing) {
+> 133 |         throw new ServiceError(
+      |               ^
+  134 |           'A contract with this client and project name already exists',
+  135 |           'DUPLICATE_CONTRACT',
+  136 |           409 {
+  code: 'DUPLICATE_CONTRACT',
+  statusCode: 409,
+  details: undefined
+}
+⚠️ Duplicate detected, creating anyway for setup assistant
+✅ Contract created directly (duplicate allowed)
+📝 Creating contract: {
+  clientName: 'Helena Orlandi',
+  projectName: 'HO',
+  totalValue: 15150,
+  signedDate: '2023-11-01'
+}
+🔧 createDateForStorage called with: 2023-11-01
+✅ createDateForStorage success: 2023-11-01T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Mila e Lucas',
+  projectName: 'ML',
+  totalValue: 15675,
+  signedDate: '2024-02-08'
+}
+🔧 createDateForStorage called with: 2024-02-08
+✅ createDateForStorage success: 2024-02-08T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Tais Campos',
+  projectName: 'TC',
+  totalValue: 6200,
+  signedDate: '2024-03-08'
+}
+🔧 createDateForStorage called with: 2024-03-08
+✅ createDateForStorage success: 2024-03-08T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Hyde e Igor',
+  projectName: 'HI',
+  totalValue: 5980,
+  signedDate: '2024-03-15'
+}
+🔧 createDateForStorage called with: 2024-03-15
+✅ createDateForStorage success: 2024-03-15T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Rosa Lyra Isabel de Castela',
+  projectName: 'RL-IC',
+  totalValue: 24480,
+  signedDate: '2024-04-01'
+}
+🔧 createDateForStorage called with: 2024-04-01
+✅ createDateForStorage success: 2024-04-01T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Tais Campos',
+  projectName: 'TC',
+  totalValue: 1800,
+  signedDate: '2024-04-02'
+}
+❌ Error creating contract: Error [ServiceError]: A contract with this client and project name already exists
+    at ContractService.validateBusinessRules (lib/services/ContractService.ts:133:15)
+    at async ContractService.create (lib/services/ContractService.ts:210:5)
+    at async SetupAssistantService.createContractsWithService (lib/services/SetupAssistantService.ts:512:9)
+    at async SetupAssistantService.createEntitiesFromData (lib/services/SetupAssistantService.ts:447:27)
+    at async SetupAssistantService.processFile (lib/services/SetupAssistantService.ts:125:21)
+    at async (app/api/ai/setup-assistant-v2/route.ts:51:22)
+    at async withTeamContext (lib/middleware/team-context.ts:185:20)
+  131 |
+  132 |       if (existing) {
+> 133 |         throw new ServiceError(
+      |               ^
+  134 |           'A contract with this client and project name already exists',
+  135 |           'DUPLICATE_CONTRACT',
+  136 |           409 {
+  code: 'DUPLICATE_CONTRACT',
+  statusCode: 409,
+  details: undefined
+}
+⚠️ Duplicate detected, creating anyway for setup assistant
+✅ Contract created directly (duplicate allowed)
+📝 Creating contract: {
+  clientName: 'Jade e Rodrigo',
+  projectName: 'JR',
+  totalValue: 36765,
+  signedDate: '2024-04-05'
+}
+🔧 createDateForStorage called with: 2024-04-05
+✅ createDateForStorage success: 2024-04-05T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Rosa Lyra Dina Claire',
+  projectName: 'RL-DC',
+  totalValue: 33120,
+  signedDate: '2024-07-11'
+}
+🔧 createDateForStorage called with: 2024-07-11
+✅ createDateForStorage success: 2024-07-11T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Beatriz Bianco e Vitor Nagata',
+  projectName: 'BB',
+  totalValue: 31040,
+  signedDate: '2024-08-14'
+}
+🔧 createDateForStorage called with: 2024-08-14
+✅ createDateForStorage success: 2024-08-14T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Renata e Victor',
+  projectName: 'RV',
+  totalValue: 23500,
+  signedDate: '2024-09-03'
+}
+🔧 createDateForStorage called with: 2024-09-03
+✅ createDateForStorage success: 2024-09-03T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Rosa Lyra Tietê',
+  projectName: 'RL-TI',
+  totalValue: 5000,
+  signedDate: '2024-09-06'
+}
+🔧 createDateForStorage called with: 2024-09-06
+✅ createDateForStorage success: 2024-09-06T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Giulianna e Pedro',
+  projectName: 'GP',
+  totalValue: 9802,
+  signedDate: '2024-09-27'
+}
+🔧 createDateForStorage called with: 2024-09-27
+✅ createDateForStorage success: 2024-09-27T15:00:00.000Z
+✅ Contract created successfully
+✅ [V2] File processed successfully
+📊 [V2] Created: 37 contracts, 0 receivables, 0 expenses
+ POST /api/ai/setup-assistant-v2 200 in 52413ms
+ GET /api/auth/csrf 200 in 242ms
+ POST /api/auth/callback/credentials 200 in 639ms
+ GET /api/auth/session 200 in 243ms
+📁 [V2] Processing file with service layer: sample_data.csv Type: text/csv
+📁 Processing file with SetupAssistantService: sample_data.csv Type: text/csv
+📄 Processing text document
+📏 Content size: 2324 characters
+🤖 Calling Claude AI for extraction
+The model 'claude-3-5-sonnet-20241022' is deprecated and will reach end-of-life on October 22, 2025
+Please migrate to a newer model. Visit https://docs.anthropic.com/en/docs/resources/model-deprecations for more information.
+✅ Claude response received
+📊 Claude found:
+  Contracts: 4
+  Receivables: 4
+  Expenses: 7
+Creating contracts...
+📝 Creating contract: {
+  clientName: 'Livia Assan',
+  projectName: 'LF',
+  totalValue: 85000,
+  signedDate: '2024-03-15'
+}
+🔧 createDateForStorage called with: 2024-03-15
+✅ createDateForStorage success: 2024-03-15T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Rosa Lyra Isabel de Castela',
+  projectName: 'RL-IC',
+  totalValue: 150000,
+  signedDate: '2024-01-22'
+}
+🔧 createDateForStorage called with: 2024-01-22
+✅ createDateForStorage success: 2024-01-22T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Carlos Botelho',
+  projectName: 'CB (REST)',
+  totalValue: 220000,
+  signedDate: '2024-02-05'
+}
+🔧 createDateForStorage called with: 2024-02-05
+✅ createDateForStorage success: 2024-02-05T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Marina Gonzalez',
+  projectName: 'MG-LOJA',
+  totalValue: 95000,
+  signedDate: '2024-04-18'
+}
+🔧 createDateForStorage called with: 2024-04-18
+✅ createDateForStorage success: 2024-04-18T15:00:00.000Z
+✅ Contract created successfully
+Creating receivables...
+🔧 createDateForStorage called with: 2024-04-30
+✅ createDateForStorage success: 2024-04-30T15:00:00.000Z
+🔧 createDateForStorage called with: 2024-02-15
+✅ createDateForStorage success: 2024-02-15T15:00:00.000Z
+🔧 createDateForStorage called with: 2024-03-20
+✅ createDateForStorage success: 2024-03-20T15:00:00.000Z
+🔧 createDateForStorage called with: 2024-04-25
+✅ createDateForStorage success: 2024-04-25T15:00:00.000Z
+Creating expenses...
+🔧 createDateForStorage called with: 2024-03-10
+✅ createDateForStorage success: 2024-03-10T15:00:00.000Z
+🔧 createDateForStorage called with: 2024-01-01
+✅ createDateForStorage success: 2024-01-01T15:00:00.000Z
+🔧 createDateForStorage called with: 2024-03-31
+✅ createDateForStorage success: 2024-03-31T15:00:00.000Z
+🔧 createDateForStorage called with: 2024-03-05
+✅ createDateForStorage success: 2024-03-05T15:00:00.000Z
+🔧 createDateForStorage called with: 2024-02-12
+✅ createDateForStorage success: 2024-02-12T15:00:00.000Z
+🔧 createDateForStorage called with: 2024-02-28
+✅ createDateForStorage success: 2024-02-28T15:00:00.000Z
+🔧 createDateForStorage called with: 2024-03-20
+✅ createDateForStorage success: 2024-03-20T15:00:00.000Z
+✅ [V2] File processed successfully
+📊 [V2] Created: 4 contracts, 4 receivables, 7 expenses
+ POST /api/ai/setup-assistant-v2 200 in 24437ms
+ GET /api/auth/csrf 200 in 251ms
+ POST /api/auth/callback/credentials 200 in 774ms
+ GET /api/auth/session 200 in 239ms
+📁 [V2] Processing file with service layer: sample_data.csv Type: text/csv
+📁 Processing file with SetupAssistantService: sample_data.csv Type: text/csv
+📄 Processing text document
+📏 Content size: 2324 characters
+🤖 Calling Claude AI for extraction
+The model 'claude-3-5-sonnet-20241022' is deprecated and will reach end-of-life on October 22, 2025
+Please migrate to a newer model. Visit https://docs.anthropic.com/en/docs/resources/model-deprecations for more information.
+✅ Claude response received
+📊 Claude found:
+  Contracts: 4
+  Receivables: 4
+  Expenses: 7
+Creating contracts...
+📝 Creating contract: {
+  clientName: 'Livia Assan',
+  projectName: 'LF',
+  totalValue: 85000,
+  signedDate: '2024-03-15'
+}
+🔧 createDateForStorage called with: 2024-03-15
+✅ createDateForStorage success: 2024-03-15T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Rosa Lyra Isabel de Castela',
+  projectName: 'RL-IC',
+  totalValue: 150000,
+  signedDate: '2024-01-22'
+}
+🔧 createDateForStorage called with: 2024-01-22
+✅ createDateForStorage success: 2024-01-22T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Carlos Botelho',
+  projectName: 'CB (REST)',
+  totalValue: 220000,
+  signedDate: '2024-02-05'
+}
+🔧 createDateForStorage called with: 2024-02-05
+✅ createDateForStorage success: 2024-02-05T15:00:00.000Z
+✅ Contract created successfully
+📝 Creating contract: {
+  clientName: 'Marina Gonzalez',
+  projectName: 'MG-LOJA',
+  totalValue: 95000,
+  signedDate: '2024-04-18'
+}
+🔧 createDateForStorage called with: 2024-04-18
+✅ createDateForStorage success: 2024-04-18T15:00:00.000Z
+✅ Contract created successfully
+Creating receivables...
+🔧 createDateForStorage called with: 2024-04-30
+✅ createDateForStorage success: 2024-04-30T15:00:00.000Z
+🔧 createDateForStorage called with: 2024-02-15
+✅ createDateForStorage success: 2024-02-15T15:00:00.000Z
+🔧 createDateForStorage called with: 2024-03-20
+✅ createDateForStorage success: 2024-03-20T15:00:00.000Z
+🔧 createDateForStorage called with: 2024-04-25
+✅ createDateForStorage success: 2024-04-25T15:00:00.000Z
+Creating expenses...
+🔧 createDateForStorage called with: 2024-03-10
+✅ createDateForStorage success: 2024-03-10T15:00:00.000Z
+🔧 createDateForStorage called with: 2024-01-01
+✅ createDateForStorage success: 2024-01-01T15:00:00.000Z
+🔧 createDateForStorage called with: 2024-03-31
+✅ createDateForStorage success: 2024-03-31T15:00:00.000Z
+🔧 createDateForStorage called with: 2024-03-05
+✅ createDateForStorage success: 2024-03-05T15:00:00.000Z
+🔧 createDateForStorage called with: 2024-02-12
+✅ createDateForStorage success: 2024-02-12T15:00:00.000Z
+🔧 createDateForStorage called with: 2024-02-28
+✅ createDateForStorage success: 2024-02-28T15:00:00.000Z
+🔧 createDateForStorage called with: 2024-03-20
+✅ createDateForStorage success: 2024-03-20T15:00:00.000Z
+✅ [V2] File processed successfully
+📊 [V2] Created: 4 contracts, 4 receivables, 7 expenses
+ POST /api/ai/setup-assistant-v2 200 in 25711ms
+📁 [V2] Processing file with service layer: Testando.xlsx Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+📁 Processing file with SetupAssistantService: Testando.xlsx Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+📄 Processing text document
+📏 Content size: 9346 characters
+🤖 Calling Claude AI for extraction
+The model 'claude-3-5-sonnet-20241022' is deprecated and will reach end-of-life on October 22, 2025
+Please migrate to a newer model. Visit https://docs.anthropic.com/en/docs/resources/model-deprecations for more information.
+[V2] Setup Assistant error: Error: 529 {"type":"error","error":{"type":"overloaded_error","message":"Overloaded"},"request_id":null}
+    at APIError.generate (../src/core/error.ts:91:14)
+    at Anthropic.makeStatusError (src/client.ts:422:28)
+    at Anthropic.makeRequest (src/client.ts:657:24)
+    at async SetupAssistantService.extractDataWithClaude (lib/services/SetupAssistantService.ts:216:20)
+    at async SetupAssistantService.processFile (lib/services/SetupAssistantService.ts:117:27)
+    at async (app/api/ai/setup-assistant-v2/route.ts:51:22)
+    at async withTeamContext (lib/middleware/team-context.ts:185:20)
+  214 |     while (retries <= maxRetries) {
+  215 |       try {
+> 216 |         response = await anthropic.messages.create({
+      |                    ^
+  217 |           model: 'claude-3-5-sonnet-20241022', // Using latest available model
+  218 |           max_tokens: 8192,
+  219 |           messages: [{ {
+  status: 529,
+  headers: Headers {
+    date: 'Sat, 27 Sep 2025 18:05:49 GMT',
+    'content-type': 'application/json',
+    'content-length': '93',
+    connection: 'keep-alive',
+    'cf-ray': '985cee48db9a4edd-GRU',
+    'x-should-retry': 'true',
+    'request-id': 'req_011CTZMCEKgQS8mHaLSjnSGD',
+    'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',
+    'anthropic-organization-id': 'e8cbc805-f7d6-474d-b29f-7bb8ce2d14c5',
+    'x-envoy-upstream-service-time': '6187',
+    via: '1.1 google',
+    'cf-cache-status': 'DYNAMIC',
+    'x-robots-tag': 'none',
+    server: 'cloudflare'
+  },
+  requestID: 'req_011CTZMCEKgQS8mHaLSjnSGD',
+  error: [Object]
+}
+ POST /api/ai/setup-assistant-v2 200 in 27529ms
+ ✓ Compiled middleware in 1ms
