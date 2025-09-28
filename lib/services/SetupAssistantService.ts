@@ -418,7 +418,7 @@ export class SetupAssistantService extends BaseService<any, any, any, any> {
     while (retries <= maxRetries) {
       try {
         response = await anthropic.messages.create({
-          model: 'claude-3-5-sonnet-20241022', // Using latest available model
+          model: 'claude-3-5-sonnet-latest', // Using Claude Sonnet 3.5 latest version
           max_tokens: 8192,
           messages: [{
             role: 'user',

@@ -106,7 +106,37 @@ The DOING section tracks **active work with detailed progress**:
 ### 📋 TO DO (Immediate Priorities)
 *Ready to implement. Start here unless directed otherwise.*
 
-#### 🚀 **NEW PRIORITY: Incremental Setup Assistant Upgrade**
+#### 🎯 **NEW PRIORITIES: Phase 2 Week 2 & Extensions (2025-09-28)**
+
+#### 1. **Update Onboarding Page for Multi-File Support - HIGH PRIORITY**
+- **Problem**: Onboarding page still uses single-file upload while AI chat has multi-file capability
+- **Context**: Inconsistent user experience between onboarding and AI chat interfaces
+- **Solution**: Replace single-file upload in onboarding with MultiFileSetupAssistant component
+- **Priority**: **HIGH** (User experience consistency)
+- **Architecture**:
+  - Replace current file upload logic in `/app/onboarding/page.tsx`
+  - Integrate `MultiFileSetupAssistant` component
+  - Maintain onboarding flow progression
+  - Preserve existing profile collection step
+- **Success Criteria**: Users can upload multiple files during onboarding process
+- **Files**: `app/onboarding/page.tsx`, component integration
+- **Added**: 2025-09-28 from Phase 2 Week 1 review
+
+#### 2. **Multi-Sheet Excel Processing Support - MEDIUM PRIORITY**
+- **Problem**: Excel files with multiple sheets only process the first sheet
+- **Context**: Users often have data spread across multiple sheets in Excel files
+- **Solution**: Add support for processing all sheets in Excel workbooks
+- **Priority**: **MEDIUM** (Feature enhancement)
+- **Architecture**:
+  - Extend SetupAssistantService Excel processing logic
+  - Options: (A) Combine all sheets into single CSV, (B) Process each sheet separately
+  - UI indication of which sheets were processed
+  - User feedback on multi-sheet detection
+- **Success Criteria**: All sheets in Excel file are processed and entities created
+- **Files**: `SetupAssistantService.ts`, Excel processing logic
+- **Added**: 2025-09-28 from Phase 2 Week 1 review
+
+#### 🚀 **ARCHIVED PRIORITY: Incremental Setup Assistant Upgrade (Phase 1 Complete)**
 
 **STRATEGIC CONTEXT**: After analysis, upgrading the proven working setup assistant (`/api/ai/setup-assistant-direct`) incrementally is more efficient than completing the new OnboardingIntelligenceAgent.
 

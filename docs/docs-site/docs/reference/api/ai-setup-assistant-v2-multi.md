@@ -1,64 +1,65 @@
 ---
-title: "Health API"
+title: "Setup Assistant V2 Multi-File API"
 type: "reference"
 audience: ["developer", "agent"]
-contexts: ["api", "health", "rest", "database"]
+contexts: ["api", "multi-file", "setup-assistant", "ai", "document-processing", "phase2"]
 complexity: "intermediate"
 last_updated: "2025-09-28"
 version: "1.0"
-agent_roles: ["api-developer", "integration-engineer"]
+agent_roles: ["api-developer", "ai-integration-engineer", "setup-assistant-developer"]
 related:
+  - reference/api/ai-setup-assistant-v2.md
   - developer/architecture/overview.md
-  - agents/contexts/contract-management.md
-dependencies: ["next.js", "prisma", "zod"]
+  - agents/examples/ai-document-processing.md
+dependencies: ["next.js", "prisma", "anthropic-ai", "xlsx", "team-context-middleware"]
 ---
 
-# Health API
+# Setup Assistant V2 Multi-File API
 
-Comprehensive API reference for health management operations.
+API endpoint for processing multiple files simultaneously through the Setup Assistant V2 service layer.
 
 ## Context for LLM Agents
 
-**Scope**: Complete health API operations including CRUD, filtering, sorting, and business logic
-**Prerequisites**: Understanding of REST APIs, Next.js App Router, Prisma ORM, and team-based data isolation
+**Scope**: Multi-file batch processing for financial document extraction using Claude AI with sequential processing
+**Prerequisites**: Understanding of Setup Assistant V2 architecture, service layer integration, and team-based data isolation
 **Key Patterns**:
-- RESTful endpoint design with standard HTTP methods
-- Team-based data isolation for multi-tenant security
-- Zod validation for type-safe request/response handling
-- Consistent error handling and response formats
-
+- Sequential file processing for reliability
+- Smart retry logic for rate limiting
+- Combined results aggregation
+- Progress tracking support
+- Team context middleware integration
+- Service layer with audit logging
 
 ## Endpoint Overview
 
-**Base URL**: `/api/monitoring/health`
-**Methods**: GET, DELETE
-**Authentication**: None
+**Base URL**: `/api/ai/setup-assistant-v2/multi`
+**Methods**: POST, GET
+**Authentication**: Required
 **Team Isolation**: No
 
 
-## GET /api/monitoring/health
+## GET /api/ai/setup-assistant-v2/multi
 
-Retrieve health records with optional filtering and sorting.
+Retrieve multi records with optional filtering and sorting.
 
 ### Query Parameters
 
 | Parameter | Type | Description | Default |
 |-----------|------|-------------|---------|
-| `status` | string | Filter by status | `all` |
-| `category` | string | Filter by category | `all` |
+
 
 ### Example Request
 
 ```bash
-curl -X GET "http://localhost:3000/api/monitoring/health?status=active&sortBy=createdAt&sortOrder=desc" \
+curl -X GET "http://localhost:3000/api/ai/setup-assistant-v2/multi?status=active&sortBy=createdAt&sortOrder=desc" \
   -H "Content-Type: application/json"
 ```
 
 ### Response Format
 
 ```typescript
-interface HealthResponse {
-  data: Health[];
+interface MultiResponse {
+  data: Multi[];
   total: number;
   filters: {
     status: string;
@@ -71,27 +72,36 @@ interface HealthResponse {
 
 
 
+## POST /api/ai/setup-assistant-v2/multi
+
+Create a new multi record.
+
+### Request Body
 
 
-
-
-## DELETE /api/monitoring/`{id}`
-
-Delete a health record.
-
-⚠️ **Warning**: This operation may cascade to related records. Use with caution.
-
-### Path Parameters
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `id` | string | Health ID |
 
 ### Example Request
 
 ```bash
-curl -X DELETE "http://localhost:3000/api/monitoring/health/clx123456789"
+curl -X POST "http://localhost:3000/api/ai/setup-assistant-v2/multi" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "example": "Request body will be populated based on the specific multi schema"
+  }'
 ```
+
+### Response
+
+```typescript
+interface CreateResponse {
+  data: Multi;
+  alerts?: AIAlert[];
+}
+```
+
+
+
+
 
 
 ## Error Handling
@@ -122,7 +132,7 @@ interface ErrorResponse {
 
 ### Business Logic
 - **Team Isolation**: Not applicable
-- **Authentication**: Public access
+- **Authentication**: Required for all operations
 - **Validation**: Zod schemas ensure type safety
 - **Error Handling**: Consistent error responses across all endpoints
 

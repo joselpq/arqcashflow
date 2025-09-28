@@ -4,7 +4,7 @@ type: "reference"
 audience: ["developer", "agent"]
 contexts: ["api", "rest", "documentation"]
 complexity: "intermediate"
-last_updated: "2025-09-27"
+last_updated: "2025-09-28"
 version: "1.0"
 agent_roles: ["api-developer", "integration-engineer"]
 ---
@@ -19,6 +19,7 @@ Comprehensive API documentation for ArqCashflow REST endpoints.
 - [Ai-assistant API](./ai-assistant.md)
 - [Ai-query API](./ai-query.md)
 - [Ai-setup-assistant-direct API](./ai-setup-assistant-direct.md)
+- [Ai-setup-assistant-v2-multi API](./ai-setup-assistant-v2-multi.md)
 - [Ai-setup-assistant-v2 API](./ai-setup-assistant-v2.md)
 - [Auth-[...nextauth] API](./auth-[...nextauth].md)
 - [Auth-register API](./auth-register.md)
@@ -62,4 +63,4 @@ All data operations are automatically filtered by team context for multi-tenant 
 
 ---
 
-*This documentation is auto-generated from the codebase. Last updated: 2025-09-27*
+*This documentation is auto-generated from the codebase. Last updated: 2025-09-28*
