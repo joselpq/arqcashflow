@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import OnboardingFileUpload from "../components/onboarding/OnboardingFileUpload";
 
 type UserType = "individual" | "company";
 
@@ -16,19 +17,26 @@ interface ProfileData {
   profession?: string;
 }
 
+interface OnboardingResults {
+  totalContracts: number;
+  totalReceivables: number;
+  totalExpenses: number;
+  totalErrors: number;
+  success: boolean;
+  message: string;
+}
+
 export default function OnboardingPage() {
   const { data: session } = useSession();
   const router = useRouter();
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [currentStep, setCurrentStep] = useState(1);
   const [profileData, setProfileData] = useState<ProfileData>({
     type: "individual",
   });
-  const [files, setFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState("");
   const [error, setError] = useState("");
+  const [importResults, setImportResults] = useState<OnboardingResults | null>(null);
 
   const handleProfileSubmit = async () => {
     setLoading(true);
@@ -51,64 +59,22 @@ export default function OnboardingPage() {
     }
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setFiles(Array.from(e.target.files));
-    }
-  };
-
-  const handleDataImport = async () => {
-    if (files.length === 0) {
-      setError("Por favor, selecione pelo menos um arquivo");
-      return;
-    }
-
-    setLoading(true);
-    setError("");
-    setUploadProgress("Processando arquivos...");
+  const handleImportComplete = async (results: OnboardingResults) => {
+    setImportResults(results);
 
     try {
-      const formData = new FormData();
-      // For now, process only the first file (Excel/CSV support)
-      const firstFile = files[0];
-
-      // Check if it's a supported file type
-      const supportedTypes = ['.xlsx', '.xls', '.csv'];
-      const isSupported = supportedTypes.some(type => firstFile.name.toLowerCase().endsWith(type));
-
-      if (!isSupported) {
-        setError("Por favor, envie apenas arquivos Excel (.xlsx, .xls) ou CSV. Suporte para PDFs será adicionado em breve.");
-        return;
-      }
-
-      formData.append("file", firstFile);
-
-      const response = await fetch("/api/ai/setup-assistant-v2", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.details || "Failed to process files");
-      }
-
-      const result = await response.json();
-
-      setUploadProgress(`Criados: ${result.summary?.contractsCreated || 0} contratos, ${result.summary?.receivablesCreated || 0} recebíveis, ${result.summary?.expensesCreated || 0} despesas`);
-
       // Mark onboarding as complete
       await fetch("/api/onboarding/complete", { method: "POST" });
 
+      // Show results briefly, then redirect
+      setTimeout(() => {
+        router.push("/");
+      }, 3000);
+    } catch (err) {
+      setError("Erro ao finalizar onboarding. Redirecionando...");
       setTimeout(() => {
         router.push("/");
       }, 2000);
-
-    } catch (err) {
-      setError("Erro ao processar arquivos. Tente novamente.");
-      setUploadProgress("");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -314,7 +280,7 @@ export default function OnboardingPage() {
         )}
 
         {/* Step 2: Data Import */}
-        {currentStep === 2 && (
+        {currentStep === 2 && !importResults && (
           <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 lg:p-10 border border-neutral-200">
             <div className="text-center mb-8 sm:mb-10">
               <div className="text-5xl sm:text-6xl mb-4">📂</div>
@@ -322,90 +288,67 @@ export default function OnboardingPage() {
                 Importe seus dados existentes
               </h2>
               <p className="text-base sm:text-lg lg:text-xl text-neutral-600 max-w-4xl mx-auto px-4">
-                Envie planilhas, PDFs ou documentos que você já tem e organizaremos para você
+                Envie múltiplos arquivos (planilhas, PDFs, imagens) e organizaremos tudo para você
               </p>
             </div>
 
-            <div className="space-y-6 sm:space-y-8">
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-neutral-300 rounded-xl p-6 sm:p-8 lg:p-10 text-center hover:border-blue-500 hover:bg-blue-50 transition-all cursor-pointer"
-              >
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  multiple
-                  accept=".xlsx,.xls,.csv"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                />
-                <div className="text-5xl sm:text-6xl mb-4 sm:mb-6">📁</div>
-                <p className="text-base sm:text-lg lg:text-xl text-neutral-900 font-medium mb-2 sm:mb-3">
-                  Clique para selecionar arquivos
-                </p>
-                <p className="text-sm sm:text-base text-neutral-500 mb-2">
-                  Planilhas Excel (.xlsx, .xls) ou arquivos CSV
-                </p>
-                <p className="text-xs sm:text-sm text-neutral-400">
-                  Seus dados estão seguros e criptografados
-                </p>
+            <OnboardingFileUpload
+              onComplete={handleImportComplete}
+              onSkip={handleSkip}
+              onBack={() => setCurrentStep(1)}
+              loading={loading}
+            />
+
+            {error && (
+              <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-sm">
+                {error}
               </div>
+            )}
+          </div>
+        )}
 
-              {files.length > 0 && (
-                <div className="bg-neutral-50 rounded-lg p-4">
-                  <p className="text-sm font-medium text-neutral-700 mb-2">
-                    Arquivos selecionados:
-                  </p>
-                  <ul className="space-y-1">
-                    {files.map((file, index) => (
-                      <li key={index} className="text-sm text-neutral-600 flex items-center">
-                        <span className="text-green-600 mr-2">✓</span>
-                        {file.name}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {uploadProgress && (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-green-700 text-sm">
-                  {uploadProgress}
-                </div>
-              )}
-
-              {error && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-sm">
-                  {error}
-                </div>
-              )}
-
-              <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
-                <button
-                  onClick={() => setCurrentStep(1)}
-                  disabled={loading}
-                  className="px-6 py-3 sm:py-4 border border-neutral-300 text-neutral-700 rounded-lg text-base sm:text-lg font-medium hover:bg-neutral-50 transition-colors disabled:opacity-50"
-                >
-                  ← Voltar
-                </button>
-                <button
-                  onClick={handleDataImport}
-                  disabled={loading || files.length === 0}
-                  className="flex-1 bg-blue-600 text-white py-3 sm:py-4 px-6 rounded-lg text-base sm:text-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50"
-                >
-                  {loading ? "Processando..." : "Importar e Organizar"}
-                </button>
-                <button
-                  onClick={handleSkip}
-                  disabled={loading}
-                  className="px-6 py-3 sm:py-4 border border-neutral-300 text-neutral-700 rounded-lg text-base sm:text-lg font-medium hover:bg-neutral-50 transition-colors disabled:opacity-50"
-                >
-                  Pular por agora
-                </button>
-              </div>
-
-              <p className="text-xs sm:text-sm text-center text-neutral-500 w-full px-4">
-                Não se preocupe, você pode importar dados a qualquer momento depois
+        {/* Step 3: Import Results */}
+        {currentStep === 2 && importResults && (
+          <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 lg:p-10 border border-neutral-200">
+            <div className="text-center mb-8">
+              <div className="text-5xl sm:text-6xl mb-4">🎉</div>
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-neutral-900 mb-3 sm:mb-4">
+                Importação Concluída!
+              </h2>
+              <p className="text-base sm:text-lg text-neutral-600">
+                {importResults.message}
               </p>
+            </div>
+
+            {/* Results Summary */}
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              <div className="text-center p-4 bg-green-50 border border-green-200 rounded-lg">
+                <div className="text-2xl font-bold text-green-700">{importResults.totalContracts}</div>
+                <div className="text-sm text-green-600">Contratos</div>
+              </div>
+              <div className="text-center p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="text-2xl font-bold text-blue-700">{importResults.totalReceivables}</div>
+                <div className="text-sm text-blue-600">Recebíveis</div>
+              </div>
+              <div className="text-center p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                <div className="text-2xl font-bold text-amber-700">{importResults.totalExpenses}</div>
+                <div className="text-sm text-amber-600">Despesas</div>
+              </div>
+            </div>
+
+            {importResults.totalErrors > 0 && (
+              <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p className="text-sm text-yellow-800">
+                  ⚠️ {importResults.totalErrors} erro(s) encontrado(s). Você pode revisar e ajustar depois.
+                </p>
+              </div>
+            )}
+
+            <div className="text-center">
+              <p className="text-sm text-neutral-600 mb-4">
+                Redirecionando para o painel principal em alguns segundos...
+              </p>
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
             </div>
           </div>
         )}
