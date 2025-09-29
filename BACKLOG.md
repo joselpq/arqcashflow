@@ -31,34 +31,102 @@ This backlog document **DOES NOT** replace other documentation update requiremen
 ### 🔄 DOING (Currently In Progress)
 *Active work with real-time progress tracking. Can persist between sessions if work is incomplete.*
 
-#### 1. **Claude API Rate Limiting for Multi-Sheet Processing - MEDIUM PRIORITY**
-- **Problem**: Multi-sheet Excel files may trigger Claude API rate limits due to larger content size
-- **Context**: Combined multi-sheet content creates larger prompts that could hit rate limits faster
-- **Solution**: Implement intelligent rate limiting and retry strategies for large Excel files
-- **Priority**: **MEDIUM** (Performance & reliability)
-- **Architecture Considerations**:
-  - Enhanced retry logic for large multi-sheet files
-  - Consider sheet-by-sheet processing for very large workbooks
-  - Better error messages for rate limit scenarios
-  - Exponential backoff strategies
-- **Success Criteria**: Large multi-sheet Excel files process reliably without rate limit failures
-- **Implementation Plan**:
-  - [ ] Research Anthropic API rate limits documentation
-  - [ ] Identify current rate limit error handling in SetupAssistantService
-  - [ ] Implement exponential backoff retry logic
-  - [ ] Add rate limit detection and user-friendly error messages
-  - [ ] Consider implementing request queuing for large files
-  - [ ] Test with large multi-sheet Excel files
-  - [ ] Update error handling UI to show progress and retry status
-- **Architecture Compliance**:
-  - [x] Service layer: `SetupAssistantService.ts` is the correct location
-  - [x] Error handling patterns: Already uses ServiceError
-  - [x] Team context: Already implemented
-  - [ ] Need to check: Current Claude API error responses
-- **Files**: `lib/services/SetupAssistantService.ts`, error handling logic, multi-file processing route
-- **Status**: Ready to investigate and implement
-- **Added**: 2025-09-29 from multi-sheet implementation observations
-- **Moved to DOING**: 2025-09-29
+#### 1. **Claude API Token Optimization for Multi-Sheet Excel - HIGH PRIORITY**
+- **Problem**: Multi-sheet Excel files with default dimensions (23×1000) exceed Claude API token limits even with mostly empty cells
+- **Root Cause Analysis** (2025-09-29):
+  - Current implementation combines ALL sheets into single Claude request
+  - Excel default: 23 columns × 1000 rows per sheet (even if only 50 rows have data)
+  - Empty cells exported as commas in CSV: `,,,,,,,,,,,,,,,,,,,,,,`
+  - **Real-world impact**: 10-sheet file = ~70,000 tokens (235% of 30k/min limit!)
+  - Single file EXCEEDS limit in ONE request (no retry can help)
+  - Problem is token count per request, NOT request frequency
+- **Investigation Summary**:
+  - ✅ Confirmed sheets processed sequentially, combined into single request
+  - ✅ Tested empty cell impact: 950 empty rows × 23 commas = 21,850 wasted chars
+  - ✅ Estimated token reduction: Trimming empty rows saves 80-90% tokens
+  - ✅ Current limits: 50 req/min (not issue), 30k input tokens/min (THE bottleneck)
+- **Solution**: Two-phase implementation (trim first, batch only if needed)
+- **Priority**: **HIGH** (Prevents guaranteed 429 errors on typical Excel files)
+
+### **Phase 1: Trim Empty Rows (CRITICAL - 1 hour implementation)** 🚨
+**Epic**: Excel Token Optimization - Empty Row Trimming
+**Status**: Ready to implement
+**Priority**: CRITICAL (Must do - solves 95% of problem)
+
+**Rationale:**
+- Single 10-sheet file: 70k tokens → 8.5k tokens (87% reduction)
+- Allows 20-sheet files to process without batching
+- Simple implementation, no architecture changes
+- Faster Claude processing (less data to analyze)
+
+**Implementation Steps:**
+- [ ] Create `trimEmptyRows()` function in SetupAssistantService
+  - Use XLSX range detection to find last non-empty row
+  - Update worksheet `!ref` to exclude trailing empty rows
+  - Handle edge cases (all empty, single row, etc.)
+- [ ] Apply trimming to single-sheet Excel processing (line ~320)
+- [ ] Apply trimming to multi-sheet Excel processing (lines ~328-347)
+- [ ] Add logging: "Trimmed X empty rows from sheet Y"
+- [ ] Test with realistic Excel files (23×1000 with 50 filled rows)
+- [ ] Verify token reduction in logs
+
+**Success Criteria:**
+- 10-sheet Excel file processes successfully (currently fails)
+- Token usage reduced by 80-90%
+- No loss of actual data
+- Faster processing times
+
+**Files**: `lib/services/SetupAssistantService.ts` (lines 306-351)
+**Estimated Time**: 1 hour
+**Added**: 2025-09-29 from thorough investigation
+
+### **Phase 2: Sheet Batching (IF NEEDED - 3-4 hours implementation)**
+**Epic**: Excel Token Optimization - Intelligent Sheet Batching
+**Status**: Deferred until Phase 1 validated
+**Priority**: LOW (Only if 30+ sheet files or very dense data)
+
+**Rationale:**
+- After trimming, most files will be under 20k token budget
+- Only needed for edge cases: 30+ sheets or 200+ filled rows per sheet
+- Adds complexity: multiple Claude requests, partial failure handling
+- User experience impact: longer processing, batch progress display
+
+**Implementation Steps (when needed):**
+- [ ] Create sheet batching algorithm with token budget (20k conservative)
+- [ ] Estimate tokens per sheet: `Math.ceil(csv.length / 3.5)`
+- [ ] Group sheets into batches that fit within budget
+- [ ] Process batches sequentially with 60s delay between
+- [ ] Combine results from multiple Claude responses
+- [ ] Update UI to show: "Processing batch 2/3 (sheets 6-10)"
+- [ ] Handle partial failures (some batches succeed, others fail)
+- [ ] Test with 30-sheet Excel file
+
+**Success Criteria:**
+- 30+ sheet Excel files process reliably
+- Each batch stays under 20k tokens
+- User sees progress per batch
+- Graceful handling of partial failures
+
+**Files**:
+- `lib/services/SetupAssistantService.ts` (new batching logic)
+- `app/components/MultiFileSetupAssistant.tsx` (batch progress display)
+**Estimated Time**: 3-4 hours
+**Decision**: Implement only if Phase 1 proves insufficient in production
+
+### **Architecture Compliance:**
+- [x] Service layer: `SetupAssistantService.ts` is correct location
+- [x] No breaking changes: Trimming is transparent to API
+- [x] Team context: Already implemented
+- [x] Error handling: Uses existing ServiceError patterns
+- [x] Token limits researched: 50 req/min, 30k input tokens/min, 8k output tokens/min
+
+### **Related Documentation:**
+- See decision record: `docs/docs-site/docs/decisions/008-excel-token-optimization.md`
+- Investigation details: Session 2025-09-29 with comprehensive testing
+
+**Added**: 2025-09-29 from multi-sheet implementation observations
+**Moved to DOING**: 2025-09-29
+**Updated**: 2025-09-29 with complete investigation findings and phased solution
 
 ---
 
