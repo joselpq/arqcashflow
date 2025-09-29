@@ -61,14 +61,21 @@ export async function DELETE(
 ) {
   return withTeamContext(async (context) => {
     const { id } = await params
+    const url = new URL(request.url)
+    const deleteMode = url.searchParams.get('mode') as 'contract-only' | 'contract-and-receivables'
 
     const contractService = new ContractService({ ...context, request })
-    const success = await contractService.delete(id)
+    const success = await contractService.delete(id, {
+      mode: deleteMode || 'contract-only'
+    })
 
     if (!success) {
       throw new Error('Contract not found')
     }
 
-    return { message: 'Contract deleted successfully' }
+    return {
+      message: 'Contract deleted successfully',
+      mode: deleteMode || 'contract-only'
+    }
   })
 }

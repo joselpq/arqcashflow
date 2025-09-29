@@ -1,8 +1,8 @@
 ---
-title: "Multi API"
+title: "Auto-number API"
 type: "reference"
 audience: ["developer", "agent"]
-contexts: ["api", "multi", "rest", "database"]
+contexts: ["api", "auto-number", "rest", "database"]
 complexity: "intermediate"
 last_updated: "2025-09-29"
 version: "1.0"
@@ -13,78 +13,56 @@ related:
 dependencies: ["next.js", "prisma", "zod"]
 ---
 
-# Multi API
+# Auto-number API
 
-Comprehensive API reference for multi management operations.
+Comprehensive API reference for auto-number management operations.
 
 ## Context for LLM Agents
 
-**Scope**: Complete multi API operations including CRUD, filtering, sorting, and business logic
+**Scope**: Complete auto-number API operations including CRUD, filtering, sorting, and business logic
 **Prerequisites**: Understanding of REST APIs, Next.js App Router, Prisma ORM, and team-based data isolation
 **Key Patterns**:
 - RESTful endpoint design with standard HTTP methods
 - Team-based data isolation for multi-tenant security
 - Zod validation for type-safe request/response handling
 - Consistent error handling and response formats
-- Session-based authentication required for all operations
+
 
 ## Endpoint Overview
 
-**Base URL**: `/api/ai/setup-assistant-v2/multi`
-**Methods**: POST, GET
-**Authentication**: Required
+**Base URL**: `/api/contracts/auto-number`
+**Methods**: POST
+**Authentication**: None
 **Team Isolation**: No
 
 
-## GET /api/ai/setup-assistant-v2/multi
-
-Retrieve multi records with optional filtering and sorting.
-
-### Query Parameters
-
-| Parameter | Type | Description | Default |
-|-----------|------|-------------|---------|
 
 
-### Example Request
+## POST /api/contracts/auto-number
 
-```bash
-curl -X GET "http://localhost:3000/api/ai/setup-assistant-v2/multi?status=active&sortBy=createdAt&sortOrder=desc" \
-  -H "Content-Type: application/json"
-```
-
-### Response Format
-
-```typescript
-interface MultiResponse {
-  data: Multi[];
-  total: number;
-  filters: {
-    status: string;
-    category?: string;
-    sortBy: string;
-    sortOrder: 'asc' | 'desc';
-  };
-}
-```
-
-
-
-## POST /api/ai/setup-assistant-v2/multi
-
-Create a new multi record.
+Create a new auto-number record.
 
 ### Request Body
 
 
+Schema validation using Zod:
+
+```typescript
+const AutoNumberSchema = z.object({
+  clientName: z.string().min(1, 'Client name is required'),
+  projectName: z.string().min(1, 'Project name is required'),
+  excludeId: z.string().optional(), // For updates
+});
+```
+
 
 ### Example Request
 
 ```bash
-curl -X POST "http://localhost:3000/api/ai/setup-assistant-v2/multi" \
+curl -X POST "http://localhost:3000/api/contracts/auto-number" \
   -H "Content-Type: application/json" \
   -d '{
-    "example": "Request body will be populated based on the specific multi schema"
+    "example": "Request body will be populated based on the specific auto-number schema"
   }'
 ```
 
@@ -92,7 +70,7 @@ curl -X POST "http://localhost:3000/api/ai/setup-assistant-v2/multi" \
 
 ```typescript
 interface CreateResponse {
-  data: Multi;
+  data: Auto-number;
   alerts?: AIAlert[];
 }
 ```
@@ -130,7 +108,7 @@ interface ErrorResponse {
 
 ### Business Logic
 - **Team Isolation**: Not applicable
-- **Authentication**: Required for all operations
+- **Authentication**: Public access
 - **Validation**: Zod schemas ensure type safety
 - **Error Handling**: Consistent error responses across all endpoints
 

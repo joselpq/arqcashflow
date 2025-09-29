@@ -4,8 +4,8 @@ type: "context"
 audience: ["agent"]
 contexts: ["contracts", "financial-management", "client-relationships"]
 complexity: "intermediate"
-last_updated: "2025-09-22"
-version: "1.0"
+last_updated: "2025-09-29"
+version: "1.1"
 agent_roles: ["contract-manager", "financial-assistant", "client-data-processor"]
 related:
   - developer/architecture/overview.md
@@ -22,6 +22,9 @@ dependencies: ["prisma", "claude-api", "next.js"]
 **Key Patterns**:
 - Team-based data isolation (all queries include teamId)
 - CRUD operations with validation and error handling
+- Enhanced deletion UX with receivables impact analysis
+- Auto-numbering for duplicate prevention ("Project (2)", "Project (3)")
+- User-choice deletion modes (contract-only vs contract-and-receivables)
 - AI-powered document processing integration
 - State management for form interactions
 

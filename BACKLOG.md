@@ -1,7 +1,7 @@
 # ArqCashflow Development Backlog
 
 **Purpose**: Central source of truth for project priorities and development status
-**Last Updated**: 2025-09-29 (Session 5 - Enhanced Onboarding UX & Claude Sonnet 4 Upgrade)
+**Last Updated**: 2025-09-29 (Session 5 - Contract Deletion & Validation UX Implementation)
 **Update Frequency**: Every LLM session MUST update this document when completing tasks or discovering new requirements
 
 ## 🚨 CRITICAL INSTRUCTIONS FOR LLM AGENTS
@@ -138,7 +138,22 @@ The DOING section tracks **active work with detailed progress**:
 - **Results**: Excel files now process all non-empty sheets with detailed user feedback
 - **Files**: `SetupAssistantService.ts`, `MultiFileSetupAssistant.tsx`, `OnboardingFileUpload.tsx`
 
-#### 🎯 **NEW PRIORITIES: Phase 2 Week 3 & UX Improvements (2025-09-29)**
+#### 🎯 **NEW PRIORITIES: Contract Deletion & Validation UX (2025-09-29)**
+
+#### ✅ **Contract Deletion with Receivables - Error Handling - COMPLETED (2025-09-29)**
+- **Problem**: Users get cryptic "Failed to delete contract" errors when contracts have receivables, and cannot edit existing contracts due to false duplicate validation
+- **Context**: Current system blocks all contract deletion/editing without user options or clear guidance
+- **Solution**: ✅ **COMPLETED** - Implemented user-choice deletion flow and fixed validation bug
+- **Priority**: **URGENT** (Blocking users from basic operations)
+- **Implementation**:
+  - ✅ **Phase 1**: Fixed validation bug - exclude current contract from duplicate check using `contractId` parameter
+  - ✅ **Phase 2**: Enhanced deletion flow with `DeleteOptions` and `DeletionInfo` interfaces
+  - ✅ **Phase 3**: Auto-numbering feature with `generateUniqueProjectName()` method
+  - ✅ **Backend**: New API routes for deletion info and enhanced delete with modes
+  - ✅ **Auto-numbering**: Prevents duplicates by generating "Project (2)", "Project (3)" etc.
+- **Results**: Users can now edit contracts without false errors and have full control over receivables handling during deletion
+- **Files**: `lib/services/ContractService.ts`, `app/api/contracts/[id]/route.ts`, `app/api/contracts/[id]/deletion-info/route.ts`, `app/api/contracts/auto-number/route.ts`
+- **Added**: 2025-09-29, **Completed**: 2025-09-29
 
 #### ✅ **Enhance Onboarding File Processing UX - COMPLETED (2025-09-29)**
 - **Problem**: Onboarding auto-redirects to dashboard after processing, missing opportunity for user engagement
@@ -157,7 +172,7 @@ The DOING section tracks **active work with detailed progress**:
 - **Files**: `app/onboarding/page.tsx`
 - **Added**: 2025-09-29, **Completed**: 2025-09-29
 
-#### 1. **Claude API Rate Limiting for Multi-Sheet Processing - MEDIUM PRIORITY**
+#### 2. **Claude API Rate Limiting for Multi-Sheet Processing - MEDIUM PRIORITY**
 - **Problem**: Multi-sheet Excel files may trigger Claude API rate limits due to larger content size
 - **Context**: Combined multi-sheet content creates larger prompts that could hit rate limits faster
 - **Solution**: Implement intelligent rate limiting and retry strategies for large Excel files
@@ -502,7 +517,7 @@ The DOING section tracks **active work with detailed progress**:
 ### ✅ DONE (Completed Items)
 *Completed work for reference. Newest first.*
 
-#### September 29, 2025 (Session 5) - Enhanced Onboarding UX & Claude Sonnet 4 Upgrade
+#### September 29, 2025 (Session 5) - Contract Deletion & Validation UX Complete
 
 - **Enhanced Onboarding File Processing UX** ✅
   - Removed automatic 3-second redirect after file processing
@@ -520,6 +535,14 @@ The DOING section tracks **active work with detailed progress**:
   - Confirmed API compatibility with existing prompts and message structure
   - Claude Sonnet 4 provides improved coding capabilities and reasoning
   - **Performance Achievement**: Setup Assistant now uses latest model for better extraction accuracy
+
+- **Contract Deletion & Validation UX Enhancement** ✅
+  - Fixed validation bug preventing contract editing (excluded current contract from duplicate check)
+  - Implemented enhanced deletion flow with user choice for receivables handling
+  - Added auto-numbering feature to prevent future duplicates ("Project (2)", "Project (3)", etc.)
+  - Created new API endpoints for deletion info and auto-number suggestions
+  - **Backend Architecture**: `DeleteOptions`, `DeletionInfo` interfaces with full team-scoped operations
+  - **UX Achievement**: Users have full control over contract deletion and no more false validation errors
 
 #### September 29, 2025 (Session 4 continued) - PHASE 2 WEEK 2 PRIORITIES COMPLETE
 

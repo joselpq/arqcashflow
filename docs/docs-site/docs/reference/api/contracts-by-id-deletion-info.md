@@ -1,8 +1,8 @@
 ---
-title: "Multi API"
+title: "Deletion-info API"
 type: "reference"
 audience: ["developer", "agent"]
-contexts: ["api", "multi", "rest", "database"]
+contexts: ["api", "deletion-info", "rest", "database"]
 complexity: "intermediate"
 last_updated: "2025-09-29"
 version: "1.0"
@@ -13,32 +13,32 @@ related:
 dependencies: ["next.js", "prisma", "zod"]
 ---
 
-# Multi API
+# Deletion-info API
 
-Comprehensive API reference for multi management operations.
+Comprehensive API reference for deletion-info management operations.
 
 ## Context for LLM Agents
 
-**Scope**: Complete multi API operations including CRUD, filtering, sorting, and business logic
+**Scope**: Complete deletion-info API operations including CRUD, filtering, sorting, and business logic
 **Prerequisites**: Understanding of REST APIs, Next.js App Router, Prisma ORM, and team-based data isolation
 **Key Patterns**:
 - RESTful endpoint design with standard HTTP methods
 - Team-based data isolation for multi-tenant security
 - Zod validation for type-safe request/response handling
 - Consistent error handling and response formats
-- Session-based authentication required for all operations
+
 
 ## Endpoint Overview
 
-**Base URL**: `/api/ai/setup-assistant-v2/multi`
-**Methods**: POST, GET
-**Authentication**: Required
+**Base URL**: `/api/contracts/:id/deletion-info`
+**Methods**: GET
+**Authentication**: None
 **Team Isolation**: No
 
 
-## GET /api/ai/setup-assistant-v2/multi
+## GET /api/contracts/:id/deletion-info
 
-Retrieve multi records with optional filtering and sorting.
+Retrieve deletion-info records with optional filtering and sorting.
 
 ### Query Parameters
 
@@ -49,15 +49,15 @@ Retrieve multi records with optional filtering and sorting.
 ### Example Request
 
 ```bash
-curl -X GET "http://localhost:3000/api/ai/setup-assistant-v2/multi?status=active&sortBy=createdAt&sortOrder=desc" \
+curl -X GET "http://localhost:3000/api/contracts/:id/deletion-info?status=active&sortBy=createdAt&sortOrder=desc" \
   -H "Content-Type: application/json"
 ```
 
 ### Response Format
 
 ```typescript
-interface MultiResponse {
-  data: Multi[];
+interface Deletion-infoResponse {
+  data: Deletion-info[];
   total: number;
   filters: {
     status: string;
@@ -69,33 +69,6 @@ interface MultiResponse {
 ```
 
 
-
-## POST /api/ai/setup-assistant-v2/multi
-
-Create a new multi record.
-
-### Request Body
-
-
-
-### Example Request
-
-```bash
-curl -X POST "http://localhost:3000/api/ai/setup-assistant-v2/multi" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "example": "Request body will be populated based on the specific multi schema"
-  }'
-```
-
-### Response
-
-```typescript
-interface CreateResponse {
-  data: Multi;
-  alerts?: AIAlert[];
-}
-```
 
 
 
@@ -130,7 +103,7 @@ interface ErrorResponse {
 
 ### Business Logic
 - **Team Isolation**: Not applicable
-- **Authentication**: Required for all operations
+- **Authentication**: Public access
 - **Validation**: Zod schemas ensure type safety
 - **Error Handling**: Consistent error responses across all endpoints
 

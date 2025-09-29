@@ -2,11 +2,11 @@
 title: "LLM Agent Guide: ArqCashflow Project"
 type: "guide"
 audience: ["agent", "developer"]
-contexts: ["automation", "ci-cd", "documentation", "health-monitoring", "code-validation", "search", "service-layer", "api-migration", "auto-generation", "phase3-migration", "receivables-api", "expenses-api", "recurring-expenses-api", "recurring-expenses-service", "bulk-operations-fix", "teamscoped-prisma", "crud-testing", "precision-validation", "unified-validation", "schema-consolidation", "event-system", "event-driven-architecture", "recurring-expense-series", "full-series-generation", "audit-logging", "mdx-compilation", "defensive-programming", "setup-assistant-v2", "phase1-complete", "phase2-multi-file", "multi-file-processing", "sequential-batch-processing", "onboarding-multi-file", "excel-multi-sheet", "unified-service-architecture", "claude-api-rate-limiting"]
+contexts: ["automation", "ci-cd", "documentation", "health-monitoring", "code-validation", "search", "service-layer", "api-migration", "auto-generation", "phase3-migration", "receivables-api", "expenses-api", "recurring-expenses-api", "recurring-expenses-service", "bulk-operations-fix", "teamscoped-prisma", "crud-testing", "precision-validation", "unified-validation", "schema-consolidation", "event-system", "event-driven-architecture", "recurring-expense-series", "full-series-generation", "audit-logging", "mdx-compilation", "defensive-programming", "setup-assistant-v2", "phase1-complete", "phase2-multi-file", "multi-file-processing", "sequential-batch-processing", "onboarding-multi-file", "excel-multi-sheet", "unified-service-architecture", "claude-api-rate-limiting", "contract-deletion-ux", "validation-bug-fixes", "auto-numbering", "receivables-handling", "user-choice-deletion"]
 complexity: "intermediate"
 last_updated: "2025-09-29"
-version: "2.4"
-agent_roles: ["documentation-maintainer", "automation-specialist", "health-monitor", "service-migration-specialist", "api-developer", "validation-architect", "event-architect"]
+version: "2.5"
+agent_roles: ["documentation-maintainer", "automation-specialist", "health-monitor", "service-migration-specialist", "api-developer", "validation-architect", "event-architect", "contract-ux-specialist"]
 related:
   - docs/docs-site/docs/agents/llm-agent-guide.md
   - docs/docs-site/docs/decisions/004-no-regrets-architecture-improvements.md
@@ -542,10 +542,40 @@ cd docs/docs-site/scripts && node validate-docs.js && gh issue list --repo josel
    - ✅ Unified Validation Layer (create lib/validation structure) (DONE)
    - ✅ Event System Foundation (prepare for AI automation) (DONE - validation refinement needed)
 
-4. **Optional Future Enhancements**
+4. **Contract Deletion & Validation UX** - ✅ **COMPLETE (2025-09-29)**
+   - ✅ **Validation Bug Fixed**: Contract editing now works (excluded current contract from duplicate checks)
+   - ✅ **Enhanced Deletion Flow**: User choice for receivables handling with `DeleteOptions` interface
+   - ✅ **Auto-numbering Feature**: Prevents duplicates with "Project (2)", "Project (3)" pattern
+   - ✅ **New API Endpoints**:
+     - `GET /api/contracts/[id]/deletion-info` - Returns receivables impact
+     - `DELETE /api/contracts/[id]?mode=contract-only|contract-and-receivables` - Enhanced deletion
+     - `POST /api/contracts/auto-number` - Generate unique project names
+
+   - 🎯 **UX Achievement**: No more false validation errors, full user control over deletion process
+   - 📁 **Key Files**: `lib/services/ContractService.ts`, contract API routes
+   - 📋 **Frontend Ready**: Backend complete, ready for modal implementation
+
+5. **Optional Future Enhancements**
    - Upgrade to Algolia DocSearch (if external indexing desired)
    - Add component documentation extraction
    - Service layer performance monitoring and analytics
+
+## Context for LLM Agents - Contract Deletion UX
+
+**Scope**: Complete contract deletion and validation UX implementation with user choice handling
+**Prerequisites**: Understanding of service layer architecture, team-scoped operations, TypeScript interfaces
+**Key Patterns**:
+- User-choice deletion with `DeleteOptions` interface (`'contract-only'` | `'contract-and-receivables'`)
+- Deletion impact analysis with `DeletionInfo` interface showing receivables count and details
+- Auto-numbering pattern for duplicate prevention using `generateUniqueProjectName()`
+- Validation bug fix pattern: exclude current entity from duplicate checks using entity ID
+- API design pattern: query parameters for operation modes (`?mode=contract-only`)
+
+**Implementation Notes**:
+- Validation now distinguishes between create (strict) and update (relaxed) operations
+- Delete operations provide two modes: unlink receivables or delete everything
+- Auto-numbering applies automatically on creation to prevent duplicate issues
+- All operations maintain team-scoped isolation and audit logging
 
 ---
 

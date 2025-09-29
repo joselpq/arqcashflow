@@ -74,6 +74,22 @@ export const ContractSchema = z.object({
   notes: z.string().optional(),
 })
 
+// Contract deletion interfaces
+export interface DeleteOptions {
+  mode: 'contract-only' | 'contract-and-receivables'
+}
+
+export interface DeletionInfo {
+  canDelete: boolean
+  hasReceivables: boolean
+  receivablesCount: number
+  receivables: Array<{
+    id: string
+    title: string
+    amount: number
+  }>
+}
+
 export class ContractService extends BaseService<
   ContractWithReceivables,
   ContractCreateData,
@@ -90,7 +106,7 @@ export class ContractService extends BaseService<
    * Validate business rules for contract operations
    * Uses flexible validation: block clearly wrong data, warn about unusual patterns
    */
-  async validateBusinessRules(data: ContractCreateData | ContractUpdateData): Promise<void> {
+  async validateBusinessRules(data: ContractCreateData | ContractUpdateData, contractId?: string): Promise<void> {
     // Validate using Zod schema
     if ('clientName' in data && 'projectName' in data) {
       // This is create data - validate all required fields
@@ -122,19 +138,37 @@ export class ContractService extends BaseService<
 
     // BLOCKING: Check for exact duplicate contracts (clearly wrong)
     if (data.clientName && data.projectName) {
+      const whereClause: any = {
+        clientName: data.clientName,
+        projectName: data.projectName
+      }
+
+      // For updates: exclude the current contract from duplicate check
+      if (contractId) {
+        whereClause.NOT = { id: contractId }
+      }
+
       const existing = await this.context.teamScopedPrisma.contract.findFirst({
-        where: {
-          clientName: data.clientName,
-          projectName: data.projectName
-        }
+        where: whereClause
       })
 
       if (existing) {
-        throw new ServiceError(
-          'A contract with this client and project name already exists',
-          'DUPLICATE_CONTRACT',
-          409
-        )
+        // For updates: just log as warning (don't block)
+        if (contractId) {
+          await this.logBusinessRuleWarning({
+            rule: 'DUPLICATE_CONTRACT',
+            message: `Possible duplicate: ${data.clientName} - ${data.projectName}`,
+            data: { clientName: data.clientName, projectName: data.projectName },
+            severity: 'warning'
+          })
+        } else {
+          // For creates: still block
+          throw new ServiceError(
+            'A contract with this client and project name already exists',
+            'DUPLICATE_CONTRACT',
+            409
+          )
+        }
       }
     }
   }
@@ -207,15 +241,22 @@ export class ContractService extends BaseService<
    * Create a new contract with validation and date processing
    */
   async create(data: ContractCreateData): Promise<ContractWithReceivables> {
-    await this.validateBusinessRules(data)
+    // Auto-number project name if duplicate exists
+    const uniqueProjectName = await this.generateUniqueProjectName(
+      data.clientName,
+      data.projectName
+    )
 
-    // Process signed date
     const processedData = {
       ...data,
+      projectName: uniqueProjectName, // Use auto-numbered name
       signedDate: data.signedDate && data.signedDate.trim() !== ''
         ? createDateForStorage(data.signedDate)
         : new Date()
     }
+
+    // Validate with the unique name (should not trigger duplicate error)
+    await this.validateBusinessRules(processedData)
 
     return await super.create(processedData, {
       receivables: true
@@ -230,7 +271,7 @@ export class ContractService extends BaseService<
       throw new ServiceError('Invalid contract ID', 'INVALID_ID', 400)
     }
 
-    await this.validateBusinessRules(data)
+    await this.validateBusinessRules(data, id)
 
     // Process signed date if provided
     const processedData = {
@@ -345,27 +386,7 @@ export class ContractService extends BaseService<
   /**
    * Delete contract (business rule: check for receivables)
    */
-  async delete(id: string): Promise<boolean> {
-    if (!ValidationUtils.isValidUUID(id)) {
-      throw new ServiceError('Invalid contract ID', 'INVALID_ID', 400)
-    }
-
-    // Business rule: Check if contract has receivables
-    const contract = await this.findById(id)
-    if (!contract) {
-      return false
-    }
-
-    if (contract.receivables && contract.receivables.length > 0) {
-      throw new ServiceError(
-        'Cannot delete contract with existing receivables. Delete receivables first.',
-        'HAS_RECEIVABLES',
-        409
-      )
-    }
-
-    return await super.delete(id)
-  }
+  // NOTE: Enhanced delete method is below after getDeletionInfo()
 
   /**
    * Validate contract can be deleted (utility method)
@@ -384,6 +405,101 @@ export class ContractService extends BaseService<
     }
 
     return { canDelete: true }
+  }
+
+  /**
+   * Generate a unique project name by adding numbers if duplicates exist
+   */
+  async generateUniqueProjectName(
+    clientName: string,
+    projectName: string,
+    excludeId?: string
+  ): Promise<string> {
+    let uniqueName = projectName
+    let counter = 1
+
+    while (true) {
+      const whereClause: any = {
+        clientName,
+        projectName: uniqueName
+      }
+
+      // Exclude current contract if updating
+      if (excludeId) {
+        whereClause.NOT = { id: excludeId }
+      }
+
+      const existing = await this.context.teamScopedPrisma.contract.findFirst({
+        where: whereClause
+      })
+
+      if (!existing) {
+        return uniqueName // Found unique name
+      }
+
+      counter++
+      uniqueName = `${projectName} (${counter})`
+    }
+  }
+
+  /**
+   * Get detailed deletion information for a contract
+   */
+  async getDeletionInfo(id: string): Promise<DeletionInfo> {
+    if (!ValidationUtils.isValidUUID(id)) {
+      throw new ServiceError('Invalid contract ID', 'INVALID_ID', 400)
+    }
+
+    const contract = await this.findById(id)
+    if (!contract) {
+      return {
+        canDelete: false,
+        hasReceivables: false,
+        receivablesCount: 0,
+        receivables: []
+      }
+    }
+
+    return {
+      canDelete: true,
+      hasReceivables: contract.receivables.length > 0,
+      receivablesCount: contract.receivables.length,
+      receivables: contract.receivables.map(r => ({
+        id: r.id,
+        title: r.title,
+        amount: r.amount
+      }))
+    }
+  }
+
+  /**
+   * Enhanced delete method with user options for handling receivables
+   */
+  async delete(id: string, options: DeleteOptions = { mode: 'contract-only' }): Promise<boolean> {
+    if (!ValidationUtils.isValidUUID(id)) {
+      throw new ServiceError('Invalid contract ID', 'INVALID_ID', 400)
+    }
+
+    const contract = await this.findById(id)
+    if (!contract) {
+      return false
+    }
+
+    if (options.mode === 'contract-and-receivables') {
+      // Delete receivables first, then contract
+      await this.context.teamScopedPrisma.receivable.deleteMany({
+        where: { contractId: id }
+      })
+    } else if (options.mode === 'contract-only') {
+      // Unlink receivables (set contractId to null)
+      await this.context.teamScopedPrisma.receivable.updateMany({
+        where: { contractId: id },
+        data: { contractId: null }
+      })
+    }
+
+    // Delete the contract
+    return await super.delete(id)
   }
 
   // ===============================
