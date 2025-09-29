@@ -17,6 +17,7 @@ import { Contract, Receivable } from '@prisma/client'
 import { BaseService, ServiceContext, ServiceError, ValidationUtils } from './BaseService'
 import { createDateForStorage } from '@/lib/date-utils'
 import { z } from 'zod'
+import { DeleteOptions, DeletionInfo } from '@/lib/validation'
 
 // Type definitions
 export interface ContractWithReceivables extends Contract {
@@ -74,21 +75,7 @@ export const ContractSchema = z.object({
   notes: z.string().optional(),
 })
 
-// Contract deletion interfaces
-export interface DeleteOptions {
-  mode: 'contract-only' | 'contract-and-receivables'
-}
-
-export interface DeletionInfo {
-  canDelete: boolean
-  hasReceivables: boolean
-  receivablesCount: number
-  receivables: Array<{
-    id: string
-    title: string
-    amount: number
-  }>
-}
+// Contract deletion interfaces now imported from validation layer
 
 export class ContractService extends BaseService<
   ContractWithReceivables,
@@ -241,22 +228,27 @@ export class ContractService extends BaseService<
    * Create a new contract with validation and date processing
    */
   async create(data: ContractCreateData): Promise<ContractWithReceivables> {
-    // Auto-number project name if duplicate exists
+    // Auto-number project name if duplicate exists BEFORE validation
     const uniqueProjectName = await this.generateUniqueProjectName(
       data.clientName,
       data.projectName
     )
 
-    const processedData = {
+    // Create data with unique project name for validation
+    const dataWithUniqueProjectName = {
       ...data,
-      projectName: uniqueProjectName, // Use auto-numbered name
+      projectName: uniqueProjectName
+    }
+
+    // Validate business rules AFTER auto-numbering (when signedDate is still a string)
+    await this.validateBusinessRules(dataWithUniqueProjectName)
+
+    const processedData = {
+      ...dataWithUniqueProjectName,
       signedDate: data.signedDate && data.signedDate.trim() !== ''
         ? createDateForStorage(data.signedDate)
         : new Date()
     }
-
-    // Validate with the unique name (should not trigger duplicate error)
-    await this.validateBusinessRules(processedData)
 
     return await super.create(processedData, {
       receivables: true
@@ -271,17 +263,46 @@ export class ContractService extends BaseService<
       throw new ServiceError('Invalid contract ID', 'INVALID_ID', 400)
     }
 
-    await this.validateBusinessRules(data, id)
+    // Auto-number if clientName or projectName changed and would create duplicate
+    let processedData = { ...data }
+    if (data.clientName || data.projectName) {
+      const currentContract = await this.findById(id)
+      if (currentContract) {
+        const clientName = data.clientName || currentContract.clientName
+        const projectName = data.projectName || currentContract.projectName
+
+        // Check if combination changed from current values
+        const hasChanged =
+          (data.clientName && data.clientName !== currentContract.clientName) ||
+          (data.projectName && data.projectName !== currentContract.projectName)
+
+        if (hasChanged) {
+          // Generate unique project name if this combination would be a duplicate
+          const uniqueProjectName = await this.generateUniqueProjectName(
+            clientName,
+            projectName,
+            id // exclude current contract from duplicate check
+          )
+
+          // Only update if auto-numbering was needed
+          if (uniqueProjectName !== projectName) {
+            processedData.projectName = uniqueProjectName
+          }
+        }
+      }
+    }
+
+    await this.validateBusinessRules(processedData, id)
 
     // Process signed date if provided
-    const processedData = {
-      ...data,
-      ...(data.signedDate && {
-        signedDate: createDateForStorage(data.signedDate)
+    const finalData = {
+      ...processedData,
+      ...(processedData.signedDate && {
+        signedDate: createDateForStorage(processedData.signedDate)
       })
     }
 
-    return await super.update(id, processedData, {
+    return await super.update(id, finalData, {
       receivables: true
     })
   }
@@ -466,7 +487,7 @@ export class ContractService extends BaseService<
       receivablesCount: contract.receivables.length,
       receivables: contract.receivables.map(r => ({
         id: r.id,
-        title: r.title,
+        title: r.description || `Receivable ${r.id.slice(-6)}`, // Use description or fallback
         amount: r.amount
       }))
     }
@@ -491,10 +512,13 @@ export class ContractService extends BaseService<
         where: { contractId: id }
       })
     } else if (options.mode === 'contract-only') {
-      // Unlink receivables (set contractId to null)
+      // Unlink receivables and inherit project name as clientName for better identification
       await this.context.teamScopedPrisma.receivable.updateMany({
         where: { contractId: id },
-        data: { contractId: null }
+        data: {
+          contractId: null,
+          clientName: contract.projectName // Inherit project name as client/origin identifier
+        }
       })
     }
 

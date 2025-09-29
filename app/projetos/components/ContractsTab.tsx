@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import { formatDateFull as formatDateForDisplay } from '@/lib/date-utils'
 import Modal from '../../components/Modal'
 import ContractForm from '../../components/forms/ContractForm'
+import ContractDeletionModal from '../../components/ContractDeletionModal'
 
 export default function ContractsTab() {
   const searchParams = useSearchParams()
@@ -19,6 +20,8 @@ export default function ContractsTab() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingContract, setEditingContract] = useState<any>(null)
   const [statusDropdownOpen, setStatusDropdownOpen] = useState<string | null>(null)
+  const [deletionModalOpen, setDeletionModalOpen] = useState(false)
+  const [contractToDelete, setContractToDelete] = useState<any>(null)
   const [filters, setFilters] = useState({
     status: 'active',
     category: 'all',
@@ -148,25 +151,35 @@ export default function ContractsTab() {
     }
   }
 
-  async function deleteContract(id: string) {
-    if (!confirm('Are you sure you want to delete this contract? This will also delete all associated receivables.')) {
-      return
-    }
+  function openDeleteModal(contract: any) {
+    setContractToDelete(contract)
+    setDeletionModalOpen(true)
+  }
+
+  async function handleDeleteConfirm(mode: 'contract-only' | 'contract-and-receivables') {
+    if (!contractToDelete) return
 
     try {
-      const res = await fetch(`/api/contracts/${id}`, {
+      const res = await fetch(`/api/contracts/${contractToDelete.id}?mode=${mode}`, {
         method: 'DELETE'
       })
 
       if (res.ok) {
         fetchContracts()
+        setDeletionModalOpen(false)
+        setContractToDelete(null)
       } else {
-        alert('Failed to delete contract')
+        alert('Falha ao excluir contrato')
       }
     } catch (error) {
       console.error('Delete error:', error)
-      alert('Failed to delete contract')
+      alert('Falha ao excluir contrato')
     }
+  }
+
+  function closeDeletionModal() {
+    setDeletionModalOpen(false)
+    setContractToDelete(null)
   }
 
   async function updateContractStatus(contractId: string, newStatus: string) {
@@ -449,7 +462,7 @@ export default function ContractsTab() {
                             ✏️
                           </button>
                           <button
-                            onClick={() => deleteContract(contract.id)}
+                            onClick={() => openDeleteModal(contract)}
                             className="bg-red-600 text-white px-2 py-1 rounded text-xs hover:bg-red-700 font-medium transition-colors"
                             title="Excluir contrato"
                           >
@@ -480,6 +493,16 @@ export default function ContractsTab() {
           loading={formLoading}
         />
       </Modal>
+
+      {/* Contract Deletion Modal */}
+      {contractToDelete && (
+        <ContractDeletionModal
+          isOpen={deletionModalOpen}
+          onClose={closeDeletionModal}
+          contract={contractToDelete}
+          onDeleteConfirm={handleDeleteConfirm}
+        />
+      )}
     </div>
   )
 }

@@ -30,6 +30,11 @@ export {
   ExpenseUpdateSchema,
   RecurringExpenseSchema,
   RecurringExpenseUpdateSchema,
+  // Deletion-related schemas
+  ContractDeleteOptionsSchema,
+  ContractDeletionInfoSchema,
+  DeleteOptions,
+  DeletionInfo,
 } from './financial'
 
 // API-specific schemas

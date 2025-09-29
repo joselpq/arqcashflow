@@ -221,6 +221,8 @@ export class ReceivableService extends BaseService<
     // Process dates
     const processedData = {
       ...data,
+      // Normalize contractId (for standalone receivables)
+      contractId: ValidationUtils.normalizeEmptyString(data.contractId),
       expectedDate: createDateForStorage(data.expectedDate),
       receivedDate: data.receivedDate ? createDateForStorage(data.receivedDate) : null,
       // Normalize empty strings to null
@@ -246,14 +248,20 @@ export class ReceivableService extends BaseService<
 
     await this.validateBusinessRules(data)
 
-    // Process dates if provided
+    // Process dates and contractId if provided
     const processedData = {
       ...data,
+      // Normalize contractId (for standalone receivables)
+      ...(data.contractId !== undefined && {
+        contractId: ValidationUtils.normalizeEmptyString(data.contractId)
+      }),
       ...(data.expectedDate && {
         expectedDate: createDateForStorage(data.expectedDate)
       }),
-      ...(data.receivedDate && {
-        receivedDate: createDateForStorage(data.receivedDate)
+      ...(data.receivedDate !== undefined && {
+        receivedDate: data.receivedDate && data.receivedDate.trim() !== ''
+          ? createDateForStorage(data.receivedDate)
+          : null
       }),
       // Normalize empty strings to null
       ...(data.clientName !== undefined && {

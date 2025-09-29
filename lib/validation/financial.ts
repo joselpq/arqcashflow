@@ -59,6 +59,23 @@ export const ContractSchemas = {
     sortBy: z.enum(['clientName', 'projectName', 'totalValue', 'signedDate', 'createdAt']).optional().default('createdAt'),
     sortOrder: EnumSchemas.sortOrder.optional(),
   }),
+
+  // Contract deletion options
+  deleteOptions: z.object({
+    mode: z.enum(['contract-only', 'contract-and-receivables']).describe('Deletion mode: unlink receivables or delete everything')
+  }),
+
+  // Contract deletion info response
+  deletionInfo: z.object({
+    canDelete: z.boolean().describe('Whether the contract can be deleted'),
+    hasReceivables: z.boolean().describe('Whether the contract has associated receivables'),
+    receivablesCount: z.number().min(0).describe('Number of associated receivables'),
+    receivables: z.array(z.object({
+      id: BaseFieldSchemas.id,
+      title: BaseFieldSchemas.name,
+      amount: BaseFieldSchemas.amount
+    })).describe('List of receivables that would be affected')
+  }),
 }
 
 /**
@@ -263,3 +280,13 @@ export const ExpenseSchema = ExpenseSchemas.create
 export const ExpenseUpdateSchema = ExpenseSchemas.update
 export const RecurringExpenseSchema = RecurringExpenseSchemas.create
 export const RecurringExpenseUpdateSchema = RecurringExpenseSchemas.update
+
+// Export deletion-related schemas
+export const ContractDeleteOptionsSchema = ContractSchemas.deleteOptions
+export const ContractDeletionInfoSchema = ContractSchemas.deletionInfo
+
+/**
+ * Type exports for deletion interfaces
+ */
+export type DeleteOptions = z.infer<typeof ContractDeleteOptionsSchema>
+export type DeletionInfo = z.infer<typeof ContractDeletionInfoSchema>
