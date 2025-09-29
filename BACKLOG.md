@@ -1,7 +1,7 @@
 # ArqCashflow Development Backlog
 
 **Purpose**: Central source of truth for project priorities and development status
-**Last Updated**: 2025-09-28 (Session 4 - Phase 2 Week 1 Implementation: Multi-File Foundation)
+**Last Updated**: 2025-09-29 (Session 5 - Enhanced Onboarding UX & Claude Sonnet 4 Upgrade)
 **Update Frequency**: Every LLM session MUST update this document when completing tasks or discovering new requirements
 
 ## 🚨 CRITICAL INSTRUCTIONS FOR LLM AGENTS
@@ -123,19 +123,67 @@ The DOING section tracks **active work with detailed progress**:
 - **Results**: Users can now upload multiple files during onboarding with same UX as AI chat
 - **Files**: `app/onboarding/page.tsx`, `app/components/onboarding/OnboardingFileUpload.tsx`
 
-#### 2. **Multi-Sheet Excel Processing Support - MEDIUM PRIORITY**
+#### ✅ **Multi-Sheet Excel Processing Support - COMPLETED (2025-09-28)**
 - **Problem**: Excel files with multiple sheets only process the first sheet
 - **Context**: Users often have data spread across multiple sheets in Excel files
-- **Solution**: Add support for processing all sheets in Excel workbooks
+- **Solution**: ✅ **COMPLETED** - Added comprehensive multi-sheet Excel processing
 - **Priority**: **MEDIUM** (Feature enhancement)
+- **Implementation**:
+  - ✅ Enhanced SetupAssistantService Excel processing logic
+  - ✅ Option A implemented: Combines all sheets with clear delimiters
+  - ✅ Automatic empty sheet detection and skipping
+  - ✅ UI feedback showing "X/Y planilhas processadas"
+  - ✅ Enhanced Claude prompt for multi-sheet awareness
+  - ✅ Sheet processing metadata in results
+- **Results**: Excel files now process all non-empty sheets with detailed user feedback
+- **Files**: `SetupAssistantService.ts`, `MultiFileSetupAssistant.tsx`, `OnboardingFileUpload.tsx`
+
+#### 🎯 **NEW PRIORITIES: Phase 2 Week 3 & UX Improvements (2025-09-29)**
+
+#### ✅ **Enhance Onboarding File Processing UX - COMPLETED (2025-09-29)**
+- **Problem**: Onboarding auto-redirects to dashboard after processing, missing opportunity for user engagement
+- **Context**: AI Chat "Configuração Rápida" has better UX with summary and "add more files" option
+- **Solution**: ✅ **COMPLETED** - Matched onboarding UX to AI Chat patterns
+- **Priority**: **HIGH** (User experience consistency)
+- **Implementation**:
+  - ✅ Added "Adicionar Mais Arquivos" button after processing completion
+  - ✅ Added "Concluir e Ir para o Dashboard" button to finish onboarding
+  - ✅ Enhanced results display with summary cards matching AI Chat UX
+  - ✅ Removed automatic 3-second redirect - user controls navigation
+  - ✅ Added cumulative results tracking when adding multiple batches
+  - ✅ Added action buttons to view created entities (contracts/receivables/expenses)
+  - ✅ Shows cumulative import progress when returning to add more files
+- **Results**: Users can now review results, add more files, or complete onboarding at their own pace
+- **Files**: `app/onboarding/page.tsx`
+- **Added**: 2025-09-29, **Completed**: 2025-09-29
+
+#### 1. **Claude API Rate Limiting for Multi-Sheet Processing - MEDIUM PRIORITY**
+- **Problem**: Multi-sheet Excel files may trigger Claude API rate limits due to larger content size
+- **Context**: Combined multi-sheet content creates larger prompts that could hit rate limits faster
+- **Solution**: Implement intelligent rate limiting and retry strategies for large Excel files
+- **Priority**: **MEDIUM** (Performance & reliability)
 - **Architecture**:
-  - Extend SetupAssistantService Excel processing logic
-  - Options: (A) Combine all sheets into single CSV, (B) Process each sheet separately
-  - UI indication of which sheets were processed
-  - User feedback on multi-sheet detection
-- **Success Criteria**: All sheets in Excel file are processed and entities created
-- **Files**: `SetupAssistantService.ts`, Excel processing logic
-- **Added**: 2025-09-28 from Phase 2 Week 1 review
+  - Enhanced retry logic for large multi-sheet files
+  - Consider sheet-by-sheet processing for very large workbooks
+  - Better error messages for rate limit scenarios
+  - Exponential backoff strategies
+- **Success Criteria**: Large multi-sheet Excel files process reliably without rate limit failures
+- **Files**: `SetupAssistantService.ts`, rate limiting logic
+- **Added**: 2025-09-29 from multi-sheet implementation observations
+
+#### ✅ **Upgrade to Claude Sonnet 4 Model - COMPLETED (2025-09-29)**
+- **Problem**: Currently using Claude 3.5 Sonnet instead of latest Claude Sonnet 4
+- **Context**: Claude Sonnet 4 offers improved performance and capabilities
+- **Solution**: ✅ **COMPLETED** - Updated Setup Assistant to use Claude Sonnet 4
+- **Priority**: **MEDIUM** (Performance improvement)
+- **Implementation**:
+  - ✅ Updated model from `claude-3-5-sonnet-latest` to `claude-sonnet-4-20250514`
+  - ✅ Applied to both SetupAssistantService and legacy setup-assistant-direct route
+  - ✅ Confirmed API compatibility - no changes needed to existing prompts
+  - ✅ Claude Sonnet 4 provides better coding capabilities and reasoning
+- **Results**: Setup Assistant now uses latest Claude Sonnet 4 for improved extraction accuracy
+- **Files**: `lib/services/SetupAssistantService.ts`, `app/api/ai/setup-assistant-direct/route.ts`
+- **Added**: 2025-09-29, **Completed**: 2025-09-29
 
 #### 🚀 **ARCHIVED PRIORITY: Incremental Setup Assistant Upgrade (Phase 1 Complete)**
 
@@ -453,6 +501,54 @@ The DOING section tracks **active work with detailed progress**:
 
 ### ✅ DONE (Completed Items)
 *Completed work for reference. Newest first.*
+
+#### September 29, 2025 (Session 5) - Enhanced Onboarding UX & Claude Sonnet 4 Upgrade
+
+- **Enhanced Onboarding File Processing UX** ✅
+  - Removed automatic 3-second redirect after file processing
+  - Added "Adicionar Mais Arquivos" button to add more files after initial batch
+  - Added "Concluir e Ir para o Dashboard" button for user-controlled completion
+  - Enhanced results display with hover-able summary cards matching AI Chat UX
+  - Implemented cumulative results tracking across multiple file batches
+  - Added action buttons to view created entities in new tabs
+  - Shows cumulative import progress when returning to add more files
+  - **UX Achievement**: Users now have full control over the onboarding flow with ability to review and add more data
+
+- **Setup Assistant Claude Sonnet 4 Upgrade** ✅
+  - Updated model from `claude-3-5-sonnet-latest` to `claude-sonnet-4-20250514`
+  - Applied to both SetupAssistantService and legacy setup-assistant-direct route
+  - Confirmed API compatibility with existing prompts and message structure
+  - Claude Sonnet 4 provides improved coding capabilities and reasoning
+  - **Performance Achievement**: Setup Assistant now uses latest model for better extraction accuracy
+
+#### September 29, 2025 (Session 4 continued) - PHASE 2 WEEK 2 PRIORITIES COMPLETE
+
+- **Onboarding Multi-File Support Implementation** ✅
+  - Successfully implemented multi-file upload in onboarding flow
+  - Created `OnboardingFileUpload` component with rich file management
+  - Replaced single-file limitation with full multi-file capability
+  - Added support for Excel, CSV, PDF, and Images (32MB per file)
+  - Enhanced results display with entity counts and redirect flow
+  - Maintained onboarding progression (Profile → Files → Results)
+  - Uses same `/api/ai/setup-assistant-v2/multi` endpoint as AI Chat
+  - **Architecture Achievement**: Single unified service (`SetupAssistantService`) serves both onboarding and AI Chat
+
+- **Multi-Sheet Excel Processing Support** ✅
+  - Implemented comprehensive multi-sheet Excel file processing
+  - Auto-detects and processes all non-empty sheets in workbooks
+  - Combines sheets with clear delimiters for Claude AI processing
+  - Enhanced Claude prompts for multi-sheet awareness
+  - Added UI feedback showing "X/Y planilhas processadas"
+  - Automatic empty sheet detection and skipping
+  - Sheet processing metadata in API responses
+  - **Technical Achievement**: Maintains backward compatibility with single-sheet files
+
+- **Service Architecture Consolidation** ✅
+  - Confirmed single `SetupAssistantService` handles all file processing
+  - Both onboarding and AI Chat use identical processing logic
+  - Unified API endpoints with multi-file capability
+  - Consistent audit logging and team context across interfaces
+  - 100% code reuse between different user flows
 
 #### September 28, 2025 (Session 4) - PHASE 2 WEEK 1 COMPLETE
 

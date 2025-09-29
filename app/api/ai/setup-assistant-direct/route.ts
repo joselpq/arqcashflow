@@ -432,7 +432,7 @@ Return a JSON object with this EXACT structure (no markdown, just JSON):
         while (retries <= maxRetries) {
           try {
             response = await anthropic.messages.create({
-              model: 'claude-3-5-sonnet-latest', // Using Claude Sonnet 3.5 latest version
+              model: 'claude-sonnet-4-20250514', // Using Claude Sonnet 4 for improved performance
               max_tokens: 8192,
               messages: [{
                 role: 'user',

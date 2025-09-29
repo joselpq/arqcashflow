@@ -37,6 +37,14 @@ export default function OnboardingPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [importResults, setImportResults] = useState<OnboardingResults | null>(null);
+  const [cumulativeResults, setCumulativeResults] = useState<OnboardingResults>({
+    totalContracts: 0,
+    totalReceivables: 0,
+    totalExpenses: 0,
+    totalErrors: 0,
+    success: false,
+    message: ""
+  });
 
   const handleProfileSubmit = async () => {
     setLoading(true);
@@ -62,20 +70,35 @@ export default function OnboardingPage() {
   const handleImportComplete = async (results: OnboardingResults) => {
     setImportResults(results);
 
+    // Accumulate results for when user adds more files
+    setCumulativeResults(prev => ({
+      totalContracts: prev.totalContracts + results.totalContracts,
+      totalReceivables: prev.totalReceivables + results.totalReceivables,
+      totalExpenses: prev.totalExpenses + results.totalExpenses,
+      totalErrors: prev.totalErrors + results.totalErrors,
+      success: true,
+      message: `Total processado: ${prev.totalContracts + results.totalContracts} contratos, ${prev.totalReceivables + results.totalReceivables} recebíveis, ${prev.totalExpenses + results.totalExpenses} despesas`
+    }));
+    // Remove auto-redirect - let user control when to complete
+  };
+
+  const handleCompleteOnboarding = async () => {
+    setLoading(true);
     try {
       // Mark onboarding as complete
       await fetch("/api/onboarding/complete", { method: "POST" });
-
-      // Show results briefly, then redirect
-      setTimeout(() => {
-        router.push("/");
-      }, 3000);
+      router.push("/");
     } catch (err) {
-      setError("Erro ao finalizar onboarding. Redirecionando...");
-      setTimeout(() => {
-        router.push("/");
-      }, 2000);
+      setError("Erro ao finalizar onboarding. Tente novamente.");
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const handleAddMoreFiles = () => {
+    // Reset to file upload state but keep cumulative results
+    setImportResults(null);
+    // Step stays at 2 to show file upload again
   };
 
   const handleSkip = async () => {
@@ -285,11 +308,20 @@ export default function OnboardingPage() {
             <div className="text-center mb-8 sm:mb-10">
               <div className="text-5xl sm:text-6xl mb-4">📂</div>
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-neutral-900 mb-3 sm:mb-4">
-                Importe seus dados existentes
+                {cumulativeResults.success ? "Adicione mais arquivos" : "Importe seus dados existentes"}
               </h2>
               <p className="text-base sm:text-lg lg:text-xl text-neutral-600 max-w-4xl mx-auto px-4">
                 Envie múltiplos arquivos (planilhas, PDFs, imagens) e organizaremos tudo para você
               </p>
+
+              {/* Show cumulative progress if user has already imported some files */}
+              {cumulativeResults.success && (
+                <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <p className="text-sm text-green-700">
+                    ✅ Já importado: {cumulativeResults.totalContracts} contratos, {cumulativeResults.totalReceivables} recebíveis, {cumulativeResults.totalExpenses} despesas
+                  </p>
+                </div>
+              )}
             </div>
 
             <OnboardingFileUpload
@@ -311,28 +343,28 @@ export default function OnboardingPage() {
         {currentStep === 2 && importResults && (
           <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 lg:p-10 border border-neutral-200">
             <div className="text-center mb-8">
-              <div className="text-5xl sm:text-6xl mb-4">🎉</div>
+              <div className="text-5xl sm:text-6xl mb-4">✅</div>
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-neutral-900 mb-3 sm:mb-4">
-                Importação Concluída!
+                Processamento Concluído!
               </h2>
               <p className="text-base sm:text-lg text-neutral-600">
                 {importResults.message}
               </p>
             </div>
 
-            {/* Results Summary */}
+            {/* Enhanced Results Summary Cards */}
             <div className="grid grid-cols-3 gap-4 mb-6">
-              <div className="text-center p-4 bg-green-50 border border-green-200 rounded-lg">
-                <div className="text-2xl font-bold text-green-700">{importResults.totalContracts}</div>
-                <div className="text-sm text-green-600">Contratos</div>
+              <div className="text-center p-4 bg-white border-2 border-green-300 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                <div className="text-3xl font-bold text-green-700">{importResults.totalContracts}</div>
+                <div className="text-sm font-medium text-green-600">Contratos Criados</div>
               </div>
-              <div className="text-center p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <div className="text-2xl font-bold text-blue-700">{importResults.totalReceivables}</div>
-                <div className="text-sm text-blue-600">Recebíveis</div>
+              <div className="text-center p-4 bg-white border-2 border-blue-300 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                <div className="text-3xl font-bold text-blue-700">{importResults.totalReceivables}</div>
+                <div className="text-sm font-medium text-blue-600">Recebíveis Criados</div>
               </div>
-              <div className="text-center p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                <div className="text-2xl font-bold text-amber-700">{importResults.totalExpenses}</div>
-                <div className="text-sm text-amber-600">Despesas</div>
+              <div className="text-center p-4 bg-white border-2 border-amber-300 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                <div className="text-3xl font-bold text-amber-700">{importResults.totalExpenses}</div>
+                <div className="text-sm font-medium text-amber-600">Despesas Criadas</div>
               </div>
             </div>
 
@@ -344,11 +376,76 @@ export default function OnboardingPage() {
               </div>
             )}
 
-            <div className="text-center">
-              <p className="text-sm text-neutral-600 mb-4">
-                Redirecionando para o painel principal em alguns segundos...
-              </p>
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
+            {/* Action Buttons - Enhanced UX */}
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row gap-3">
+                {/* View Created Entities */}
+                <div className="flex-1 grid grid-cols-3 gap-2">
+                  {importResults.totalContracts > 0 && (
+                    <a
+                      href="/projetos?tab=contratos"
+                      target="_blank"
+                      className="bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700 text-sm text-center font-medium transition-colors"
+                    >
+                      Ver Contratos
+                    </a>
+                  )}
+                  {importResults.totalReceivables > 0 && (
+                    <a
+                      href="/projetos?tab=recebiveis"
+                      target="_blank"
+                      className="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 text-sm text-center font-medium transition-colors"
+                    >
+                      Ver Recebíveis
+                    </a>
+                  )}
+                  {importResults.totalExpenses > 0 && (
+                    <a
+                      href="/projetos?tab=despesas"
+                      target="_blank"
+                      className="bg-amber-600 text-white px-3 py-2 rounded-lg hover:bg-amber-700 text-sm text-center font-medium transition-colors"
+                    >
+                      Ver Despesas
+                    </a>
+                  )}
+                </div>
+              </div>
+
+              {/* Main Actions */}
+              <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-neutral-200">
+                <button
+                  onClick={handleAddMoreFiles}
+                  className="flex-1 bg-neutral-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-neutral-700 transition-colors flex items-center justify-center gap-2"
+                >
+                  <span>📁</span> Adicionar Mais Arquivos
+                </button>
+                <button
+                  onClick={handleCompleteOnboarding}
+                  disabled={loading}
+                  className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {loading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Finalizando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>✨</span> Concluir e Ir para o Dashboard
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* Optional Skip */}
+              <div className="text-center">
+                <button
+                  onClick={handleSkip}
+                  className="text-sm text-neutral-500 hover:text-neutral-700 underline"
+                >
+                  Pular e configurar depois
+                </button>
+              </div>
             </div>
           </div>
         )}
