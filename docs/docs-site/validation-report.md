@@ -1,10 +1,10 @@
 # Documentation Validation Report
 
-Generated on: 2025-09-28
+Generated on: 2025-09-29
 
 ## Summary
 
-- **Total files validated**: 73
+- **Total files validated**: 74
 - **Broken links**: 0
 - **Stale content**: 0
 - **Missing metadata**: 0

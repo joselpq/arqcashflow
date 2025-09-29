@@ -2,10 +2,10 @@
 title: "Setup Assistant V2 Multi-File API"
 type: "reference"
 audience: ["developer", "agent"]
-contexts: ["api", "multi-file", "setup-assistant", "ai", "document-processing", "phase2"]
+contexts: ["api", "multi-file", "setup-assistant", "ai", "document-processing", "phase2", "excel-multi-sheet", "onboarding-multi-file"]
 complexity: "intermediate"
-last_updated: "2025-09-28"
-version: "1.0"
+last_updated: "2025-09-29"
+version: "1.1"
 agent_roles: ["api-developer", "ai-integration-engineer", "setup-assistant-developer"]
 related:
   - reference/api/ai-setup-assistant-v2.md
@@ -29,6 +29,7 @@ API endpoint for processing multiple files simultaneously through the Setup Assi
 - Progress tracking support
 - Team context middleware integration
 - Service layer with audit logging
+- Multi-sheet Excel processing support
 
 ## Endpoint Overview
 
