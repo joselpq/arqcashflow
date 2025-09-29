@@ -31,26 +31,39 @@ This backlog document **DOES NOT** replace other documentation update requiremen
 ### 🔄 DOING (Currently In Progress)
 *Active work with real-time progress tracking. Can persist between sessions if work is incomplete.*
 
----
-
-### 📋 TO DO (Immediate Priorities)
-*Ready to implement. Start here unless directed otherwise.*
-
-#### Performance & Reliability
-
 #### 1. **Claude API Rate Limiting for Multi-Sheet Processing - MEDIUM PRIORITY**
 - **Problem**: Multi-sheet Excel files may trigger Claude API rate limits due to larger content size
 - **Context**: Combined multi-sheet content creates larger prompts that could hit rate limits faster
 - **Solution**: Implement intelligent rate limiting and retry strategies for large Excel files
 - **Priority**: **MEDIUM** (Performance & reliability)
-- **Architecture**:
+- **Architecture Considerations**:
   - Enhanced retry logic for large multi-sheet files
   - Consider sheet-by-sheet processing for very large workbooks
   - Better error messages for rate limit scenarios
   - Exponential backoff strategies
 - **Success Criteria**: Large multi-sheet Excel files process reliably without rate limit failures
-- **Files**: `SetupAssistantService.ts`, rate limiting logic
+- **Implementation Plan**:
+  - [ ] Research Anthropic API rate limits documentation
+  - [ ] Identify current rate limit error handling in SetupAssistantService
+  - [ ] Implement exponential backoff retry logic
+  - [ ] Add rate limit detection and user-friendly error messages
+  - [ ] Consider implementing request queuing for large files
+  - [ ] Test with large multi-sheet Excel files
+  - [ ] Update error handling UI to show progress and retry status
+- **Architecture Compliance**:
+  - [x] Service layer: `SetupAssistantService.ts` is the correct location
+  - [x] Error handling patterns: Already uses ServiceError
+  - [x] Team context: Already implemented
+  - [ ] Need to check: Current Claude API error responses
+- **Files**: `lib/services/SetupAssistantService.ts`, error handling logic, multi-file processing route
+- **Status**: Ready to investigate and implement
 - **Added**: 2025-09-29 from multi-sheet implementation observations
+- **Moved to DOING**: 2025-09-29
+
+---
+
+### 📋 TO DO (Immediate Priorities)
+*Ready to implement. Start here unless directed otherwise.*
 
 ---
 
@@ -59,7 +72,44 @@ This backlog document **DOES NOT** replace other documentation update requiremen
 
 #### User Experience Improvements
 
-#### 1. **Receivable Title Enhancement**
+#### 1. **System Message Standardization - LOW PRIORITY**
+- **Problem**: Inconsistent use of native browser popups (alert/confirm) across the application
+- **Context**: Multiple flows use browser's `alert()` and `confirm()` for success messages and deletion confirmations
+- **Current Usage Patterns**:
+  - Deletion confirmations: Some use `confirm()`, others use custom modals
+  - Success messages: Some use `alert()`, others provide no feedback
+  - Error messages: Mix of alerts and inline error displays
+- **Investigation Needed**:
+  - Audit all usages of `alert()` and `confirm()` across codebase (14+ files identified)
+  - Document current patterns: where, when, and why they're used
+  - Define principles: when to use toast notifications vs. modals vs. inline feedback
+  - Consider user experience consistency
+- **Proposed Solution**:
+  - Replace browser alerts with toast notification system (e.g., react-hot-toast, sonner)
+  - Standardize deletion confirmations: simple ones use toast, complex use modals
+  - Success messages: Use non-intrusive toast notifications
+  - Error messages: Context-dependent (toast for general, inline for form validation)
+- **Files to Audit**:
+  - `app/contracts/page.tsx`
+  - `app/projetos/components/ContractsTab.tsx`
+  - `app/projetos/components/ReceivablesTab.tsx`
+  - `app/projetos/components/ExpensesTab.tsx`
+  - `app/receivables/page.tsx`
+  - `app/expenses/page.tsx`
+  - `app/components/forms/ContractForm.tsx`
+  - `app/components/forms/ReceivableForm.tsx`
+  - `app/components/forms/ExpenseForm.tsx`
+  - And 5+ additional files
+- **Success Criteria**:
+  - Consistent notification patterns across all user flows
+  - No more native browser `alert()`/`confirm()` dialogs
+  - Better UX with non-blocking toast notifications
+  - Clear guidelines documented for future development
+- **Priority**: **LOW** (UX polish, not blocking)
+- **Effort**: Medium (requires audit + implementation + testing)
+- **Added**: 2025-09-29 from user feedback on inconsistent messaging
+
+#### 2. **Receivable Title Enhancement**
 - **Problem**: Receivables imported through setup assistant use project name as title, could be more descriptive
 - **Context**: When Claude extracts receivables from documents, the title defaults to project name
 - **Solution**: Enhance receivable title generation to include more context (e.g., "Payment for [Project] - Milestone 1")
