@@ -47,6 +47,11 @@ export interface ProcessingResult {
     expensesFound: number
     errors: string[]
   }
+  excelSheets?: {
+    totalSheets: number
+    processedSheets: string[]
+    skippedSheets: string[]
+  }
 }
 
 export interface FileProcessingResult extends ProcessingResult {
@@ -288,6 +293,7 @@ export class SetupAssistantService extends BaseService<any, any, any, any> {
     let fileContent: string | undefined
     let fileBase64: string | undefined
     let isVisualDocument = false
+    let excelSheetsInfo: { totalSheets: number; processedSheets: string[]; skippedSheets: string[] } | undefined
 
     // Check file type by MIME type and extension
     const fileType = file.type.toLowerCase()
@@ -297,11 +303,52 @@ export class SetupAssistantService extends BaseService<any, any, any, any> {
       // CSV files - keep original buffer for document attachment
       fileContent = buffer.toString('utf-8')
     } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
-      // Excel files - keep original buffer for document attachment
+      // Excel files - Process all sheets for comprehensive data extraction
       const workbook = XLSX.read(buffer, { type: 'buffer' })
-      const sheetName = workbook.SheetNames[0]
-      const worksheet = workbook.Sheets[sheetName]
-      fileContent = XLSX.utils.sheet_to_csv(worksheet)
+      const sheetNames = workbook.SheetNames
+
+      console.log(`📈 Processing Excel file with ${sheetNames.length} sheet(s): ${sheetNames.join(', ')}`)
+
+      // Initialize Excel sheets tracking
+      excelSheetsInfo = {
+        totalSheets: sheetNames.length,
+        processedSheets: [],
+        skippedSheets: []
+      }
+
+      if (sheetNames.length === 1) {
+        // Single sheet - process normally
+        const worksheet = workbook.Sheets[sheetNames[0]]
+        fileContent = XLSX.utils.sheet_to_csv(worksheet)
+        excelSheetsInfo.processedSheets.push(sheetNames[0])
+      } else {
+        // Multiple sheets - combine all data with sheet identifiers
+        const combinedData: string[] = []
+
+        for (let i = 0; i < sheetNames.length; i++) {
+          const sheetName = sheetNames[i]
+          const worksheet = workbook.Sheets[sheetName]
+          const sheetCsv = XLSX.utils.sheet_to_csv(worksheet)
+
+          // Skip empty sheets
+          if (sheetCsv.trim()) {
+            console.log(`📊 Processing sheet ${i + 1}/${sheetNames.length}: "${sheetName}"`)
+
+            // Add sheet header for context
+            combinedData.push(`\n=== PLANILHA: ${sheetName} ===\n`)
+            combinedData.push(sheetCsv)
+            combinedData.push(`\n=== FIM DA PLANILHA: ${sheetName} ===\n`)
+
+            excelSheetsInfo.processedSheets.push(sheetName)
+          } else {
+            console.log(`⚠️ Skipping empty sheet: "${sheetName}"`)
+            excelSheetsInfo.skippedSheets.push(sheetName)
+          }
+        }
+
+        fileContent = combinedData.join('\n')
+        console.log(`✅ Combined ${excelSheetsInfo.processedSheets.length}/${sheetNames.length} sheets into single data stream`)
+      }
     } else if (fileType === 'application/pdf' || fileName.endsWith('.pdf')) {
       // PDF files - send as base64 for Claude to process
       fileBase64 = buffer.toString('base64')
@@ -344,7 +391,8 @@ export class SetupAssistantService extends BaseService<any, any, any, any> {
           ...results.receivables.errors,
           ...results.expenses.errors
         ]
-      }
+      },
+      excelSheets: excelSheetsInfo
     }
   }
 
@@ -523,6 +571,13 @@ VALIDATION RULES:
       return `You are a data extraction expert for a Brazilian architecture firm's cashflow system.
 
 Analyze this spreadsheet data and extract ALL contracts, receivables, and expenses you can find.
+
+MULTI-SHEET PROCESSING:
+- This data may contain multiple Excel sheets combined (marked with "=== PLANILHA: [SheetName] ===")
+- Each sheet may contain different types of data (contracts, receivables, expenses)
+- Process ALL sheets and ALL data comprehensively
+- Treat each sheet section as potentially containing complete datasets
+
 IMPORTANT: Extract EVERY SINGLE ROW that looks like a contract, receivable, or expense. Do not limit or truncate the results.
 
 IMPORTANT RULES:

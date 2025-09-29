@@ -288,11 +288,21 @@ export default function OnboardingFileUpload({
                     <p className="font-medium text-neutral-800 text-sm">{fileItem.file.name}</p>
                     <p className="text-xs text-neutral-600">{formatFileSize(fileItem.file.size)}</p>
                     {fileItem.status === 'completed' && fileItem.result?.summary && (
-                      <p className="text-xs text-green-600 mt-1">
-                        ✅ {fileItem.result.summary.contractsCreated || 0} contratos,
-                        {fileItem.result.summary.receivablesCreated || 0} recebíveis,
-                        {fileItem.result.summary.expensesCreated || 0} despesas
-                      </p>
+                      <div className="text-xs text-green-600 mt-1">
+                        <p>
+                          ✅ {fileItem.result.summary.contractsCreated || 0} contratos,
+                          {fileItem.result.summary.receivablesCreated || 0} recebíveis,
+                          {fileItem.result.summary.expensesCreated || 0} despesas
+                        </p>
+                        {fileItem.result.excelSheets && fileItem.result.excelSheets.totalSheets > 1 && (
+                          <p className="text-purple-600 mt-1">
+                            📊 Excel: {fileItem.result.excelSheets.processedSheets.length}/{fileItem.result.excelSheets.totalSheets} planilhas processadas
+                            {fileItem.result.excelSheets.skippedSheets.length > 0 && (
+                              <span className="text-orange-600"> ({fileItem.result.excelSheets.skippedSheets.length} vazias)</span>
+                            )}
+                          </p>
+                        )}
+                      </div>
                     )}
                     {fileItem.status === 'error' && (
                       <p className="text-xs text-red-600 mt-1">❌ {fileItem.error}</p>
