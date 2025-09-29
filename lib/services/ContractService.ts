@@ -488,7 +488,8 @@ export class ContractService extends BaseService<
       receivables: contract.receivables.map(r => ({
         id: r.id,
         title: r.description || `Receivable ${r.id.slice(-6)}`, // Use description or fallback
-        amount: r.amount
+        amount: r.amount,
+        expectedDate: r.expectedDate
       }))
     }
   }

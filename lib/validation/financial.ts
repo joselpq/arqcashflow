@@ -73,7 +73,8 @@ export const ContractSchemas = {
     receivables: z.array(z.object({
       id: BaseFieldSchemas.id,
       title: BaseFieldSchemas.name,
-      amount: BaseFieldSchemas.amount
+      amount: BaseFieldSchemas.amount,
+      expectedDate: z.date().describe('Expected date for the receivable')
     })).describe('List of receivables that would be affected')
   }),
 }

@@ -165,16 +165,36 @@ function ContractsPageContent() {
     })
   }
 
-  function openDeleteModal(contract: any) {
-    setContractToDelete(contract)
-    setDeletionModalOpen(true)
+  async function openDeleteModal(contract: any) {
+    // Check if contract has receivables before opening modal
+    try {
+      const res = await fetch(`/api/contracts/${contract.id}/deletion-info`)
+      if (res.ok) {
+        const deletionInfo = await res.json()
+
+        if (!deletionInfo.hasReceivables) {
+          // No receivables - show simple confirmation
+          if (confirm(`Tem certeza que deseja excluir o contrato "${contract.clientName} - ${contract.projectName}"?`)) {
+            await handleDeleteConfirm('contract-only', contract)
+          }
+        } else {
+          // Has receivables - open modal for user choice
+          setContractToDelete(contract)
+          setDeletionModalOpen(true)
+        }
+      }
+    } catch (error) {
+      console.error('Error checking deletion info:', error)
+      alert('Erro ao verificar informações de exclusão')
+    }
   }
 
-  async function handleDeleteConfirm(mode: 'contract-only' | 'contract-and-receivables') {
-    if (!contractToDelete) return
+  async function handleDeleteConfirm(mode: 'contract-only' | 'contract-and-receivables', contract?: any) {
+    const contractToDeleteNow = contract || contractToDelete
+    if (!contractToDeleteNow) return
 
     try {
-      const res = await fetch(`/api/contracts/${contractToDelete.id}?mode=${mode}`, {
+      const res = await fetch(`/api/contracts/${contractToDeleteNow.id}?mode=${mode}`, {
         method: 'DELETE'
       })
 

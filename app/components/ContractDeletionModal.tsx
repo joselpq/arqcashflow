@@ -160,12 +160,16 @@ export default function ContractDeletionModal({
                     {deletionInfo.receivables.length > 0 && (
                       <div className="text-sm text-amber-700 space-y-1">
                         <p className="font-medium">Recebíveis afetados:</p>
-                        {deletionInfo.receivables.slice(0, 3).map((receivable) => (
-                          <div key={receivable.id} className="flex justify-between">
-                            <span>• {receivable.title}</span>
-                            <span className="font-medium">R$ {receivable.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                          </div>
-                        ))}
+                        {deletionInfo.receivables.slice(0, 3).map((receivable) => {
+                          const expectedDate = new Date(receivable.expectedDate)
+                          const formattedDate = expectedDate.toLocaleDateString('pt-BR')
+                          return (
+                            <div key={receivable.id} className="flex justify-between">
+                              <span>• {formattedDate}</span>
+                              <span className="font-medium">R$ {receivable.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                            </div>
+                          )
+                        })}
                         {deletionInfo.receivables.length > 3 && (
                           <p className="text-xs text-amber-600">... e mais {deletionInfo.receivables.length - 3}</p>
                         )}
@@ -216,9 +220,9 @@ export default function ContractDeletionModal({
                           className="mt-1 h-4 w-4 text-blue-600 border-neutral-300 focus:ring-blue-500"
                         />
                         <div className="ml-3">
-                          <div className="font-medium text-neutral-900 text-red-700">Excluir contrato e todos os recebíveis</div>
-                          <div className="text-sm text-red-600">
-                            ⚠️ CUIDADO: Esta ação não pode ser desfeita. Todos os recebíveis serão perdidos permanentemente.
+                          <div className="font-medium text-neutral-900">Excluir contrato e todos os recebíveis</div>
+                          <div className="text-sm text-neutral-600">
+                            Todos os recebíveis associados serão excluídos permanentemente junto com o contrato.
                           </div>
                         </div>
                       </label>

@@ -204,6 +204,34 @@ This backlog document **DOES NOT** replace other documentation update requiremen
 ### ✅ DONE (Completed Items)
 *Completed work for reference. Newest first.*
 
+#### September 29, 2025 (Night) - Contract Deletion Modal UX Refinements Complete
+
+#### Contract Management UX Improvements
+
+- **Contract Deletion Modal UX Refinements - HIGH PRIORITY** ✅
+  - **Problem**: Modal worked but had UX issues based on user feedback
+  - **Issues Resolved**:
+    1. Unnecessary modal when no receivables (now shows simple confirmation)
+    2. Overly dramatic red warning text (changed to neutral tone)
+    3. Technical receivable display (changed to user-friendly date + amount)
+  - **Implementation**:
+    - Added `expectedDate` field to `DeletionInfo` schema and service response
+    - Updated receivable display to show "DD/MM/YYYY - R$ X.XXX,XX" format instead of ID
+    - Removed red "⚠️ CUIDADO" warning text, replaced with neutral explanation
+    - Added conditional logic in both `ContractsTab.tsx` and `contracts/page.tsx`
+    - Checks `deletion-info` endpoint before opening modal
+    - Shows simple `confirm()` dialog if no receivables exist
+    - Only opens modal when user needs to choose receivables handling
+  - **Results**: Cleaner UX flow - simple confirmation for basic deletes, informative modal only when needed
+  - **Files**:
+    - `lib/services/ContractService.ts:488-493` (added expectedDate)
+    - `lib/validation/financial.ts:77` (schema update)
+    - `app/components/ContractDeletionModal.tsx:163-176,223-226` (display and text changes)
+    - `app/projetos/components/ContractsTab.tsx:154-176` (conditional logic)
+    - `app/contracts/page.tsx:168-190` (conditional logic)
+  - **Build Status**: ✅ Compiled successfully (no TypeScript errors)
+  - **Completed**: 2025-09-29
+
 #### September 29, 2025 (Evening) - Contract UX Bug Fixes Complete
 
 #### Contract Management Bug Fixes
