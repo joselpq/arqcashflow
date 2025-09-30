@@ -237,11 +237,12 @@ This backlog document **DOES NOT** replace other documentation update requiremen
 - **Solution**: AI-powered financial intelligence agent that answers business questions
 - **Implementation**:
   - Created `FinancialQueryService` with Claude Sonnet 4 integration
+  - **Text-to-SQL approach**: Claude generates SQL → Execute → Format response
+  - Token efficient: ~4-5k tokens (vs 218k in initial broken approach)
   - Semantic mapping (projeto→contract, concluído→completed, etc.)
-  - Two-phase query processing: intent analysis → data fetch → response generation
-  - Service layer integration (ContractService, ReceivableService, ExpenseService)
+  - Three-phase query processing: SQL generation → execution → natural language formatting
+  - Team isolation via `teamScopedPrisma` + SQL WHERE clause filtering
   - Conversation context management for follow-up questions
-  - Team isolation enforced via `withTeamContext` middleware
   - Portuguese and English support
   - Integrated with existing AI Chat UI (💬 Chat Inteligente tab)
 - **Results**:
@@ -253,11 +254,17 @@ This backlog document **DOES NOT** replace other documentation update requiremen
   - Maintains conversation context for follow-up questions
 - **Strategic Value**: Completes Phase 1B of AI Agent Strategy (ADR-008)
 - **Files**:
-  - `lib/services/FinancialQueryService.ts` (296 lines)
-  - `app/api/ai/query/route.ts` (simplified to 64 lines)
-  - `app/ai-chat/enhanced-page.tsx` (Chat tab integration)
-  - `lib/validation/api.ts` (AISchemas.query validation)
-  - `test-financial-query.ts` (test suite)
+  - `lib/services/FinancialQueryService.ts` (286 lines, text-to-SQL approach)
+  - `app/api/ai/query/route.ts` (64 lines, architecture compliant)
+  - `app/ai-chat/enhanced-page.tsx` (Chat tab integration, removed file upload)
+  - `lib/validation/api.ts` (AISchemas.query validation schema)
+  - `test-financial-query.ts` (test suite with auth instructions)
+- **Architecture Compliance**:
+  - ✅ Uses ServiceContext pattern
+  - ✅ Team isolation via teamScopedPrisma
+  - ✅ Validation via AISchemas from lib/validation
+  - ✅ Does NOT extend BaseService (read-only, no CRUD)
+  - ✅ Mirrors original LangChain text-to-SQL approach
 - **Build Status**: ✅ Compiled successfully
 - **Completed**: 2025-09-30
 

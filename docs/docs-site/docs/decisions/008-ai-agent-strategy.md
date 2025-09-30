@@ -4,7 +4,7 @@ type: "decision"
 audience: ["developer", "agent", "product"]
 contexts: ["ai-agents", "product-strategy", "financial-intelligence", "user-experience", "automation", "small-business", "professional-services", "document-processing", "business-insights"]
 complexity: "advanced"
-last_updated: "2025-09-27"
+last_updated: "2025-09-30"
 version: "1.1"
 agent_roles: ["ai-architect", "product-strategist", "business-analyst"]
 related:
@@ -27,14 +27,18 @@ dependencies: ["claude-api", "next.js", "service-layer", "event-system", "team-c
 - API-driven integration with platform services
 - Progressive disclosure of complexity
 
-**Implementation Status (2025-09-27) - BASELINE ESTABLISHED**:
-- ✅ Baseline testing completed: Current setup assistant validated and working perfectly
-- ✅ Manual testing confirmed: CSV (4c,4r,7e), Excel (37c), PDF (1c) all working (~60s each)
-- ✅ UI Integration verified: "Assistente IA > Configuração Rápida" fully functional
-- ✅ Test suite created: `test-setup-assistant-baseline-final.ts` for Phase 1 validation
-- 🚀 Status: Ready to begin Phase 1 incremental upgrade implementation
+**Implementation Status (2025-09-30) - PHASE 1B COMPLETE**:
+- ✅ **Phase 1A (Setup Assistant)**: 100% extraction accuracy achieved with sub-batch splitting
+- ✅ **Phase 1B (Financial Query Agent)**: Complete - Text-to-SQL approach with Claude
+  - Natural language to PostgreSQL query generation
+  - Token efficient: ~4-5k tokens (vs 218k in initial approach)
+  - Semantic mapping: projeto→contract, concluído→completed, etc.
+  - Portuguese/English bilingual support
+  - Conversation context management
+  - UI integrated: Chat tab (💬 Chat Inteligente)
+- 🚀 Status: Phase 1 agents operational, Phase 2 planning
 
-## 🎯 **Strategic Overview (Updated 2025-09-27)**
+## 🎯 **Strategic Overview (Updated 2025-09-30)**
 
 **STRATEGIC PIVOT**: ArqCashflow's AI strategy has evolved from "build new specialized agents" to "incrementally upgrade existing proven systems" for faster time-to-value and lower risk.
 
@@ -119,38 +123,62 @@ Agent: [Creates 12 contracts, 145 expenses, 28 receivables]
         R$187k across 8 projects."
 ```
 
-#### **2. Financial Query Agent**
+#### **2. Financial Query Agent** ✅ **IMPLEMENTED (2025-09-30)**
 **"The Business Intelligence Expert"**
 
-**Purpose**: Answer complex business questions using financial data
-**Wow Factor**: "Ask anything about your business → Instant expert analysis"
+**Status**: **Production Ready** - Text-to-SQL implementation with Claude Sonnet 4
+**Implementation**: `lib/services/FinancialQueryService.ts` + `/api/ai/query`
+**UI**: Chat tab (💬 Chat Inteligente) at `/ai-chat`
+
+**Purpose**: Answer financial questions using natural language with precise, concise responses
+**Wow Factor**: "Ask anything about your business → Instant precise answers"
+
+**Technical Architecture**:
+- **Text-to-SQL Approach**: Claude generates PostgreSQL query → Execute → Format response
+- **Token Efficiency**: ~4-5k tokens per query (vs 218k in initial broken approach)
+- **Semantic Mapping**: projeto→contract, concluído→completed, cliente→clientName
+- **Team Isolation**: Uses `teamScopedPrisma` + SQL WHERE clause filtering
+- **Conversation Context**: Maintains history for follow-up questions
 
 **Capabilities**:
-- **Natural language queries**: "How much will I receive next month?"
-- **Financial analysis**: Profit/loss, cash flow, trends, projections
-- **Cross-entity insights**: Contract profitability, client patterns, expense trends
-- **Contextual responses**: Understand business implications of numbers
+- **Natural language queries**: "Quais meus projetos concluídos?"
+- **Financial calculations**: Count contracts, sum receivables, calculate expenses
+- **Smart inference**: Understands imprecise language and context
+- **Clarification requests**: Asks follow-up questions when ambiguous
+- **Bilingual**: Portuguese (primary) and English support
 
 **Tools Available**:
-- All financial APIs (contracts, receivables, expenses, recurring)
-- Dashboard analytics API (`/api/dashboard`)
-- Team financial summary services
-- Historical data analysis capabilities
+- Direct PostgreSQL database access via Prisma
+- Full access to Contract, Receivable, Expense tables
+- Team-scoped data isolation
+- Date/time functions for period calculations
 
 **Context Provided**:
-- Complete business financial state
-- Industry benchmarks (architecture firm norms)
-- Business size and lifecycle stage
-- Seasonal patterns and project cycles
+- Complete database schema with semantic hints
+- Team ID for data isolation
+- Current date for temporal queries
+- Conversation history for context
 
 **Interaction Pattern**:
 ```
-User: "How much will I receive next month?"
-Agent: "You have R$67k expected in November: R$45k from ACME (final milestone),
-        R$15k from Beta Design (monthly payment), and R$7k from pending overdue
-        payments. However, your Q4 pattern shows 15% of receivables typically
-        arrive late, so realistic expectation is R$57k."
+User: "Quais meus projetos concluídos?"
+Agent: "Você tem 8 contratos concluídos:
+        - ACME Corp / Renovação Escritório: R$ 120.000,00
+        - Beta Design / Casa Moderna: R$ 85.000,00
+        - Zeta Ltda / Reforma Comercial: R$ 95.000,00
+        [...]
+        Total: R$ 687.000,00"
+
+User: "E quanto recebi deles?"
+Agent: "Dos 8 contratos concluídos, você recebeu R$ 652.000,00 (95%).
+        Faltam R$ 35.000,00 de pagamentos finais pendentes."
 ```
+
+**Implementation Notes**:
+- Mirrors original LangChain approach but with Claude
+- Does NOT extend BaseService (read-only, no CRUD)
+- Uses ServiceContext pattern for team isolation
+- Validates input with AISchemas.query from validation layer
 
 #### **3. Financial Audit Agent**
 **"The Quality Control Specialist"**
