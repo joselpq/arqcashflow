@@ -1,7 +1,7 @@
 # ArqCashflow Development Backlog
 
 **Purpose**: Central source of truth for project priorities and development status
-**Last Updated**: 2025-09-29 (Complete reorganization for clarity and functionality)
+**Last Updated**: 2025-09-30 (Event System marked complete, priorities reassessed)
 **Update Frequency**: Every LLM session MUST update this document when completing tasks or discovering new requirements
 
 ## 🚨 CRITICAL INSTRUCTIONS FOR LLM AGENTS
@@ -38,7 +38,29 @@ This backlog document **DOES NOT** replace other documentation update requiremen
 ### 📋 TO DO (Immediate Priorities)
 *Ready to implement. Start here unless directed otherwise.*
 
-**Currently Empty** - All major features complete!
+#### 1. **Financial Query Agent (AI Chat) - HIGH PRIORITY** 🎯
+- **Problem**: Users need natural language access to their financial data and business insights
+- **Context**: Setup Assistant complete (100% accuracy), service layer ready, event system in place
+- **Solution**: AI-powered financial intelligence agent that answers business questions
+- **Capabilities**:
+  - Natural language queries: "How much will I receive next month?"
+  - Financial analysis: profit/loss, cash flow, trends, projections
+  - Cross-entity insights: contract profitability, client patterns, expense trends
+  - Contextual responses with business implications
+- **Implementation Approach**:
+  - Create `/api/ai/query` route with Claude integration
+  - Leverage existing service layer for data access
+  - Implement conversation context management
+  - Integrate with existing AI chat UI
+- **Strategic Value**:
+  - Completes Phase 1 of AI Agent Strategy (ADR-008)
+  - Creates "AI CFO" competitive differentiation
+  - Natural progression after Setup Assistant completion
+  - All prerequisites met (service layer, event system, validation)
+- **Priority**: **HIGH** (Next feature to implement)
+- **Effort**: 5-6 days
+- **Added**: 2025-09-30 from ADR-008 Phase 1B prioritization
+- **Status**: Ready to begin implementation
 
 ---
 
@@ -270,6 +292,45 @@ This backlog document **DOES NOT** replace other documentation update requiremen
 - **Build Status**: ✅ Compiled successfully
 - **Decision Record**: `docs/docs-site/docs/decisions/011-extraction-accuracy-enhancement.md`
 - **Completed**: 2025-09-30
+
+---
+
+#### September 25, 2025 - Event System Foundation Complete
+
+#### **Event System Foundation (Phase 1) - HIGH PRIORITY** ✅
+
+- **Problem**: No event-driven architecture foundation for automation, AI coordination, and audit trails
+- **Context**: Final piece of ADR-004 "No-Regrets Architecture Improvements"
+- **Solution**: Implemented complete event-driven architecture foundation
+- **Implementation**:
+  - Core event bus (`lib/events/bus.ts`) - Type-safe event emission and subscription
+  - Event type definitions (`lib/events/types.ts`) - Business, AI, and system events
+  - Event handlers (`lib/events/handlers/`) - Business logic, AI processing, audit logging
+  - Middleware (`lib/events/middleware/`) - Validation and team context isolation
+  - Event persistence with database Event model
+  - Comprehensive documentation and README for LLM agents
+- **Capabilities**:
+  - Business events: contract.created, receivable.payment_received, expense.approved
+  - AI events: document.uploaded, ai.analysis_complete, ai.suggestion_generated
+  - System events: user.onboarded, validation.failed, audit.logged
+  - Team-scoped events with security boundaries
+  - CUID validation system for data integrity
+  - Full audit trail for compliance
+- **Results**:
+  - ✅ Complete event-driven foundation ready for automation
+  - ✅ Enables AI agent coordination and workflow automation
+  - ✅ Foundation for real-time dashboard updates
+  - ✅ Audit trail and compliance logging operational
+  - ✅ Authenticated testing with team isolation verified
+- **Strategic Value**:
+  - Completes all ADR-004 architecture improvements
+  - Unblocks AI agent features (ADR-008)
+  - Enables future automation and optimization features
+  - Foundation for next 6-12 months of development
+- **Files**: `lib/events/` directory structure complete
+- **Build Status**: ✅ Fully tested and operational
+- **Decision Record**: `docs/docs-site/docs/decisions/007-event-system-foundation.md`
+- **Completed**: 2025-09-25
 
 ---
 
