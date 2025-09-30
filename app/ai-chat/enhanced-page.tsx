@@ -161,122 +161,52 @@ export default function EnhancedAIChatPage() {
   // Submit message
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!message.trim() && files.length === 0) return
-
-    // Check if we have any large files that need FormData
-    const hasLargeFiles = files.some(f => f.file)
-
-    console.log('handleSubmit called:', {
-      message: message.trim(),
-      filesCount: files.length,
-      hasLargeFiles,
-      files: files.map(f => ({
-        name: f.name,
-        type: f.type,
-        strategy: f.file ? 'FormData' : 'base64',
-        size: `${(f.size / 1024 / 1024).toFixed(1)}MB`
-      }))
-    })
+    if (!message.trim()) return
 
     setLoading(true)
 
     // Create user message
     const userMessage: Message = {
       role: 'user',
-      content: message || 'Documento anexado',
-      files: files.length > 0 ? files.map(f => ({
-        name: f.name,
-        type: f.type,
-        size: f.size,
-        base64: f.base64 // Only include base64 for display
-      })) : undefined,
+      content: message,
       timestamp: new Date()
     }
 
     const newMessages = [...messages, userMessage]
     setMessages(newMessages)
     setMessage('')
-    setFiles([])
 
     try {
-      let response: Response
+      // Use financial query endpoint for text-only queries
+      console.log('💬 Using Financial Query endpoint')
 
-      if (hasLargeFiles) {
-        // Use FormData for large files
-        console.log('🚚 Using FormData for large file upload')
-
-        const formData = new FormData()
-        formData.append('message', userMessage.content)
-
-        // Add history as JSON string
-        formData.append('history', JSON.stringify(newMessages.slice(-10).map(m => ({
-          role: m.role,
-          content: m.content,
-          metadata: m.metadata
-        }))))
-
-        // Add all files to FormData
-        files.forEach(file => {
-          if (file.file) {
-            // Large file: add File object
-            formData.append('files', file.file)
-          } else if (file.base64) {
-            // Small file: convert base64 back to Blob for consistency
-            const binaryString = atob(file.base64)
-            const bytes = new Uint8Array(binaryString.length)
-            for (let i = 0; i < binaryString.length; i++) {
-              bytes[i] = binaryString.charCodeAt(i)
-            }
-            const blob = new Blob([bytes], { type: file.type })
-            const reconstructedFile = new File([blob], file.name, { type: file.type })
-            formData.append('files', reconstructedFile)
-          }
-        })
-
-        response = await fetch('/api/ai/assistant', {
-          method: 'POST',
-          body: formData // No Content-Type header - let browser set it
-        })
-      } else {
-        // Use JSON for small files
-        console.log('📄 Using JSON for small file upload')
-
-        const requestBody = {
-          message: userMessage.content,
-          files: files.map(f => ({
-            name: f.name,
-            type: f.type,
-            base64: f.base64!,
-            size: f.size
-          })),
-          history: newMessages.slice(-10).map(m => ({
-            role: m.role,
-            content: m.content,
-            metadata: m.metadata
-          }))
-        }
-
-        response = await fetch('/api/ai/assistant', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(requestBody)
-        })
+      const requestBody = {
+        question: userMessage.content,
+        history: newMessages.slice(-10).map(m => ({
+          question: m.role === 'user' ? m.content : '',
+          answer: m.role === 'assistant' ? m.content : ''
+        })).filter(h => h.question || h.answer) // Remove empty entries
       }
+
+      const response = await fetch('/api/ai/query', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody)
+      })
 
       console.log('Response status:', response.status)
 
       if (response.ok) {
         const result = await response.json()
-        console.log('AI assistant response:', result)
+        console.log('Financial query response:', result)
 
         const assistantMessage: Message = {
           role: 'assistant',
-          content: result.response,
+          content: result.answer,
           metadata: {
-            intent: result.intent,
-            type: result.type,
-            sqlQuery: result.sqlQuery,
-            pendingActions: result.pendingActions
+            needsClarification: result.needsClarification,
+            suggestedQuestions: result.suggestedQuestions,
+            dataUsed: result.dataUsed
           },
           timestamp: new Date()
         }
@@ -640,35 +570,38 @@ export default function EnhancedAIChatPage() {
           <MultiFileSetupAssistant />
         ) : (
           <div>
-        {/* Quick Actions */}
+        {/* Quick Questions */}
         <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <h3 className="text-sm font-bold text-blue-800 mb-3">Ações Rápidas:</h3>
+          <h3 className="text-sm font-bold text-blue-800 mb-3">💡 Perguntas Rápidas:</h3>
           <div className="flex flex-wrap gap-2">
             <button
-              onClick={() => handleQuickAction('Qual foi minha receita este mês?')}
+              onClick={() => handleQuickAction('Quanto vou receber no próximo mês?')}
               className="text-xs bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors"
             >
-              📊 Receita do Mês
+              💰 Receitas Futuras
             </button>
             <button
-              onClick={() => handleQuickAction('Criar novo contrato')}
+              onClick={() => handleQuickAction('Quais meus projetos concluídos?')}
               className="text-xs bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 transition-colors"
             >
-              📄 Novo Contrato
+              ✅ Projetos Finalizados
             </button>
             <button
-              onClick={() => handleQuickAction('Adicionar despesa')}
+              onClick={() => handleQuickAction('Quanto gastei este mês?')}
               className="text-xs bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 transition-colors"
             >
-              💰 Nova Despesa
+              📊 Despesas do Mês
             </button>
             <button
-              onClick={() => handleQuickAction('Mostrar contratos ativos')}
+              onClick={() => handleQuickAction('Quais contratos estão ativos?')}
               className="text-xs bg-purple-600 text-white px-3 py-1 rounded hover:bg-purple-700 transition-colors"
             >
               📋 Contratos Ativos
             </button>
           </div>
+          <p className="text-xs text-blue-700 mt-2">
+            💡 Dica: Faça perguntas sobre contratos, recebíveis, despesas e análises financeiras
+          </p>
         </div>
 
         {/* Chat Messages */}
@@ -677,7 +610,10 @@ export default function EnhancedAIChatPage() {
             <div className="text-center text-neutral-600 py-8">
               <p className="text-lg mb-4">👋 Olá! Como posso ajudá-lo hoje?</p>
               <p className="text-sm">
-                Posso responder perguntas, criar contratos/despesas, ou processar documentos.
+                Faça perguntas sobre seus contratos, recebíveis, despesas e finanças.
+              </p>
+              <p className="text-xs text-neutral-500 mt-2">
+                Para importar documentos, use a aba "📊 Configuração Rápida"
               </p>
             </div>
           ) : (
@@ -745,73 +681,8 @@ export default function EnhancedAIChatPage() {
           )}
         </div>
 
-        {/* File Upload Area */}
-        {files.length > 0 && (
-          <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <h4 className="text-sm font-bold text-yellow-800 mb-2">Arquivos Anexados:</h4>
-            <div className="flex flex-wrap gap-2">
-              {files.map((file, index) => (
-                <div
-                  key={index}
-                  className="flex items-center gap-2 bg-white border border-yellow-300 rounded px-3 py-1"
-                >
-                  <span className="text-sm text-neutral-900">📎 {file.name}</span>
-                  <span className="text-xs text-neutral-500">
-                    ({(file.size / 1024 / 1024).toFixed(1)}MB)
-                    {file.file && <span className="text-blue-600 ml-1">• FormData</span>}
-                    {file.base64 && <span className="text-green-600 ml-1">• JSON</span>}
-                  </span>
-                  <button
-                    onClick={() => removeFile(index)}
-                    className="text-red-600 hover:text-red-800 text-sm"
-                  >
-                    ✕
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* Input Form */}
         <div className="bg-white border-2 border-neutral-300 rounded-lg p-4">
-          {/* File Drop Zone */}
-          <div
-            className={`border-2 border-dashed rounded-lg p-4 mb-4 text-center transition-colors ${
-              dragActive
-                ? 'border-blue-500 bg-blue-50'
-                : 'border-neutral-300 bg-neutral-50'
-            }`}
-            onDragEnter={handleDrag}
-            onDragLeave={handleDrag}
-            onDragOver={handleDrag}
-            onDrop={handleDrop}
-          >
-            <p className="text-sm text-neutral-600 mb-2">
-              📎 Arraste arquivos aqui ou clique para selecionar
-            </p>
-            <p className="text-xs text-neutral-500 mb-2">
-              Formatos: PNG, JPG, PDF • Máximo: 32MB por arquivo
-            </p>
-            <p className="text-xs text-green-600 mb-2">
-              ✅ Pequenos (&lt;3MB): JSON • Grandes (≥3MB): FormData upload
-            </p>
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-            >
-              Selecionar Arquivos
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              accept="image/*,.pdf"
-              onChange={(e) => e.target.files && handleFiles(e.target.files)}
-              className="hidden"
-            />
-          </div>
 
           {/* Message Form */}
           <form onSubmit={handleSubmit} className="flex gap-2">
