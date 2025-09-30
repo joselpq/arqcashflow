@@ -138,7 +138,7 @@ function trimEmptyRows(worksheet) {
 **When to implement:**
 - Production monitoring shows files still hitting token limits after Phase 1
 - User feedback indicates common use of 30+ sheet files
-- Analytics show >5% of files need batching
+- Analytics show `>5%` of files need batching
 
 **Implementation Strategy (when needed):**
 - Group sheets into batches staying under 20k token budget
@@ -224,8 +224,8 @@ describe('trimEmptyRows', () => {
 ```
 
 **Integration Tests:**
-- 10-sheet Excel with 50 filled rows → verify <10k tokens
-- 20-sheet Excel with 50 filled rows → verify <20k tokens
+- 10-sheet Excel with 50 filled rows → verify `<10k` tokens
+- 20-sheet Excel with 50 filled rows → verify `<20k` tokens
 - 1-sheet Excel with 1000 filled rows → verify no trimming
 - Mixed: Some sheets full, some sparse → verify selective trimming
 
@@ -246,9 +246,9 @@ describe('trimEmptyRows', () => {
 ```
 
 **Alert thresholds:**
-- Token usage >25k after trimming → investigate for Phase 2
-- Failure rate >1% → review edge cases
-- Average reduction <50% → trimming not effective for user data patterns
+- Token usage `>25k` after trimming → investigate for Phase 2
+- Failure rate `>1%` → review edge cases
+- Average reduction `<50%` → trimming not effective for user data patterns
 
 ## References
 
@@ -299,7 +299,7 @@ Result: 28% of limit (SUCCESS)
 
 **Indicators:**
 - User feedback: "My 30-sheet budget spreadsheet fails"
-- Analytics: >5% of files hit token limits after Phase 1
+- Analytics: `>5%` of files hit token limits after Phase 1
 - Support tickets: Token limit errors persist
 
 **Implementation Checklist:**
@@ -433,7 +433,7 @@ Result: ❌ Error - "SyntaxError: Expected ',' or ']' after array element"
   - Input tokens are fine (32k), output tokens are the bottleneck
 - Solution Implemented:
   - **Sheet-boundary-respecting batches**: Never split sheets across batches ✅
-  - **Large sheet isolation**: Sheets >5000 est. tokens get dedicated batch ✅
+  - **Large sheet isolation**: Sheets `>5000` est. tokens get dedicated batch ✅
   - **Dynamic grouping**: Small sheets grouped if they fit ✅
   - **Sequential processing**: 10s delays between batches ✅
   - **Result aggregation**: Merge contracts/receivables/expenses arrays ✅
@@ -476,7 +476,7 @@ Batch 3: [Acompanhamento de Obra, Previsão RT, Custos] → Not reached due to b
 
 4. **Option D: Request smaller batches from Claude**
    - Reduce OUTPUT_TOKEN_BUDGET from 6000 to 4000
-   - Creates more batches but each has fewer entities (<50 items per array)
+   - Creates more batches but each has fewer entities (`<50` items per array)
    - Higher success rate for JSON formatting
 
 ### Decision Update
