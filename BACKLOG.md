@@ -83,7 +83,185 @@ Examples:
 ### 🔄 DOING (Currently In Progress)
 *Active work with real-time progress tracking. Can persist between sessions if work is incomplete.*
 
-**Currently Empty** - Financial Query Agent completed on 2025-09-30!
+#### **AI Command Agent: Natural Language CRUD Operations - HIGH PRIORITY** 🎯
+
+**Strategic Value**: Completes the AI agent trinity (Import → Query → Command)
+**Timeline**: 2-3 weeks
+**Status**: Planning phase
+
+**Vision**: "R$50 em gasolina ontem" → Expense created automatically
+
+**Core Capabilities**:
+- Natural language CRUD: Create, edit, delete contracts/receivables/expenses
+- Smart inference: Fill missing data from context (client name → project, etc.)
+- Ambiguity handling: Ask follow-up questions when unclear
+- Confirmation workflow: Preview action, ask for approval before executing
+- Conversation memory: Retain context for follow-up requests
+- Tool integration: Call Financial Query Agent for data lookup
+- Document processing: Call Setup Assistant for images/docs/CSV
+- Multi-entity operations: Batch create/update/delete
+
+**Examples**:
+```
+User: "R$50 em gasolina ontem"
+Agent: "Vou criar uma despesa de R$ 50,00 de gasolina para ontem (29/09).
+       Categoria: Transporte. Confirma?"
+User: "Sim"
+Agent: ✅ Despesa criada! [shows details]
+
+User: "R$400 de RT do projeto Mari para receber amanhã"
+Agent: "Encontrei 2 projetos com 'Mari':
+       1. Residência Mariana - Cliente: João Silva
+       2. Escritório Mari Ltda - Cliente: Mari Empresa
+       Qual deles?"
+User: "O primeiro"
+Agent: "Vou criar um recebível de R$ 400,00 para o projeto 'Residência Mariana'
+       com data de recebimento amanhã (01/10). Confirma?"
+```
+
+**Implementation Plan**:
+
+### Phase 1: Foundation & Architecture (Week 1 - Days 1-3)
+- [ ] Create `CommandAgentService` extending base patterns
+- [ ] Design conversation state management (context retention)
+- [ ] Implement intent classification system
+  - Identify operation type (create/update/delete)
+  - Identify entity type (contract/receivable/expense/recurring)
+  - Extract parameters from natural language
+- [ ] Create confirmation workflow system
+- [ ] Design tool integration pattern (Query + Setup agents)
+- [ ] Set up API route `/api/ai/command` with team context
+- [ ] Define validation schemas for command inputs
+
+**Deliverables**: Service skeleton, intent classifier, confirmation system
+
+### Phase 2: Core CRUD Operations (Week 1 - Days 4-7)
+- [ ] Implement CREATE operations:
+  - Contracts: Extract client, project, value, dates
+  - Receivables: Extract amount, date, link to contract
+  - Expenses: Extract description, amount, date, category
+  - Recurring expenses: Extract frequency, dates
+- [ ] Implement UPDATE operations:
+  - Find entity by fuzzy matching
+  - Apply partial updates from natural language
+- [ ] Implement DELETE operations:
+  - Find entity confirmation
+  - Handle cascading deletes (contracts → receivables)
+- [ ] Add smart inference logic:
+  - Client name → find project
+  - Project name fuzzy matching
+  - Date parsing (ontem, amanhã, próxima semana)
+  - Category inference from keywords
+
+**Deliverables**: Working CRUD for all 4 entity types
+
+### Phase 3: Intelligence & Context (Week 2 - Days 1-4)
+- [ ] Implement ambiguity detection:
+  - Multiple matches → ask for clarification
+  - Missing required fields → ask follow-up questions
+  - Unfeasible operations → explain why
+- [ ] Add conversation context management:
+  - Store conversation history
+  - Reference resolution ("o primeiro", "esse contrato")
+  - Follow-up operations on same entity
+- [ ] Integrate Financial Query Agent as tool:
+  - "Mostre meus projetos ativos" before creating receivable
+  - Fetch data to resolve ambiguity
+- [ ] Semantic mappings (Portuguese business terms):
+  - RT, recebível, fatura, pagamento → Receivable
+  - Despesa, gasto, custo → Expense
+  - Projeto, contrato, proposta → Contract
+
+**Deliverables**: Intelligent disambiguation, context awareness
+
+### Phase 4: Multi-Operation & Document Support (Week 2 - Days 5-7)
+- [ ] Implement batch operations:
+  - "Cria 3 recebíveis de R$1000 para os próximos 3 meses"
+  - Parse multiple entities from single instruction
+- [ ] Integrate Setup Assistant as tool:
+  - Detect document/image/CSV in conversation
+  - Route to Setup Assistant for processing
+  - Return results in conversation
+- [ ] Add operation preview system:
+  - Show formatted preview before execution
+  - Highlight inferred/assumed fields
+  - Allow user to edit before confirming
+
+**Deliverables**: Batch operations, document integration
+
+### Phase 5: UI Integration & Polish (Week 3)
+- [ ] Create new tab under "Assistente IA":
+  - Tab name: "💬 Comandos" or "🎯 Ações Rápidas"
+  - Chat interface with conversation history
+  - Quick action buttons for common operations
+- [ ] Add operation history view:
+  - Show recent commands executed
+  - Allow undo for recent operations
+- [ ] Implement error handling:
+  - User-friendly error messages
+  - Retry logic for transient failures
+  - Fallback to traditional forms if needed
+- [ ] Testing with real user scenarios:
+  - Common expense creation flows
+  - Receivable management patterns
+  - Contract updates and edits
+
+**Deliverables**: Production-ready UI, error handling, testing
+
+### Phase 6: Refinement & Optimization (Ongoing)
+- [ ] Monitor usage patterns and common intents
+- [ ] Tune inference algorithms based on user corrections
+- [ ] Add more semantic mappings from real usage
+- [ ] Performance optimization (response time < 3s)
+- [ ] A/B testing vs traditional forms
+
+**Success Metrics**:
+- Command completion rate (intent → execution)
+- User satisfaction (thumbs up/down)
+- Disambiguation accuracy (correct inference %)
+- Time saved vs traditional forms
+
+**Technical Architecture**:
+```
+User Input → Intent Classification → Parameter Extraction
+    ↓
+Ambiguity Check → [If ambiguous: Ask clarification]
+    ↓
+Smart Inference → Fill missing data from context/DB
+    ↓
+Tool Integration → [Query Agent | Setup Assistant]
+    ↓
+Preview Generation → Format confirmation message
+    ↓
+User Confirmation → Parse approval/rejection
+    ↓
+Service Layer Execution → CRUD via existing services
+    ↓
+Event Emission → Audit logging
+    ↓
+Response Generation → Success message + details
+```
+
+**Key Files**:
+- `lib/services/CommandAgentService.ts` (main service)
+- `lib/ai/intent-classifier.ts` (intent detection)
+- `lib/ai/parameter-extractor.ts` (NLP parsing)
+- `lib/ai/smart-inference.ts` (fuzzy matching, inference)
+- `app/api/ai/command/route.ts` (API endpoint)
+- `app/ai-chat/command-tab.tsx` (UI integration)
+- `lib/validation/ai.ts` (command validation schemas)
+
+**Prerequisites**:
+- ✅ Financial Query Agent working
+- ✅ Setup Assistant working
+- ✅ Service layer complete
+- ✅ Event system operational
+
+**Risk Assessment**: LOW
+- All infrastructure exists
+- Architecture patterns proven
+- Can iterate based on feedback
+- Fallback to traditional UI always available
 
 ---
 
@@ -94,36 +272,54 @@ Examples:
 
 ---
 
-## 🎯 BACKLOG PRIORITIZATION ANALYSIS (2025-09-30)
+## 🎯 BACKLOG PRIORITIZATION ANALYSIS (2025-09-30 - UPDATED)
 
 ### Strategic Context
 **Current State**: Phase 1 AI agents complete (Setup Assistant + Financial Query)
 **Foundation Status**: Service layer ✅, Event system ✅, Validation ✅, Team isolation ✅
-**Next Major Milestone**: Platform differentiation & user retention
+**Next Major Milestone**: Complete AI agent trinity → Platform differentiation
 
-### High-Priority Items (Recommended Next Steps)
+### 🚨 **PRIORITY SHIFT: AI Command Agent Added**
 
-#### 🥇 Tier 1: Customer Journey & UX Optimization (3-4 weeks)
-**Why First**: Foundation for all other improvements
-- **Impact**: HIGH - Affects retention and adoption
-- **Risk**: LOW - Research-driven, iterative implementation
-- **Dependencies**: None (can start immediately)
-- **Rationale**: Before building new features, ensure current platform is intuitive
-- **ROI**: Every future feature benefits from better UX foundation
+**New Focus**: Complete the AI agent ecosystem BEFORE UX overhaul
+**Rationale**: Command Agent is the missing piece that makes AI truly useful for daily tasks
+
+### High-Priority Items (REVISED Recommended Next Steps)
+
+#### 🥇 Tier 1: AI Command Agent - Natural Language CRUD (2-3 weeks) ⭐ **NEW**
+**Why First**: Completes the AI trinity and delivers immediate value
+- **Impact**: VERY HIGH - Core product differentiator, daily use feature
+- **Risk**: LOW - All infrastructure exists (service layer, validation, events)
+- **Dependencies**: Financial Query ✅, Setup Assistant ✅, Service layer ✅
+- **Rationale**: "R$50 em gasolina ontem" → done. This is the killer feature.
+- **ROI**: Massive - reduces friction for every financial operation
+
+**The AI Trinity**:
+1. ✅ Setup Assistant = Batch import (onboarding)
+2. ✅ Financial Query = Read data (insights)
+3. **🆕 Command Agent = CRUD operations (daily tasks)** ← Missing piece!
+
+**Why This Changes Everything**:
+- Users can create expenses/receivables in seconds vs minutes
+- Natural language = no form friction
+- Smart inference = less data entry
+- Conversation context = progressive disclosure
+- Tool integration = unified AI experience
 
 **Deliverables**:
-1. User journey maps and pain point identification
-2. Prioritized UX improvement roadmap
-3. Navigation/information architecture redesign
-4. Quick wins implementation (low-hanging fruit)
+1. Intent classification & parameter extraction (Week 1)
+2. CRUD operations for all entities (Week 1)
+3. Smart inference & disambiguation (Week 2)
+4. Batch operations & document support (Week 2)
+5. UI integration & testing (Week 3)
 
 #### 🥈 Tier 2: AI Agent Error Handling Standardization (3-4 days)
-**Why Second**: Quality improvement for existing agents
-- **Impact**: MEDIUM - Better user experience for existing features
+**Why Second**: Quality improvement for all 3 agents
+- **Impact**: MEDIUM-HIGH - Better UX across entire AI system
 - **Risk**: LOW - Well-defined technical task
-- **Dependencies**: None
-- **Rationale**: Fix current agent UX before building more agents
-- **ROI**: Immediate improvement to Setup Assistant and Financial Query
+- **Dependencies**: Command Agent complete (benefit from lessons learned)
+- **Rationale**: Standardize error handling across Setup, Query, and Command agents
+- **ROI**: Immediate improvement to all existing AI features
 
 **Deliverables**:
 1. Error taxonomy and handling patterns
@@ -131,13 +327,33 @@ Examples:
 3. Retry logic with exponential backoff
 4. Error monitoring integration
 
-#### 🥉 Tier 3: Custom KPI Dashboard Builder (3-4 weeks)
-**Why Third**: Major product differentiator
+#### 🥉 Tier 3: Customer Journey & UX Optimization (3-4 weeks)
+**Why Third**: Foundation for future improvements (moved from #1)
+- **Impact**: HIGH - Affects retention and adoption
+- **Risk**: LOW - Research-driven, iterative implementation
+- **Dependencies**: Command Agent complete (understand new AI-first workflows)
+- **Rationale**: UX research AFTER Command Agent to understand new user patterns
+- **ROI**: Every future feature benefits from better UX foundation
+
+**Why Moved to #3**:
+- Command Agent changes user workflows significantly
+- Better to understand AI-first patterns before redesigning UX
+- Research should include how users interact with Command Agent
+- Can design for AI-first platform (ADR-003 vision)
+
+**Deliverables**:
+1. User journey maps (including AI agent usage patterns)
+2. Prioritized UX improvement roadmap
+3. AI-first navigation/information architecture
+4. Quick wins implementation
+
+#### 🏅 Tier 4: Custom KPI Dashboard Builder (3-4 weeks)
+**Why Fourth**: Advanced feature after core AI is complete
 - **Impact**: HIGH - Unique competitive advantage
 - **Risk**: MEDIUM - Complex technical implementation
-- **Dependencies**: UX research (Tier 1), Financial Query working ✅
-- **Rationale**: Leverage Financial Query agent for AI-powered dashboards
-- **ROI**: Potential game-changer for user engagement and stickiness
+- **Dependencies**: Command Agent ✅, Query Agent ✅, UX research insights
+- **Rationale**: Build on top of complete AI foundation
+- **ROI**: Potential game-changer for power users
 
 **Deliverables**:
 1. Dashboard layout engine
@@ -186,24 +402,41 @@ Examples:
 
 ---
 
-### 🎯 RECOMMENDED 3-MONTH ROADMAP
+### 🎯 RECOMMENDED 3-MONTH ROADMAP (REVISED)
 
-**Month 1 (Weeks 1-4)**: UX Foundation
-- ✅ Week 1: Customer journey research & user interviews
-- ✅ Week 2-3: UX improvements implementation (quick wins)
-- ✅ Week 4: AI agent error handling standardization
+**Month 1 (Weeks 1-3)**: AI Command Agent 🚀 **PRIORITY**
+- ✅ Week 1 (Days 1-3): Foundation & architecture (intent, confirmation, tools)
+- ✅ Week 1 (Days 4-7): Core CRUD operations (all 4 entities)
+- ✅ Week 2 (Days 1-4): Intelligence & context (disambiguation, inference)
+- ✅ Week 2 (Days 5-7): Multi-operation & document support
+- ✅ Week 3: UI integration, testing, polish
 
-**Month 2 (Weeks 5-8)**: Dashboard Innovation
-- ✅ Week 5-6: Custom KPI dashboard builder (core features)
-- ✅ Week 7-8: Dashboard builder (polish + export features)
-- Small wins: Receivable title enhancement (2 days)
+**Week 4**: Error Handling Standardization
+- ✅ Standardize errors across all 3 agents (Setup, Query, Command)
+- ✅ User-friendly messages, retry logic, monitoring
 
-**Month 3 (Weeks 9-12)**: Platform Optimization
-- ✅ Week 9-10: Dashboard tab optimization (based on research)
-- ✅ Week 11-12: Frontend infrastructure planning & foundation
-- Evaluate: Phase 2 AI agent timing based on user data
+**Month 2 (Weeks 5-8)**: UX Foundation & Research
+- ✅ Week 5: Customer journey mapping (with AI agent workflows)
+- ✅ Week 6-7: UX improvements (AI-first navigation, quick wins)
+- ✅ Week 8: Dashboard tab optimization (cash flow, profitability)
+- Small win: Receivable title enhancement (2 days)
 
-**Ongoing Throughout**: Monitor user feedback, iterate based on usage patterns
+**Month 3 (Weeks 9-12)**: Dashboard Innovation
+- ✅ Week 9-10: Custom KPI dashboard builder (core features)
+- ✅ Week 11-12: Dashboard polish + export features
+- Planning: Frontend infrastructure refactor strategy
+
+**Key Difference from Original Roadmap**:
+- **Command Agent moved to Month 1** (was not in original plan)
+- **UX research moved to Month 2** (was Month 1) - better timing after Command Agent
+- **Dashboard builder moved to Month 3** (was Month 2) - build on complete AI foundation
+
+**Strategic Rationale**:
+1. Complete AI trinity first (Setup → Query → Command)
+2. Understand AI-first user patterns before UX overhaul
+3. Build advanced features (dashboard) on solid AI foundation
+
+**Ongoing Throughout**: Monitor Command Agent usage patterns, collect user feedback on AI interactions
 
 ---
 
