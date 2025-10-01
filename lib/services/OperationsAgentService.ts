@@ -530,7 +530,7 @@ If the user references existing entities but doesn't provide enough info to iden
 - "Atualiza o último projeto" → needsQuery: true, queryRequest: "Get the most recent contract"
 - "R$400 do projeto ACME" → needsQuery: true, queryRequest: "Find contract for project ACME"
 
-Set `needsQuery: true` and provide a `queryRequest` in natural language.
+Set needsQuery to true and provide a queryRequest in natural language.
 
 # RESPONSE FORMAT
 
