@@ -21,7 +21,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { AISchemas } from '@/lib/validation/api'
-import { CommandAgentService, ConversationState } from '@/lib/services/CommandAgentService'
+import { OperationsAgentService, ConversationState } from '@/lib/services/OperationsAgentService'
 import { withTeamContext } from '@/lib/middleware/team-context'
 import { z } from 'zod'
 
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       const { command, conversationState, isConfirmation } = AISchemas.command.parse(body)
 
       // Create service instance with team context
-      const commandService = new CommandAgentService({ ...context, request })
+      const operationsService = new OperationsAgentService(context)
 
       // Handle confirmation vs new command
       let result
@@ -41,22 +41,22 @@ export async function POST(request: NextRequest) {
       if (isConfirmation && conversationState?.pendingOperation) {
         // User is confirming a pending operation
         const confirmed = parseConfirmation(command)
-        result = await commandService.confirmOperation(
+        result = await operationsService.confirmOperation(
           conversationState as ConversationState,
           confirmed
         )
       } else {
         // New command to process
-        result = await commandService.processCommand(
+        result = await operationsService.processCommand(
           command,
           conversationState as ConversationState | undefined
         )
       }
 
-      // Return result with appropriate status code
-      return NextResponse.json(result, {
-        status: result.success ? 200 : 400
-      })
+      console.log('[Command API] Result:', JSON.stringify(result, null, 2))
+
+      // Return result directly - withTeamContext will wrap it in NextResponse.json()
+      return result
 
     } catch (error) {
       // Validation errors

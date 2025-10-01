@@ -72,20 +72,22 @@ export const AISchemas = {
       messages: z.array(z.object({
         role: z.enum(['user', 'assistant']),
         content: z.string(),
-        timestamp: z.string().datetime()
-      })),
+        timestamp: z.union([z.string().datetime(), z.date()]).optional()
+      })).optional().default([]),
       pendingOperation: z.object({
         intent: z.any(),
         preview: z.string(),
         entityData: z.any(),
         confirmationRequired: z.boolean()
-      }).optional(),
+      }).optional().nullable(),
       lastEntities: z.object({
         contract: z.any().optional(),
         receivable: z.any().optional(),
         expense: z.any().optional(),
         recurringExpense: z.any().optional(),
-      }).optional()
+      }).optional(),
+      recentlyCreated: z.array(z.any()).optional(),
+      lastReferencedEntities: z.array(z.any()).optional()
     }).optional(),
     isConfirmation: z.boolean().optional(),
   }),
