@@ -25,7 +25,7 @@ export default function EnhancedAIChatPage() {
   const [loading, setLoading] = useState(false)
   const [files, setFiles] = useState<FileData[]>([])
   const [dragActive, setDragActive] = useState(false)
-  const [activeTab, setActiveTab] = useState<'chat' | 'setup' | 'command'>('chat')
+  const [activeTab, setActiveTab] = useState<'chat' | 'setup' | 'command' | 'unified'>('unified')
   const [conversationState, setConversationState] = useState<any>(null)
   const [pendingOperation, setPendingOperation] = useState<any>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -339,6 +339,151 @@ export default function EnhancedAIChatPage() {
     }
   }
 
+  // Unified AI Submit - Week 3 Phase 2
+  const handleUnifiedSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!message.trim() && files.length === 0) return
+
+    setLoading(true)
+
+    // Create user message
+    const userMessage: Message = {
+      role: 'user',
+      content: message,
+      files: files.length > 0 ? files : undefined,
+      timestamp: new Date()
+    }
+
+    const newMessages = [...messages, userMessage]
+    setMessages(newMessages)
+    setMessage('')
+    setFiles([]) // Clear files after sending
+
+    try {
+      console.log('🚀 Using Unified AI Router endpoint')
+      console.log('📊 Current conversation state:', conversationState)
+      console.log('⏳ Pending operation:', pendingOperation)
+
+      // Build conversation state - preserve server state, add new message
+      const currentState = conversationState || {
+        messages: [],
+        recentlyCreated: [],
+        metadata: {
+          startedAt: new Date().toISOString(),
+          lastUpdatedAt: new Date().toISOString(),
+          messageCount: 0,
+          entitiesCreated: 0
+        }
+      }
+
+      // Add new user message to the conversation history
+      const updatedMessages = [
+        ...(currentState.messages || []),
+        {
+          role: userMessage.role,
+          content: userMessage.content,
+          timestamp: userMessage.timestamp.toISOString()
+        }
+      ].slice(-10) // Keep last 10 messages
+
+      const requestBody = {
+        message: userMessage.content,
+        files: files.map(f => ({
+          name: f.name,
+          type: f.type,
+          base64: f.base64,
+          size: f.size
+        })),
+        conversationState: {
+          ...currentState, // Preserve recentlyCreated, metadata, pendingOperation
+          messages: updatedMessages,
+          pendingOperation: pendingOperation // Pass pending operation explicitly
+        }
+      }
+
+      console.log('📤 Sending request with state:', {
+        messageCount: updatedMessages.length,
+        hasPendingOp: !!pendingOperation,
+        recentlyCreated: currentState.recentlyCreated?.length || 0
+      })
+
+      const response = await fetch('/api/ai/unified', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody)
+      })
+
+      console.log('Unified AI response status:', response.status)
+
+      if (response.ok) {
+        const result = await response.json()
+        console.log('✅ Unified AI response:', {
+          agentUsed: result.agentUsed,
+          hasConversationState: !!result.conversationState,
+          hasPendingOp: !!result.pendingOperation,
+          responseLength: result.response?.length
+        })
+
+        // CRITICAL: Update conversation state from response
+        if (result.conversationState) {
+          console.log('📝 Updating conversation state:', {
+            messages: result.conversationState.messages?.length,
+            recentlyCreated: result.conversationState.recentlyCreated?.length,
+            hasPendingOp: !!result.conversationState.pendingOperation
+          })
+          setConversationState(result.conversationState)
+        }
+
+        // CRITICAL: Update pending operation
+        if (result.pendingOperation) {
+          console.log('⏳ Setting pending operation:', result.pendingOperation.operation)
+          setPendingOperation(result.pendingOperation)
+        } else if (result.conversationState?.pendingOperation) {
+          console.log('⏳ Setting pending operation from state:', result.conversationState.pendingOperation.operation)
+          setPendingOperation(result.conversationState.pendingOperation)
+        } else {
+          console.log('✅ Clearing pending operation')
+          setPendingOperation(null)
+        }
+
+        const assistantMessage: Message = {
+          role: 'assistant',
+          content: result.response,
+          metadata: {
+            agentUsed: result.agentUsed,
+            ...result
+          },
+          timestamp: new Date()
+        }
+
+        setMessages([...newMessages, assistantMessage])
+      } else {
+        const error = await response.json()
+        console.error('Unified AI error:', error)
+
+        const errorMessage: Message = {
+          role: 'assistant',
+          content: `❌ Erro: ${error.error || 'Falha ao processar solicitação'}`,
+          timestamp: new Date()
+        }
+
+        setMessages([...newMessages, errorMessage])
+      }
+    } catch (error) {
+      console.error('Unified AI submission error:', error)
+
+      const errorMessage: Message = {
+        role: 'assistant',
+        content: '❌ Erro de comunicação. Por favor, tente novamente.',
+        timestamp: new Date()
+      }
+
+      setMessages([...newMessages, errorMessage])
+    } finally {
+      setLoading(false)
+    }
+  }
+
   // Quick action buttons
   const handleQuickAction = (action: string) => {
     setMessage(action)
@@ -639,6 +784,16 @@ export default function EnhancedAIChatPage() {
         <div className="mb-6 border-b border-neutral-300">
           <nav className="flex space-x-8">
             <button
+              onClick={() => setActiveTab('unified')}
+              className={`py-3 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'unified'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300'
+              }`}
+            >
+              🚀 AI Unificado
+            </button>
+            <button
               onClick={() => setActiveTab('chat')}
               className={`py-3 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'chat'
@@ -672,7 +827,158 @@ export default function EnhancedAIChatPage() {
         </div>
 
         {/* Tab Content */}
-        {activeTab === 'setup' ? (
+        {activeTab === 'unified' ? (
+          <div>
+            {/* Unified AI Tab - All-in-one AI Assistant */}
+            <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg">
+              <h3 className="text-sm font-bold text-blue-900 mb-3">🚀 AI Unificado - Assistente Inteligente</h3>
+              <p className="text-xs text-blue-700 mb-3">
+                Envie qualquer tipo de mensagem! O AI Unificado detecta automaticamente o que você precisa e roteia para o agente certo:
+              </p>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="flex items-start">
+                  <span className="mr-2">💬</span>
+                  <span className="text-blue-700"><strong>Perguntas</strong> → Query Agent</span>
+                </div>
+                <div className="flex items-start">
+                  <span className="mr-2">🎯</span>
+                  <span className="text-purple-700"><strong>Comandos CRUD</strong> → Operations Agent</span>
+                </div>
+                <div className="flex items-start">
+                  <span className="mr-2">📄</span>
+                  <span className="text-green-700"><strong>Documentos</strong> → Setup Assistant</span>
+                </div>
+                <div className="flex items-start">
+                  <span className="mr-2">🤝</span>
+                  <span className="text-orange-700"><strong>Geral</strong> → Router direto</span>
+                </div>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button
+                  onClick={() => setMessage('Quanto gastei esse mês?')}
+                  className="text-xs bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors"
+                >
+                  💬 Pergunta
+                </button>
+                <button
+                  onClick={() => setMessage('R$50 em gasolina ontem')}
+                  className="text-xs bg-purple-600 text-white px-3 py-1 rounded hover:bg-purple-700 transition-colors"
+                >
+                  🎯 Comando
+                </button>
+                <button
+                  onClick={() => setMessage('Oi, preciso de ajuda')}
+                  className="text-xs bg-orange-600 text-white px-3 py-1 rounded hover:bg-orange-700 transition-colors"
+                >
+                  🤝 Geral
+                </button>
+              </div>
+            </div>
+
+            {/* Chat Messages */}
+            <div className="mb-6 space-y-4 max-h-96 overflow-y-auto bg-white border-2 border-neutral-300 rounded-lg p-4">
+              {messages.length === 0 ? (
+                <div className="text-center text-neutral-600 py-8">
+                  <p className="text-lg mb-4">🚀 AI Unificado</p>
+                  <p className="text-sm">
+                    Converse naturalmente! O sistema detecta automaticamente o que você precisa.
+                  </p>
+                  <p className="text-xs text-neutral-500 mt-2">
+                    Experimente: "Quanto gastei esse mês?" ou "R$50 em gasolina ontem"
+                  </p>
+                </div>
+              ) : (
+                messages.map((msg, index) => (
+                  <div
+                    key={index}
+                    className={`p-4 rounded-lg border ${
+                      msg.role === 'user'
+                        ? 'bg-blue-50 border-blue-200 ml-8'
+                        : 'bg-neutral-50 border-neutral-300 mr-8'
+                    }`}
+                  >
+                    <div className="text-sm whitespace-pre-wrap">{msg.content}</div>
+                    {msg.metadata?.agentUsed && (
+                      <div className="mt-2 flex items-center gap-2">
+                        <span className={`text-xs px-2 py-1 rounded ${
+                          msg.metadata.agentUsed === 'query' ? 'bg-blue-100 text-blue-700' :
+                          msg.metadata.agentUsed === 'operations' ? 'bg-purple-100 text-purple-700' :
+                          msg.metadata.agentUsed === 'setup' ? 'bg-green-100 text-green-700' :
+                          'bg-orange-100 text-orange-700'
+                        }`}>
+                          {msg.metadata.agentUsed === 'query' ? '💬 Query' :
+                           msg.metadata.agentUsed === 'operations' ? '🎯 Operations' :
+                           msg.metadata.agentUsed === 'setup' ? '📄 Setup' :
+                           '🤝 Router'}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+              {loading && (
+                <div className="p-4 rounded-lg bg-neutral-50 border border-neutral-300 mr-8">
+                  <div className="flex items-center space-x-2">
+                    <div className="animate-spin h-4 w-4 border-2 border-blue-600 rounded-full border-t-transparent"></div>
+                    <span className="text-sm text-neutral-600">Analisando e roteando...</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Pending Operation Alert */}
+            {pendingOperation && (
+              <div className="mb-4 p-4 bg-yellow-50 border-2 border-yellow-400 rounded-lg">
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl">⏳</span>
+                  <div className="flex-1">
+                    <h4 className="font-bold text-yellow-900 mb-1">Operação Aguardando Confirmação</h4>
+                    <p className="text-sm text-yellow-800 mb-2">
+                      {pendingOperation.operation === 'create' && 'Criação pendente'}
+                      {pendingOperation.operation === 'update' && 'Atualização pendente'}
+                      {pendingOperation.operation === 'delete' && 'Deleção pendente'}
+                    </p>
+                    <p className="text-xs text-yellow-700">
+                      Responda com "sim", "confirma" ou "não", "cancela"
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Input Form - Unified */}
+            <div className="bg-white border-2 border-neutral-300 rounded-lg p-4">
+              <form onSubmit={handleUnifiedSubmit} className="flex gap-2">
+                <input
+                  type="text"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder={pendingOperation ? "Digite 'sim' para confirmar ou 'não' para cancelar..." : "Digite qualquer coisa... perguntas, comandos, ou apenas converse"}
+                  className={`flex-1 px-4 py-2 border ${pendingOperation ? 'border-yellow-400' : 'border-neutral-300'} rounded-lg focus:outline-none focus:ring-2 ${pendingOperation ? 'focus:ring-yellow-500' : 'focus:ring-blue-500'}`}
+                  disabled={loading}
+                />
+                <button
+                  type="submit"
+                  disabled={!message.trim() || loading}
+                  className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 disabled:bg-neutral-300 disabled:cursor-not-allowed transition-colors"
+                >
+                  {loading ? 'Processando...' : pendingOperation ? 'Responder' : 'Enviar'}
+                </button>
+              </form>
+              {conversationState && (
+                <div className="mt-2 text-xs text-neutral-500">
+                  💬 {conversationState.messages?.length || 0} mensagens na conversa
+                  {conversationState.recentlyCreated?.length > 0 &&
+                    ` • ✨ ${conversationState.recentlyCreated.length} entidade(s) criada(s)`
+                  }
+                  {pendingOperation &&
+                    ` • ⏳ Operação pendente`
+                  }
+                </div>
+              )}
+            </div>
+          </div>
+        ) : activeTab === 'setup' ? (
           <MultiFileSetupAssistant />
         ) : activeTab === 'command' ? (
           <div>
