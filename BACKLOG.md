@@ -1,7 +1,7 @@
 # ArqCashflow Development Backlog
 
 **Purpose**: Central source of truth for project priorities and development status
-**Last Updated**: 2025-09-30 (Event System marked complete, priorities reassessed)
+**Last Updated**: 2025-09-30 (Financial Query fix deployed, backlog prioritization added)
 **Update Frequency**: Every LLM session MUST update this document when completing tasks or discovering new requirements
 
 ## 🚨 CRITICAL INSTRUCTIONS FOR LLM AGENTS
@@ -94,8 +94,219 @@ Examples:
 
 ---
 
+## 🎯 BACKLOG PRIORITIZATION ANALYSIS (2025-09-30)
+
+### Strategic Context
+**Current State**: Phase 1 AI agents complete (Setup Assistant + Financial Query)
+**Foundation Status**: Service layer ✅, Event system ✅, Validation ✅, Team isolation ✅
+**Next Major Milestone**: Platform differentiation & user retention
+
+### High-Priority Items (Recommended Next Steps)
+
+#### 🥇 Tier 1: Customer Journey & UX Optimization (3-4 weeks)
+**Why First**: Foundation for all other improvements
+- **Impact**: HIGH - Affects retention and adoption
+- **Risk**: LOW - Research-driven, iterative implementation
+- **Dependencies**: None (can start immediately)
+- **Rationale**: Before building new features, ensure current platform is intuitive
+- **ROI**: Every future feature benefits from better UX foundation
+
+**Deliverables**:
+1. User journey maps and pain point identification
+2. Prioritized UX improvement roadmap
+3. Navigation/information architecture redesign
+4. Quick wins implementation (low-hanging fruit)
+
+#### 🥈 Tier 2: AI Agent Error Handling Standardization (3-4 days)
+**Why Second**: Quality improvement for existing agents
+- **Impact**: MEDIUM - Better user experience for existing features
+- **Risk**: LOW - Well-defined technical task
+- **Dependencies**: None
+- **Rationale**: Fix current agent UX before building more agents
+- **ROI**: Immediate improvement to Setup Assistant and Financial Query
+
+**Deliverables**:
+1. Error taxonomy and handling patterns
+2. User-friendly error messages (PT/EN)
+3. Retry logic with exponential backoff
+4. Error monitoring integration
+
+#### 🥉 Tier 3: Custom KPI Dashboard Builder (3-4 weeks)
+**Why Third**: Major product differentiator
+- **Impact**: HIGH - Unique competitive advantage
+- **Risk**: MEDIUM - Complex technical implementation
+- **Dependencies**: UX research (Tier 1), Financial Query working ✅
+- **Rationale**: Leverage Financial Query agent for AI-powered dashboards
+- **ROI**: Potential game-changer for user engagement and stickiness
+
+**Deliverables**:
+1. Dashboard layout engine
+2. AI agent for chart generation
+3. User preference persistence
+4. Export functionality
+
+### Medium-Priority Items (2-6 weeks each)
+
+**Dashboard Tab Optimization** (2-3 weeks)
+- Can run parallel with UX research from Tier 1
+- Depends on user research insights
+- Quick wins vs full redesign tradeoff
+
+**Frontend Infrastructure Refactor** (4-6 weeks)
+- Foundation for personalization features
+- Should follow dashboard builder (learn from implementation)
+- Major architectural decisions required
+
+**Receivable Title Enhancement** (2-3 days)
+- Small UX improvement
+- Can be quick win during larger initiatives
+- Low risk, medium impact
+
+### Low-Priority Items (Nice to Have)
+
+**Setup Assistant Improvements**:
+- Hybrid batch processing (performance optimization)
+- Real-time progress (WebSocket/SSE upgrade)
+- User review before creation (workflow complexity)
+- Cross-file duplicate detection (depends on user patterns)
+
+**System Message Standardization** (1 week)
+- UX polish rather than core functionality
+- Can be part of frontend refactor
+
+**Phase 2 AI Agents**:
+- Financial Audit Agent (5-7 days) - wait for more user data
+- Business Insights Agent (2-3 weeks) - needs mature dataset
+
+### Architecture & Research Items
+
+**CUID to UUID Migration** - Needs analysis and decision
+**Frontend Modularization** - Part of infrastructure refactor
+**Latency Optimization** - Profile first, optimize based on data
+
+---
+
+### 🎯 RECOMMENDED 3-MONTH ROADMAP
+
+**Month 1 (Weeks 1-4)**: UX Foundation
+- ✅ Week 1: Customer journey research & user interviews
+- ✅ Week 2-3: UX improvements implementation (quick wins)
+- ✅ Week 4: AI agent error handling standardization
+
+**Month 2 (Weeks 5-8)**: Dashboard Innovation
+- ✅ Week 5-6: Custom KPI dashboard builder (core features)
+- ✅ Week 7-8: Dashboard builder (polish + export features)
+- Small wins: Receivable title enhancement (2 days)
+
+**Month 3 (Weeks 9-12)**: Platform Optimization
+- ✅ Week 9-10: Dashboard tab optimization (based on research)
+- ✅ Week 11-12: Frontend infrastructure planning & foundation
+- Evaluate: Phase 2 AI agent timing based on user data
+
+**Ongoing Throughout**: Monitor user feedback, iterate based on usage patterns
+
+---
+
 ### 🗂️ BACKLOG (Future Work)
 *Important but not immediate. Do not start unless specifically requested.*
+
+#### AI & Automation Improvements
+
+**1. AI Agent Error Handling Standardization**
+- **Problem**: Inconsistent error messages when AI agents encounter errors, poor user experience
+- **Context**: Setup Assistant, Financial Query Agent, and future agents need unified error handling
+- **Solution**: Create standardized error handling patterns for all AI agents
+- **Scope**:
+  - Define error categories (validation, API limits, parsing, network, etc.)
+  - Create user-friendly error messages in Portuguese/English
+  - Implement retry logic with exponential backoff
+  - Add error logging and monitoring integration
+  - Provide actionable guidance ("Try rephrasing" vs "Contact support")
+- **Priority**: **MEDIUM** (Quality improvement)
+- **Effort**: 3-4 days
+- **Added**: 2025-09-30 from user feedback on agent reliability
+
+#### Platform Epics (Large Multi-Week Initiatives)
+
+**2. Custom KPI Monitoring Dashboard Builder**
+- **Problem**: Users have different KPIs they care about, one-size-fits-all dashboard doesn't work
+- **Vision**: AI-powered custom dashboard where users choose KPIs and our agent builds the visualization
+- **Capabilities**:
+  - Natural language KPI selection: "Show me monthly revenue vs expenses"
+  - AI-generated chart configurations based on user intent
+  - Drag-and-drop dashboard customization
+  - Save and share custom dashboard layouts
+  - Export capabilities (PDF, Excel, image)
+- **Technical Scope**:
+  - Chart library integration (Recharts, Chart.js, or D3.js)
+  - Dashboard layout engine (React Grid Layout)
+  - AI agent for chart configuration generation
+  - Dashboard state persistence (per user)
+- **Prerequisites**: Financial Query Agent working (✅), UI framework selected
+- **Priority**: **HIGH** (Major product differentiator)
+- **Effort**: 3-4 weeks
+- **Added**: 2025-09-30 from product vision
+
+**3. Dashboard Tab Optimization & Relevance Review**
+- **Problem**: Current dashboard may not show the most relevant information for architects
+- **Goal**: Ensure dashboard provides maximum value at a glance
+- **Research Needed**:
+  - User research: What do architects check daily/weekly?
+  - Analytics: Which dashboard widgets are actually used?
+  - Competitor analysis: Best practices from similar tools
+- **Potential Improvements**:
+  - Cash flow forecasting widget (next 30/60/90 days)
+  - Project profitability at-a-glance
+  - Overdue receivables alerts
+  - Budget vs actual comparisons
+  - Quick actions (add expense, mark paid)
+- **Priority**: **MEDIUM** (UX improvement)
+- **Effort**: 2-3 weeks (research + implementation)
+- **Added**: 2025-09-30 from product strategy
+
+**4. Frontend Infrastructure Refactor: Personalization & Scalability**
+- **Problem**: Current frontend not optimized for user-specific customization
+- **Vision**: Each user can personalize what appears where on each page
+- **Technical Goals**:
+  - Component library standardization (shadcn/ui, Radix, or custom)
+  - Layout system for drag-and-drop page customization
+  - User preferences storage and sync
+  - Reusable form patterns (reduce duplication)
+  - Performance optimization (code splitting, lazy loading)
+  - Mobile-first responsive patterns
+- **Architectural Decisions Needed**:
+  - State management strategy (Zustand, Jotai, or React Context)
+  - Component composition patterns
+  - Theme system for personalization
+  - Layout persistence strategy
+- **Prerequisites**: Dashboard and KPI builder requirements defined
+- **Priority**: **MEDIUM** (Foundation for future features)
+- **Effort**: 4-6 weeks
+- **Added**: 2025-09-30 from scalability planning
+
+**5. Customer Journey & UX Optimization**
+- **Problem**: User flow may not be intuitive, need holistic UX review
+- **Goal**: Design platform to be more intuitive and user-friendly
+- **Scope**:
+  - User journey mapping (from registration to daily use)
+  - Onboarding flow optimization (reduce friction)
+  - Navigation structure review (information architecture)
+  - Task flow analysis (common user workflows)
+  - Accessibility audit (WCAG compliance)
+  - Mobile experience optimization
+- **Research Methods**:
+  - User interviews with current architects
+  - Usability testing sessions
+  - Analytics review (drop-off points, time-on-page)
+  - Competitor UX teardowns
+- **Deliverables**:
+  - Updated user journey maps
+  - UX improvement roadmap
+  - Design system documentation
+  - Accessibility compliance report
+- **Priority**: **HIGH** (Retention and adoption)
+- **Effort**: 3-4 weeks (research + design + implementation)
+- **Added**: 2025-09-30 from product strategy
 
 ---
 
