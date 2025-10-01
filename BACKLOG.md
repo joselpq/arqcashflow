@@ -28,6 +28,58 @@ This backlog document **DOES NOT** replace other documentation update requiremen
 
 ## 📊 Status Categories
 
+### Category Definitions
+
+**🔄 DOING (Currently In Progress)**
+- Work that is actively being implemented RIGHT NOW
+- Work that has been explicitly decided as the immediate next thing to implement
+- Can persist between sessions if work is incomplete
+- Should typically have only 1-2 items maximum
+- ❌ **DO NOT** add items here unless you're actively working on them
+
+**📋 TO DO (Immediate Priorities - Decided Work)**
+- Tasks that have been explicitly decided and prioritized to be done soon
+- Ready to implement with clear scope and requirements
+- These are commitments, not possibilities
+- Start here unless directed otherwise
+- ❌ **DO NOT** add speculative or "nice to have" items here
+
+**🗂️ BACKLOG (Future Work - Not Yet Prioritized)**
+- Ideas, enhancements, and technical debt that MAY be done later
+- No commitment to implementation
+- Needs prioritization discussion before moving to TO DO
+- Can include long-term architectural improvements
+- Can include exploratory work or experiments
+- ✅ **DO ADD** discovered improvements or ideas here
+
+**✅ DONE (Completed Items)**
+- Completed work for reference
+- Newest first
+- Permanent record of what was accomplished
+
+### Task Title Guidelines
+
+**❌ BAD** - Vague, unclear scope:
+- "Phase 1"
+- "Improve performance"
+- "Add features"
+- "Fix bugs"
+
+**✅ GOOD** - Specific, clear scope:
+- "Phase 1A: Setup Assistant extraction accuracy with sub-batch splitting"
+- "Phase 1B: Financial Query Agent with text-to-SQL approach"
+- "Excel token optimization for multi-sheet Setup Assistant processing"
+- "Advanced date filtering for recurring expenses (before/after/month/year)"
+
+**Title Format**: `[Feature/Area]: [Specific what] with [Key implementation detail]`
+
+Examples:
+- "Dashboard: Real-time cash flow chart with WebSocket updates"
+- "Contracts API: Bulk import via CSV with validation and rollback"
+- "Event System: Phase 2 AI agent coordination handlers"
+
+## 📊 Status Categories (Legacy - DO NOT USE BELOW SECTIONS)
+
 ### 🔄 DOING (Currently In Progress)
 *Active work with real-time progress tracking. Can persist between sessions if work is incomplete.*
 
@@ -44,6 +96,77 @@ This backlog document **DOES NOT** replace other documentation update requiremen
 
 ### 🗂️ BACKLOG (Future Work)
 *Important but not immediate. Do not start unless specifically requested.*
+
+---
+
+## 📋 ADR Implementation Status (All 11 ADRs)
+
+### ✅ COMPLETED ADRs (Fully Implemented)
+
+1. **ADR-001: Precision Bug Investigation** ✅ RESOLVED (Sept 2024)
+2. **ADR-002: Claude API Migration** ✅ IMPLEMENTED (Sept 2024)
+3. **ADR-004: No-Regrets Architecture Improvements** ✅ COMPLETE
+4. **ADR-005: Team Context Middleware** ✅ FULLY MIGRATED
+5. **ADR-006: Service Layer Migration** ✅ ALL PHASES COMPLETE (Sept 25)
+6. **ADR-007: Event System Foundation** ✅ COMPLETE (Sept 26)
+7. **ADR-008: AI Agent Strategy - Phase 1** ✅ COMPLETE (Sept 30)
+8. **ADR-009: Advanced Date Filtering** ✅ IMPLEMENTED (Sept 26)
+9. **ADR-010: Excel Token Optimization** ✅ IMPLEMENTED (Sept 29)
+10. **ADR-011: Extraction Accuracy Enhancement** ✅ COMPLETE (Sept 30)
+
+### 🔮 PENDING ADRs
+
+11. **ADR-003: Strategic Architecture Evolution** 🔮 LONG-TERM VISION
+    - Stage 1: Dual-Interface Architecture (6-12 months)
+    - Stage 2: AI-First Platform (12-24 months)
+
+---
+
+### Pending ADR Items (From Completed ADRs)
+
+#### AI Agent Strategy: Phase 2 Agents (ADR-008)
+
+**1. AI Financial Audit Agent: Proactive error detection**
+- **Problem**: Manual error checking is time-consuming and reactive
+- **Solution**: AI agent that proactively identifies errors, inconsistencies, and anomalies
+- **Capabilities**:
+  - Data validation (typos, impossible dates, mismatched amounts)
+  - Pattern analysis vs historical norms
+  - Relationship verification (receivables ↔ contracts)
+  - Anomaly detection (unusual expenses, payment patterns)
+- **Prerequisites**: Phase 1 complete (✅), event system (✅)
+- **Effort**: 5-7 days
+- **Priority**: Medium (valuable quality improvement)
+
+**2. Business Insights Agent: Strategic CFO intelligence**
+- **Problem**: Users need strategic guidance, not just data access
+- **Solution**: AI agent providing CFO-level strategic intelligence
+- **Capabilities**:
+  - Trend analysis (contract size, client profitability, patterns)
+  - Predictive modeling (cash flow forecasts, revenue predictions)
+  - Strategic recommendations (pricing, acquisition costs)
+  - Competitive benchmarking
+- **Prerequisites**: Phase 1 complete (✅), significant data history needed
+- **Effort**: 2-3 weeks
+- **Priority**: Low (needs mature dataset)
+
+#### Strategic Architecture Evolution (ADR-003)
+
+**Stage 1: Dual-Interface Architecture (6-12 month vision)**
+- **Goal**: User choice between traditional UI and AI interaction
+- **Status**: Foundation complete (service layer ✅, events ✅, Phase 1 AI ✅)
+- **Remaining Work**:
+  - AI command interface for all CRUD operations
+  - User preference learning and analytics
+  - Incremental UI-to-AI migration
+- **Priority**: Strategic vision (not immediate work)
+
+**Stage 2: AI-First Platform (12-24 month vision)**
+- **Goal**: Minimal UI, conversational interface primary
+- **Status**: Long-term vision, requires Stage 1 + user data
+- **Priority**: Future vision (planning only)
+
+---
 
 #### User Experience Improvements
 
