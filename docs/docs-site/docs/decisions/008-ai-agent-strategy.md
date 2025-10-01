@@ -27,7 +27,7 @@ dependencies: ["claude-api", "next.js", "service-layer", "event-system", "team-c
 - API-driven integration with platform services
 - Progressive disclosure of complexity
 
-**Implementation Status (2025-09-30) - PHASE 1B COMPLETE**:
+**Implementation Status (2025-09-30) - AI TRINITY IN PROGRESS**:
 - ✅ **Phase 1A (Setup Assistant)**: 100% extraction accuracy achieved with sub-batch splitting
 - ✅ **Phase 1B (Financial Query Agent)**: Complete - Text-to-SQL approach with Claude
   - Natural language to PostgreSQL query generation
@@ -36,7 +36,14 @@ dependencies: ["claude-api", "next.js", "service-layer", "event-system", "team-c
   - Portuguese/English bilingual support
   - Conversation context management
   - UI integrated: Chat tab (💬 Chat Inteligente)
-- 🚀 Status: Phase 1 agents operational, Phase 2 planning
+- 🔄 **Phase 1C (AI Command Agent)**: Phases 1 & 2 Complete (Core CRUD Functional)
+  - Intent classification + smart inference operational
+  - CREATE/UPDATE/DELETE for all 4 entity types
+  - Natural language commands: "R$50 em gasolina ontem" → done
+  - Fuzzy matching, date/currency parsing, category inference
+  - Confirmation workflow with Brazilian format support
+  - Phases 3-5 pending: Context enhancement + UI integration
+- 🚀 Status: AI Trinity core functionality complete, UI integration next
 
 ## 🎯 **Strategic Overview (Updated 2025-09-30)**
 
@@ -180,7 +187,119 @@ Agent: "Dos 8 contratos concluídos, você recebeu R$ 652.000,00 (95%).
 - Uses ServiceContext pattern for team isolation
 - Validates input with AISchemas.query from validation layer
 
-#### **3. Financial Audit Agent**
+#### **3. AI Command Agent** 🔄 **IN PROGRESS (2025-09-30)**
+**"The Natural Language CRUD Expert"**
+
+**Status**: **Phases 1 & 2 Complete** - Core CRUD operations functional
+**Implementation**: `lib/services/CommandAgentService.ts` + `/api/ai/command`
+**Progress**: Foundation ✅, CRUD ✅, UI Integration pending
+
+**Purpose**: Execute CRUD operations through natural language commands
+**Wow Factor**: "R$50 em gasolina ontem" → Expense created in 5 seconds
+
+**The AI Trinity Complete**:
+1. ✅ **Setup Assistant** = Batch import (onboarding)
+2. ✅ **Financial Query** = Read data (insights)
+3. 🔄 **Command Agent** = CRUD operations (daily tasks)
+
+**Technical Architecture**:
+- **Intent Classification**: Claude identifies operation (create/update/delete) + entity type
+- **Smart Inference**: Fills missing data (dates, categories, fuzzy project matching)
+- **Confirmation Workflow**: Preview → User approval → Execute via service layer
+- **Conversation State**: Retains context for follow-up commands
+- **Tool Integration**: Can call Query Agent for lookups, Setup Assistant for documents
+
+**Capabilities**:
+- **CREATE**: All 4 entity types (contracts, receivables, expenses, recurring)
+- **UPDATE**: Fuzzy entity matching + partial field updates
+- **DELETE**: Entity confirmation + safe deletion
+- **Smart Inference**:
+  - Date parsing: "ontem", "amanhã", "próxima semana" → ISO dates
+  - Category inference: "gasolina" → transport, "almoço" → meals
+  - Currency parsing: "R$50", "50 reais", "cinquenta" → 50.00
+  - Fuzzy matching: "Mari" finds "Residência Mariana" (Levenshtein distance)
+- **Ambiguity Resolution**: Multiple matches → clarification questions
+- **Portuguese/English**: Bilingual command understanding
+
+**Tools Available**:
+- ContractService, ReceivableService, ExpenseService, RecurringExpenseService
+- FinancialQueryService (for data lookups)
+- Smart inference library (date/currency parsing, fuzzy matching)
+- Team-scoped Prisma for all CRUD operations
+
+**Context Provided**:
+- Full database schema for all financial entities
+- Team ID for data isolation
+- Current date for temporal parsing
+- Conversation history for context retention
+
+**Interaction Pattern**:
+```
+User: "R$50 em gasolina ontem"
+Agent: "Vou criar uma despesa:
+        • Descrição: gasolina
+        • Valor: R$ 50,00
+        • Data: 29/09/2025
+        • Categoria: Transporte
+        Confirma?"
+User: "sim"
+Agent: "✅ Despesa criada com sucesso!"
+
+User: "R$400 de RT do projeto Mari para receber amanhã"
+Agent: "Encontrei projeto 'Residência Mariana' via fuzzy match.
+        Vou criar um recebível:
+        • Valor: R$ 400,00
+        • Data esperada: 01/10/2025
+        • Descrição: RT
+        • Vinculado a projeto
+        Confirma?"
+User: "ok"
+Agent: "✅ Recebível criado com sucesso!"
+```
+
+**Implementation Status (2025-09-30)**:
+- ✅ **Phase 1**: Foundation & Architecture (Commit: 640de8b)
+  - Intent classification with Claude Sonnet 4
+  - Conversation state management
+  - Confirmation workflow system
+  - API route `/api/ai/command` with team context
+  - Validation schemas (AISchemas.command)
+
+- ✅ **Phase 2**: Core CRUD Operations (Commit: 2c9aac9)
+  - Smart inference library (330 lines) - dates, categories, currency, fuzzy matching
+  - CREATE operations for all 4 entity types
+  - UPDATE with fuzzy entity lookup
+  - DELETE with confirmation workflow
+  - Brazilian format support (R$ X.XXX,XX, DD/MM/YYYY)
+
+- 🔄 **Phase 3**: Intelligence & Context (In Progress)
+  - Enhanced conversation context management
+  - Reference resolution ("o primeiro", "esse contrato")
+  - Follow-up operations on same entity
+
+- ⏳ **Phase 4**: Multi-Operation & Documents (Planned)
+  - Batch operations: "Cria 3 recebíveis de R$1000..."
+  - Setup Assistant integration for document uploads
+
+- ⏳ **Phase 5**: UI Integration (Planned)
+  - New tab "💬 Comandos" under Assistente IA
+  - Chat interface with conversation history
+  - Operation history with undo capability
+
+**Implementation Notes**:
+- Does NOT extend BaseService (orchestrates other services)
+- Uses ServiceContext pattern like FinancialQueryService
+- Team isolation enforced via service layer
+- Audit logging automatic via existing services
+- All CRUD operations validated and secure
+
+**Key Files**:
+- `lib/services/CommandAgentService.ts` (1,065 lines)
+- `lib/ai/smart-inference.ts` (330 lines)
+- `app/api/ai/command/route.ts` (128 lines)
+- `lib/validation/api.ts` (AISchemas.command)
+
+#### **4. Financial Audit Agent**
 **"The Quality Control Specialist"**
 
 **Purpose**: Proactively identify errors, inconsistencies, and anomalies
