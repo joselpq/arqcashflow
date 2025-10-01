@@ -65,6 +65,31 @@ export const AISchemas = {
     })).optional(),
   }),
 
+  // AI Command Agent request
+  command: z.object({
+    command: z.string().min(1, 'Command is required').max(500, 'Command is too long'),
+    conversationState: z.object({
+      messages: z.array(z.object({
+        role: z.enum(['user', 'assistant']),
+        content: z.string(),
+        timestamp: z.string().datetime()
+      })),
+      pendingOperation: z.object({
+        intent: z.any(),
+        preview: z.string(),
+        entityData: z.any(),
+        confirmationRequired: z.boolean()
+      }).optional(),
+      lastEntities: z.object({
+        contract: z.any().optional(),
+        receivable: z.any().optional(),
+        expense: z.any().optional(),
+        recurringExpense: z.any().optional(),
+      }).optional()
+    }).optional(),
+    isConfirmation: z.boolean().optional(),
+  }),
+
   // AI response schema
   response: z.object({
     content: z.string(),
