@@ -5,7 +5,7 @@ audience: ["developer", "agent", "product"]
 contexts: ["ai-agents", "product-strategy", "financial-intelligence", "user-experience", "automation", "small-business", "professional-services", "document-processing", "business-insights"]
 complexity: "advanced"
 last_updated: "2025-10-01"
-version: "1.2"
+version: "1.3"
 agent_roles: ["ai-architect", "product-strategist", "business-analyst"]
 related:
   - decisions/003-strategic-architecture-evolution.md
@@ -27,7 +27,7 @@ dependencies: ["claude-api", "next.js", "service-layer", "event-system", "team-c
 - API-driven integration with platform services
 - Progressive disclosure of complexity
 
-**Implementation Status (2025-10-01) - PHASE 2 UNIFIED AI ROUTER IN PROGRESS**:
+**Implementation Status (2025-10-01) - PHASE 2 WEEK 3 COMPLETE**:
 - ✅ **Phase 1A (Setup Assistant)**: 100% extraction accuracy achieved with sub-batch splitting
 - ✅ **Phase 1B (Financial Query Agent)**: Complete - Text-to-SQL approach with Claude
   - Natural language to PostgreSQL query generation
@@ -36,18 +36,30 @@ dependencies: ["claude-api", "next.js", "service-layer", "event-system", "team-c
   - Portuguese/English bilingual support
   - Conversation context management
   - UI integrated: Chat tab (💬 Chat Inteligente)
-- 🔄 **Phase 1C (Operations Agent)**: Renamed from "Command Agent", enhancement in progress
+- ✅ **Phase 1C (Operations Agent)**: ADR-008 compliant, production ready
+  - Renamed from "Command Agent" for clarity
   - Intent classification + smart inference operational
   - CREATE/UPDATE/DELETE for all 4 entity types
   - Natural language commands: "R$50 em gasolina ontem" → done
-  - Fuzzy matching, date/currency parsing, category inference
+  - Query Agent integration for entity lookup
+  - Context-rich prompts (not prescriptive)
   - Confirmation workflow with Brazilian format support
-  - **NEEDS**: Context-rich prompts, Query Agent integration, single-phase processing
-- ✅ **Phase 2 (Unified AI Router)**: Week 1 & 2 COMPLETE
-  - ✅ Router infrastructure implemented (AIAgentRouterService, 327 lines)
-  - ✅ Unified conversation state types created (187 lines)
-  - ✅ Single entry point API route (/api/ai/unified, 132 lines)
-  - ✅ Intent classification with Claude Sonnet 4
+  - UI integrated: Comandos tab (🎯 Comandos)
+- ✅ **Phase 2 (Unified AI Router)**: Weeks 1, 2 & 3 COMPLETE
+  - ✅ **Week 1-2 (Backend)**: Router infrastructure
+    - AIAgentRouterService with intent classification (327 lines)
+    - Unified conversation state types (187 lines)
+    - Single entry point API route (/api/ai/unified, 150 lines)
+    - Intent classification with Claude Sonnet 4 (setup/query/operations/general)
+    - Operations Agent with Query Agent delegation
+  - ✅ **Week 3 (Frontend)**: UI Integration
+    - "🚀 AI Unificado" tab in /ai-chat (default active)
+    - Conversation state persistence (fixes context loss bug)
+    - Pending operation tracking with visual feedback
+    - Agent indicator badges (color-coded by agent type)
+    - Yellow banner for pending confirmations
+    - Dynamic UI based on conversation state
+    - Enhanced logging for debugging
   - ✅ Command Agent renamed to Operations Agent
   - ✅ Operations Agent enhanced with comprehensive database schema (83 lines)
   - ✅ Query Agent integration complete (165 lines delegation logic)
@@ -732,12 +744,25 @@ Response: "Você tem 12 despesas esse mês, total R$ 5.240,00"
 - ✅ Enhanced intent classification with `needsQuery` detection
 - ✅ Created test suite (test-unified-ai-system.ts, 184 lines)
 
-#### **Week 3: Integration & Polish**
-- ✅ Update all agents to Sonnet 4
-- ✅ Add full database schema to Operations Agent
-- ✅ Implement conversation state persistence
-- ✅ Frontend integration
-- ✅ End-to-end testing
+#### **Week 3: Frontend Integration & UX Polish** ✅ **COMPLETE (2025-10-01)**
+- ✅ **UI Integration**: Created "🚀 AI Unificado" tab in /ai-chat (default active)
+- ✅ **Tab Architecture**: Unified tab + individual agent tabs for debugging
+- ✅ **Conversation State Persistence**: Fixed critical bug where state was reset each message
+  - Before: Fresh `conversationState: { messages: [] }` every request ❌
+  - After: Preserves server-returned state with `...currentState` ✅
+- ✅ **Pending Operation Tracking**: Explicit `pendingOperation` passing in requests
+- ✅ **Visual Feedback System**:
+  - Agent indicator badges (💬 Query=blue, 🎯 Operations=purple, 📄 Setup=green, 🤝 Router=orange)
+  - Yellow pending operation banner when awaiting confirmation
+  - Dynamic input placeholder based on state ("Digite 'sim' para confirmar..." vs normal)
+  - Border color changes (yellow when pending operation)
+  - Status footer showing message count and entities created
+- ✅ **handleUnifiedSubmit**: Complete implementation (94 lines) with proper state management
+- ✅ **Enhanced Logging**: Console logs for debugging state flow (12 log points)
+- ✅ **Bug Fixes**:
+  - State initialization overwriting server data → Now preserves properly
+  - pendingOperation not passed → Now explicitly included in request
+  - User confirmations without context → Now works with visual feedback
 
 #### **Week 4: Production Rollout**
 - ✅ A/B testing (old vs new endpoints)
