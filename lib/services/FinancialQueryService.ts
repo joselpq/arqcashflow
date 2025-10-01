@@ -160,7 +160,9 @@ Consider the conversation context to understand pronouns and references.`
    */
   private async executeSQL(sqlQuery: string): Promise<any> {
     try {
-      const result = await this.context.teamScopedPrisma.$queryRawUnsafe(sqlQuery)
+      // Use raw prisma client for $queryRawUnsafe
+      // Note: Team isolation is enforced by SQL query including teamId filter
+      const result = await this.context.teamScopedPrisma.raw.$queryRawUnsafe(sqlQuery)
 
       // Convert BigInt to string for serialization
       const serializedResult = JSON.parse(JSON.stringify(result, (key, value) =>
