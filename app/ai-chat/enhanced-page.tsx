@@ -25,7 +25,9 @@ export default function EnhancedAIChatPage() {
   const [loading, setLoading] = useState(false)
   const [files, setFiles] = useState<FileData[]>([])
   const [dragActive, setDragActive] = useState(false)
-  const [activeTab, setActiveTab] = useState<'chat' | 'setup'>('chat')
+  const [activeTab, setActiveTab] = useState<'chat' | 'setup' | 'command'>('chat')
+  const [conversationState, setConversationState] = useState<any>(null)
+  const [pendingOperation, setPendingOperation] = useState<any>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Handle file upload
@@ -156,6 +158,100 @@ export default function EnhancedAIChatPage() {
   // Remove file
   const removeFile = (index: number) => {
     setFiles(prev => prev.filter((_, i) => i !== index))
+  }
+
+  // Submit command (for Command tab)
+  const handleCommandSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!message.trim()) return
+
+    setLoading(true)
+
+    // Create user message
+    const userMessage: Message = {
+      role: 'user',
+      content: message,
+      timestamp: new Date()
+    }
+
+    const newMessages = [...messages, userMessage]
+    setMessages(newMessages)
+    setMessage('')
+
+    try {
+      console.log('🎯 Using Command Agent endpoint')
+
+      const requestBody = {
+        command: userMessage.content,
+        conversationState: conversationState ? {
+          messages: newMessages.slice(-10).map(m => ({
+            role: m.role,
+            content: m.content,
+            timestamp: m.timestamp.toISOString()
+          })),
+          pendingOperation: pendingOperation
+        } : undefined,
+        isConfirmation: pendingOperation ? true : false
+      }
+
+      const response = await fetch('/api/ai/command', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody)
+      })
+
+      console.log('Command response status:', response.status)
+
+      if (response.ok) {
+        const result = await response.json()
+        console.log('Command agent response:', result)
+
+        // Update conversation state
+        if (result.pendingOperation) {
+          setPendingOperation(result.pendingOperation)
+        } else {
+          setPendingOperation(null)
+        }
+
+        // Update conversation state
+        setConversationState({
+          messages: newMessages,
+          pendingOperation: result.pendingOperation || null
+        })
+
+        const assistantMessage: Message = {
+          role: 'assistant',
+          content: result.message,
+          metadata: result,
+          timestamp: new Date()
+        }
+
+        setMessages([...newMessages, assistantMessage])
+      } else {
+        const error = await response.json()
+        console.error('Command error:', error)
+
+        const errorMessage: Message = {
+          role: 'assistant',
+          content: `❌ Erro: ${error.error || 'Falha ao processar comando'}`,
+          timestamp: new Date()
+        }
+
+        setMessages([...newMessages, errorMessage])
+      }
+    } catch (error) {
+      console.error('Command submission error:', error)
+
+      const errorMessage: Message = {
+        role: 'assistant',
+        content: '❌ Erro de comunicação. Por favor, tente novamente.',
+        timestamp: new Date()
+      }
+
+      setMessages([...newMessages, errorMessage])
+    } finally {
+      setLoading(false)
+    }
   }
 
   // Submit message
@@ -553,6 +649,16 @@ export default function EnhancedAIChatPage() {
               💬 Chat Inteligente
             </button>
             <button
+              onClick={() => setActiveTab('command')}
+              className={`py-3 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'command'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300'
+              }`}
+            >
+              🎯 Comandos
+            </button>
+            <button
               onClick={() => setActiveTab('setup')}
               className={`py-3 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'setup'
@@ -568,6 +674,115 @@ export default function EnhancedAIChatPage() {
         {/* Tab Content */}
         {activeTab === 'setup' ? (
           <MultiFileSetupAssistant />
+        ) : activeTab === 'command' ? (
+          <div>
+            {/* Command Tab - Natural Language CRUD */}
+            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <h3 className="text-sm font-bold text-blue-800 mb-3">🎯 Comandos Rápidos:</h3>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => setMessage('R$50 em gasolina ontem')}
+                  className="text-xs bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors"
+                >
+                  💰 Criar Despesa
+                </button>
+                <button
+                  onClick={() => setMessage('R$400 de RT para receber amanhã')}
+                  className="text-xs bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 transition-colors"
+                >
+                  📥 Criar Recebível
+                </button>
+                <button
+                  onClick={() => setMessage('Novo contrato com Cliente X de R$10k')}
+                  className="text-xs bg-purple-600 text-white px-3 py-1 rounded hover:bg-purple-700 transition-colors"
+                >
+                  📄 Criar Contrato
+                </button>
+                <button
+                  onClick={() => setMessage('Atualiza a despesa de gasolina para R$60')}
+                  className="text-xs bg-orange-600 text-white px-3 py-1 rounded hover:bg-orange-700 transition-colors"
+                >
+                  ✏️ Atualizar
+                </button>
+              </div>
+              <p className="text-xs text-blue-700 mt-3">
+                💡 Dica: Use linguagem natural! Exemplos:<br/>
+                • "R$50 em gasolina ontem"<br/>
+                • "R$400 de RT do projeto Mari para receber amanhã"<br/>
+                • "Atualiza o contrato da ACME para R$150k"<br/>
+                • "Deleta a despesa de gasolina"
+              </p>
+            </div>
+
+            {/* Chat Messages - reused from chat tab */}
+            <div className="mb-6 space-y-4 max-h-96 overflow-y-auto bg-white border-2 border-neutral-300 rounded-lg p-4">
+              {messages.length === 0 ? (
+                <div className="text-center text-neutral-600 py-8">
+                  <p className="text-lg mb-4">🎯 Comandos Rápidos</p>
+                  <p className="text-sm">
+                    Digite comandos em linguagem natural para criar, atualizar ou deletar dados.
+                  </p>
+                  <p className="text-xs text-neutral-500 mt-2">
+                    Exemplo: "R$50 em gasolina ontem" cria uma despesa automaticamente
+                  </p>
+                </div>
+              ) : (
+                messages.map((msg, index) => (
+                  <div
+                    key={index}
+                    className={`p-4 rounded-lg border ${
+                      msg.role === 'user'
+                        ? 'bg-blue-50 border-blue-200 ml-8'
+                        : 'bg-neutral-50 border-neutral-300 mr-8'
+                    }`}
+                  >
+                    <div className="text-sm whitespace-pre-wrap">{msg.content}</div>
+                    {msg.metadata && (
+                      <div className="mt-2 text-xs text-neutral-500">
+                        {msg.metadata.success === true && '✅ Sucesso'}
+                        {msg.metadata.success === false && '❌ Erro'}
+                        {msg.metadata.needsConfirmation && ' 🔄 Aguardando confirmação'}
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+              {loading && (
+                <div className="p-4 rounded-lg bg-neutral-50 border border-neutral-300 mr-8">
+                  <div className="flex items-center space-x-2">
+                    <div className="animate-spin h-4 w-4 border-2 border-blue-600 rounded-full border-t-transparent"></div>
+                    <span className="text-sm text-neutral-600">Processando comando...</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Input Form - Command specific */}
+            <div className="bg-white border-2 border-neutral-300 rounded-lg p-4">
+              <form onSubmit={handleCommandSubmit} className="flex gap-2">
+                <input
+                  type="text"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder="Digite seu comando aqui... (ex: R$50 em gasolina ontem)"
+                  className="flex-1 px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={loading}
+                />
+                <button
+                  type="submit"
+                  disabled={!message.trim() || loading}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-neutral-300 disabled:cursor-not-allowed transition-colors"
+                >
+                  {loading ? 'Processando...' : 'Enviar'}
+                </button>
+              </form>
+              {pendingOperation && (
+                <div className="mt-2 text-xs text-orange-600">
+                  ⚠️ Operação pendente - responda "sim" ou "não" para confirmar
+                </div>
+              )}
+            </div>
+          </div>
         ) : (
           <div>
         {/* Quick Questions */}

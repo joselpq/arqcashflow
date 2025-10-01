@@ -1,15 +1,15 @@
 # Documentation Validation Report
 
-Generated on: 2025-09-29
+Generated on: 2025-09-30
 
 ## Summary
 
-- **Total files validated**: 76
+- **Total files validated**: 78
 - **Broken links**: 0
 - **Stale content**: 0
 - **Missing metadata**: 0
 - **Format inconsistencies**: 1
-- **Orphaned files**: 21
+- **Orphaned files**: 22
 
 ## Issues Found
 
@@ -32,7 +32,7 @@ Generated on: 2025-09-29
   - **Issues**: Missing LLM Context section
 
 
-### 🔍 Orphaned Files (21)
+### 🔍 Orphaned Files (22)
 
 
 - `agents/contexts/validation-layer.md`
@@ -72,6 +72,9 @@ Generated on: 2025-09-29
 
 
 - `decisions/009-advanced-date-filtering.md`
+
+
+- `decisions/010-excel-token-optimization.md`
 
 
 - `developer/architecture/decisions/adr-002-claude-ai-integration.md`
