@@ -231,11 +231,11 @@ export class ServiceEventIntegration {
             description: data.description,
             amount: data.amount,
             dueDate: data.dueDate,
-            status: 'approved',
+            status: 'paid' as const,
             vendor: data.vendor,
             category: data.category,
           },
-        }),
+        } as any),
 
       emitExpensePaid: (expenseId: string, data: any) =>
         teamEventBus.emit({
@@ -363,7 +363,7 @@ export class EventSystemHealth {
         bus: false,
         handlers: false,
         database: false,
-        details: { error: error.message },
+        details: { error: (error as Error).message },
       }
     }
   }

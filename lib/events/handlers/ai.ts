@@ -57,7 +57,7 @@ class DocumentProcessingHandlers {
   static onDocumentProcessed: EventHandler = async (event, context) => {
     if (!isAIEvent(event) || event.type !== EventTypes.DOCUMENT_PROCESSED) return
 
-    console.log(`[AI] Generating suggestions for processed document: ${event.payload.documentId}`)
+    console.log(`[AI] Generating suggestions for processed document: ${(event.payload as any).documentId}`)
 
     try {
       const teamEventBus = createTeamEventBus(context.teamId, context.userId)
@@ -69,11 +69,11 @@ class DocumentProcessingHandlers {
         type: EventTypes.AI_SUGGESTION_GENERATED,
         source: 'ai',
         payload: {
-          documentId: event.payload.documentId,
+          documentId: (event.payload as any).documentId,
           suggestions,
-          confidence: event.payload.analysisResult?.confidence || 0.8
+          confidence: (event.payload as any).analysisResult?.confidence || 0.8
         }
-      })
+      } as any)
 
     } catch (error) {
       console.error(`[AI] Failed to generate document suggestions:`, error)
@@ -140,11 +140,11 @@ class AIProcessingHandlers {
    * Generate intelligent suggestions for document processing
    */
   static async generateDocumentSuggestions(event: EventPayload, context: EventContext): Promise<any[]> {
-    const analysisResult = event.payload?.analysisResult
+    const analysisResult = (event.payload as any)?.analysisResult
 
     if (!analysisResult) return []
 
-    const suggestions = []
+    const suggestions: any[] = []
 
     // Invoice processing suggestions
     if (analysisResult.documentType === 'invoice') {
@@ -189,7 +189,7 @@ class AIProcessingHandlers {
     const insights = {
       pattern_detected: false,
       risk_level: 'low',
-      recommendations: []
+      recommendations: [] as string[]
     }
 
     // Analyze overdue patterns
@@ -201,7 +201,7 @@ class AIProcessingHandlers {
 
     // Analyze expense patterns
     if (isExpenseEvent(event) && event.type === EventTypes.EXPENSE_CREATED) {
-      if (event.payload.amount > 10000) {
+      if ((event.payload as any).amount > 10000) {
         insights.pattern_detected = true
         insights.risk_level = 'high'
         insights.recommendations.push('Large expense detected - ensure budget approval')

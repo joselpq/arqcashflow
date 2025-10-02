@@ -148,7 +148,11 @@ export class OnboardingIntelligenceAgent {
     console.log(`📊 Extracted ${extractedEntities.length} entities from ${result.processedFiles} files`)
 
     // Step 3: Validate entities and collect clarification requests
-    const validatedEntities = { contracts: [], expenses: [], receivables: [] }
+    const validatedEntities = {
+      contracts: [] as any[],
+      expenses: [] as any[],
+      receivables: [] as any[]
+    }
 
     for (const entity of extractedEntities) {
       const clarifications = this.validateEntityAndGetClarifications(entity)
@@ -585,7 +589,7 @@ Be thorough and extract ALL financial information found in the document.`
             }
           }
         })
-        .filter((entity: any) => entity !== null) // Remove invalid entities
+        .filter((entity: any) => entity !== null) as ExtractedEntity[] // Remove invalid entities
 
       console.log(`✅ Successfully parsed ${entities.length} entities from ${fileName}`)
       return entities

@@ -210,17 +210,19 @@ export class TeamContextMiddleware {
         data: {
           id: `team_access_${event.id}`,
           teamId: context.teamId,
-          userId: context.userId,
+          userId: context.userId || 'system',
+          userEmail: 'system@arqcashflow.com',
           entityType: 'team_access',
           entityId: context.teamId,
           action: 'event_access',
           timestamp: context.timestamp,
+          changes: {},
           metadata: {
             eventType: event.type,
             eventId: event.id,
             source: event.source,
             accessType: 'team_context_middleware',
-          },
+          } as any,
         },
       })
     } catch (error) {

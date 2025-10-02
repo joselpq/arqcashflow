@@ -76,16 +76,27 @@ export const BaseFieldSchemas = {
     .nullable()
     .transform(val => val === '' ? null : val),
 
-  // Date fields
-  dateString: z.string()
-    .min(1, 'Date is required')
-    .regex(/^\d{4}-\d{2}-\d{2}/, 'Invalid date format (expected YYYY-MM-DD)'),
+  // Date fields - accept both string (YYYY-MM-DD) and Date objects
+  dateString: z.union([
+    z.string().min(1, 'Date is required').regex(/^\d{4}-\d{2}-\d{2}/, 'Invalid date format (expected YYYY-MM-DD)'),
+    z.date()
+  ]).transform(val => {
+    if (val instanceof Date) {
+      return val.toISOString().split('T')[0] // Convert Date to YYYY-MM-DD string
+    }
+    return val
+  }),
 
-  optionalDateString: z.string()
-    .optional()
-    .nullable()
-    .transform(val => {
+  optionalDateString: z.union([
+    z.string(),
+    z.date(),
+    z.null(),
+    z.undefined()
+  ]).optional().nullable().transform(val => {
       if (val === '' || val === null || val === undefined) return null
+      if (val instanceof Date) {
+        return val.toISOString().split('T')[0]
+      }
       return val
     }),
 
@@ -197,8 +208,8 @@ export const ValidationUtils = {
   /**
    * Validates that a date is not in the future
    */
-  notInFuture: (date: string) => {
-    const inputDate = new Date(date)
+  notInFuture: (date: string | Date) => {
+    const inputDate = date instanceof Date ? date : new Date(date)
     const today = new Date()
     today.setHours(23, 59, 59, 999) // End of today
     return inputDate <= today
@@ -207,8 +218,8 @@ export const ValidationUtils = {
   /**
    * Validates that a date is not too far in the past
    */
-  notTooOld: (date: string, maxYearsAgo: number = 10) => {
-    const inputDate = new Date(date)
+  notTooOld: (date: string | Date, maxYearsAgo: number = 10) => {
+    const inputDate = date instanceof Date ? date : new Date(date)
     const cutoff = new Date()
     cutoff.setFullYear(cutoff.getFullYear() - maxYearsAgo)
     return inputDate >= cutoff

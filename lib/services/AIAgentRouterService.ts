@@ -278,37 +278,20 @@ Examples:
       lastEntities: this.extractLastEntities(conversationState.recentlyCreated)
     }
 
-    const result = await this.operationsAgent.processCommand(message, operationsState)
+    const result = await this.operationsAgent.processCommand(message, operationsState.messages)
 
-    // Update unified state
+    // Update unified state with conversation history from Operations Agent
     let updatedState = {
       ...conversationState,
+      messages: result.conversationHistory,
       lastAgent: 'operations' as const
     }
 
-    // Track pending operation if confirmation needed
-    if (result.needsConfirmation && result.pendingOperation) {
-      updatedState.pendingOperation = {
-        agentType: 'operations',
-        operation: result.pendingOperation,
-        requiresConfirmation: true
-      }
-    } else {
-      // Clear pending operation if completed
-      updatedState.pendingOperation = undefined
-    }
+    // Operations Agent doesn't use pending operations - it handles confirmations internally via conversation
+    updatedState.pendingOperation = undefined
 
-    // Track created entities
-    if (result.success && result.data) {
-      const entity: RecentEntity = {
-        type: result.data.entityType || 'expense',
-        id: result.data.id || 'unknown',
-        data: result.data,
-        createdAt: new Date(),
-        createdBy: 'operations'
-      }
-      updatedState = addRecentEntity(updatedState, entity)
-    }
+    // Note: Entity tracking happens inside OperationsAgentService via ExpenseService
+    // We don't track entities here since the Operations Agent manages its own state
 
     return {
       agentUsed: 'operations',

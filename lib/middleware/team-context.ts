@@ -26,7 +26,9 @@ export interface TeamScopedPrismaClient {
     findFirst: (args?: any) => Promise<any>
     create: (args: any) => Promise<any>
     update: (args: any) => Promise<any>
+    updateMany: (args: any) => Promise<any>
     delete: (args: any) => Promise<any>
+    deleteMany: (args: any) => Promise<any>
     count: (args?: any) => Promise<number>
   }
   receivable: {
@@ -35,7 +37,9 @@ export interface TeamScopedPrismaClient {
     findFirst: (args?: any) => Promise<any>
     create: (args: any) => Promise<any>
     update: (args: any) => Promise<any>
+    updateMany: (args: any) => Promise<any>
     delete: (args: any) => Promise<any>
+    deleteMany: (args: any) => Promise<any>
     count: (args?: any) => Promise<number>
   }
   expense: {
@@ -52,17 +56,17 @@ export interface TeamScopedPrismaClient {
   recurringExpense: {
     findMany: (args?: any) => Promise<any[]>
     findUnique: (args: any) => Promise<any>
+    findFirst: (args?: any) => Promise<any>
     create: (args: any) => Promise<any>
     update: (args: any) => Promise<any>
     delete: (args: any) => Promise<any>
     count: (args?: any) => Promise<number>
   }
-  budget: {
+  auditLog: {
     findMany: (args?: any) => Promise<any[]>
     findUnique: (args: any) => Promise<any>
+    findFirst: (args?: any) => Promise<any>
     create: (args: any) => Promise<any>
-    update: (args: any) => Promise<any>
-    delete: (args: any) => Promise<any>
     count: (args?: any) => Promise<number>
   }
   // Access to original prisma client for complex queries
@@ -154,7 +158,28 @@ export function createTeamScopedPrisma(teamId: string): TeamScopedPrismaClient {
     receivable: createEntityMethods('receivable'),
     expense: createEntityMethods('expense'),
     recurringExpense: createEntityMethods('recurringExpense'),
-    budget: createEntityMethods('budget'),
+    auditLog: {
+      findMany: (args?: any) => {
+        const scopedArgs = ensureTeamScope(args)
+        return prisma.auditLog.findMany(scopedArgs)
+      },
+      findUnique: (args: any) => {
+        const scopedArgs = ensureTeamScope(args)
+        return prisma.auditLog.findUnique(scopedArgs)
+      },
+      findFirst: (args?: any) => {
+        const scopedArgs = ensureTeamScope(args)
+        return prisma.auditLog.findFirst(scopedArgs)
+      },
+      create: (args: any) => {
+        const scopedArgs = ensureTeamScopeCreate(args)
+        return prisma.auditLog.create(scopedArgs)
+      },
+      count: (args?: any) => {
+        const scopedArgs = ensureTeamScope(args)
+        return prisma.auditLog.count(scopedArgs)
+      }
+    },
     raw: prisma // Access to original client for complex operations
   }
 }

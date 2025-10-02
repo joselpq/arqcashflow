@@ -218,11 +218,7 @@ export type EventPayload =
  */
 export type EventHandler<T extends EventPayload = EventPayload> = (
   event: T,
-  context: {
-    teamId: string
-    userId?: string
-    timestamp: Date
-  }
+  context: EventContext
 ) => Promise<void>
 
 /**

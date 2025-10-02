@@ -250,7 +250,7 @@ export class ContractService extends BaseService<
         : new Date()
     }
 
-    return await super.create(processedData, {
+    return await super.create(processedData as any, {
       receivables: true
     })
   }
@@ -302,7 +302,7 @@ export class ContractService extends BaseService<
       })
     }
 
-    return await super.update(id, finalData, {
+    return await super.update(id, finalData as any, {
       receivables: true
     })
   }
@@ -562,7 +562,7 @@ export class ContractService extends BaseService<
     options: import('./BaseService').BulkOptions & { validateDuplicates?: boolean } = {}
   ): Promise<import('./BaseService').BulkOperationResult<ContractWithReceivables>> {
     // Transform and validate CSV data
-    const transformedData: ContractCreateData[] = csvData.map((row, index) => {
+    const transformedData: any[] = csvData.map((row, index) => {
       try {
         return {
           clientName: row.clientName?.trim(),

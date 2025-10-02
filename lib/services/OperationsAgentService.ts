@@ -177,6 +177,18 @@ IMPORTANTE:
         if (action.action === 'update_expense' && action.id && action.data) {
           const expense = await this.expenseService.update(action.id, action.data)
 
+          if (!expense) {
+            return {
+              success: false,
+              message: '❌ Despesa não encontrada.',
+              conversationHistory: [
+                ...history,
+                { role: 'user' as const, content: message },
+                { role: 'assistant' as const, content: '❌ Despesa não encontrada.' }
+              ]
+            }
+          }
+
           const successMessage = `✅ Despesa atualizada!
 
 📝 ${expense.description}
@@ -248,7 +260,7 @@ IMPORTANTE:
         throw new Error('Query must filter by teamId')
       }
 
-      const result = await this.context.prisma.$queryRawUnsafe(sql)
+      const result = await this.context.teamScopedPrisma.raw.$queryRawUnsafe(sql)
       return Array.isArray(result) ? result : []
     } catch (error) {
       console.error('[Operations] Query error:', error)

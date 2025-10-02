@@ -130,11 +130,11 @@ export class ArqEventBus implements EventBus {
    */
   once<T extends EventPayload>(eventType: EventType, handler: EventHandler<T>): void {
     const onceHandler: EventHandler<T> = async (event, context) => {
-      this.off(eventType, onceHandler)
+      this.off(eventType, onceHandler as EventHandler)
       await handler(event, context)
     }
 
-    this.on(eventType, onceHandler)
+    this.on(eventType, onceHandler as EventHandler)
   }
 
   /**
@@ -300,8 +300,8 @@ export class ArqEventBus implements EventBus {
           userId: event.userId,
           timestamp: event.timestamp,
           source: event.source,
-          payload: event.payload || {},
-          metadata: event.metadata || {},
+          payload: event.payload as any || {},
+          metadata: event.metadata as any || {},
         },
       })
     } catch (error) {

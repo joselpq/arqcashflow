@@ -136,7 +136,7 @@ export class ExpenseService extends BaseService<
     }
 
     // Business rule: Paid amount cannot exceed total amount
-    if (data.paidAmount !== undefined && data.amount !== undefined) {
+    if (data.paidAmount !== undefined && data.paidAmount !== null && data.amount !== undefined) {
       if (data.paidAmount > data.amount) {
         throw new ServiceError(
           'Paid amount cannot exceed total amount',
@@ -283,7 +283,7 @@ export class ExpenseService extends BaseService<
       receiptUrl: ValidationUtils.normalizeEmptyString(data.receiptUrl)
     }
 
-    return await super.create(processedData, {
+    return await super.create(processedData as any, {
       contract: true,
       recurringExpense: true
     })
@@ -323,7 +323,7 @@ export class ExpenseService extends BaseService<
       })
     }
 
-    return await super.update(id, processedData, {
+    return await super.update(id, processedData as any, {
       contract: true,
       recurringExpense: true
     })
@@ -604,15 +604,15 @@ export class ExpenseService extends BaseService<
           amount: typeof row.amount === 'string'
             ? parseFloat(row.amount.replace(/[^\d.-]/g, ''))
             : row.amount,
-          dueDate: createDateForStorage(row.dueDate),
+          dueDate: row.dueDate, // Don't transform here - let schema handle it
           vendor: row.vendor?.trim() || null,
           category: row.category?.trim() || 'general',
           contractId: row.contractId?.trim() || null,
           invoiceNumber: row.invoiceNumber?.trim() || null,
           type: (row.type as 'project' | 'operational') || 'operational',
-          status: row.status?.trim() || 'pending',
+          status: (row.status?.trim() || 'pending') as 'pending' | 'paid' | 'overdue' | 'cancelled',
           notes: row.notes?.trim() || null
-        })
+        } as any)
       } catch (error) {
         throw new ServiceError(
           `Invalid data in row ${index + 1}: ${error instanceof Error ? error.message : 'Unknown error'}`,

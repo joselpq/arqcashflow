@@ -152,6 +152,9 @@ export const ExpenseSchemas = {
     notes: BaseFieldSchemas.notes,
     receiptUrl: BaseFieldSchemas.url,
     status: EnumSchemas.paymentStatus.optional().default('pending'),
+    paidDate: BaseFieldSchemas.optionalDateString,
+    paidAmount: BaseFieldSchemas.amount.optional().nullable(),
+    recurringExpenseId: BaseFieldSchemas.id.optional().nullable(),
   }),
 
   // Expense update schema
@@ -168,6 +171,8 @@ export const ExpenseSchemas = {
     notes: BaseFieldSchemas.notes,
     receiptUrl: BaseFieldSchemas.url,
     status: EnumSchemas.paymentStatus.optional(),
+    paidDate: BaseFieldSchemas.optionalDateString,
+    paidAmount: BaseFieldSchemas.amount.optional().nullable(),
   }),
 
   // Expense filters for querying

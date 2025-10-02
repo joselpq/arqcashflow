@@ -233,7 +233,7 @@ export class ReceivableService extends BaseService<
       notes: ValidationUtils.normalizeEmptyString(data.notes)
     }
 
-    return await super.create(processedData, {
+    return await super.create(processedData as any, {
       contract: true
     })
   }
@@ -281,7 +281,7 @@ export class ReceivableService extends BaseService<
       })
     }
 
-    return await super.update(id, processedData, {
+    return await super.update(id, processedData as any, {
       contract: true
     })
   }
@@ -478,13 +478,13 @@ export class ReceivableService extends BaseService<
           amount: typeof row.amount === 'string'
             ? parseFloat(row.amount.replace(/[^\d.-]/g, ''))
             : row.amount,
-          dueDate: createDateForStorage(row.dueDate),
+          expectedDate: createDateForStorage(row.dueDate), // Map dueDate -> expectedDate
           status: row.status?.trim() || 'pending',
           category: row.category?.trim() || 'general',
           contractId: row.contractId?.trim() || null,
           invoiceNumber: row.invoiceNumber?.trim() || null,
           notes: row.notes?.trim() || null
-        })
+        } as any)
       } catch (error) {
         throw new ServiceError(
           `Invalid data in row ${index + 1}: ${error instanceof Error ? error.message : 'Unknown error'}`,

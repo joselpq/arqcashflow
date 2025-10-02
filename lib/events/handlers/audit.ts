@@ -107,12 +107,12 @@ class AuditTrailHandlers {
             securityLevel: 'high',
             payload: {
               // Don't log sensitive auth data
-              ...event.payload,
+              ...(event.payload as any),
               password: undefined,
               token: undefined,
               secret: undefined,
             },
-          },
+          } as any,
         },
       })
 
@@ -139,7 +139,7 @@ class AuditTrailHandlers {
           userId: context.userId || 'system',
           userEmail,
           entityType: 'ai_processing',
-          entityId: event.payload?.documentId || event.id,
+          entityId: (event.payload as any)?.documentId || event.id,
           action: event.type,
           timestamp: context.timestamp,
           changes: (event.payload as any) || {},
@@ -148,9 +148,9 @@ class AuditTrailHandlers {
             eventType: event.type,
             source: event.source,
             aiProcessing: true,
-            confidence: event.payload?.confidence,
-            processingTime: event.payload?.processingTime,
-          },
+            confidence: (event.payload as any)?.confidence,
+            processingTime: (event.payload as any)?.processingTime,
+          } as any,
         },
       })
 

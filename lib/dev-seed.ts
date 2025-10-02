@@ -165,13 +165,14 @@ async function clearTestData(): Promise<void> {
     }
   })
 
-  await prisma.budget.deleteMany({
-    where: {
-      teamId: {
-        in: TEST_USERS.map(u => u.team.id)
-      }
-    }
-  })
+  // Budget model has been removed
+  // await prisma.budget.deleteMany({
+  //   where: {
+  //     teamId: {
+  //       in: TEST_USERS.map(u => u.team.id)
+  //     }
+  //   }
+  // })
 
   await prisma.contract.deleteMany({
     where: {
