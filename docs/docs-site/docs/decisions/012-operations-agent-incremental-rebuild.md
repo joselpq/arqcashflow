@@ -30,8 +30,12 @@ related:
 
 **ACCEPTED** - 2025-10-02
 
-**Current Implementation**: Step 1 Complete - Basic conversation with context
-**Next Step**: Step 2 - Simple expense creation
+**Current Implementation**: ✅ Steps 1-3 Complete (2025-10-02)
+- Step 1: ✅ Basic conversation with context
+- Step 2: ✅ Simple expense creation
+- Step 3: ✅ Confirmation workflow (Claude-powered)
+
+**Next Step**: Step 4 - Update and Delete operations
 
 ## Problem Statement
 
@@ -150,63 +154,63 @@ class OperationsAgentService {
 
 ---
 
-#### 📋 **Step 2: Simple Expense Creation** (NEXT)
+#### ✅ **Step 2: Simple Expense Creation** (COMPLETE - 2025-10-02)
 
 **Goal**: Add ability to create expenses from natural language
 
-**What to Add**:
-- Enhanced system prompt with database schema for expenses
-- ExpenseService integration
-- Extract expense data from command
-- Create expense (no confirmation yet)
+**Implementation**: ~150 lines total (final with Step 3)
 
-**Example System Prompt Enhancement**:
-```
-Você é um assistente financeiro para ArqCashflow.
+**What Was Added**:
+- ✅ Enhanced system prompt with database schema for expenses
+- ✅ ExpenseService integration
+- ✅ JSON-based action extraction
+- ✅ Date inference (ontem, hoje, amanhã)
+- ✅ Category inference from description
+- ✅ Amount parsing (R$50, 50 reais, etc.)
 
-CONTEXTO:
-- Data de hoje: ${currentDate}
-- Team ID: ${teamId}
+**Key Decision**: Let Claude handle everything through conversation context
+- No manual state tracking
+- No separate confirmation detection methods
+- Single system prompt with full workflow instructions
 
-BANCO DE DADOS - Expense:
-- description: string (obrigatório)
-- amount: decimal (obrigatório, positivo)
-- date: YYYY-MM-DD (obrigatório)
-- category: string (Alimentação|Transporte|Materiais|Serviços|Escritório|Outros)
-- notes: string (opcional)
-
-CAPACIDADES ATUAIS:
-- Criar despesas a partir de comandos como "R$50 em gasolina ontem"
-
-Quando o usuário pedir para criar uma despesa, extraia os dados e responda com JSON:
-{"action": "create_expense", "data": {...}}
-
-Caso contrário, apenas converse normalmente.
-```
-
-**Implementation Estimate**: +40 lines (~85 lines total)
-
-**Success Criteria**:
+**Success Criteria**: ✅ All passed
 - "R$50 em gasolina" → Creates expense
 - "R$30 em almoço ontem" → Creates expense with yesterday's date
-- Conversation context still works for non-expense messages
+- Conversation context maintained for non-expense messages
 
 ---
 
-#### 📋 **Step 3: Confirmation Workflow**
+#### ✅ **Step 3: Confirmation Workflow** (COMPLETE - 2025-10-02)
 
 **Goal**: Preview and confirm before creating
 
-**What to Add**:
-- Return pending operation instead of immediate execution
-- Handle confirmation responses ("sim", "não")
-- Execute on "sim", cancel on "não"
+**Final Implementation**: ~150 lines (integrated with Step 2)
 
-**Success Criteria**:
-- User: "R$50 em gasolina"
-- Agent: "Vou criar despesa de R$50. Confirma?"
-- User: "sim"
-- Agent: "✅ Despesa criada!"
+**What Was Added**:
+- ✅ System prompt includes full workflow: preview → confirm → create
+- ✅ Claude handles confirmation detection naturally (no hardcoded words)
+- ✅ Preview format with emojis (📝 💰 📅 🏷️)
+- ✅ Cancellation support
+- ✅ JSON extraction handles text before/after JSON
+
+**Key Innovation**: **No separate state management**
+- Removed `PendingOperation` interface entirely
+- Removed `pendingOperation` parameter
+- Claude uses conversation history to know context
+- Claude decides when to preview vs when to create
+
+**Workflow**:
+1. User: "R$50 em gasolina"
+2. Claude: Shows preview "Vou criar uma despesa: ... Confirma?"
+3. User: "sim" (or "ok", "pode", "vai", etc.)
+4. Claude: Returns `{"action": "create_expense", ...}`
+5. Service: Creates expense
+
+**Success Criteria**: ✅ All passed
+- Shows preview before creating
+- Confirms on "sim", "ok", "pode", "vai lá", etc.
+- Cancels on "não", "cancela", etc.
+- Can start new conversation while preview is shown
 
 ---
 

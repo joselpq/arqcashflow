@@ -1,7 +1,7 @@
 # ArqCashflow Development Backlog
 
 **Purpose**: Central source of truth for project priorities and development status
-**Last Updated**: 2025-10-01 (Operations Agent Simplified Rebuild - Trust Claude, Not Code)
+**Last Updated**: 2025-10-02 (Operations Agent Steps 1-3 Complete - Incremental Rebuild Success)
 **Update Frequency**: Every LLM session MUST update this document when completing tasks or discovering new requirements
 
 ## 🚨 CRITICAL INSTRUCTIONS FOR LLM AGENTS
@@ -83,58 +83,90 @@ Examples:
 ### 🔄 DOING (Currently In Progress)
 *Active work with real-time progress tracking. Can persist between sessions if work is incomplete.*
 
-#### **🔄 Operations Agent Simplified Rebuild** (2025-10-01)
+**Currently**: Nothing in progress. Operations Agent Steps 1-3 complete and working! 🎉
 
-**🚨 CRITICAL REALIZATION**: We over-engineered the Operations Agent to 2,049 lines of code
-**Root Cause**: Fighting Claude instead of trusting it
-**Solution**: Rebuild from scratch with Claude-first approach
+---
 
-**The Problem**:
-- ❌ Old Operations Agent: 2,049 lines (manual state machines, fuzzy matching, multi-phase processing)
-- ❌ Too complex: Intent classification → Query delegation → Entity resolution → Confirmation workflow
-- ❌ Still broken: Can't maintain context across multi-turn conversations
+### 📋 TO DO (Immediate Priorities)
+*Ready to implement, explicitly prioritized.*
 
-**The Solution**:
-- ✅ New Operations Agent: ~200 lines (trust Claude completely)
-- ✅ Simple: One prompt with full context → Claude decides everything → Execute
-- ✅ Working Query Agent: 288 lines (keep as-is)
-- ✅ Working Setup Agent: 549 lines (keep as-is)
+#### **Operations Agent - Step 4: Update and Delete** (Next Priority)
 
-**Progress**:
-- ✅ Documented new simplified strategy in ADR-008
-- ✅ Updated BACKLOG.md with new direction
-- 🔄 Building new OperationsAgentService (~200 lines)
-- ⏳ Testing simplified agent
-- ⏳ Deprecate old 2,049 line version
+**Goal**: Add ability to update and delete expenses
 
-**New Architecture**:
-```
-User message + conversation history
-  ↓
-Claude (comprehensive single prompt)
-  ↓
-JSON decision with API calls
-  ↓
-Execute via service layer
-  ↓
-Done
-```
+**Scope**:
+- Update expense operations
+- Delete expense operations
+- Query Agent integration for finding expenses
+- Multi-match handling ("Encontrei 2 despesas de gasolina...")
 
-**What Claude Gets**:
-- Full conversation history (all context naturally)
-- Database schema (can query via SQL)
-- API documentation (can call create/update/delete)
-- Current date, team ID, user context
+**Expected Implementation**: +50 lines to system prompt and action handlers
 
-**What We Don't Need Anymore**:
-- ❌ Manual state tracking (lastReferencedEntities, pendingOperation, etc.)
-- ❌ Fuzzy matching libraries (Claude does this via SQL)
-- ❌ Multi-phase intent classification (one prompt handles it all)
-- ❌ Separate query delegation system (Claude queries directly)
+**Success Criteria**:
+- "Atualiza a despesa de gasolina para R$60" → Updates expense
+- "Deleta a despesa de almoço" → Deletes after confirmation
+- "Deleta as 3 últimas despesas" → Queries, shows list, confirms, deletes
 
-**Target**: Working in 2-3 hours, down from 2,049 → ~200 lines
+---
 
-**✅ Week 2 Complete (2025-10-01)**:
+### ✅ DONE (Recently Completed)
+*Newest first, for reference.*
+
+#### ✅ **Operations Agent Steps 1-3: Incremental Rebuild** (2025-10-02)
+
+**Achievement**: **2,049 lines → 150 lines** (93% reduction!)
+
+**Philosophy**: Trust Claude completely - no manual state management, no hardcoded patterns
+
+**What Was Built**:
+
+**Step 1: Conversation Context** (45 lines)
+- ✅ Basic chat with conversation memory
+- ✅ Claude Sonnet 4 integration
+- ✅ Team context (teamId, userId)
+
+**Step 2: Simple Expense Creation** (integrated into Step 3)
+- ✅ Enhanced system prompt with expense schema
+- ✅ ExpenseService integration
+- ✅ Date inference (ontem, hoje, amanhã)
+- ✅ Category inference from description
+- ✅ Amount parsing (R$50, 50 reais, etc.)
+
+**Step 3: Confirmation Workflow** (150 lines final)
+- ✅ Claude-powered confirmation detection (no hardcoded words)
+- ✅ Preview format with emojis (📝 💰 📅 🏷️)
+- ✅ Cancellation support
+- ✅ **No separate state management** - uses conversation context
+
+**Key Innovation**: Single system prompt with full workflow instructions
+- Claude decides when to preview vs when to create
+- Claude detects confirmations naturally ("sim", "ok", "pode", "vai lá", etc.)
+- Claude handles cancellations naturally ("não", "cancela", etc.)
+- No `PendingOperation` interface needed
+- No separate confirmation checking methods
+
+**Files**:
+- `lib/services/OperationsAgentService.ts` (150 lines)
+- `app/api/ai/operations/route.ts` (51 lines)
+- `app/ai-chat/enhanced-page.tsx` (updated to call Operations directly)
+
+**Documentation**:
+- ADR-012: Operations Agent Incremental Rebuild
+- OPERATIONS-AGENT-ROADMAP.md: 10-step plan
+- Testing guides for each step
+
+**Testing**: ✅ Working in production
+- Multi-turn conversations
+- Natural language expense creation
+- Preview → confirm → create workflow
+- Cancellation workflow
+- JSON extraction handles text before/after
+
+**Next**: Step 4 (Update/Delete operations)
+
+---
+
+**Previous Work (Archive - Legacy Week 2 & 3)**:
 - ✅ Added comprehensive database schema to Operations Agent (83 lines)
 - ✅ Implemented Query Agent integration (165 lines delegation logic)
 - ✅ Enhanced intent classification with `needsQuery` detection
