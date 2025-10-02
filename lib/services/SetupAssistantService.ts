@@ -190,6 +190,14 @@ export class SetupAssistantService extends BaseService<any, any, any, any> {
   }
 
   /**
+   * Validate business rules (not applicable for SetupAssistant)
+   */
+  async validateBusinessRules(data: any): Promise<void> {
+    // Setup assistant doesn't have specific business rules
+    // Validation happens at entity level (contracts, expenses, receivables)
+  }
+
+  /**
    * Estimate token count for text content
    * Rule of thumb: 1 token ≈ 3.5-4 characters for CSV data
    *
@@ -1775,13 +1783,13 @@ NOT new contracts!
     console.log('✅ Claude response received')
 
     // DIAGNOSTIC: Check if Claude stopped due to token limit or other reason
-    if (response.stop_reason) {
+    if (response?.stop_reason) {
       console.log(`   Stop reason: ${response.stop_reason}`)
       if (response.stop_reason === 'max_tokens') {
         console.log(`   ⚠️ WARNING: Hit max_tokens limit! Response was truncated.`)
       }
     }
-    if (response.usage) {
+    if (response?.usage) {
       console.log(`   Tokens used: ${response.usage.output_tokens} output / ${response.usage.input_tokens} input`)
     }
 
@@ -1875,7 +1883,7 @@ NOT new contracts!
       const analysisText = claudeResponse.analysis.toLowerCase()
 
       // Look for numbers in analysis that might indicate Claude knew there were more
-      const numberMatches = analysisText.match(/(\d+)\s*(contract|receivable|expense|row|entit|item)/gi)
+      const numberMatches = analysisText.match(/(\d+)\s*(contract|receivable|expense|row|entit|item)/gi) as RegExpMatchArray | null
       if (numberMatches && numberMatches.length > 0) {
         console.log(`   📝 Analysis mentions counts: ${numberMatches.join(', ')}`)
 

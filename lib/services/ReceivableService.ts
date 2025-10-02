@@ -114,7 +114,7 @@ export class ReceivableService extends BaseService<
 
     // Business rule: Received amount cannot exceed expected amount
     if (data.receivedAmount !== undefined && data.amount !== undefined) {
-      if (data.receivedAmount > data.amount) {
+      if ((data.receivedAmount || 0) > data.amount) {
         throw new ServiceError(
           'Received amount cannot exceed expected amount',
           'INVALID_RECEIVED_AMOUNT',
@@ -124,9 +124,9 @@ export class ReceivableService extends BaseService<
     }
 
     // Business rule: If contractId is provided, verify it exists and belongs to team
-    if (data.contractId) {
+    if ('contractId' in data && data.contractId) {
       const contract = await this.context.teamScopedPrisma.contract.findFirst({
-        where: { id: data.contractId }
+        where: { id: data.contractId as string }
       })
 
       if (!contract) {
@@ -139,7 +139,7 @@ export class ReceivableService extends BaseService<
     }
 
     // Business rule: For standalone receivables, client name is required
-    if (!data.contractId && !data.clientName) {
+    if (!('contractId' in data && data.contractId) && !('clientName' in data && data.clientName)) {
       throw new ServiceError(
         'Client name is required for standalone receivables',
         'CLIENT_NAME_REQUIRED',
