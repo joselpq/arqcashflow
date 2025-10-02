@@ -208,125 +208,136 @@ Agent: "Dos 8 contratos concluídos, você recebeu R$ 652.000,00 (95%).
 - Uses ServiceContext pattern for team isolation
 - Validates input with AISchemas.query from validation layer
 
-#### **3. AI Operations Agent** 🔄 **ENHANCEMENT IN PROGRESS (2025-10-01)**
+#### **3. AI Operations Agent** 🔄 **SIMPLIFIED REBUILD (2025-10-01)**
 **"The Natural Language CRUD Expert"**
 
-**Status**: **Phases 1 & 2 Complete, Phase 3 Enhancement Planned**
+**Status**: **Rebuilding with Simplified Architecture**
 **Implementation**: `lib/services/OperationsAgentService.ts` + `/api/ai/operations`
-**Progress**: Foundation ✅, CRUD ✅, Context enhancement 🔄
+**Lines of Code Target**: ~200 lines (down from 2,049)
 
-**Name Change (2025-10-01)**: Renamed from "Command Agent" to "Operations Agent" for clarity
-- Better reflects purpose: executing operations on financial data
-- Avoids confusion with command-line terminology
-- Aligns with business language (operations = actions)
+**Strategic Pivot (2025-10-01)**: **Trust Claude, Not Code**
+- **Previous approach**: 2,049 lines of manual orchestration, state machines, fuzzy matching
+- **New approach**: ~200 lines - give Claude full context, let it decide everything
+- **Key insight**: We were fighting Claude instead of trusting it
 
 **Purpose**: Execute CRUD operations through natural language commands
 **Wow Factor**: "R$50 em gasolina ontem" → Expense created in 5 seconds
 
-**The AI Trinity Complete**:
-1. ✅ **Setup Assistant** = Batch import (onboarding)
-2. ✅ **Financial Query** = Read data (insights)
-3. 🔄 **Operations Agent** = CRUD operations (daily tasks)
+**The AI Trinity**:
+1. ✅ **Setup Assistant** = Batch import (549 lines, working)
+2. ✅ **Query Agent** = Read data (288 lines, working)
+3. 🔄 **Operations Agent** = CRUD operations (rebuilding: 2,049 → ~200 lines)
 
-**Technical Architecture**:
-- **Intent Classification**: Claude identifies operation (create/update/delete) + entity type
-- **Smart Inference**: Fills missing data (dates, categories, fuzzy project matching)
-- **Confirmation Workflow**: Preview → User approval → Execute via service layer
-- **Conversation State**: Retains context for follow-up commands
-- **Tool Integration**: Can call Query Agent for lookups, Setup Assistant for documents
+**New Simplified Architecture**:
+```
+User message + full conversation history
+  ↓
+Claude Sonnet 4 (single comprehensive prompt)
+  ↓
+Decision JSON:
+{
+  "action": "query" | "create" | "update" | "delete" | "clarify" | "route_to_setup",
+  "api_calls": [{ method, endpoint, body }],
+  "response": "natural language"
+}
+  ↓
+Execute API calls via service layer
+  ↓
+Return response
+```
 
-**Capabilities**:
-- **CREATE**: All 4 entity types (contracts, receivables, expenses, recurring)
-- **UPDATE**: Fuzzy entity matching + partial field updates
-- **DELETE**: Entity confirmation + safe deletion
-- **Smart Inference**:
+**That's it. No intermediate steps, no state machines, no fuzzy matching libraries.**
+
+**Capabilities** (Claude handles ALL of this naturally):
+- **CREATE**: All 4 entity types (contracts, receivables, expenses, recurring) - single or batch
+- **UPDATE**: Partial or full updates - Claude queries DB to find entities
+- **DELETE**: Single or batch deletion - Claude confirms with user first
+- **QUERY**: Claude has direct database access via Query Agent patterns
+- **Smart Inference** (Claude does this natively):
   - Date parsing: "ontem", "amanhã", "próxima semana" → ISO dates
   - Category inference: "gasolina" → transport, "almoço" → meals
   - Currency parsing: "R$50", "50 reais", "cinquenta" → 50.00
-  - Fuzzy matching: "Mari" finds "Residência Mariana" (Levenshtein distance)
-- **Ambiguity Resolution**: Multiple matches → clarification questions
-- **Portuguese/English**: Bilingual command understanding
+  - Entity matching: "Mari" finds "Residência Mariana" via SQL ILIKE/fuzzy
+- **Ambiguity Resolution**: Claude asks follow-up questions when needed
+- **Portuguese/English**: Claude is natively bilingual
+- **Document Routing**: Claude routes file uploads to Setup Agent
 
-**Tools Available**:
-- ContractService, ReceivableService, ExpenseService, RecurringExpenseService
-- FinancialQueryService (for data lookups)
-- Smart inference library (date/currency parsing, fuzzy matching)
-- Team-scoped Prisma for all CRUD operations
+**What Claude Gets** (in a single prompt):
+- **Full conversation history**: All previous messages with context
+- **Database schema**: Complete schema for all 4 entity types
+- **API documentation**: All available service layer methods
+- **Current context**: Date, team ID, user preferences
+- **Available actions**:
+  - Query database (read-only SQL via Query Agent pattern)
+  - Call service APIs (create/update/delete via ContractService, etc.)
+  - Ask clarifying questions
+  - Route to Setup Agent for document processing
 
-**Context Provided**:
-- Full database schema for all financial entities
-- Team ID for data isolation
-- Current date for temporal parsing
-- Conversation history for context retention
+**What We Provide** (the entire service):
+```typescript
+class OperationsAgentService {
+  async processCommand(message: string, conversationHistory: Message[]): Promise<Response> {
+    // 1. Build comprehensive prompt with ALL context
+    // 2. Send to Claude
+    // 3. Parse JSON decision
+    // 4. Execute API calls if any
+    // 5. Return natural language response
+  }
+}
+```
 
-**Interaction Pattern**:
+**That's it. ~200 lines total.**
+
+**Example Interactions**:
+```
+User: "Quais meus 5 contratos de menor valor?"
+Claude: [Queries DB] → "Aqui estão seus 5 contratos..."
+
+User: "Deleta esses 5"
+Claude: [Extracts IDs from conversation] → "Vou deletar 5 contratos: ... Confirma?"
+
+User: "sim"
+Claude: [Executes 5 DELETE calls] → "✅ 5 contratos deletados!"
+```
+
 ```
 User: "R$50 em gasolina ontem"
-Agent: "Vou criar uma despesa:
-        • Descrição: gasolina
-        • Valor: R$ 50,00
-        • Data: 29/09/2025
-        • Categoria: Transporte
-        Confirma?"
+Claude: [Infers: date=yesterday, category=transport, amount=50]
+        → "Vou criar despesa de R$50 em transporte. Confirma?"
 User: "sim"
-Agent: "✅ Despesa criada com sucesso!"
-
-User: "R$400 de RT do projeto Mari para receber amanhã"
-Agent: "Encontrei projeto 'Residência Mariana' via fuzzy match.
-        Vou criar um recebível:
-        • Valor: R$ 400,00
-        • Data esperada: 01/10/2025
-        • Descrição: RT
-        • Vinculado a projeto
-        Confirma?"
-User: "ok"
-Agent: "✅ Recebível criado com sucesso!"
+Claude: [POST /api/expenses] → "✅ Despesa criada!"
 ```
 
-**Implementation Status (2025-09-30)**:
-- ✅ **Phase 1**: Foundation & Architecture (Commit: 640de8b)
-  - Intent classification with Claude Sonnet 4
-  - Conversation state management
-  - Confirmation workflow system
-  - API route `/api/ai/command` with team context
-  - Validation schemas (AISchemas.command)
+```
+User: "Cria 3 recebíveis de R$1000 para próximos 3 meses do contrato ACME"
+Claude: [Queries DB for ACME contract]
+        [Prepares 3 receivables with monthly intervals]
+        → "Vou criar 3 recebíveis:
+           • R$1000 - 01/11/2025
+           • R$1000 - 01/12/2025
+           • R$1000 - 01/01/2026
+           Vinculados ao contrato ACME. Confirma?"
+User: "ok"
+Claude: [POST /api/receivables × 3] → "✅ 3 recebíveis criados!"
+```
 
-- ✅ **Phase 2**: Core CRUD Operations (Commit: 2c9aac9)
-  - Smart inference library (330 lines) - dates, categories, currency, fuzzy matching
-  - CREATE operations for all 4 entity types
-  - UPDATE with fuzzy entity lookup
-  - DELETE with confirmation workflow
-  - Brazilian format support (R$ X.XXX,XX, DD/MM/YYYY)
+**Implementation Status**:
+- 🔄 **Rebuilding** (2025-10-01)
+  - Scrapping 2,049 line implementation
+  - Building new ~200 line version
+  - Target: Working in 2-3 hours
 
-- 🔄 **Phase 3**: Intelligence & Context (In Progress)
-  - Enhanced conversation context management
-  - Reference resolution ("o primeiro", "esse contrato")
-  - Follow-up operations on same entity
+**Key Files** (new):
+- `lib/services/OperationsAgentService.ts` (~200 lines)
+- `app/api/ai/operations/route.ts` (unchanged, still uses service)
+- Database schema shared with Query Agent (already exists)
 
-- ⏳ **Phase 4**: Multi-Operation & Documents (Planned)
-  - Batch operations: "Cria 3 recebíveis de R$1000..."
-  - Setup Assistant integration for document uploads
-
-- ✅ **Phase 5**: UI Integration (Commit: TBD)
-  - New tab "🎯 Comandos" under Assistente IA
-  - Chat interface with conversation history
-  - Quick action buttons for common commands
-  - Pending operation indicators
-  - Success/error visual feedback
-
-**Implementation Notes**:
-- Does NOT extend BaseService (orchestrates other services)
-- Uses ServiceContext pattern like FinancialQueryService
-- Team isolation enforced via service layer
-- Audit logging automatic via existing services
-- All CRUD operations validated and secure
-
-**Key Files**:
-- `lib/services/OperationsAgentService.ts` (to be renamed from CommandAgentService.ts)
-- `lib/ai/fuzzy-match-utils.ts` (minimal utilities, ADR-008 compliant)
-- `lib/ai/entity-schemas.ts` (database schema documentation)
-- `app/api/ai/operations/route.ts` (to be renamed from command/route.ts)
-- `lib/validation/api.ts` (AISchemas.operations)
+**Deleted** (no longer needed):
+- ❌ `lib/ai/fuzzy-match-utils.ts` (Claude does this naturally)
+- ❌ `lib/ai/entity-schemas.ts` (just use inline schema in prompt)
+- ❌ All complex state management code
+- ❌ Multi-phase intent classification
+- ❌ Separate query delegation system
 
 ---
 

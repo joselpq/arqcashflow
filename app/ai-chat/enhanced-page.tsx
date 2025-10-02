@@ -342,7 +342,7 @@ export default function EnhancedAIChatPage() {
   // Unified AI Submit - Week 3 Phase 2
   const handleUnifiedSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!message.trim() && files.length === 0) return
+    if (!message.trim()) return
 
     setLoading(true)
 
@@ -350,116 +350,41 @@ export default function EnhancedAIChatPage() {
     const userMessage: Message = {
       role: 'user',
       content: message,
-      files: files.length > 0 ? files : undefined,
       timestamp: new Date()
     }
 
     const newMessages = [...messages, userMessage]
     setMessages(newMessages)
     setMessage('')
-    setFiles([]) // Clear files after sending
 
     try {
-      console.log('🚀 Using Unified AI Router endpoint')
-      console.log('📊 Current conversation state:', conversationState)
-      console.log('⏳ Pending operation:', pendingOperation)
+      // Build simple conversation history (just messages)
+      const conversationHistory = messages.map(m => ({
+        role: m.role,
+        content: m.content
+      }))
 
-      // Build conversation state - preserve server state, add new message
-      const currentState = conversationState || {
-        messages: [],
-        recentlyCreated: [],
-        metadata: {
-          startedAt: new Date().toISOString(),
-          lastUpdatedAt: new Date().toISOString(),
-          messageCount: 0,
-          entitiesCreated: 0
-        }
-      }
-
-      // Add new user message to the conversation history
-      const updatedMessages = [
-        ...(currentState.messages || []),
-        {
-          role: userMessage.role,
-          content: userMessage.content,
-          timestamp: userMessage.timestamp.toISOString()
-        }
-      ].slice(-10) // Keep last 10 messages
-
-      const requestBody = {
-        message: userMessage.content,
-        files: files.map(f => ({
-          name: f.name,
-          type: f.type,
-          base64: f.base64,
-          size: f.size
-        })),
-        conversationState: {
-          ...currentState, // Preserve recentlyCreated, metadata, pendingOperation
-          messages: updatedMessages,
-          pendingOperation: pendingOperation // Pass pending operation explicitly
-        }
-      }
-
-      console.log('📤 Sending request with state:', {
-        messageCount: updatedMessages.length,
-        hasPendingOp: !!pendingOperation,
-        recentlyCreated: currentState.recentlyCreated?.length || 0
-      })
-
-      const response = await fetch('/api/ai/unified', {
+      const response = await fetch('/api/ai/operations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify({
+          message: userMessage.content,
+          conversationHistory
+        })
       })
-
-      console.log('Unified AI response status:', response.status)
 
       if (response.ok) {
         const result = await response.json()
-        console.log('✅ Unified AI response:', {
-          agentUsed: result.agentUsed,
-          hasConversationState: !!result.conversationState,
-          hasPendingOp: !!result.pendingOperation,
-          responseLength: result.response?.length
-        })
-
-        // CRITICAL: Update conversation state from response
-        if (result.conversationState) {
-          console.log('📝 Updating conversation state:', {
-            messages: result.conversationState.messages?.length,
-            recentlyCreated: result.conversationState.recentlyCreated?.length,
-            hasPendingOp: !!result.conversationState.pendingOperation
-          })
-          setConversationState(result.conversationState)
-        }
-
-        // CRITICAL: Update pending operation
-        if (result.pendingOperation) {
-          console.log('⏳ Setting pending operation:', result.pendingOperation.operation)
-          setPendingOperation(result.pendingOperation)
-        } else if (result.conversationState?.pendingOperation) {
-          console.log('⏳ Setting pending operation from state:', result.conversationState.pendingOperation.operation)
-          setPendingOperation(result.conversationState.pendingOperation)
-        } else {
-          console.log('✅ Clearing pending operation')
-          setPendingOperation(null)
-        }
 
         const assistantMessage: Message = {
           role: 'assistant',
-          content: result.response,
-          metadata: {
-            agentUsed: result.agentUsed,
-            ...result
-          },
+          content: result.message,
           timestamp: new Date()
         }
 
         setMessages([...newMessages, assistantMessage])
       } else {
         const error = await response.json()
-        console.error('Unified AI error:', error)
 
         const errorMessage: Message = {
           role: 'assistant',

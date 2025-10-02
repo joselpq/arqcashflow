@@ -1,155 +1,50 @@
 /**
- * AI Command Agent API Route
+ * AI Operations Agent API Route - Simplified
  *
- * Natural language CRUD operations endpoint using Claude
- * Enables conversational interface for creating, updating, and deleting financial entities
- *
- * Features:
- * - Intent classification (create/update/delete detection)
- * - Smart inference from natural language
- * - Ambiguity resolution with clarification questions
- * - Confirmation workflow (preview → approve → execute)
- * - Conversation context retention
- * - Tool integration (Query Agent, Setup Assistant)
- * - Portuguese semantic understanding
- *
- * Examples:
- * - "R$50 em gasolina ontem" → Creates expense
- * - "R$400 de RT do projeto Mari para receber amanhã" → Creates receivable
- * - "Atualiza o contrato da ACME para R$150k" → Updates contract
+ * Claude handles the entire flow through conversation context.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { AISchemas } from '@/lib/validation/api'
-import { OperationsAgentService, ConversationState } from '@/lib/services/OperationsAgentService'
+import { OperationsAgentService, ConversationMessage } from '@/lib/services/OperationsAgentService'
 import { withTeamContext } from '@/lib/middleware/team-context'
 import { z } from 'zod'
+
+const RequestSchema = z.object({
+  message: z.string().min(1),
+  conversationHistory: z.array(z.object({
+    role: z.enum(['user', 'assistant']),
+    content: z.string()
+  })).optional().default([])
+})
 
 export async function POST(request: NextRequest) {
   return withTeamContext(async (context) => {
     try {
-      // Validate request body
       const body = await request.json()
-      const { command, conversationState, isConfirmation } = AISchemas.command.parse(body)
+      const { message, conversationHistory } = RequestSchema.parse(body)
 
-      // Create service instance with team context
       const operationsService = new OperationsAgentService(context)
+      const result = await operationsService.processCommand(message, conversationHistory)
 
-      // Handle confirmation vs new command
-      let result
-
-      if (isConfirmation && conversationState?.pendingOperation) {
-        // User is confirming a pending operation
-        const confirmed = parseConfirmation(command)
-        result = await operationsService.confirmOperation(
-          conversationState as ConversationState,
-          confirmed
-        )
-      } else {
-        // New command to process
-        result = await operationsService.processCommand(
-          command,
-          conversationState as ConversationState | undefined
-        )
-      }
-
-      console.log('[Command API] Result:', JSON.stringify(result, null, 2))
-
-      // Return result directly - withTeamContext will wrap it in NextResponse.json()
       return result
 
     } catch (error) {
-      // Validation errors
       if (error instanceof z.ZodError) {
         return NextResponse.json(
-          {
-            success: false,
-            error: 'Invalid command format',
-            details: error.errors
-          },
+          { success: false, error: 'Invalid request', details: error.errors },
           { status: 400 }
         )
       }
 
-      // Configuration errors
-      if (error instanceof Error && error.message.includes('CLAUDE_API_KEY')) {
-        console.error('Configuration error:', error.message)
-        return NextResponse.json(
-          {
-            success: false,
-            error: 'AI service not configured. Please contact support.'
-          },
-          { status: 503 }
-        )
-      }
-
-      // General errors
-      console.error('AI Command error:', error)
+      console.error('[Operations API] Error:', error)
       return NextResponse.json(
         {
           success: false,
-          error: 'Failed to process command. Please try rephrasing.',
-          message: error instanceof Error ? error.message : 'Unknown error'
+          error: error instanceof Error ? error.message : 'Unknown error',
+          conversationHistory: []
         },
         { status: 500 }
       )
     }
   })
-}
-
-/**
- * Parse user's confirmation response
- * Handles various ways users can confirm or reject
- */
-function parseConfirmation(response: string): boolean {
-  const normalized = response.toLowerCase().trim()
-
-  // Positive confirmations
-  const confirmations = [
-    'sim',
-    'yes',
-    's',
-    'y',
-    'ok',
-    'confirma',
-    'confirmar',
-    'pode',
-    'vai',
-    'faz',
-    'fazer',
-    'certo',
-    'correto',
-    'isso',
-    'exato',
-    'perfeito'
-  ]
-
-  // Negative rejections
-  const rejections = [
-    'não',
-    'no',
-    'n',
-    'cancela',
-    'cancelar',
-    'nao',
-    'nope',
-    'nunca',
-    'jamais',
-    'para',
-    'parar',
-    'stop'
-  ]
-
-  // Check for explicit confirmations
-  if (confirmations.some(word => normalized === word || normalized.startsWith(word + ' '))) {
-    return true
-  }
-
-  // Check for explicit rejections
-  if (rejections.some(word => normalized === word || normalized.startsWith(word + ' '))) {
-    return false
-  }
-
-  // Default to false for ambiguous responses (safety first)
-  return false
 }

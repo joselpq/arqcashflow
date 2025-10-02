@@ -1,7 +1,7 @@
 # ArqCashflow Development Backlog
 
 **Purpose**: Central source of truth for project priorities and development status
-**Last Updated**: 2025-10-01 (Phase 2 Unified AI Router - Week 3 Frontend Integration Complete)
+**Last Updated**: 2025-10-01 (Operations Agent Simplified Rebuild - Trust Claude, Not Code)
 **Update Frequency**: Every LLM session MUST update this document when completing tasks or discovering new requirements
 
 ## 🚨 CRITICAL INSTRUCTIONS FOR LLM AGENTS
@@ -83,20 +83,56 @@ Examples:
 ### 🔄 DOING (Currently In Progress)
 *Active work with real-time progress tracking. Can persist between sessions if work is incomplete.*
 
-#### **Phase 2: Unified AI Router System** 🎉 **Week 1, 2 & 3 COMPLETE**
+#### **🔄 Operations Agent Simplified Rebuild** (2025-10-01)
 
-**Strategic Value**: Seamless multi-turn AI conversations with intelligent routing
-**Status**: ✅ Week 1, 2 & 3 Complete | Ready for Week 4 (Production Testing & Rollout)
-**Vision**: Single AI endpoint that intelligently routes to Setup/Query/Operations agents with full context
+**🚨 CRITICAL REALIZATION**: We over-engineered the Operations Agent to 2,049 lines of code
+**Root Cause**: Fighting Claude instead of trusting it
+**Solution**: Rebuild from scratch with Claude-first approach
 
-**✅ Week 1 Complete (2025-10-01)**:
-- ✅ Created `AIAgentRouterService` with intent classification (327 lines)
-- ✅ Created unified conversation state types (187 lines)
-- ✅ Created `/api/ai/unified` route (132 lines)
-- ✅ Implemented Claude Sonnet 4 intent classification
-- ✅ Renamed Command Agent → Operations Agent (better naming)
-- ✅ Updated all imports and references
-- ✅ Documentation updated (ADR-008 v1.2)
+**The Problem**:
+- ❌ Old Operations Agent: 2,049 lines (manual state machines, fuzzy matching, multi-phase processing)
+- ❌ Too complex: Intent classification → Query delegation → Entity resolution → Confirmation workflow
+- ❌ Still broken: Can't maintain context across multi-turn conversations
+
+**The Solution**:
+- ✅ New Operations Agent: ~200 lines (trust Claude completely)
+- ✅ Simple: One prompt with full context → Claude decides everything → Execute
+- ✅ Working Query Agent: 288 lines (keep as-is)
+- ✅ Working Setup Agent: 549 lines (keep as-is)
+
+**Progress**:
+- ✅ Documented new simplified strategy in ADR-008
+- ✅ Updated BACKLOG.md with new direction
+- 🔄 Building new OperationsAgentService (~200 lines)
+- ⏳ Testing simplified agent
+- ⏳ Deprecate old 2,049 line version
+
+**New Architecture**:
+```
+User message + conversation history
+  ↓
+Claude (comprehensive single prompt)
+  ↓
+JSON decision with API calls
+  ↓
+Execute via service layer
+  ↓
+Done
+```
+
+**What Claude Gets**:
+- Full conversation history (all context naturally)
+- Database schema (can query via SQL)
+- API documentation (can call create/update/delete)
+- Current date, team ID, user context
+
+**What We Don't Need Anymore**:
+- ❌ Manual state tracking (lastReferencedEntities, pendingOperation, etc.)
+- ❌ Fuzzy matching libraries (Claude does this via SQL)
+- ❌ Multi-phase intent classification (one prompt handles it all)
+- ❌ Separate query delegation system (Claude queries directly)
+
+**Target**: Working in 2-3 hours, down from 2,049 → ~200 lines
 
 **✅ Week 2 Complete (2025-10-01)**:
 - ✅ Added comprehensive database schema to Operations Agent (83 lines)
