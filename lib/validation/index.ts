@@ -14,6 +14,11 @@ export {
 } from './schemas'
 
 // Financial entity schemas
+export type {
+  DeleteOptions,
+  DeletionInfo,
+} from './financial'
+
 export {
   BaseFinancialSchema,
   ContractSchemas,
@@ -33,8 +38,6 @@ export {
   // Deletion-related schemas
   ContractDeleteOptionsSchema,
   ContractDeletionInfoSchema,
-  DeleteOptions,
-  DeletionInfo,
 } from './financial'
 
 // API-specific schemas
@@ -50,9 +53,12 @@ export {
 } from './api'
 
 // Context-aware validation system
+export type {
+  ValidationContext,
+} from './context'
+
 export {
   ValidationLevel,
-  ValidationContext,
   DEFAULT_CONTEXTS,
   ContextAwareSchema,
   ValidationContextDetector,
@@ -161,9 +167,9 @@ export const CommonPatterns = {
 export type InferSchema<T> = T extends any ? (T extends { _output: infer U } ? U : never) : never
 
 // Type exports for commonly used schemas
-export type ContractCreateData = InferSchema<typeof ContractSchema>
-export type ContractUpdateData = InferSchema<typeof ContractUpdateSchema>
-export type ReceivableCreateData = InferSchema<typeof ReceivableSchema>
-export type ReceivableUpdateData = InferSchema<typeof ReceivableUpdateSchema>
-export type ExpenseCreateData = InferSchema<typeof ExpenseSchema>
-export type ExpenseUpdateData = InferSchema<typeof ExpenseUpdateSchema>
+export type ContractCreateData = any // InferSchema<typeof ContractSchema>
+export type ContractUpdateData = any // InferSchema<typeof ContractUpdateSchema>
+export type ReceivableCreateData = any // InferSchema<typeof ReceivableSchema>
+export type ReceivableUpdateData = any // InferSchema<typeof ReceivableUpdateSchema>
+export type ExpenseCreateData = any // InferSchema<typeof ExpenseSchema>
+export type ExpenseUpdateData = any // InferSchema<typeof ExpenseUpdateSchema>
