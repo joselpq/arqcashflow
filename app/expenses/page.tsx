@@ -9,19 +9,23 @@ function ExpensesPageContent() {
   const searchParams = useSearchParams()
   const editId = searchParams.get('edit')
 
-  const [expenses, setExpenses] = useState([])
-  const [recurringExpenses, setRecurringExpenses] = useState([])
-  const [contracts, setContracts] = useState([])
+  const [expenses, setExpenses] = useState<any[]>([])
+  const [recurringExpenses, setRecurringExpenses] = useState<any[]>([])
+  const [contracts, setContracts] = useState<any[]>([])
   const [summary, setSummary] = useState({ total: 0, paid: 0, pending: 0, overdue: 0, count: 0 })
   const [loading, setLoading] = useState(false)
-  const [editingExpense, setEditingExpense] = useState(null)
+  const [editingExpense, setEditingExpense] = useState<any>(null)
   const [viewMode, setViewMode] = useState('regular') // 'regular', 'recurring'
 
   // Recurring expense action modal state
-  const [recurringActionModal, setRecurringActionModal] = useState({
+  const [recurringActionModal, setRecurringActionModal] = useState<{
+    isOpen: boolean
+    expense: any
+    action: 'edit' | 'delete'
+  }>({
     isOpen: false,
     expense: null,
-    action: 'edit' as 'edit' | 'delete'
+    action: 'edit'
   })
   const [recurringEditScope, setRecurringEditScope] = useState<'this' | 'future' | 'all' | null>(null)
 
@@ -186,7 +190,7 @@ function ExpensesPageContent() {
     }
   }
 
-  async function handleSubmit(e) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     try {
       // Validate and prepare form data
@@ -209,7 +213,7 @@ function ExpensesPageContent() {
       // Check if this is a recurring expense (only for new expenses, not edits)
       if (isRecurring && !editingExpense) {
         // Validate recurring data
-        const interval = parseInt(recurringData.interval)
+        const interval = parseInt(recurringData.interval.toString())
         if (isNaN(interval) || interval < 1) {
           alert('Por favor, insira um intervalo válido (1 ou maior)')
           return
@@ -375,7 +379,7 @@ function ExpensesPageContent() {
     setEditingExpense(null)
   }
 
-  async function editExpense(expense) {
+  async function editExpense(expense: any) {
     // Check if this is a recurring expense
     if (expense.recurringExpenseId) {
       setRecurringActionModal({
@@ -390,7 +394,7 @@ function ExpensesPageContent() {
     setEditingExpense(expense)
     setFormData({
       description: expense.description,
-      amount: formatCurrencyForInput(expense.amount),
+      amount: expense.amount?.toString() || '',
       dueDate: formatDateForInput(expense.dueDate),
       category: expense.category,
       contractId: expense.contractId || '',
@@ -400,11 +404,11 @@ function ExpensesPageContent() {
       notes: expense.notes || '',
       status: expense.status || 'pending',
       paidDate: expense.paidDate ? formatDateForInput(expense.paidDate) : '',
-      paidAmount: formatCurrencyForInput(expense.paidAmount),
+      paidAmount: expense.paidAmount?.toString() || '',
     })
   }
 
-  async function markAsPaid(expense) {
+  async function markAsPaid(expense: any) {
     try {
       const response = await fetch(`/api/expenses/${expense.id}`, {
         method: 'PUT',
@@ -430,7 +434,7 @@ function ExpensesPageContent() {
     }
   }
 
-  async function deleteExpense(expense) {
+  async function deleteExpense(expense: any) {
     // Check if this is a recurring expense
     if (expense.recurringExpenseId) {
       setRecurringActionModal({
@@ -487,7 +491,7 @@ function ExpensesPageContent() {
     setEditingExpense(expense)
     setFormData({
       description: expense.description,
-      amount: formatCurrencyForInput(expense.amount),
+      amount: expense.amount?.toString() || '',
       dueDate: formatDateForInput(expense.dueDate),
       category: expense.category,
       contractId: expense.contractId || '',
@@ -497,7 +501,7 @@ function ExpensesPageContent() {
       notes: expense.notes || '',
       status: expense.status || 'pending',
       paidDate: expense.paidDate ? formatDateForInput(expense.paidDate) : '',
-      paidAmount: formatCurrencyForInput(expense.paidAmount),
+      paidAmount: expense.paidAmount?.toString() || '',
     })
 
     // Store the scope for later use in form submission
@@ -532,14 +536,14 @@ function ExpensesPageContent() {
     }
   }
 
-  function getStatusDisplay(expense) {
+  function getStatusDisplay(expense: any) {
     const status = getExpenseActualStatus(expense)
     const statusOption = statusOptions.find(s => s.value === status)
     return statusOption || { label: status, color: 'bg-neutral-100 text-neutral-900' }
   }
 
   // Recurring expense functions
-  async function toggleRecurringActive(recurring) {
+  async function toggleRecurringActive(recurring: any) {
     try {
       const response = await fetch(`/api/recurring-expenses/${recurring.id}`, {
         method: 'PUT',
@@ -562,7 +566,7 @@ function ExpensesPageContent() {
     }
   }
 
-  async function generateNext(recurring) {
+  async function generateNext(recurring: any) {
     try {
       const response = await fetch(`/api/recurring-expenses/${recurring.id}/generate`, {
         method: 'POST',
@@ -582,7 +586,7 @@ function ExpensesPageContent() {
     }
   }
 
-  async function deleteRecurring(recurring) {
+  async function deleteRecurring(recurring: any) {
     if (!confirm(`Excluir despesa recorrente "${recurring.description}"? Isso não afetará as despesas já geradas.`)) return
 
     try {
@@ -603,7 +607,7 @@ function ExpensesPageContent() {
     }
   }
 
-  function getFrequencyDisplay(frequency, interval) {
+  function getFrequencyDisplay(frequency: any, interval: any) {
     const base = frequencyOptions.find(f => f.value === frequency)?.label || frequency
     if (interval === 1) return base
     return `A cada ${interval} ${frequency === 'weekly' ? 'semanas' :
@@ -611,7 +615,7 @@ function ExpensesPageContent() {
                                    frequency === 'quarterly' ? 'trimestres' : 'anos'}`
   }
 
-  function getRecurringStatusDisplay(recurring) {
+  function getRecurringStatusDisplay(recurring: any) {
     if (!recurring.isActive) {
       return { label: 'Pausada', color: 'bg-gray-100 text-gray-800' }
     }

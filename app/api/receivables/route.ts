@@ -22,9 +22,9 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams
 
     const filters = {
-      contractId: searchParams.get('contractId'),
-      status: searchParams.get('status'),
-      category: searchParams.get('category')
+      contractId: searchParams.get('contractId') || undefined,
+      status: searchParams.get('status') || undefined,
+      category: searchParams.get('category') || undefined
     }
 
     const options = {

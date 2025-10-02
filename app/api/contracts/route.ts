@@ -42,11 +42,7 @@ export async function GET(request: NextRequest) {
       sortOrder: sortOrder as 'asc' | 'desc'
     }
 
-    const include = {
-      receivables: true
-    }
-
-    return await contractService.findMany(filters, options, include)
+    return await contractService.findMany(filters, options)
   })
 }
 

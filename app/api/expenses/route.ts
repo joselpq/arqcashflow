@@ -23,15 +23,15 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams
 
     const filters = {
-      contractId: searchParams.get('contractId'),
-      status: searchParams.get('status'),
-      category: searchParams.get('category'),
-      type: searchParams.get('type'),
-      vendor: searchParams.get('vendor'),
+      contractId: searchParams.get('contractId') || undefined,
+      status: searchParams.get('status') || undefined,
+      category: searchParams.get('category') || undefined,
+      type: searchParams.get('type') || undefined,
+      vendor: searchParams.get('vendor') || undefined,
       isRecurring: searchParams.get('isRecurring') === 'true' ? true :
                    searchParams.get('isRecurring') === 'false' ? false : undefined,
-      dueAfter: searchParams.get('startDate'),
-      dueBefore: searchParams.get('endDate')
+      dueAfter: searchParams.get('startDate') || undefined,
+      dueBefore: searchParams.get('endDate') || undefined
     }
 
     const options = {

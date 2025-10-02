@@ -7,7 +7,9 @@
  * Phase 2: Context-Aware Validation Implementation
  */
 
-import type { EventPayload, EventContext, EventMiddleware } from '../types'
+import type { EventPayload, EventContext } from '../types'
+
+type EventMiddleware = (event: EventPayload, context: EventContext, next: () => Promise<void>) => Promise<void>
 import { EventSchemas } from '../types'
 import { ValidationError, validateSchema } from '@/lib/validation'
 import {
@@ -51,7 +53,7 @@ export class ValidationMiddleware {
   /**
    * Validate basic event structure with context awareness
    */
-  static validateEventStructure: EventMiddleware = async (event, context, next) => {
+  static validateEventStructure: EventMiddleware = async (event: EventPayload, context: EventContext, next: () => Promise<void>) => {
     const validationContext = ValidationMiddleware.getCurrentContext()
 
     try {
@@ -128,7 +130,7 @@ export class ValidationMiddleware {
   /**
    * Validate event payload using appropriate schema with context awareness
    */
-  static validateEventPayload: EventMiddleware = async (event, context, next) => {
+  static validateEventPayload: EventMiddleware = async (event: EventPayload, context: EventContext, next: () => Promise<void>) => {
     const validationContext = ValidationMiddleware.getCurrentContext()
 
     try {
@@ -166,7 +168,7 @@ export class ValidationMiddleware {
   /**
    * Sanitize event data to prevent injection attacks
    */
-  static sanitizeEventData: EventMiddleware = async (event, context, next) => {
+  static sanitizeEventData: EventMiddleware = async (event: EventPayload, context: EventContext, next: () => Promise<void>) => {
     try {
       // Sanitize string fields in payload
       if (event.payload && typeof event.payload === 'object') {
@@ -189,7 +191,7 @@ export class ValidationMiddleware {
   /**
    * Validate business rules for event with context awareness
    */
-  static validateBusinessRules: EventMiddleware = async (event, context, next) => {
+  static validateBusinessRules: EventMiddleware = async (event: EventPayload, context: EventContext, next: () => Promise<void>) => {
     const validationContext = ValidationMiddleware.getCurrentContext()
 
     try {

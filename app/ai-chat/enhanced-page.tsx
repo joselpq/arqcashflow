@@ -117,7 +117,7 @@ export default function EnhancedAIChatPage() {
           }
         } catch (fileError) {
           console.error(`Error processing file ${file.name}:`, fileError)
-          alert(`Erro ao processar arquivo ${file.name}: ${fileError.message}`)
+          alert(`Erro ao processar arquivo ${file.name}: ${fileError instanceof Error ? fileError.message : 'Erro desconhecido'}`)
         }
       }
 
@@ -331,7 +331,7 @@ export default function EnhancedAIChatPage() {
       console.error('Request failed:', error)
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: `Erro ao processar solicitação: ${error.message}. Tente novamente.`,
+        content: `Erro ao processar solicitação: ${error instanceof Error ? error.message : 'Erro desconhecido'}. Tente novamente.`,
         timestamp: new Date()
       }])
     } finally {

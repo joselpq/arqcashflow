@@ -52,15 +52,15 @@ class AuditTrailHandlers {
           entityId: AuditTrailHandlers.extractEntityId(event),
           action: event.type.split('.')[1], // created, updated, paid, etc.
           timestamp: context.timestamp,
-          changes: event.payload || {},
+          changes: (event.payload as any) || {},
           metadata: {
             eventId: event.id,
             eventType: event.type,
             source: event.source,
-            payload: event.payload,
+            payload: event.payload as any,
             userAgent: event.metadata?.userAgent,
             ipAddress: event.metadata?.ipAddress,
-          },
+          } as any,
         },
       })
 
@@ -99,7 +99,7 @@ class AuditTrailHandlers {
           entityId: context.userId || 'unknown',
           action: event.type,
           timestamp: context.timestamp,
-          changes: event.payload || {},
+          changes: (event.payload as any) || {},
           metadata: {
             eventId: event.id,
             eventType: event.type,
@@ -142,7 +142,7 @@ class AuditTrailHandlers {
           entityId: event.payload?.documentId || event.id,
           action: event.type,
           timestamp: context.timestamp,
-          changes: event.payload || {},
+          changes: (event.payload as any) || {},
           metadata: {
             eventId: event.id,
             eventType: event.type,

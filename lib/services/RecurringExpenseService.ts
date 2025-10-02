@@ -112,9 +112,33 @@ export interface SeriesGenerationResult {
 /**
  * RecurringExpenseService - Centralized business logic for recurring expense operations
  */
-export class RecurringExpenseService extends BaseService {
+export class RecurringExpenseService extends BaseService<
+  RecurringExpense,
+  RecurringExpenseCreateData,
+  RecurringExpenseUpdateData,
+  RecurringExpenseFilters
+> {
   constructor(context: ServiceContext) {
-    super(context)
+    super(context, 'RecurringExpense', ['description', 'amount', 'startDate', 'frequency', 'createdAt'])
+  }
+
+  /**
+   * Validate business rules for recurring expense data
+   */
+  async validateBusinessRules(data: RecurringExpenseCreateData | RecurringExpenseUpdateData): Promise<void> {
+    // Validate recurring date range if both dates are provided
+    if ('startDate' in data && data.startDate) {
+      const endDate = 'endDate' in data ? data.endDate : undefined
+      if (!BusinessRuleValidation.validateRecurringDateRange(data.startDate, endDate)) {
+        throw new ServiceError(
+          'End date must be after start date',
+          'INVALID_DATE_RANGE',
+          400
+        )
+      }
+    }
+
+    // Additional validations can be added here as needed
   }
 
   /**

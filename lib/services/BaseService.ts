@@ -207,7 +207,7 @@ export abstract class BaseService<TEntity, TCreateData, TUpdateData, TFilters ex
     // Log audit entry
     await this.logAudit(async () => {
       const auditContext = this.createAuditContext(`${this.entityName}_creation`)
-      await auditCreate(auditContext, this.entityName, entity.id, entity)
+      await auditCreate(auditContext, this.entityName as any, entity.id, entity)
     })
 
     return entity
@@ -237,7 +237,7 @@ export abstract class BaseService<TEntity, TCreateData, TUpdateData, TFilters ex
     // Log audit entry
     await this.logAudit(async () => {
       const auditContext = this.createAuditContext(`${this.entityName}_update`)
-      await auditUpdate(auditContext, this.entityName, id, beforeState, data, entity)
+      await auditUpdate(auditContext, this.entityName as any, id, beforeState, data, entity)
     })
 
     return entity
@@ -265,7 +265,7 @@ export abstract class BaseService<TEntity, TCreateData, TUpdateData, TFilters ex
     // Log audit entry
     await this.logAudit(async () => {
       const auditContext = this.createAuditContext(`${this.entityName}_deletion`)
-      await auditDelete(auditContext, this.entityName, id, beforeState)
+      await auditDelete(auditContext, this.entityName as any, id, beforeState)
     })
 
     return true
@@ -326,7 +326,7 @@ export abstract class BaseService<TEntity, TCreateData, TUpdateData, TFilters ex
           setImmediate(async () => {
             await this.logAudit(async () => {
               const auditContext = this.createAuditContext(`${this.entityName}_bulk_creation`)
-              await auditCreate(auditContext, this.entityName, entity.id, entity)
+              await auditCreate(auditContext, this.entityName as any, entity.id, entity)
             })
           })
 
@@ -413,7 +413,7 @@ export abstract class BaseService<TEntity, TCreateData, TUpdateData, TFilters ex
           setImmediate(async () => {
             await this.logAudit(async () => {
               const auditContext = this.createAuditContext(`${this.entityName}_bulk_update`)
-              await auditUpdate(auditContext, this.entityName, id, beforeState, data, entity)
+              await auditUpdate(auditContext, this.entityName as any, id, beforeState, data, entity)
             })
           })
 
@@ -500,7 +500,7 @@ export abstract class BaseService<TEntity, TCreateData, TUpdateData, TFilters ex
           setImmediate(async () => {
             await this.logAudit(async () => {
               const auditContext = this.createAuditContext(`${this.entityName}_bulk_deletion`)
-              await auditDelete(auditContext, this.entityName, id, beforeState)
+              await auditDelete(auditContext, this.entityName as any, id, beforeState)
             })
           })
 

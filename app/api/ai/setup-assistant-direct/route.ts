@@ -455,8 +455,8 @@ Return a JSON object with this EXACT structure (no markdown, just JSON):
         console.log('✅ Claude response received')
         console.log(`📏 Response length: ${JSON.stringify(response).length} characters`)
 
-        const content = response.content[0]
-        if (content.type !== 'text') {
+        const content = response?.content?.[0]
+        if (!content || content.type !== 'text') {
           throw new Error('Unexpected response type from Claude')
         }
 

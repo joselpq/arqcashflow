@@ -22,7 +22,7 @@ export async function GET(
     const { id } = await params
 
     const contractService = new ContractService({ ...context, request })
-    const contract = await contractService.findById(id, { receivables: true })
+    const contract = await contractService.findById(id)
 
     if (!contract) {
       throw new Error('Contract not found')

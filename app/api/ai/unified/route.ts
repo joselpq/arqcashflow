@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
       console.log(`[Unified AI] Files: ${files.length}`)
 
       // Initialize conversation state if new conversation
-      let state: UnifiedConversationState = conversationState || createInitialConversationState()
+      let state: UnifiedConversationState = (conversationState as unknown as UnifiedConversationState) || createInitialConversationState()
 
       // Convert date strings to Date objects if state was serialized
       if (state.metadata.startedAt && typeof state.metadata.startedAt === 'string') {
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
         'user',
         message,
         undefined,
-        { filesAttached: files.length }
+        files.length > 0 ? { filesProcessed: files.length } : undefined
       )
 
       // Initialize router with team context

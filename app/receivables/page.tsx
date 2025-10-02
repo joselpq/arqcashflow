@@ -106,7 +106,7 @@ function ReceivablesPageContent() {
       setReceivables(data)
 
       // Extract unique categories for filter dropdown
-      const categories = [...new Set(data.map((r: any) => r.category).filter(Boolean))]
+      const categories = [...new Set(data.map((r: any) => r.category).filter(Boolean))] as string[]
       setUniqueCategories(categories)
     } catch (error) {
       console.error('Falha ao buscar contas a receber:', error)

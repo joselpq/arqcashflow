@@ -5,8 +5,10 @@
  * and maintains security boundaries for all events.
  */
 
-import type { EventPayload, EventContext, EventMiddleware } from '../types'
+import type { EventPayload, EventContext } from '../types'
 import { prisma } from '@/lib/prisma'
+
+type EventMiddleware = (event: EventPayload, context: EventContext, next: () => Promise<void>) => Promise<void>
 
 /**
  * Team Context Middleware Components
@@ -15,7 +17,7 @@ export class TeamContextMiddleware {
   /**
    * Enforce team isolation - ensure event belongs to correct team
    */
-  static enforceTeamIsolation: EventMiddleware = async (event, context, next) => {
+  static enforceTeamIsolation: EventMiddleware = async (event: EventPayload, context: EventContext, next: () => Promise<void>) => {
     try {
       // Verify event teamId matches context teamId
       if (event.teamId !== context.teamId) {
@@ -41,7 +43,7 @@ export class TeamContextMiddleware {
   /**
    * Validate team access permissions
    */
-  static validateTeamAccess: EventMiddleware = async (event, context, next) => {
+  static validateTeamAccess: EventMiddleware = async (event: EventPayload, context: EventContext, next: () => Promise<void>) => {
     try {
       // Verify user has access to the team
       if (context.userId) {
@@ -68,7 +70,7 @@ export class TeamContextMiddleware {
   /**
    * Audit team access for security monitoring
    */
-  static auditTeamAccess: EventMiddleware = async (event, context, next) => {
+  static auditTeamAccess: EventMiddleware = async (event: EventPayload, context: EventContext, next: () => Promise<void>) => {
     try {
       // Log team access patterns for security analysis
       await TeamContextMiddleware.logTeamAccess(event, context)

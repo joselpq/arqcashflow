@@ -12,21 +12,25 @@ export default function ExpensesTab() {
   const searchParams = useSearchParams()
   const editId = searchParams.get('edit')
 
-  const [expenses, setExpenses] = useState([])
-  const [filteredExpenses, setFilteredExpenses] = useState([])
+  const [expenses, setExpenses] = useState<any[]>([])
+  const [filteredExpenses, setFilteredExpenses] = useState<any[]>([])
   // Removed recurringExpenses state - now handled through regular expenses filter
-  const [contracts, setContracts] = useState([])
+  const [contracts, setContracts] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [formLoading, setFormLoading] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [editingExpense, setEditingExpense] = useState(null)
+  const [editingExpense, setEditingExpense] = useState<any>(null)
   // Removed viewMode - now using filters.recurrenceType
 
   // Recurring expense action modal state
-  const [recurringActionModal, setRecurringActionModal] = useState({
+  const [recurringActionModal, setRecurringActionModal] = useState<{
+    isOpen: boolean
+    expense: any
+    action: 'edit' | 'delete'
+  }>({
     isOpen: false,
     expense: null,
-    action: 'edit' as 'edit' | 'delete'
+    action: 'edit'
   })
   const [isMarkPaidModalOpen, setIsMarkPaidModalOpen] = useState(false)
   const [expenseToMark, setExpenseToMark] = useState<any>(null)
@@ -111,7 +115,7 @@ export default function ExpensesTab() {
     setLoading(true)
     try {
       // Prepare filters for API call
-      const apiFilters = { ...filters }
+      const apiFilters: any = { ...filters }
 
       // Handle recurrence type filter
       if (filters.recurrenceType === 'regular') {
