@@ -389,9 +389,9 @@ Each step must have:
 - ✅ Code is readable and maintainable
 
 ### Overall Project Success (All Steps Complete)
-- 🎯 <500 lines total (vs 2,049)
+- 🎯 &lt;500 lines total (vs 2,049)
 - 🎯 >95% success rate for operations
-- 🎯 <3s response time (P95)
+- 🎯 &lt;3s response time (P95)
 - 🎯 Positive user feedback
 - 🎯 All features from original spec working
 

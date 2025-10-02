@@ -788,7 +788,7 @@ Response: "Você tem 12 despesas esse mês, total R$ 5.240,00"
 | **Intent Classification Accuracy** | >95% | User doesn't need to manually switch agents |
 | **Multi-Turn Context Retention** | 100% | Follow-up commands work seamlessly |
 | **Query Delegation Success Rate** | >85% | Operations successfully uses Query when needed |
-| **Response Time (P95)** | <3s | Includes all agent processing |
+| **Response Time (P95)** | &lt;3s | Includes all agent processing |
 | **User Satisfaction** | >90% | Thumbs up/down feedback |
 
 ### **ADR-008 Compliance**
