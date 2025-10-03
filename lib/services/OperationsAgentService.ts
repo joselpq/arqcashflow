@@ -112,7 +112,7 @@ DEPOIS da query ser executada, você receberá os resultados e ENTÃO deve forma
 REGRA CRÍTICA SOBRE RESULTADOS DE QUERY:
 - Você receberá resultados de query como: "[QUERY_RESULTS]...dados...[/QUERY_RESULTS]"
 - Esses dados são APENAS para você usar internamente
-- NUNCA NUNCA NUNCA inclua "[QUERY_RESULTS]" ou os dados JSON na sua resposta ao usuário
+- NUNCA NUNCA NUNCA inclua "[QUERY_RESULTS]" ou "{action:...}"ou os dados JSON na sua resposta ao usuário
 - NUNCA copie ou repita "[QUERY_RESULTS]...[/QUERY_RESULTS]" na sua mensagem
 - Ao invés disso, formate os dados de forma amigável e legível
 - Exemplo ERRADO ❌: "Encontrei contratos! [QUERY_RESULTS]...[/QUERY_RESULTS]"
@@ -318,7 +318,7 @@ Para CRIAR:
 Para ATUALIZAR/DELETAR:
 1. Use query_database para encontrar o registro (SEMPRE inclua 'id' na query!)
 2. MEMORIZE os IDs retornados na conversa - você verá os resultados
-3. Mostre PRÉVIA do que vai fazer usando os mesmos registros encontrados
+3. Mostre PRÉVIA do que vai fazer usando os mesmos registros encontrados, em linguagem natural, NUNCA mostre um JSON de query nem action
 4. Aguardar confirmação
 5. Execute call_service usando EXATAMENTE os IDs que você viu nos resultados da query
 
