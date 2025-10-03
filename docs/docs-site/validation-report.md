@@ -4,12 +4,12 @@ Generated on: 2025-10-03
 
 ## Summary
 
-- **Total files validated**: 79
+- **Total files validated**: 80
 - **Broken links**: 0
 - **Stale content**: 1
 - **Missing metadata**: 0
-- **Format inconsistencies**: 2
-- **Orphaned files**: 23
+- **Format inconsistencies**: 3
+- **Orphaned files**: 24
 
 ## Issues Found
 
@@ -20,19 +20,23 @@ Generated on: 2025-10-03
 ### 📅 Stale Content (1)
 
 
-- **File**: `decisions/012-operations-agent-incremental-rebuild.md`
-  - **Last updated**: 2025-01-02
-  - **Days since update**: 274
+- **File**: `optimization-opportunities.md`
+  - **Last updated**: 2025-01-03
+  - **Days since update**: 273
 
 
 ### 📋 Missing Metadata (0)
 
 ✅ All files have required metadata!
 
-### 📐 Format Inconsistencies (2)
+### 📐 Format Inconsistencies (3)
 
 
 - **File**: `decisions/012-operations-agent-incremental-rebuild.md`
+  - **Issues**: Missing agent_roles or contexts in frontmatter
+
+
+- **File**: `optimization-opportunities.md`
   - **Issues**: Missing agent_roles or contexts in frontmatter
 
 
@@ -40,7 +44,7 @@ Generated on: 2025-10-03
   - **Issues**: Missing LLM Context section
 
 
-### 🔍 Orphaned Files (23)
+### 🔍 Orphaned Files (24)
 
 
 - `agents/contexts/validation-layer.md`
@@ -109,6 +113,9 @@ Generated on: 2025-10-03
 - `meta/templates/adr-template.md`
 
 
+- `optimization-opportunities.md`
+
+
 - `reference/api/auth-[...nextauth].md`
 
 
@@ -130,7 +137,7 @@ Generated on: 2025-10-03
 
 ## Health Score
 
-**Overall Score**: 99% 🟢
+**Overall Score**: 98% 🟢
 
 ---
 

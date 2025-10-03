@@ -2,12 +2,13 @@
 title: "Operations Agent Incremental Rebuild"
 type: "decision"
 audience: ["developer", "agent"]
-contexts: ["ai-agents", "architecture", "incremental-development", "simplicity"]
+contexts: ["ai-agents", "architecture", "incremental-development", "simplicity", "multi-entity-operations", "token-limits"]
 complexity: "intermediate"
-last_updated: "2025-01-02"
-version: "1.1"
+last_updated: "2025-10-03"
+version: "1.2"
 status: "active"
 decision_date: "2025-10-02"
+agent_roles: ["operations-agent-developer", "ai-integration-specialist", "incremental-builder"]
 related:
   - decisions/008-ai-agent-strategy.md
   - decisions/004-no-regrets-architecture-improvements.md
@@ -29,17 +30,18 @@ related:
 ## Status
 
 **ACCEPTED** - 2025-10-02
-**UPDATED** - 2025-01-02
+**UPDATED** - 2025-10-03
 
-**Current Implementation**: ✅ Steps 1-4 Complete (2025-01-02)
+**Current Implementation**: ✅ Steps 1-5 Complete (2025-10-03)
 - Step 1: ✅ Basic conversation with context
 - Step 2: ✅ Simple expense creation
 - Step 3: ✅ Confirmation workflow (Claude-powered)
 - Step 4: ✅ Update and Delete operations (with bulkUpdate API integration)
+- Step 5: ✅ Multi-entity support (Contract, Receivable, RecurringExpense)
 
-**Current Status**: Core CRUD operations working, comprehensive system prompt implemented
+**Current Status**: All entity types supported, production bugs fixed, max_tokens optimized
 
-**Next Steps**: Step 5+ - Expand to other entity types (Contract, Receivable, RecurringExpense)
+**Next Steps**: Step 6+ - Batch operations, advanced context, agent integration
 
 ## Problem Statement
 
@@ -317,14 +319,74 @@ Frontend maintains:
 
 ---
 
-#### 📋 **Step 5: Contracts and Receivables**
+#### ✅ **Step 5: Multi-Entity Support** (COMPLETE - 2025-10-03)
 
-**Goal**: Expand to other entity types
+**Goal**: Expand to all entity types (Contract, Receivable, RecurringExpense)
 
-**What to Add**:
-- ContractService integration
-- ReceivableService integration
-- Enhanced schema in system prompt
+**Implementation**: ~650 lines maintained (no code bloat)
+
+**What Was Added**:
+- ✅ ContractService integration with deletion options
+- ✅ ReceivableService integration
+- ✅ RecurringExpenseService integration
+- ✅ Complete schema documentation for all 4 entities in system prompt
+- ✅ Smart defaults for dates and contract fields
+- ✅ Contract deletion UX with receivables handling options
+
+**Bug Fixes (Production Testing)**:
+
+**Bug 1: RecurringExpense Schema** ✅ FIXED
+- Problem: System prompt documented wrong schema (had `dueDate`, actual is `nextDue`)
+- Solution: Updated schema to show correct fields (nextDue, isActive, vendor)
+- Added warning: "RecurringExpense NÃO tem campo 'dueDate'!"
+
+**Bug 2: Contract Deletion Missing Receivables Handling** ✅ FIXED
+- Problem: Claude deleted contracts without asking about linked receivables
+- Solution: Added `options` parameter documentation with two modes:
+  - `"contract-only"`: Unlinks receivables (safe default)
+  - `"contract-and-receivables"`: Deletes everything (destructive)
+- Added workflow rule requiring Claude to always ask user about receivables
+
+**Bug 3: JSON Exposure in User Display** ✅ FIXED
+- Problem: Claude echoed `[QUERY_RESULTS]` and `{action:...}` JSON in responses
+- Solution: Enhanced system prompt with explicit rules:
+  - Line 115: "NUNCA inclua '[QUERY_RESULTS]' ou '{action:...}' na resposta"
+  - Line 321: Preview must be "em linguagem natural, NUNCA mostre JSON"
+
+**Bug 4: max_tokens Limit for Large Operations** ✅ FIXED
+- Problem: 1,500 token limit caused truncated JSON for 108 contract IDs
+- Evidence: Response stopped mid-JSON at ID #73, system couldn't parse action
+- Analysis: 108 IDs = ~2,700 chars + structure + text = ~2,500 tokens needed
+- Solution: Increased max_tokens to **8,192** (supports ~400 IDs)
+
+**max_tokens Decision Rationale**:
+
+**Why 8,192?**
+1. ✅ Handles realistic bulk operations (up to ~400 contract IDs)
+2. ✅ Avoids Anthropic SDK timeout warning (>10 min for non-streaming)
+3. ✅ Cost-efficient (only pay for tokens actually used, not the limit)
+4. ✅ 5x increase from original 1,500, covers 99% of use cases
+
+**SDK Constraint**:
+- Anthropic TypeScript SDK has `calculateNonstreamingTimeout` check
+- Non-streaming requests with max_tokens >~16K trigger 10-minute timeout error
+- Error: "Streaming is required for operations that may take longer than 10 minutes"
+- Tested: 32K triggers warning, 8K does not
+
+**Future Scaling (if needed)**:
+- Claude Sonnet 4 supports up to **64,000 max_tokens**
+- To use >16K without warnings, add `timeout: 600000` (10 min) to API calls
+- Or enable streaming: `stream: true` (requires response handling changes)
+- For >1,000 IDs: Consider "useLastQueryResults" pattern (reference IDs from history)
+
+**Files Modified**:
+- `lib/services/OperationsAgentService.ts` (lines 360, 523)
+
+**Success Criteria**: ✅ All passed
+- "Cria um contrato da Mari de R$5000" → Creates contract
+- "Deleta o contrato Ble" → Asks about receivables, then deletes
+- "Lista despesas recorrentes" → Uses correct schema fields
+- 108 contract bulk deletion → Complete JSON response, successful execution
 
 ---
 

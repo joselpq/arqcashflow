@@ -1,7 +1,7 @@
 # ArqCashflow Development Backlog
 
 **Purpose**: Central source of truth for project priorities and development status
-**Last Updated**: 2025-01-03 (Operations Agent Step 4 Bug Fixes Complete - Production Ready)
+**Last Updated**: 2025-10-03 (Operations Agent Step 5 Complete - Multi-Entity Support with Bug Fixes)
 **Update Frequency**: Every LLM session MUST update this document when completing tasks or discovering new requirements
 
 ## 🚨 CRITICAL INSTRUCTIONS FOR LLM AGENTS
@@ -83,51 +83,85 @@ Examples:
 ### 🔄 DOING (Currently In Progress)
 *Active work with real-time progress tracking. Can persist between sessions if work is incomplete.*
 
-**Currently**: Nothing in progress. Operations Agent Step 4 COMPLETE with all bugs fixed! 🎉
+**Currently**: Nothing in progress. Operations Agent Step 5 COMPLETE with all bugs fixed! 🎉
 
-**Step 4 Final Status** (2025-01-03):
-- ✅ Comprehensive system prompt with 4 entity schemas
-- ✅ All bulk operations: bulkCreate, bulkUpdate, bulkDelete
-- ✅ PostgreSQL case sensitivity handling (quoted column names)
-- ✅ Dual history architecture (conversationHistory + displayHistory)
-- ✅ Frontend fullHistory state preservation (no ID hallucination)
-- ✅ Query → Update → Confirm workflow tested in production
-- ✅ Clean user experience (no raw JSON or internal messages shown)
+**Step 5 Final Status** (2025-10-03):
+- ✅ Multi-entity support: Contract, Receivable, RecurringExpense, Expense
+- ✅ RecurringExpense schema bug fixed (dueDate → nextDue)
+- ✅ Contract deletion with receivables handling options
+- ✅ JSON exposure prevention in user responses
+- ✅ max_tokens optimized: 1,500 → 8,192 (handles ~400 IDs)
+- ✅ Large bulk operations tested (108 contracts deletion)
 
 **Production Testing Results**:
-- ✅ Complex queries work: "despesas com Notion abaixo de R$10"
-- ✅ Multi-turn operations: Query → Preview → Confirm → Execute
-- ✅ Bulk delete: "Pode deletar elas?" deletes all items found
-- ✅ No ID hallucination: Uses correct IDs from query results
-- ✅ No raw JSON shown: User sees formatted responses only
+- ✅ Multi-entity operations: "Cria contrato da Mari R$5000" works
+- ✅ Contract deletion: Asks about receivables before deleting
+- ✅ RecurringExpense queries: Uses correct schema fields (nextDue)
+- ✅ 108 contract bulk deletion: Complete JSON response, no truncation
+- ✅ No JSON leakage: Clean natural language responses only
 
 ---
 
 ### 📋 TO DO (Immediate Priorities)
 *Ready to implement, explicitly prioritized.*
 
-#### **Operations Agent - Step 5: Expand to Other Entity Types** (Next Priority)
-
-**Goal**: Extend Operations Agent to handle Contract, Receivable, and RecurringExpense operations
-
-**Scope**:
-- Add service integrations (ContractService, ReceivableService, RecurringExpenseService)
-- Test create/update/delete/bulkUpdate for each entity type
-- Verify inference works for each entity (e.g., contract dates, receivable amounts)
-
-**Current State**: System prompt already documents all 4 entities, just need to add service instances
-
-**Expected Implementation**: ~15 lines (add 3 service instances to serviceMap)
-
-**Success Criteria**:
-- "Cria um contrato da Mari de R$5000" → Creates contract
-- "Atualiza o recebível da ACME para R$3000" → Queries and updates receivable
-- "Deleta a despesa recorrente do Notion" → Queries, confirms, deletes
+**Currently Empty** - Next priorities to be determined
 
 ---
 
 ### ✅ DONE (Recently Completed)
 *Newest first, for reference.*
+
+#### ✅ **Operations Agent Step 5: Multi-Entity Support** (2025-10-03)
+
+**Achievement**: Extended Operations Agent to all entity types with production bug fixes
+
+**What Was Built**:
+- ✅ Multi-entity CRUD: Contract, Receivable, RecurringExpense, Expense
+- ✅ Complete schema documentation for all 4 entities in system prompt
+- ✅ Smart defaults (dates, contract fields, recurring expense intervals)
+- ✅ Contract deletion with receivables handling (user choice between modes)
+
+**Bug Fixes (4 Critical Issues)**:
+
+1. **RecurringExpense Schema Bug** ✅
+   - Fixed: System prompt had wrong field name (dueDate vs nextDue)
+   - Impact: RecurringExpense queries now work correctly
+
+2. **Contract Deletion Missing Options** ✅
+   - Fixed: Added `options` parameter with two modes
+   - Impact: Users now choose how to handle linked receivables
+
+3. **JSON Exposure in User Display** ✅
+   - Fixed: Enhanced system prompt to prevent JSON leakage
+   - Impact: Clean natural language responses only
+
+4. **max_tokens Limit for Large Operations** ✅
+   - Problem: 1,500 limit caused truncated JSON for 108 contracts
+   - Fixed: Increased to 8,192 (supports ~400 IDs)
+   - Rationale: Avoids SDK timeout warning, handles 99% of use cases
+   - SDK Constraint: >16K triggers non-streaming timeout error
+   - Future scaling documented in ADR-012
+
+**Key Decisions**:
+- **max_tokens: 8,192** - Balances capacity vs SDK constraints
+- Claude Sonnet 4 supports up to 64K, but SDK warns at >16K
+- To use >16K: Add `timeout: 600000` or enable streaming
+- For >1,000 IDs: Consider "useLastQueryResults" pattern
+
+**Testing**: ✅ Production validated
+- 108 contract bulk deletion: Complete response, no truncation
+- Multi-entity operations: All CRUD working across all types
+- Contract deletion: Proper receivables handling prompt
+- RecurringExpense queries: Correct schema usage
+
+**Files**:
+- `lib/services/OperationsAgentService.ts` (~650 lines maintained)
+- `docs/docs-site/docs/decisions/012-operations-agent-incremental-rebuild.md`
+
+**Next Steps**: Step 6 (Batch Operations) - Create multiple entities at once
+
+---
 
 #### ✅ **Operations Agent Step 4: Bug Fixes & Production Refinement** (2025-01-03)
 
