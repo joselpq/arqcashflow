@@ -107,10 +107,14 @@ export function createDateForStorage(dateStr: string): Date {
   }
 
   try {
+    // Handle ISO 8601 format (YYYY-MM-DDTHH:mm:ss.sssZ)
+    // Extract just the date part before 'T' if present
+    const datePart = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr
+
     // Parse the date string (YYYY-MM-DD format)
-    const parts = dateStr.split('-')
+    const parts = datePart.split('-')
     if (parts.length !== 3) {
-      throw new Error(`Invalid date format: ${dateStr}. Expected YYYY-MM-DD format`)
+      throw new Error(`Invalid date format: ${dateStr}. Expected YYYY-MM-DD or ISO 8601 format`)
     }
 
     const [year, month, day] = parts.map(Number)
