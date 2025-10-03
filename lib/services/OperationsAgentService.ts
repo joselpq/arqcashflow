@@ -93,8 +93,6 @@ FERRAMENTAS DISPONÍVEIS:
 2. call_service - Executar operações (criar/editar/deletar)
    {"action": "call_service", "service": "ExpenseService", "method": "create", "params": {...}}
 
-Você pode usar apenas uma dessas ferramentas por chamada, nunca as duas em uma mesma chamada.
-
 REGRAS CRÍTICAS PARA AÇÕES:
 
 ⚠️ QUANDO EXECUTAR UMA QUERY OU OPERAÇÃO:
@@ -114,9 +112,9 @@ DEPOIS da query ser executada, você receberá os resultados e ENTÃO deve forma
 REGRA CRÍTICA SOBRE RESULTADOS DE QUERY:
 - Você receberá resultados de query como: "[QUERY_RESULTS]...dados...[/QUERY_RESULTS]"
 - Esses dados são APENAS para você usar internamente
-- NUNCA NUNCA NUNCA inclua "[QUERY_RESULTS]" ou "{action:...}" ou os dados JSON na sua resposta ao usuário
+- NUNCA NUNCA NUNCA inclua "[QUERY_RESULTS]" ou "{action:...}"ou os dados JSON na sua resposta ao usuário
 - NUNCA copie ou repita "[QUERY_RESULTS]...[/QUERY_RESULTS]" na sua mensagem
-- Ao invés disso, dê sua resposta ao usuário em linguagem natural, NUNCA mostre um JSON de query nem action
+- Ao invés disso, formate os dados de forma amigável e legível
 - Exemplo ERRADO ❌: "Encontrei contratos! [QUERY_RESULTS]...[/QUERY_RESULTS]"
 - Exemplo CORRETO ✅: "Encontrei 36 contratos: RV, Julia Melardi, Paula Saad..."
 
@@ -371,9 +369,42 @@ TOM E ESTILO:
     // Extract JSON action if present
     let action = null
 
-    // Extract inline JSON action from Claude's response
-    // Handles both single and multiple JSON objects (for potential batch operations)
-    if (responseText.includes('"action"')) {
+    // Method 1: Check for tool use format (Claude is mimicking function calling)
+    // Format: <invoke name="..."><parameter name="X">value</parameter>...</invoke>
+    if (responseText.includes('<invoke') || responseText.includes('<parameter')) {
+      try {
+        const serviceMatch = responseText.match(/<parameter name="service">\s*([^<]+)\s*<\/parameter>/i)
+        const methodMatch = responseText.match(/<parameter name="method">\s*([^<]+)\s*<\/parameter>/i)
+        const paramsMatch = responseText.match(/<parameter name="params">\s*(\{[\s\S]*?\})\s*<\/parameter>/i)
+        const actionTypeMatch = responseText.match(/<parameter name="action">\s*([^<]+)\s*<\/parameter>/i)
+        const sqlMatch = responseText.match(/<parameter name="sql">\s*([^<]+)\s*<\/parameter>/i)
+
+        if (serviceMatch && methodMatch && paramsMatch) {
+          // call_service format
+          const params = JSON.parse(paramsMatch[1].trim())
+          action = {
+            action: 'call_service',
+            service: serviceMatch[1].trim(),
+            method: methodMatch[1].trim(),
+            params
+          }
+          console.log('[Operations] Extracted tool use format (call_service):', action)
+        } else if (actionTypeMatch && actionTypeMatch[1].trim() === 'query_database' && sqlMatch) {
+          // query_database format
+          action = {
+            action: 'query_database',
+            sql: sqlMatch[1].trim()
+          }
+          console.log('[Operations] Extracted tool use format (query_database):', action)
+        }
+      } catch (error) {
+        console.error('[Operations] Tool use format parse error:', error)
+      }
+    }
+
+    // Method 2: Try to extract inline JSON (fallback for simple format)
+    // Handle multiple JSON objects in response (for batch operations)
+    if (!action && responseText.includes('"action"')) {
       try {
         // Find all complete JSON objects (supporting nested objects)
         const jsonObjects: any[] = []
@@ -510,23 +541,34 @@ TOM E ESTILO:
           }
         }
 
-        // CALL SERVICE (unified handler for all entity types)
+        // CALL SERVICE (new unified handler)
         if (action.action === 'call_service' && action.service && action.method && action.params) {
           return await this.handleServiceCall(action.service, action.method, action.params, message, history)
         }
 
+        // Legacy handlers (for backward compatibility during transition)
+        if (action.action === 'create_expense' && action.data) {
+          return await this.handleServiceCall('ExpenseService', 'create', action.data, message, history)
+        }
+
+        if (action.action === 'update_expense' && action.id && action.data) {
+          return await this.handleServiceCall('ExpenseService', 'update', { id: action.id, data: action.data }, message, history)
+        }
+
+        if (action.action === 'delete_expense' && action.id) {
+          return await this.handleServiceCall('ExpenseService', 'delete', { id: action.id }, message, history)
+        }
+
       } catch (error) {
         const errorMessage = `❌ Erro: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
-        const errorHistory = [
-          ...history,
-          { role: 'user' as const, content: message },
-          { role: 'assistant' as const, content: errorMessage }
-        ]
         return {
           success: false,
           message: errorMessage,
-          conversationHistory: errorHistory,
-          displayHistory: this.filterInternalMessages(errorHistory)
+          conversationHistory: [
+            ...history,
+            { role: 'user' as const, content: message },
+            { role: 'assistant' as const, content: errorMessage }
+          ]
         }
       }
     }
@@ -547,36 +589,6 @@ TOM E ESTILO:
       conversationHistory: fullHistory,
       displayHistory: this.filterInternalMessages(fullHistory)
     }
-  }
-
-  /**
-   * Helper: Log errors from bulk operations
-   */
-  private logBulkOperationErrors(service: string, method: string, result: any) {
-    if (result.errors && result.errors.length > 0) {
-      console.log(`[Operations] ${service}.${method} errors:`, result.errors)
-    }
-  }
-
-  /**
-   * Helper: Format success message for bulk operations (create/update/delete)
-   */
-  private formatBulkOperationMessage(method: string, result: any): string {
-    const operationName =
-      method === 'bulkCreate' ? 'Criação' :
-      method === 'bulkUpdate' ? 'Atualização' : 'Exclusão'
-
-    let message = `✅ ${operationName} em lote concluída!
-
-📊 Total: ${result.totalItems} itens
-✅ Sucesso: ${result.successCount}
-❌ Falhas: ${result.failureCount}`
-
-    if (result.failureCount > 0 && result.errors && result.errors.length > 0) {
-      message += `\n\n⚠️ Erros:\n${result.errors.slice(0, 3).join('\n')}`
-    }
-
-    return message
   }
 
   private async handleServiceCall(
@@ -617,7 +629,9 @@ TOM E ESTILO:
       console.log(`[Operations] Calling ${service}.${method} with ${items.length} items`)
       result = await serviceInstance[method](items)
       console.log(`[Operations] ${service}.${method} completed:`, result.successCount, 'succeeded,', result.failureCount, 'failed')
-      this.logBulkOperationErrors(service, method, result)
+      if (result.errors && result.errors.length > 0) {
+        console.log('[Operations] Errors:', result.errors)
+      }
     } else if (method === 'bulkUpdate') {
       // Handle bulk updates: params can be array or object with 'updates' property
       const updates = Array.isArray(params) ? params : params.updates
@@ -628,7 +642,9 @@ TOM E ESTILO:
       console.log('[Operations] Update details:', JSON.stringify(updates, null, 2))
       result = await serviceInstance[method](updates)
       console.log(`[Operations] ${service}.${method} completed:`, result.successCount, 'succeeded,', result.failureCount, 'failed')
-      this.logBulkOperationErrors(service, method, result)
+      if (result.errors && result.errors.length > 0) {
+        console.log('[Operations] Errors:', result.errors)
+      }
     } else if (method === 'bulkDelete') {
       // Handle bulk deletes: params can be array or object with 'ids' property
       const ids = Array.isArray(params) ? params : params.ids
@@ -638,7 +654,9 @@ TOM E ESTILO:
       console.log(`[Operations] Calling ${service}.${method} with ${ids.length} ids:`, ids)
       result = await serviceInstance[method](ids)
       console.log(`[Operations] ${service}.${method} completed:`, result.successCount, 'succeeded,', result.failureCount, 'failed')
-      this.logBulkOperationErrors(service, method, result)
+      if (result.errors && result.errors.length > 0) {
+        console.log('[Operations] Errors:', result.errors)
+      }
     } else if (method === 'update') {
       // Handle two formats:
       // 1. params = { id: "...", data: { amount: 15 } } (expected format)
@@ -660,12 +678,42 @@ TOM E ESTILO:
       result = await serviceInstance[method](params)
     }
 
-    // Format success message based on operation type
+    // Format success message based on entity type
     let successMessage = ''
 
-    if (['bulkCreate', 'bulkUpdate', 'bulkDelete'].includes(method)) {
-      // Use helper for all bulk operations
-      successMessage = this.formatBulkOperationMessage(method, result)
+    if (method === 'bulkCreate') {
+      // Handle bulk create result
+      successMessage = `✅ Criação em lote concluída!
+
+📊 Total: ${result.totalItems} itens
+✅ Sucesso: ${result.successCount}
+❌ Falhas: ${result.failureCount}`
+
+      if (result.failureCount > 0 && result.errors.length > 0) {
+        successMessage += `\n\n⚠️ Erros:\n${result.errors.slice(0, 3).join('\n')}`
+      }
+    } else if (method === 'bulkUpdate') {
+      // Handle bulk update result
+      successMessage = `✅ Atualização em lote concluída!
+
+📊 Total: ${result.totalItems} itens
+✅ Sucesso: ${result.successCount}
+❌ Falhas: ${result.failureCount}`
+
+      if (result.failureCount > 0 && result.errors.length > 0) {
+        successMessage += `\n\n⚠️ Erros:\n${result.errors.slice(0, 3).join('\n')}`
+      }
+    } else if (method === 'bulkDelete') {
+      // Handle bulk delete result
+      successMessage = `✅ Exclusão em lote concluída!
+
+📊 Total: ${result.totalItems} itens
+✅ Sucesso: ${result.successCount}
+❌ Falhas: ${result.failureCount}`
+
+      if (result.failureCount > 0 && result.errors.length > 0) {
+        successMessage += `\n\n⚠️ Erros:\n${result.errors.slice(0, 3).join('\n')}`
+      }
     } else if (method === 'delete') {
       successMessage = `✅ Registro deletado com sucesso!`
     } else if (result) {
