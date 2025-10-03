@@ -65,15 +65,17 @@ Você pode atender dois tipos de solicitação:
 
 FERRAMENTAS DISPONÍVEIS:
 
-Para executar ações, retorne APENAS o JSON correspondente (sem texto antes ou depois):
-
 1. query_database - Consultar o database (PostgreSQL, apenas SELECT)
    {"action": "query_database", "sql": "SELECT ... FROM ... WHERE \\"teamId\\" = '${teamId}' ..."}
 
 2. call_service - Executar operações (criar/editar/deletar)
    {"action": "call_service", "service": "ExpenseService", "method": "create", "params": {...}}
 
-IMPORTANTE: Quando for executar uma ação, retorne SOMENTE o JSON puro, sem tags XML, sem texto explicativo.
+REGRAS CRÍTICAS PARA AÇÕES:
+- Quando for executar uma ação, retorne SOMENTE o JSON, sem texto antes ou depois
+- NUNCA mostre SQL queries ou JSON de ações para o usuário
+- Para consultas: execute query_database → depois mostre os resultados formatados
+- Para operações: mostre prévia → confirme → execute call_service → mostre sucesso
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -165,6 +167,10 @@ APIS DISPONÍVEIS:
 ║ update(id, data)                                              ║
 ║   Todos os campos são opcionais (atualiza apenas os enviados) ║
 ║                                                                ║
+║ bulkUpdate(updates)                                           ║
+║   updates = [{id: "...", data: {amount: 15}}, ...]            ║
+║   Para atualizar múltiplas entidades de uma vez               ║
+║                                                                ║
 ║ delete(id)                                                     ║
 ║   OBRIGATÓRIO: id                                             ║
 ╚═══════════════════════════════════════════════════════════════╝
@@ -172,47 +178,22 @@ APIS DISPONÍVEIS:
 ╔═══════════════════════════════════════════════════════════════╗
 ║ ContractService                                                ║
 ╠═══════════════════════════════════════════════════════════════╣
-║ create(data)                                                   ║
-║   OBRIGATÓRIO: clientName, projectName, totalValue, signedDate║
-║   OPCIONAL: description, status, category, notes              ║
-║                                                                ║
-║ update(id, data)                                              ║
-║   Todos os campos são opcionais                               ║
-║                                                                ║
-║ delete(id, options?)                                          ║
-║   OBRIGATÓRIO: id                                             ║
-║   OPCIONAL: options = {mode: "contract-only" | "contract-and-receivables"}║
+║ create(data), update(id, data), delete(id, options?)         ║
+║ bulkUpdate(updates) - Para múltiplas entidades               ║
 ╚═══════════════════════════════════════════════════════════════╝
 
 ╔═══════════════════════════════════════════════════════════════╗
 ║ ReceivableService                                              ║
 ╠═══════════════════════════════════════════════════════════════╣
-║ create(data)                                                   ║
-║   OBRIGATÓRIO: expectedDate, amount                           ║
-║   OPCIONAL: contractId, status, receivedDate, receivedAmount, ║
-║             invoiceNumber, category, clientName, description, ║
-║             notes                                              ║
-║                                                                ║
-║ update(id, data)                                              ║
-║   Todos os campos são opcionais                               ║
-║                                                                ║
-║ delete(id)                                                     ║
-║   OBRIGATÓRIO: id                                             ║
+║ create(data), update(id, data), delete(id)                   ║
+║ bulkUpdate(updates) - Para múltiplas entidades               ║
 ╚═══════════════════════════════════════════════════════════════╝
 
 ╔═══════════════════════════════════════════════════════════════╗
 ║ RecurringExpenseService                                        ║
 ╠═══════════════════════════════════════════════════════════════╣
-║ create(data)                                                   ║
-║   OBRIGATÓRIO: description, amount, category, frequency,      ║
-║                startDate                                       ║
-║   OPCIONAL: endDate, dayOfMonth, dayOfWeek, notes             ║
-║                                                                ║
-║ update(id, data)                                              ║
-║   Todos os campos são opcionais                               ║
-║                                                                ║
-║ delete(id)                                                     ║
-║   OBRIGATÓRIO: id                                             ║
+║ create(data), update(id, data), delete(id)                   ║
+║ bulkUpdate(updates) - Para múltiplas entidades               ║
 ╚═══════════════════════════════════════════════════════════════╝
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -244,9 +225,12 @@ REGRAS IMPORTANTES:
 WORKFLOW OBRIGATÓRIO:
 
 Para CONSULTAS:
-1. Use query_database
-2. Formate a resposta de forma amigável
+1. Use query_database (SEMPRE inclua 'id' no SELECT mesmo que seja só consulta!)
+2. Formate a resposta de forma amigável (não mostre os IDs para o usuário)
 3. Não retorne JSON bruto para o usuário
+
+IMPORTANTE: SEMPRE inclua 'id' em TODAS as queries, mesmo consultas simples!
+Isso permite que você possa atualizar/deletar depois sem fazer nova query.
 
 Para CRIAR:
 1. Extrair dados da mensagem do usuário
@@ -256,11 +240,21 @@ Para CRIAR:
 5. Executar call_service
 
 Para ATUALIZAR/DELETAR:
-1. Use query_database para encontrar o registro
-2. Se encontrar múltiplos: liste e peça clarificação
-3. Se encontrar 1: mostre PRÉVIA do que vai fazer
-4. Pedir confirmação
-5. Executar call_service
+1. Use query_database para encontrar o registro (SEMPRE inclua 'id' na query!)
+2. MEMORIZE os IDs retornados na conversa - você verá os resultados
+3. Mostre PRÉVIA do que vai fazer usando os mesmos registros encontrados
+4. Aguardar confirmação
+5. Execute call_service usando EXATAMENTE os IDs que você viu nos resultados da query
+
+CRÍTICO:
+- Quando listar registros para o usuário, SEMPRE inclua 'id' na SELECT
+- Use os MESMOS IDs que você recebeu na primeira query
+- NÃO faça uma nova query para pegar IDs - use os que já tem na conversa!
+
+Exemplo correto:
+1. Query: SELECT id, description, amount FROM "Expense" WHERE ... LIMIT 3
+2. Você vê: [{id: "abc", ...}, {id: "def", ...}, {id: "ghi", ...}]
+3. Update: bulkUpdate com ids ["abc", "def", "ghi"]
 
 NUNCA execute operações destrutivas sem confirmação explícita!
 
@@ -326,14 +320,79 @@ TOM E ESTILO:
     }
 
     // Method 2: Try to extract inline JSON (fallback for simple format)
+    // Handle multiple JSON objects in response (for batch operations)
     if (!action && responseText.includes('"action"')) {
       try {
-        const jsonStart = responseText.indexOf('{')
-        const jsonEnd = responseText.lastIndexOf('}')
-        if (jsonStart !== -1 && jsonEnd !== -1) {
-          const jsonStr = responseText.substring(jsonStart, jsonEnd + 1)
-          action = JSON.parse(jsonStr)
+        // Find all complete JSON objects (supporting nested objects)
+        const jsonObjects: any[] = []
+        let currentPos = 0
+
+        while (currentPos < responseText.length) {
+          const jsonStart = responseText.indexOf('{', currentPos)
+          if (jsonStart === -1) break
+
+          // Find matching closing brace
+          let braceCount = 0
+          let jsonEnd = -1
+          for (let i = jsonStart; i < responseText.length; i++) {
+            if (responseText[i] === '{') braceCount++
+            if (responseText[i] === '}') {
+              braceCount--
+              if (braceCount === 0) {
+                jsonEnd = i
+                break
+              }
+            }
+          }
+
+          if (jsonEnd === -1) break
+
+          try {
+            const jsonStr = responseText.substring(jsonStart, jsonEnd + 1)
+            const parsed = JSON.parse(jsonStr)
+            if (parsed.action) {
+              jsonObjects.push(parsed)
+            }
+          } catch (e) {
+            // Skip invalid JSON
+          }
+
+          currentPos = jsonEnd + 1
+        }
+
+        if (jsonObjects.length === 1) {
+          action = jsonObjects[0]
           console.log('[Operations] Extracted inline JSON:', action)
+        } else if (jsonObjects.length > 1) {
+          // Multiple actions - convert to bulkUpdate if they're all updates
+          const allUpdates = jsonObjects.every(obj =>
+            obj.action === 'call_service' &&
+            obj.method === 'update' &&
+            obj.service === jsonObjects[0].service
+          )
+
+          if (allUpdates) {
+            // Convert to bulkUpdate
+            const updates = jsonObjects.map(obj => ({
+              id: obj.params.id,
+              data: obj.params.data || (() => {
+                const { id, ...rest } = obj.params
+                return rest
+              })()
+            }))
+
+            action = {
+              action: 'call_service',
+              service: jsonObjects[0].service,
+              method: 'bulkUpdate',
+              params: updates
+            }
+            console.log('[Operations] Converted multiple updates to bulkUpdate:', updates.length, 'items')
+          } else {
+            // Different operations - can't batch, use first one for now
+            action = jsonObjects[0]
+            console.log('[Operations] Multiple different actions detected, using first one only')
+          }
         }
       } catch (error) {
         console.error('[Operations] JSON parse error:', error)
@@ -341,10 +400,30 @@ TOM E ESTILO:
     }
 
     if (action) {
+      console.log('[Operations] Action detected:', {
+        actionType: action.action,
+        hasSQL: !!action.sql,
+        hasService: !!action.service,
+        hasMethod: !!action.method
+      })
+
       try {
         // QUERY DATABASE
         if (action.action === 'query_database' && action.sql) {
+          console.log('[Operations] Executing query_database...')
           const results = await this.executeQuery(action.sql)
+
+          // Log the actual results with IDs
+          console.log('[Operations] Query returned', results.length, 'rows')
+          if (results.length > 0) {
+            console.log('[Operations] Query results:', JSON.stringify(results, null, 2))
+            // Specifically highlight IDs if present
+            const ids = results.map(r => r.id).filter(Boolean)
+            if (ids.length > 0) {
+              console.log('[Operations] IDs returned by query:', ids)
+            }
+          }
+
           const resultsMessage = `Resultados da consulta: ${JSON.stringify(results, null, 2)}`
 
           // Add query results to conversation and ask Claude what to do next
@@ -407,7 +486,9 @@ TOM E ESTILO:
       }
     }
 
-    // Normal conversation or preview
+    // Normal conversation or preview (no action detected)
+    // If we got here, either no action was found OR action handlers didn't return
+    console.log('[Operations] No action detected or action not handled, returning response as-is')
     return {
       success: true,
       message: responseText,
@@ -446,20 +527,57 @@ TOM E ESTILO:
     // Call the service method
     let result
     if (method === 'create') {
+      console.log(`[Operations] Calling ${service}.${method} with:`, params)
       result = await serviceInstance[method](params)
+    } else if (method === 'bulkUpdate') {
+      // Handle bulk updates: params can be array or object with 'updates' property
+      const updates = Array.isArray(params) ? params : params.updates
+      if (!updates || !Array.isArray(updates)) {
+        throw new Error('bulkUpdate requires an array of updates')
+      }
+      console.log(`[Operations] Calling ${service}.${method} with ${updates.length} items`)
+      console.log('[Operations] Update details:', JSON.stringify(updates, null, 2))
+      result = await serviceInstance[method](updates)
+      console.log(`[Operations] ${service}.${method} completed:`, result.successCount, 'succeeded,', result.failureCount, 'failed')
+      if (result.errors && result.errors.length > 0) {
+        console.log('[Operations] Errors:', result.errors)
+      }
     } else if (method === 'update') {
-      result = await serviceInstance[method](params.id, params.data)
+      // Handle two formats:
+      // 1. params = { id: "...", data: { amount: 15 } } (expected format)
+      // 2. params = { id: "...", amount: 15 } (Claude's natural format)
+      const updateId = params.id
+      const updateData = params.data || (() => {
+        const { id, ...rest } = params
+        return rest
+      })()
+      console.log(`[Operations] Calling ${service}.${method} with id:`, updateId, 'data:', updateData)
+      result = await serviceInstance[method](updateId, updateData)
     } else if (method === 'delete') {
+      console.log(`[Operations] Calling ${service}.${method} with id:`, params.id)
       result = await serviceInstance[method](params.id)
+      console.log(`[Operations] ${service}.${method} completed, result:`, result)
     } else {
       // Generic call for other methods
+      console.log(`[Operations] Calling ${service}.${method} with:`, params)
       result = await serviceInstance[method](params)
     }
 
     // Format success message based on entity type
     let successMessage = ''
 
-    if (method === 'delete') {
+    if (method === 'bulkUpdate') {
+      // Handle bulk operation result
+      successMessage = `✅ Atualização em lote concluída!
+
+📊 Total: ${result.totalItems} itens
+✅ Sucesso: ${result.successCount}
+❌ Falhas: ${result.failureCount}`
+
+      if (result.failureCount > 0 && result.errors.length > 0) {
+        successMessage += `\n\n⚠️ Erros:\n${result.errors.slice(0, 3).join('\n')}`
+      }
+    } else if (method === 'delete') {
       successMessage = `✅ Registro deletado com sucesso!`
     } else if (result) {
       // Format based on entity type

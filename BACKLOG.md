@@ -1,7 +1,7 @@
 # ArqCashflow Development Backlog
 
 **Purpose**: Central source of truth for project priorities and development status
-**Last Updated**: 2025-10-02 (Operations Agent Steps 1-3 Complete - Incremental Rebuild Success)
+**Last Updated**: 2025-01-02 (Operations Agent Steps 1-4 Complete - Full CRUD with bulkUpdate)
 **Update Frequency**: Every LLM session MUST update this document when completing tasks or discovering new requirements
 
 ## 🚨 CRITICAL INSTRUCTIONS FOR LLM AGENTS
@@ -83,34 +83,75 @@ Examples:
 ### 🔄 DOING (Currently In Progress)
 *Active work with real-time progress tracking. Can persist between sessions if work is incomplete.*
 
-**Currently**: Nothing in progress. Operations Agent Steps 1-3 complete and working! 🎉
+**Currently**: Nothing in progress. Operations Agent Steps 1-4 complete and working! 🎉
+
+**Step 4 Status** (2025-01-02):
+- ✅ Comprehensive system prompt with 4 entity schemas
+- ✅ bulkUpdate API integration for batch operations
+- ✅ Multi-JSON parser with tool use format support
+- ✅ Frontend conversation history preservation (fixed ID hallucination)
+- ✅ Query → Update → Confirm workflow working end-to-end
 
 ---
 
 ### 📋 TO DO (Immediate Priorities)
 *Ready to implement, explicitly prioritized.*
 
-#### **Operations Agent - Step 4: Update and Delete** (Next Priority)
+#### **Operations Agent - Step 5: Expand to Other Entity Types** (Next Priority)
 
-**Goal**: Add ability to update and delete expenses
+**Goal**: Extend Operations Agent to handle Contract, Receivable, and RecurringExpense operations
 
 **Scope**:
-- Update expense operations
-- Delete expense operations
-- Query Agent integration for finding expenses
-- Multi-match handling ("Encontrei 2 despesas de gasolina...")
+- Add service integrations (ContractService, ReceivableService, RecurringExpenseService)
+- Test create/update/delete/bulkUpdate for each entity type
+- Verify inference works for each entity (e.g., contract dates, receivable amounts)
 
-**Expected Implementation**: +50 lines to system prompt and action handlers
+**Current State**: System prompt already documents all 4 entities, just need to add service instances
+
+**Expected Implementation**: ~15 lines (add 3 service instances to serviceMap)
 
 **Success Criteria**:
-- "Atualiza a despesa de gasolina para R$60" → Updates expense
-- "Deleta a despesa de almoço" → Deletes after confirmation
-- "Deleta as 3 últimas despesas" → Queries, shows list, confirms, deletes
+- "Cria um contrato da Mari de R$5000" → Creates contract
+- "Atualiza o recebível da ACME para R$3000" → Queries and updates receivable
+- "Deleta a despesa recorrente do Notion" → Queries, confirms, deletes
 
 ---
 
 ### ✅ DONE (Recently Completed)
 *Newest first, for reference.*
+
+#### ✅ **Operations Agent Step 4: Update and Delete with bulkUpdate** (2025-01-02)
+
+**Achievement**: Full CRUD operations with native bulk API integration
+
+**Key Discoveries**:
+1. **ID Hallucination Bug**: Claude hallucinated IDs when query results weren't in conversation history
+   - Root cause: Frontend only saved formatted responses, lost raw query results
+   - Fix: Frontend now uses full conversationHistory from backend
+
+2. **Tool Use Format**: Claude naturally outputs XML-like function calls
+   - Built multi-JSON parser with brace counting
+   - Handles both `<parameter>` format and inline JSON
+
+3. **Batch Operations**: Multiple updates converted to single bulkUpdate
+   - Uses native BaseService.bulkUpdate for atomic transactions
+   - Proper error handling per item
+
+**Implementation** (~550 lines):
+- Comprehensive system prompt (4 entity schemas, all APIs, workflows)
+- Multi-JSON parser for batch operations
+- bulkUpdate integration with flexible params handling
+- Frontend history preservation (query results + formatted responses)
+
+**Testing**: ✅ Working end-to-end
+- Query → Shows 3 expenses with IDs in memory
+- Update request → Preview with correct IDs
+- Confirmation → bulkUpdate executes with actual query IDs
+- Batch operations use single database transaction
+
+**Next**: Step 5 (Expand to Contract, Receivable, RecurringExpense)
+
+---
 
 #### ✅ **Operations Agent Steps 1-3: Incremental Rebuild** (2025-10-02)
 

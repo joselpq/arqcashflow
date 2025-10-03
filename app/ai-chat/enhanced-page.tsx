@@ -11,6 +11,11 @@ interface Message {
   timestamp: Date
 }
 
+interface ConversationMessage {
+  role: 'user' | 'assistant'
+  content: string
+}
+
 interface FileData {
   name: string
   type: string
@@ -376,13 +381,25 @@ export default function EnhancedAIChatPage() {
       if (response.ok) {
         const result = await response.json()
 
-        const assistantMessage: Message = {
-          role: 'assistant',
-          content: result.message,
-          timestamp: new Date()
+        // Use the conversationHistory from the result if available
+        // This preserves query results and other internal messages
+        if (result.conversationHistory && result.conversationHistory.length > 0) {
+          // Convert conversation history back to Message format
+          const historyMessages: Message[] = result.conversationHistory.map((msg: ConversationMessage) => ({
+            role: msg.role,
+            content: msg.content,
+            timestamp: new Date()
+          }))
+          setMessages(historyMessages)
+        } else {
+          // Fallback to old behavior
+          const assistantMessage: Message = {
+            role: 'assistant',
+            content: result.message,
+            timestamp: new Date()
+          }
+          setMessages([...newMessages, assistantMessage])
         }
-
-        setMessages([...newMessages, assistantMessage])
       } else {
         const error = await response.json()
 

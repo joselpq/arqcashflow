@@ -4,8 +4,8 @@ type: "decision"
 audience: ["developer", "agent"]
 contexts: ["ai-agents", "architecture", "incremental-development", "simplicity"]
 complexity: "intermediate"
-last_updated: "2025-10-02"
-version: "1.0"
+last_updated: "2025-01-02"
+version: "1.1"
 status: "active"
 decision_date: "2025-10-02"
 related:
@@ -29,13 +29,17 @@ related:
 ## Status
 
 **ACCEPTED** - 2025-10-02
+**UPDATED** - 2025-01-02
 
-**Current Implementation**: ✅ Steps 1-3 Complete (2025-10-02)
+**Current Implementation**: ✅ Steps 1-4 Complete (2025-01-02)
 - Step 1: ✅ Basic conversation with context
 - Step 2: ✅ Simple expense creation
 - Step 3: ✅ Confirmation workflow (Claude-powered)
+- Step 4: ✅ Update and Delete operations (with bulkUpdate API integration)
 
-**Next Step**: Step 4 - Update and Delete operations
+**Current Status**: Core CRUD operations working, comprehensive system prompt implemented
+
+**Next Steps**: Step 5+ - Expand to other entity types (Contract, Receivable, RecurringExpense)
 
 ## Problem Statement
 
@@ -214,18 +218,56 @@ class OperationsAgentService {
 
 ---
 
-#### 📋 **Step 4: Update and Delete Expenses**
+#### ✅ **Step 4: Update and Delete Expenses** (COMPLETE - 2025-01-02)
 
-**Goal**: Modify and remove expenses
+**Goal**: Modify and remove expenses using native bulk APIs
 
-**What to Add**:
-- Update operation handling
-- Delete operation handling
-- Query Agent integration for finding expenses
+**Implementation**: ~550 lines total (including comprehensive system prompt)
 
-**Success Criteria**:
-- "Atualiza a despesa de gasolina para R$60" → Updates
-- "Deleta a despesa de almoço" → Deletes after confirmation
+**What Was Added**:
+- ✅ Enhanced system prompt with full database schema (4 tables)
+- ✅ Complete API documentation (all CRUD + bulkUpdate methods)
+- ✅ Multi-JSON parser for batch operations
+- ✅ Native bulkUpdate API integration (using BaseService.bulkUpdate)
+- ✅ Tool use format parser (handles Claude's XML-like output)
+- ✅ Smart update params handling (flexible format support)
+- ✅ Conversation history preservation (query results retained)
+
+**Key Discoveries**:
+1. **ID Hallucination Problem**: Claude was hallucinating IDs when query results weren't preserved in conversation history
+2. **Frontend History Bug**: Frontend only saved formatted responses, losing query results between API calls
+3. **Batch Operations**: Automatically converts multiple update actions to single bulkUpdate call
+4. **Tool Use Format**: Claude naturally outputs XML-like function call syntax, required custom parser
+
+**Success Criteria**: ✅ All passed
+- "Quais minhas 3 menores despesas?" → Lists with IDs in memory
+- "Pode alterar para R$15?" → Shows preview using same IDs
+- "Sim" → Executes bulkUpdate with correct IDs from query
+- Query results preserved in conversation history
+- Bulk operations use native BaseService.bulkUpdate
+
+**Technical Solutions**:
+1. **Comprehensive System Prompt** (lines 39-275 in OperationsAgentService.ts):
+   - Database schema for all 4 entity types
+   - API method signatures with required/optional fields
+   - Inference guidelines (dates, categories, amounts)
+   - Workflow instructions (query → preview → confirm → execute)
+   - Critical rule: ALWAYS include 'id' in SELECT queries
+
+2. **Multi-JSON Parser** (lines 330-385):
+   - Brace-counting algorithm for nested JSON extraction
+   - Converts multiple update actions to single bulkUpdate
+   - Handles both tool use format and inline JSON
+
+3. **Frontend History Fix** (enhanced-page.tsx:376-397):
+   - Uses full conversationHistory from backend response
+   - Preserves query results + formatted responses
+   - Prevents ID hallucination on subsequent operations
+
+**Architecture Decision**:
+- Chose native bulkUpdate API over custom batching
+- Trust Claude with minimal code (system prompt > custom logic)
+- Preserve query results in conversation vs server-side state
 
 ---
 
