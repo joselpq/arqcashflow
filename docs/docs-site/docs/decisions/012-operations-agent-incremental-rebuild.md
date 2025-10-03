@@ -218,56 +218,102 @@ class OperationsAgentService {
 
 ---
 
-#### ✅ **Step 4: Update and Delete Expenses** (COMPLETE - 2025-01-02)
+#### ✅ **Step 4: Update and Delete Expenses** (COMPLETE - 2025-01-03)
 
 **Goal**: Modify and remove expenses using native bulk APIs
 
-**Implementation**: ~550 lines total (including comprehensive system prompt)
+**Implementation**: ~650 lines total (including comprehensive system prompt + bug fixes)
 
 **What Was Added**:
 - ✅ Enhanced system prompt with full database schema (4 tables)
-- ✅ Complete API documentation (all CRUD + bulkUpdate methods)
+- ✅ Complete API documentation (all CRUD + bulkCreate/bulkUpdate/bulkDelete)
 - ✅ Multi-JSON parser for batch operations
-- ✅ Native bulkUpdate API integration (using BaseService.bulkUpdate)
+- ✅ Native bulk API integration (using BaseService bulk methods)
 - ✅ Tool use format parser (handles Claude's XML-like output)
 - ✅ Smart update params handling (flexible format support)
 - ✅ Conversation history preservation (query results retained)
+- ✅ PostgreSQL case sensitivity handling
+- ✅ Display vs context history separation
 
-**Key Discoveries**:
-1. **ID Hallucination Problem**: Claude was hallucinating IDs when query results weren't preserved in conversation history
-2. **Frontend History Bug**: Frontend only saved formatted responses, losing query results between API calls
-3. **Batch Operations**: Automatically converts multiple update actions to single bulkUpdate call
-4. **Tool Use Format**: Claude naturally outputs XML-like function call syntax, required custom parser
+**Key Discoveries & Bug Fixes**:
 
-**Success Criteria**: ✅ All passed
-- "Quais minhas 3 menores despesas?" → Lists with IDs in memory
-- "Pode alterar para R$15?" → Shows preview using same IDs
-- "Sim" → Executes bulkUpdate with correct IDs from query
-- Query results preserved in conversation history
-- Bulk operations use native BaseService.bulkUpdate
+1. **Bug 1: Missing Bulk Operations** (Fixed 2025-01-03)
+   - Problem: Only had bulkUpdate, missing bulkCreate and bulkDelete
+   - Solution: Added bulkCreate(items) and bulkDelete(ids) to all services
+   - Impact: Can now delete multiple items at once
+
+2. **Bug 2: PostgreSQL Case Sensitivity** (Fixed 2025-01-03)
+   - Problem: Query failed with "column duedate does not exist"
+   - Root cause: PostgreSQL requires quoted column names
+   - Solution: Added explicit rule to ALWAYS quote columns in queries
+   - Example: SELECT "id", "dueDate" FROM "Expense"
+
+3. **Bug 3: Display vs Context History** (Fixed 2025-01-03)
+   - Problem: Users saw raw [QUERY_RESULTS] JSON in chat
+   - Secondary problem: ID hallucination when query results filtered out
+   - Root cause: Frontend sent displayHistory back as conversationHistory
+   - Solution: Dual history tracking
+     - **conversationHistory**: Full context with internal messages (for Claude)
+     - **displayHistory**: User-facing only (for UI)
+     - **Frontend**: Maintains separate `fullHistory` and `messages` states
+
+**Architecture Evolution**:
+
+**Initial Approach** (Step 4 start):
+```typescript
+conversationHistory → Frontend → Backend
+                   ↓
+          Single history for both display and context
+```
+
+**Final Approach** (Step 4 complete):
+```typescript
+Backend returns:
+  conversationHistory (full with [QUERY_RESULTS])
+  displayHistory (filtered for user)
+
+Frontend maintains:
+  fullHistory (send to backend - preserves Claude context)
+  messages (render to UI - clean display)
+```
+
+**Success Criteria**: ✅ All passed (production tested)
+- "Quais minhas 3 menores despesas com Notion?" → Formatted response (no raw JSON)
+- "Pode alterar para R$25?" → Shows preview using correct IDs from query
+- "Pode" → Executes bulkUpdate with real IDs (no hallucination)
+- PostgreSQL queries work with complex filters
+- Bulk delete works for multiple items
 
 **Technical Solutions**:
-1. **Comprehensive System Prompt** (lines 39-275 in OperationsAgentService.ts):
-   - Database schema for all 4 entity types
-   - API method signatures with required/optional fields
+
+1. **Comprehensive System Prompt** (lines 39-300 in OperationsAgentService.ts):
+   - Database schema for all 4 entity types with field types
+   - API method signatures: create, bulkCreate, update, bulkUpdate, delete, bulkDelete
+   - PostgreSQL case sensitivity rules with examples
    - Inference guidelines (dates, categories, amounts)
    - Workflow instructions (query → preview → confirm → execute)
    - Critical rule: ALWAYS include 'id' in SELECT queries
+   - Explicit examples of correct vs incorrect action output
 
-2. **Multi-JSON Parser** (lines 330-385):
+2. **Multi-JSON Parser** (lines 340-400):
    - Brace-counting algorithm for nested JSON extraction
-   - Converts multiple update actions to single bulkUpdate
+   - Converts multiple update/delete actions to single bulk call
    - Handles both tool use format and inline JSON
 
-3. **Frontend History Fix** (enhanced-page.tsx:376-397):
-   - Uses full conversationHistory from backend response
-   - Preserves query results + formatted responses
-   - Prevents ID hallucination on subsequent operations
+3. **Dual History Architecture**:
+   - Backend: `filterInternalMessages()` helper (lines 31-41)
+   - Backend: All return statements include both histories
+   - Frontend: Separate `fullHistory` (context) and `messages` (display)
+   - Frontend: Sends fullHistory to API, displays messages to user
 
-**Architecture Decision**:
-- Chose native bulkUpdate API over custom batching
-- Trust Claude with minimal code (system prompt > custom logic)
-- Preserve query results in conversation vs server-side state
+**Architecture Decisions**:
+- ✅ Chose native bulk APIs over custom batching
+- ✅ Trust Claude with minimal code (system prompt > custom logic)
+- ✅ Preserve query results in conversation (not server-side state)
+- ✅ Separate display from context (clean architecture principle)
+- ✅ Filter internal messages on backend (frontend shouldn't know format)
+
+**Performance**: ~650 lines (vs 2,049 in original) - **68% reduction**
 
 ---
 

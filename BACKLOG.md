@@ -1,7 +1,7 @@
 # ArqCashflow Development Backlog
 
 **Purpose**: Central source of truth for project priorities and development status
-**Last Updated**: 2025-01-02 (Operations Agent Steps 1-4 Complete - Full CRUD with bulkUpdate)
+**Last Updated**: 2025-01-03 (Operations Agent Step 4 Bug Fixes Complete - Production Ready)
 **Update Frequency**: Every LLM session MUST update this document when completing tasks or discovering new requirements
 
 ## 🚨 CRITICAL INSTRUCTIONS FOR LLM AGENTS
@@ -83,14 +83,23 @@ Examples:
 ### 🔄 DOING (Currently In Progress)
 *Active work with real-time progress tracking. Can persist between sessions if work is incomplete.*
 
-**Currently**: Nothing in progress. Operations Agent Steps 1-4 complete and working! 🎉
+**Currently**: Nothing in progress. Operations Agent Step 4 COMPLETE with all bugs fixed! 🎉
 
-**Step 4 Status** (2025-01-02):
+**Step 4 Final Status** (2025-01-03):
 - ✅ Comprehensive system prompt with 4 entity schemas
-- ✅ bulkUpdate API integration for batch operations
-- ✅ Multi-JSON parser with tool use format support
-- ✅ Frontend conversation history preservation (fixed ID hallucination)
-- ✅ Query → Update → Confirm workflow working end-to-end
+- ✅ All bulk operations: bulkCreate, bulkUpdate, bulkDelete
+- ✅ PostgreSQL case sensitivity handling (quoted column names)
+- ✅ Dual history architecture (conversationHistory + displayHistory)
+- ✅ Frontend fullHistory state preservation (no ID hallucination)
+- ✅ Query → Update → Confirm workflow tested in production
+- ✅ Clean user experience (no raw JSON or internal messages shown)
+
+**Production Testing Results**:
+- ✅ Complex queries work: "despesas com Notion abaixo de R$10"
+- ✅ Multi-turn operations: Query → Preview → Confirm → Execute
+- ✅ Bulk delete: "Pode deletar elas?" deletes all items found
+- ✅ No ID hallucination: Uses correct IDs from query results
+- ✅ No raw JSON shown: User sees formatted responses only
 
 ---
 
@@ -119,6 +128,70 @@ Examples:
 
 ### ✅ DONE (Recently Completed)
 *Newest first, for reference.*
+
+#### ✅ **Operations Agent Step 4: Bug Fixes & Production Refinement** (2025-01-03)
+
+**Context**: After initial Step 4 implementation, production testing revealed 3 critical bugs
+
+**Bug 1: Missing Bulk Operations** ✅ FIXED
+- **Problem**: Only had bulkUpdate, missing bulkCreate and bulkDelete
+- **Impact**: Couldn't delete multiple items when user said "Pode deletar elas?"
+- **Solution**: Added bulkCreate(items) and bulkDelete(ids) to all service documentation
+- **Implementation**: Added handlers in handleServiceCall, success messages for bulk ops
+- **Result**: Bulk delete now works for multiple items at once
+
+**Bug 2: PostgreSQL Case Sensitivity** ✅ FIXED
+- **Problem**: Query failed with "column duedate does not exist"
+- **Root Cause**: PostgreSQL requires double quotes for case-sensitive column names
+- **Example**: `SELECT dueDate` → Error, `SELECT "dueDate"` → Works
+- **Solution**: Added explicit PostgreSQL rule to system prompt with examples
+- **Result**: Complex queries like "despesas com Notion abaixo de R$10" now work
+
+**Bug 3: Display vs Context History** ✅ FIXED (2-part solution)
+- **Problem 1**: Users saw raw `[QUERY_RESULTS]` JSON in chat
+- **Problem 2**: Claude hallucinated fake IDs instead of using real ones from query
+- **Root Cause**: Frontend sent displayHistory back as conversationHistory, losing internal messages
+- **Solution Part 1** (Backend): Dual history architecture
+  - `conversationHistory`: Full with internal messages (for Claude's context)
+  - `displayHistory`: Filtered user-facing (for UI rendering)
+  - `filterInternalMessages()` helper method
+- **Solution Part 2** (Frontend): Separate state tracking
+  - `fullHistory`: Complete conversation (send to API)
+  - `messages`: Display only (render to UI)
+- **Architecture**: Backend filters, frontend separates display from context
+- **Result**: Clean UX + Claude has full context with query results
+
+**Code Changes**:
+- Backend: ~100 lines (system prompt + filterInternalMessages + dual returns)
+- Frontend: ~30 lines (fullHistory state + dual update logic)
+- Total: ~650 lines (vs 2,049 original) - **68% reduction maintained**
+
+**Production Testing**: ✅ All scenarios working
+- Query: "quais são minhas 3 menores despesas com Notion?"
+  - ✅ No raw JSON shown
+  - ✅ Formatted response with amounts and dates
+- Update: "Pode alterar o valor delas para R$25?"
+  - ✅ Shows preview with correct original values
+  - ✅ Uses real IDs from query (no hallucination)
+- Confirm: "Pode"
+  - ✅ Executes bulkUpdate successfully
+  - ✅ Updates all 3 items with correct IDs
+
+**Architecture Evolution**:
+```
+Before: conversationHistory → Frontend → Backend (lost context)
+After:  conversationHistory (full) → Frontend fullHistory → Backend ✅
+        displayHistory (filtered) → Frontend messages → UI ✅
+```
+
+**Commits**:
+- `17bcffc`: Bugs 1 & 2 (bulk operations + PostgreSQL)
+- `564da94`: Bug 3 Part 1 (backend dual history)
+- `ebf38e8`: Bug 3 Part 2 (frontend fullHistory state)
+
+**Next**: Step 5 (Expand to Contract, Receivable, RecurringExpense)
+
+---
 
 #### ✅ **Operations Agent Step 4: Update and Delete with bulkUpdate** (2025-01-02)
 
