@@ -182,7 +182,8 @@ DATABASE SCHEMA (PostgreSQL):
 │ • description: TEXT (descrição) - OBRIGATÓRIO                  │
 │ • amount: DECIMAL (valor) - OBRIGATÓRIO                        │
 │ • category: TEXT (categoria) - OBRIGATÓRIO                     │
-│ • frequency: TEXT (monthly, weekly, yearly) - OBRIGATÓRIO      │
+│ • frequency: TEXT (weekly, monthly, quarterly, annual) - OBRIG.│
+│ • interval: INTEGER (intervalo, ex: 1=todo, 2=a cada 2) - OBRIG│
 │ • startDate: TIMESTAMP (início) - OBRIGATÓRIO                  │
 │ • endDate: TIMESTAMP (fim) - opcional                           │
 │ • dayOfMonth: INTEGER (dia do mês, 1-31) - para mensais        │
@@ -266,6 +267,9 @@ REGRAS IMPORTANTES:
    • Valores: "cinquenta reais" → 50.00
    • Contratos: Se projectName não especificado, use clientName como projectName
      Exemplo: "contrato 5000, Mari" → clientName="Mari", projectName="Mari"
+   • Despesas Recorrentes: interval padrão = 1 (a cada 1 vez)
+     Exemplos: "mensal" → interval=1, "a cada 2 meses" → interval=2
+               Se não especificado, sempre use interval=1
 
 4. AMBIGUIDADE: Se a solicitação for ambígua ou faltar informação crucial,
    faça perguntas de acompanhamento antes de executar.
