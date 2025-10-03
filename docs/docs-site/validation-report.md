@@ -1,15 +1,15 @@
 # Documentation Validation Report
 
-Generated on: 2025-09-30
+Generated on: 2025-10-03
 
 ## Summary
 
-- **Total files validated**: 78
+- **Total files validated**: 79
 - **Broken links**: 0
-- **Stale content**: 0
+- **Stale content**: 1
 - **Missing metadata**: 0
-- **Format inconsistencies**: 1
-- **Orphaned files**: 22
+- **Format inconsistencies**: 2
+- **Orphaned files**: 23
 
 ## Issues Found
 
@@ -17,22 +17,30 @@ Generated on: 2025-09-30
 
 ✅ No broken links found!
 
-### 📅 Stale Content (0)
+### 📅 Stale Content (1)
 
-✅ All content is fresh!
+
+- **File**: `decisions/012-operations-agent-incremental-rebuild.md`
+  - **Last updated**: 2025-01-02
+  - **Days since update**: 274
+
 
 ### 📋 Missing Metadata (0)
 
 ✅ All files have required metadata!
 
-### 📐 Format Inconsistencies (1)
+### 📐 Format Inconsistencies (2)
+
+
+- **File**: `decisions/012-operations-agent-incremental-rebuild.md`
+  - **Issues**: Missing agent_roles or contexts in frontmatter
 
 
 - **File**: `reference/api/index.md`
   - **Issues**: Missing LLM Context section
 
 
-### 🔍 Orphaned Files (22)
+### 🔍 Orphaned Files (23)
 
 
 - `agents/contexts/validation-layer.md`
@@ -77,6 +85,9 @@ Generated on: 2025-09-30
 - `decisions/010-excel-token-optimization.md`
 
 
+- `decisions/012-operations-agent-incremental-rebuild.md`
+
+
 - `developer/architecture/decisions/adr-002-claude-ai-integration.md`
 
 
@@ -109,7 +120,7 @@ Generated on: 2025-09-30
 - 🟡 Update format to match LLM-optimized structure
 
 ### Medium Priority
-
+- 🟡 Review and update stale content
 - 🟡 Link orphaned files or consider removal
 
 ### Maintenance Schedule

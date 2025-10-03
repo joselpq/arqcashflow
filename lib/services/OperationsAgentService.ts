@@ -77,6 +77,12 @@ REGRAS CRÍTICAS PARA AÇÕES:
 - Para consultas: execute query_database → depois mostre os resultados formatados
 - Para operações: mostre prévia → confirme → execute call_service → mostre sucesso
 
+REGRA CRÍTICA SOBRE RESULTADOS DE QUERY:
+- Você receberá resultados de query como: "[QUERY_RESULTS]...dados...[/QUERY_RESULTS]"
+- Esses dados são APENAS para você usar - NUNCA mostre esse JSON bruto para o usuário
+- Ao invés disso, formate os dados de forma amigável e legível
+- Exemplo: ao invés de mostrar o JSON, diga "Encontrei 3 despesas: ..." com formatação bonita
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 DATABASE SCHEMA (PostgreSQL):
@@ -164,6 +170,10 @@ APIS DISPONÍVEIS:
 ║   OPCIONAL: contractId, vendor, invoiceNumber, type, notes,   ║
 ║             status, paidDate, paidAmount                       ║
 ║                                                                ║
+║ bulkCreate(items)                                             ║
+║   items = [{description: "...", amount: 50, ...}, ...]        ║
+║   Para criar múltiplas entidades de uma vez                   ║
+║                                                                ║
 ║ update(id, data)                                              ║
 ║   Todos os campos são opcionais (atualiza apenas os enviados) ║
 ║                                                                ║
@@ -173,27 +183,31 @@ APIS DISPONÍVEIS:
 ║                                                                ║
 ║ delete(id)                                                     ║
 ║   OBRIGATÓRIO: id                                             ║
+║                                                                ║
+║ bulkDelete(ids)                                               ║
+║   ids = ["id1", "id2", "id3", ...]                            ║
+║   Para deletar múltiplas entidades de uma vez                 ║
 ╚═══════════════════════════════════════════════════════════════╝
 
 ╔═══════════════════════════════════════════════════════════════╗
 ║ ContractService                                                ║
 ╠═══════════════════════════════════════════════════════════════╣
 ║ create(data), update(id, data), delete(id, options?)         ║
-║ bulkUpdate(updates) - Para múltiplas entidades               ║
+║ bulkCreate(items), bulkUpdate(updates), bulkDelete(ids)      ║
 ╚═══════════════════════════════════════════════════════════════╝
 
 ╔═══════════════════════════════════════════════════════════════╗
 ║ ReceivableService                                              ║
 ╠═══════════════════════════════════════════════════════════════╣
 ║ create(data), update(id, data), delete(id)                   ║
-║ bulkUpdate(updates) - Para múltiplas entidades               ║
+║ bulkCreate(items), bulkUpdate(updates), bulkDelete(ids)      ║
 ╚═══════════════════════════════════════════════════════════════╝
 
 ╔═══════════════════════════════════════════════════════════════╗
 ║ RecurringExpenseService                                        ║
 ╠═══════════════════════════════════════════════════════════════╣
 ║ create(data), update(id, data), delete(id)                   ║
-║ bulkUpdate(updates) - Para múltiplas entidades               ║
+║ bulkCreate(items), bulkUpdate(updates), bulkDelete(ids)      ║
 ╚═══════════════════════════════════════════════════════════════╝
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -203,12 +217,19 @@ REGRAS IMPORTANTES:
 1. TEAM ISOLATION: SEMPRE filtre queries por teamId = '${teamId}'
    Exemplo: WHERE "teamId" = '${teamId}'
 
-2. INFERÊNCIA: Para campos obrigatórios, você pode inferir valores óbvios:
+2. POSTGRESQL CASE SENSITIVITY: SEMPRE use aspas duplas para nomes de colunas em queries
+   ✅ CORRETO: SELECT "id", "description", "dueDate" FROM "Expense"
+   ❌ ERRADO: SELECT id, description, dueDate FROM Expense
+
+   IMPORTANTE: Nomes de tabelas e colunas são case-sensitive em PostgreSQL!
+   Use EXATAMENTE como mostrado no schema (Contract, Expense, dueDate, clientName, etc.)
+
+3. INFERÊNCIA: Para campos obrigatórios, você pode inferir valores óbvios:
    • Datas: "ontem" = ${yesterday}, "hoje" = ${today}
    • Categorias: "gasolina" → Transporte, "almoço" → Alimentação
    • Valores: "cinquenta reais" → 50.00
 
-3. AMBIGUIDADE: Se a solicitação for ambígua ou faltar informação crucial,
+4. AMBIGUIDADE: Se a solicitação for ambígua ou faltar informação crucial,
    faça perguntas de acompanhamento antes de executar.
 
    Exemplos de quando perguntar:
@@ -216,7 +237,7 @@ REGRAS IMPORTANTES:
    • "Cria um contrato da Mari" → Qual o valor? Data de assinatura?
    • "Deleta o contrato" → Qual contrato? Tem recebíveis vinculados?
 
-4. IMPOSSIBILIDADE: Se a solicitação for impossível, explique o porquê.
+5. IMPOSSIBILIDADE: Se a solicitação for impossível, explique o porquê.
    • "Deleta todas as despesas" → Muito perigoso, peça confirmação específica
    • "Cria recebível de R$0" → Valor deve ser positivo
 
@@ -424,7 +445,8 @@ TOM E ESTILO:
             }
           }
 
-          const resultsMessage = `Resultados da consulta: ${JSON.stringify(results, null, 2)}`
+          // Use special markers to indicate this is internal data, not user-facing
+          const resultsMessage = `[QUERY_RESULTS]${JSON.stringify(results, null, 2)}[/QUERY_RESULTS]`
 
           // Add query results to conversation and ask Claude what to do next
           const updatedHistory = [
@@ -529,6 +551,18 @@ TOM E ESTILO:
     if (method === 'create') {
       console.log(`[Operations] Calling ${service}.${method} with:`, params)
       result = await serviceInstance[method](params)
+    } else if (method === 'bulkCreate') {
+      // Handle bulk creates: params can be array or object with 'items' property
+      const items = Array.isArray(params) ? params : params.items
+      if (!items || !Array.isArray(items)) {
+        throw new Error('bulkCreate requires an array of items')
+      }
+      console.log(`[Operations] Calling ${service}.${method} with ${items.length} items`)
+      result = await serviceInstance[method](items)
+      console.log(`[Operations] ${service}.${method} completed:`, result.successCount, 'succeeded,', result.failureCount, 'failed')
+      if (result.errors && result.errors.length > 0) {
+        console.log('[Operations] Errors:', result.errors)
+      }
     } else if (method === 'bulkUpdate') {
       // Handle bulk updates: params can be array or object with 'updates' property
       const updates = Array.isArray(params) ? params : params.updates
@@ -538,6 +572,18 @@ TOM E ESTILO:
       console.log(`[Operations] Calling ${service}.${method} with ${updates.length} items`)
       console.log('[Operations] Update details:', JSON.stringify(updates, null, 2))
       result = await serviceInstance[method](updates)
+      console.log(`[Operations] ${service}.${method} completed:`, result.successCount, 'succeeded,', result.failureCount, 'failed')
+      if (result.errors && result.errors.length > 0) {
+        console.log('[Operations] Errors:', result.errors)
+      }
+    } else if (method === 'bulkDelete') {
+      // Handle bulk deletes: params can be array or object with 'ids' property
+      const ids = Array.isArray(params) ? params : params.ids
+      if (!ids || !Array.isArray(ids)) {
+        throw new Error('bulkDelete requires an array of ids')
+      }
+      console.log(`[Operations] Calling ${service}.${method} with ${ids.length} ids:`, ids)
+      result = await serviceInstance[method](ids)
       console.log(`[Operations] ${service}.${method} completed:`, result.successCount, 'succeeded,', result.failureCount, 'failed')
       if (result.errors && result.errors.length > 0) {
         console.log('[Operations] Errors:', result.errors)
@@ -566,9 +612,31 @@ TOM E ESTILO:
     // Format success message based on entity type
     let successMessage = ''
 
-    if (method === 'bulkUpdate') {
-      // Handle bulk operation result
+    if (method === 'bulkCreate') {
+      // Handle bulk create result
+      successMessage = `✅ Criação em lote concluída!
+
+📊 Total: ${result.totalItems} itens
+✅ Sucesso: ${result.successCount}
+❌ Falhas: ${result.failureCount}`
+
+      if (result.failureCount > 0 && result.errors.length > 0) {
+        successMessage += `\n\n⚠️ Erros:\n${result.errors.slice(0, 3).join('\n')}`
+      }
+    } else if (method === 'bulkUpdate') {
+      // Handle bulk update result
       successMessage = `✅ Atualização em lote concluída!
+
+📊 Total: ${result.totalItems} itens
+✅ Sucesso: ${result.successCount}
+❌ Falhas: ${result.failureCount}`
+
+      if (result.failureCount > 0 && result.errors.length > 0) {
+        successMessage += `\n\n⚠️ Erros:\n${result.errors.slice(0, 3).join('\n')}`
+      }
+    } else if (method === 'bulkDelete') {
+      // Handle bulk delete result
+      successMessage = `✅ Exclusão em lote concluída!
 
 📊 Total: ${result.totalItems} itens
 ✅ Sucesso: ${result.successCount}
