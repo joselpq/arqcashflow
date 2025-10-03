@@ -259,8 +259,13 @@ REGRAS IMPORTANTES:
 
 3. INFERÊNCIA: Para campos obrigatórios, você pode inferir valores óbvios:
    • Datas: "ontem" = ${yesterday}, "hoje" = ${today}
+   • Data ausente: Se não especificada, use HOJE = ${today}
+     Exemplos: "novo contrato 35000, João" → signedDate = ${today}
+               "R$50 almoço" → dueDate = ${today}
    • Categorias: "gasolina" → Transporte, "almoço" → Alimentação
    • Valores: "cinquenta reais" → 50.00
+   • Contratos: Se projectName não especificado, use clientName como projectName
+     Exemplo: "contrato 5000, Mari" → clientName="Mari", projectName="Mari"
 
 4. AMBIGUIDADE: Se a solicitação for ambígua ou faltar informação crucial,
    faça perguntas de acompanhamento antes de executar.
