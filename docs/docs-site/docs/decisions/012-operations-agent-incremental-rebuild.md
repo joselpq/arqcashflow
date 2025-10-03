@@ -41,7 +41,9 @@ related:
 
 **Current Status**: All entity types supported, production bugs fixed, max_tokens optimized
 
-**Next Steps**: Step 6+ - Batch operations, advanced context, agent integration
+**Next Priority**: **Step 6 - Structured Tool Use Migration** (Architecture refactor to eliminate JSON/Query leakage)
+
+**Roadmap Update**: Steps renumbered after inserting Step 6 (Structured Tool Use) as priority
 
 ## Problem Statement
 
@@ -390,7 +392,182 @@ Frontend maintains:
 
 ---
 
-#### 📋 **Step 6: Batch Operations**
+#### 📋 **Step 6: Structured Tool Use Migration** (PRIORITY - Architecture Refactor)
+
+**Goal**: Migrate from text-based JSON extraction to Anthropic's official Structured Tool Use pattern
+
+**Context**: Current implementation suffers from JSON/Query leakage to users despite prompt instructions. Root cause: relying on Claude to format responses correctly in plain text. Solution: Use official `tool_use` / `tool_result` content blocks which structurally separate tools from conversation.
+
+**Problem Being Solved**:
+- **Issue**: Claude sometimes includes JSON actions/SQL queries in user-facing responses
+- **Current Fix**: Prompt engineering + post-processing (fragile, prompt-dependent)
+- **Root Cause**: Plain text responses mix conversation with tool calls
+- **Proper Solution**: Structured content blocks separate concerns architecturally
+
+**Migration Strategy**:
+
+**Phase 1: Preparation** (1 hour)
+1. ✅ Backup current implementation → `OperationsAgentService-old.ts`
+2. ✅ Duplicate to `OperationsAgentService.ts` (working copy)
+3. ✅ Document migration plan in ADR-012
+4. ✅ Update BACKLOG.md with new priority
+
+**Phase 2: Implementation** (6-8 hours)
+1. **Add Tool Definitions** (~1 hour)
+   - Define `query_database` tool with input schema
+   - Define `call_service` tool with input schema
+   - Add to Anthropic API request
+
+2. **Refactor Response Handling** (~2 hours)
+   - Remove regex-based JSON extraction (~80 lines)
+   - Add content block processor (text vs tool_use)
+   - Handle tool execution from structured blocks
+   - Implement tool_result formatting
+
+3. **Add History Management Helpers** (~2 hours)
+   - `buildStructuredMessages()` - Convert legacy to structured
+   - `extractText()` - Get text from content blocks
+   - `buildDisplayHistory()` - User-facing messages only
+   - Handle backward compatibility with existing conversations
+
+4. **Update System Prompt** (~1 hour)
+   - Remove JSON format examples
+   - Add tool usage instructions
+   - Simplify workflow descriptions
+
+5. **Update Types** (~30 min)
+   - Support both string and ContentBlock[] in ConversationMessage
+   - Add tool tracking fields
+
+**Phase 3: Testing & Validation** (~2-3 hours)
+1. Test all CRUD operations (create, update, delete, bulk)
+2. Verify NO JSON/SQL leakage in user responses
+3. Confirm context preservation (Claude sees tool history)
+4. Test backward compatibility with existing conversations
+5. Edge cases: errors, confirmations, multi-turn operations
+
+**Architecture Comparison**:
+
+**Before (Text-Based - Current)**:
+```typescript
+// Claude response is plain text
+{ role: 'assistant', content: '{"action": "query_database", "sql": "SELECT..."}' }
+
+// System extracts JSON using regex
+const action = extractJSON(responseText)  // Fragile!
+
+// User might see JSON if extraction fails
+```
+
+**After (Structured - Target)**:
+```typescript
+// Claude response has separated blocks
+{
+  role: 'assistant',
+  content: [
+    { type: 'text', text: 'I will query your contracts' },  // User sees
+    { type: 'tool_use', id: 'xyz', name: 'query_database', input: {sql: 'SELECT...'} }  // Hidden
+  ]
+}
+
+// System processes blocks by type
+for (const block of content) {
+  if (block.type === 'text') → displayToUser()
+  if (block.type === 'tool_use') → executeTool()
+}
+```
+
+**Key Benefits**:
+1. ✅ **Architectural Guarantee**: Tools structurally separated from conversation
+2. ✅ **No Prompt Dependency**: Works even if Claude "forgets" instructions
+3. ✅ **Future-Proof**: Compatible with new Anthropic features
+4. ✅ **Official Pattern**: Battle-tested by Anthropic
+5. ✅ **Simpler Code**: ~40 net line reduction, cleaner logic
+6. ✅ **Better UX**: Zero risk of JSON/SQL exposure to users
+
+**Technical Details**:
+
+Tool Definitions:
+```typescript
+tools: [
+  {
+    name: 'query_database',
+    description: 'Execute SELECT query on PostgreSQL',
+    input_schema: {
+      type: 'object',
+      properties: {
+        sql: { type: 'string', description: 'SQL SELECT query' }
+      },
+      required: ['sql']
+    }
+  },
+  {
+    name: 'call_service',
+    description: 'Execute CRUD on financial entities',
+    input_schema: {
+      type: 'object',
+      properties: {
+        service: { type: 'string', enum: ['ExpenseService', 'ContractService', ...] },
+        method: { type: 'string', enum: ['create', 'update', 'delete', 'bulkCreate', ...] },
+        params: { type: 'object', description: 'Operation parameters' }
+      },
+      required: ['service', 'method', 'params']
+    }
+  }
+]
+```
+
+Response Handling:
+```typescript
+// Process content blocks
+const textBlocks = content.filter(b => b.type === 'text')
+const toolUseBlocks = content.filter(b => b.type === 'tool_use')
+
+// Execute tools
+for (const tool of toolUseBlocks) {
+  const result = await executeTool(tool.name, tool.input)
+
+  // Add tool_result to history (hidden from user)
+  messages.push({
+    role: 'user',
+    content: [{
+      type: 'tool_result',
+      tool_use_id: tool.id,
+      content: JSON.stringify(result)
+    }]
+  })
+}
+
+// Call Claude again if tools were used
+const followUp = await claude({ messages })
+
+// Return only text to user
+return { message: extractText(followUp.content) }
+```
+
+**Rollback Plan**:
+- Keep `OperationsAgentService-old.ts` as backup
+- If critical issues found, restore old version
+- Old version remains functional throughout migration
+
+**Success Criteria**:
+- ✅ All existing operations work (create, update, delete, bulk, query)
+- ✅ **Zero JSON/SQL leakage** in user responses (validated by tests)
+- ✅ Context preservation verified (Claude sees tool history)
+- ✅ Backward compatible with existing conversation histories
+- ✅ Performance maintained or improved
+- ✅ Code complexity reduced (~40 net line reduction)
+
+**Files Modified**:
+- `lib/services/OperationsAgentService.ts` (primary implementation)
+- `lib/services/OperationsAgentService-old.ts` (backup - NEW)
+- System prompt updated (simplified)
+
+**Next Step After Completion**: Step 7 - Batch Operations
+
+---
+
+#### 📋 **Step 7: Batch Operations** (Deferred - After Step 6)
 
 **Goal**: Handle multiple entities at once
 
@@ -401,7 +578,7 @@ Frontend maintains:
 
 ---
 
-#### 📋 **Step 7: Advanced Context**
+#### 📋 **Step 8: Advanced Context** (Deferred - After Step 7)
 
 **Goal**: Entity tracking and reference resolution
 
@@ -412,7 +589,7 @@ Frontend maintains:
 
 ---
 
-#### 📋 **Step 8: Query Agent Integration**
+#### 📋 **Step 9: Query Agent Integration** (Deferred)
 
 **Goal**: Delegate read queries
 
@@ -422,7 +599,7 @@ Frontend maintains:
 
 ---
 
-#### 📋 **Step 9: Setup Assistant Integration**
+#### 📋 **Step 10: Setup Assistant Integration** (Deferred)
 
 **Goal**: Handle document uploads
 
@@ -432,7 +609,7 @@ Frontend maintains:
 
 ---
 
-#### 📋 **Step 10: Polish and Production**
+#### 📋 **Step 11: Polish and Production** (Deferred)
 
 **Goal**: Production-ready features
 

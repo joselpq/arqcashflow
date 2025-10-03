@@ -1,7 +1,7 @@
 # ArqCashflow Development Backlog
 
 **Purpose**: Central source of truth for project priorities and development status
-**Last Updated**: 2025-10-03 (Operations Agent Step 5 Complete - Multi-Entity Support with Bug Fixes)
+**Last Updated**: 2025-10-03 (Operations Agent Step 6 Planned - Structured Tool Use Migration)
 **Update Frequency**: Every LLM session MUST update this document when completing tasks or discovering new requirements
 
 ## 🚨 CRITICAL INSTRUCTIONS FOR LLM AGENTS
@@ -105,7 +105,43 @@ Examples:
 ### 📋 TO DO (Immediate Priorities)
 *Ready to implement, explicitly prioritized.*
 
-**Currently Empty** - Next priorities to be determined
+#### **Operations Agent Step 6: Structured Tool Use Migration** (HIGH PRIORITY - Architecture Refactor)
+
+**Goal**: Eliminate JSON/Query leakage by migrating to Anthropic's official Structured Tool Use pattern
+
+**Problem**: Current implementation occasionally exposes internal JSON actions/SQL queries to users despite prompt engineering. Root cause: relying on plain text responses where tools are mixed with conversation.
+
+**Solution**: Use official `tool_use` / `tool_result` content blocks which architecturally separate tools from user-facing messages.
+
+**Strategy**:
+1. **Backup current implementation** → `OperationsAgentService-old.ts`
+2. **Duplicate & modify** → Work on copy, keep original as fallback
+3. **Implement structured tools** → ~9 hours effort (see ADR-012 for detailed plan)
+4. **Test & validate** → Ensure zero JSON/SQL leakage
+5. **Rollback if needed** → Restore old version if critical issues
+
+**Key Benefits**:
+- ✅ Architectural guarantee (tools structurally separated)
+- ✅ No prompt dependency (works even if Claude "forgets")
+- ✅ Future-proof (official Anthropic pattern)
+- ✅ Simpler code (~40 line reduction)
+- ✅ Zero risk of JSON/SQL exposure to users
+
+**Effort Estimate**: 9-10 hours total
+- Phase 1 (Prep): 1 hour - Backup, documentation
+- Phase 2 (Implementation): 6-7 hours - Tool definitions, response handling, history management
+- Phase 3 (Testing): 2-3 hours - Validation, edge cases, backward compatibility
+
+**Success Criteria**:
+- ✅ All CRUD operations working
+- ✅ **Zero JSON/SQL leakage** in user responses
+- ✅ Context preservation (Claude sees tool history)
+- ✅ Backward compatible with existing conversations
+- ✅ Performance maintained or improved
+
+**Documentation**: Full implementation plan in ADR-012 Step 6
+
+**Priority**: **HIGH** - Fixes critical UX issue (user seeing internal implementation details)
 
 ---
 
