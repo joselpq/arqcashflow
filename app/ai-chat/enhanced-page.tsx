@@ -26,7 +26,8 @@ interface FileData {
 
 export default function EnhancedAIChatPage() {
   const [message, setMessage] = useState('')
-  const [messages, setMessages] = useState<Message[]>([])
+  const [messages, setMessages] = useState<Message[]>([]) // Display messages (user-facing)
+  const [fullHistory, setFullHistory] = useState<ConversationMessage[]>([]) // Full conversation (with internal messages)
   const [loading, setLoading] = useState(false)
   const [files, setFiles] = useState<FileData[]>([])
   const [dragActive, setDragActive] = useState(false)
@@ -363,29 +364,28 @@ export default function EnhancedAIChatPage() {
     setMessage('')
 
     try {
-      // Build simple conversation history (just messages)
-      const conversationHistory = messages.map(m => ({
-        role: m.role,
-        content: m.content
-      }))
-
+      // Use fullHistory (with internal messages) for backend context
+      // This preserves query results and other internal data Claude needs
       const response = await fetch('/api/ai/operations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: userMessage.content,
-          conversationHistory
+          conversationHistory: fullHistory // Send full history with [QUERY_RESULTS] etc.
         })
       })
 
       if (response.ok) {
         const result = await response.json()
 
-        // Use displayHistory if available (user-facing messages only)
-        // Fall back to conversationHistory for backward compatibility
-        // This separates internal messages (like [QUERY_RESULTS]) from user display
+        // Update fullHistory with complete conversation (includes internal messages)
+        if (result.conversationHistory && result.conversationHistory.length > 0) {
+          setFullHistory(result.conversationHistory)
+        }
+
+        // Update messages with user-facing display only
         if (result.displayHistory && result.displayHistory.length > 0) {
-          // Use displayHistory - excludes internal messages
+          // Use displayHistory - excludes internal messages like [QUERY_RESULTS]
           const historyMessages: Message[] = result.displayHistory.map((msg: ConversationMessage) => ({
             role: msg.role,
             content: msg.content,
