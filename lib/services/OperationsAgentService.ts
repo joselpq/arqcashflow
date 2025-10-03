@@ -1,15 +1,19 @@
 /**
- * Operations Agent Service - Step 4: Update and Delete Operations (Simplified)
+ * Operations Agent Service - Step 5: Multi-Entity Operations
  *
  * Step 1: ✅ Chat with conversation context
  * Step 2: ✅ Create expenses
  * Step 3: ✅ Confirmation workflow
- * Step 4: 🔄 Update and delete - Claude queries and uses APIs
+ * Step 4: ✅ Update and delete - Claude queries and uses APIs
+ * Step 5: ✅ Multi-entity support (Expense, Contract, Receivable, RecurringExpense)
  */
 
 import Anthropic from '@anthropic-ai/sdk'
 import type { ServiceContext } from './BaseService'
 import { ExpenseService } from './ExpenseService'
+import { ContractService } from './ContractService'
+import { ReceivableService } from './ReceivableService'
+import { RecurringExpenseService } from './RecurringExpenseService'
 
 export interface ConversationMessage {
   role: 'user' | 'assistant'
@@ -19,6 +23,9 @@ export interface ConversationMessage {
 export class OperationsAgentService {
   private anthropic: Anthropic
   private expenseService: ExpenseService
+  private contractService: ContractService
+  private receivableService: ReceivableService
+  private recurringExpenseService: RecurringExpenseService
 
   constructor(private context: ServiceContext) {
     const apiKey = process.env.CLAUDE_API_KEY
@@ -26,6 +33,9 @@ export class OperationsAgentService {
 
     this.anthropic = new Anthropic({ apiKey })
     this.expenseService = new ExpenseService(context)
+    this.contractService = new ContractService(context)
+    this.receivableService = new ReceivableService(context)
+    this.recurringExpenseService = new RecurringExpenseService(context)
   }
 
   /**
@@ -562,9 +572,9 @@ TOM E ESTILO:
     // Map service name to service instance
     const serviceMap: Record<string, any> = {
       ExpenseService: this.expenseService,
-      // Add other services here when needed
-      // ContractService: this.contractService,
-      // ReceivableService: this.receivableService,
+      ContractService: this.contractService,
+      ReceivableService: this.receivableService,
+      RecurringExpenseService: this.recurringExpenseService
     }
 
     const serviceInstance = serviceMap[service]
