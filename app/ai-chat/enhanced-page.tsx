@@ -381,10 +381,19 @@ export default function EnhancedAIChatPage() {
       if (response.ok) {
         const result = await response.json()
 
-        // Use the conversationHistory from the result if available
-        // This preserves query results and other internal messages
-        if (result.conversationHistory && result.conversationHistory.length > 0) {
-          // Convert conversation history back to Message format
+        // Use displayHistory if available (user-facing messages only)
+        // Fall back to conversationHistory for backward compatibility
+        // This separates internal messages (like [QUERY_RESULTS]) from user display
+        if (result.displayHistory && result.displayHistory.length > 0) {
+          // Use displayHistory - excludes internal messages
+          const historyMessages: Message[] = result.displayHistory.map((msg: ConversationMessage) => ({
+            role: msg.role,
+            content: msg.content,
+            timestamp: new Date()
+          }))
+          setMessages(historyMessages)
+        } else if (result.conversationHistory && result.conversationHistory.length > 0) {
+          // Fallback to conversationHistory (legacy behavior)
           const historyMessages: Message[] = result.conversationHistory.map((msg: ConversationMessage) => ({
             role: msg.role,
             content: msg.content,
@@ -392,7 +401,7 @@ export default function EnhancedAIChatPage() {
           }))
           setMessages(historyMessages)
         } else {
-          // Fallback to old behavior
+          // Fallback to old behavior (single message)
           const assistantMessage: Message = {
             role: 'assistant',
             content: result.message,

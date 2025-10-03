@@ -28,6 +28,18 @@ export class OperationsAgentService {
     this.expenseService = new ExpenseService(context)
   }
 
+  /**
+   * Filter out internal messages that should not be displayed to users.
+   * Internal messages are marked with special prefixes like [QUERY_RESULTS], [INTERNAL], etc.
+   */
+  private filterInternalMessages(history: ConversationMessage[]): ConversationMessage[] {
+    return history.filter(msg =>
+      !msg.content.startsWith('[QUERY_RESULTS]') &&
+      !msg.content.startsWith('[INTERNAL]') &&
+      !msg.content.startsWith('[DEBUG]')
+    )
+  }
+
   async processCommand(
     message: string,
     history: ConversationMessage[] = []
@@ -466,13 +478,16 @@ TOM E ESTILO:
           const followUpContent = followUpResponse.content[0]
           if (followUpContent.type !== 'text') throw new Error('Unexpected response')
 
+          const fullHistory = [
+            ...updatedHistory,
+            { role: 'assistant' as const, content: followUpContent.text }
+          ]
+
           return {
             success: true,
             message: followUpContent.text,
-            conversationHistory: [
-              ...updatedHistory,
-              { role: 'assistant' as const, content: followUpContent.text }
-            ]
+            conversationHistory: fullHistory,
+            displayHistory: this.filterInternalMessages(fullHistory)
           }
         }
 
@@ -511,14 +526,18 @@ TOM E ESTILO:
     // Normal conversation or preview (no action detected)
     // If we got here, either no action was found OR action handlers didn't return
     console.log('[Operations] No action detected or action not handled, returning response as-is')
+
+    const fullHistory = [
+      ...history,
+      { role: 'user' as const, content: message },
+      { role: 'assistant' as const, content: responseText }
+    ]
+
     return {
       success: true,
       message: responseText,
-      conversationHistory: [
-        ...history,
-        { role: 'user' as const, content: message },
-        { role: 'assistant' as const, content: responseText }
-      ]
+      conversationHistory: fullHistory,
+      displayHistory: this.filterInternalMessages(fullHistory)
     }
   }
 
@@ -678,14 +697,17 @@ ${result.description ? `📝 ${result.description}` : ''}`
       }
     }
 
+    const fullHistory = [
+      ...history,
+      { role: 'user' as const, content: message },
+      { role: 'assistant' as const, content: successMessage }
+    ]
+
     return {
       success: true,
       message: successMessage,
-      conversationHistory: [
-        ...history,
-        { role: 'user' as const, content: message },
-        { role: 'assistant' as const, content: successMessage }
-      ]
+      conversationHistory: fullHistory,
+      displayHistory: this.filterInternalMessages(fullHistory)
     }
   }
 
