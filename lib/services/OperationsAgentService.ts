@@ -357,7 +357,7 @@ TOM E ESTILO:
 
     const response = await this.anthropic.messages.create({
       model: 'claude-sonnet-4-20250514',
-      max_tokens: 1500,
+      max_tokens: 32768,  // Increased from 1500 to handle large bulk operations (up to ~1,600 IDs)
       system: systemPrompt,
       messages: [...history, { role: 'user' as const, content: message }]
     })
@@ -520,7 +520,7 @@ TOM E ESTILO:
           // Call Claude again with results
           const followUpResponse = await this.anthropic.messages.create({
             model: 'claude-sonnet-4-20250514',
-            max_tokens: 1500,
+            max_tokens: 32768,  // Same as initial call - handles large bulk operations
             system: systemPrompt,
             messages: updatedHistory
           })
