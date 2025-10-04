@@ -352,7 +352,7 @@ Frontend maintains:
 **Bug 3: JSON Exposure in User Display** ✅ FIXED
 - Problem: Claude echoed `[QUERY_RESULTS]` and `{action:...}` JSON in responses
 - Solution: Enhanced system prompt with explicit rules:
-  - Line 115: "NUNCA inclua '[QUERY_RESULTS]' ou '{action:...}' na resposta"
+  - Line 115: "NUNCA inclua '[QUERY_RESULTS]' ou '\{action:...\}' na resposta"
   - Line 321: Preview must be "em linguagem natural, NUNCA mostre JSON"
 
 **Bug 4: max_tokens Limit for Large Operations** ✅ FIXED
