@@ -4,14 +4,15 @@ type: "decision"
 audience: ["developer", "agent", "product"]
 contexts: ["ai-agents", "product-strategy", "financial-intelligence", "user-experience", "automation", "small-business", "professional-services", "document-processing", "business-insights"]
 complexity: "advanced"
-last_updated: "2025-10-01"
-version: "1.3"
+last_updated: "2025-10-04"
+version: "1.4"
 agent_roles: ["ai-architect", "product-strategist", "business-analyst"]
 related:
   - decisions/003-strategic-architecture-evolution.md
   - decisions/007-event-system-foundation.md
+  - decisions/013-operations-agent-agentic-loop-refactor.md
   - agents/contexts/ai-assistant.md
-dependencies: ["claude-api", "next.js", "service-layer", "event-system", "team-context", "financial-apis"]
+dependencies: ["claude-api", "next.js", "service-layer", "event-system", "team-context", "financial-apis", "vercel-ai-sdk"]
 ---
 
 # AI Agent Strategy: Specialized Financial Intelligence Architecture
@@ -27,7 +28,7 @@ dependencies: ["claude-api", "next.js", "service-layer", "event-system", "team-c
 - API-driven integration with platform services
 - Progressive disclosure of complexity
 
-**Implementation Status (2025-10-01) - PHASE 2 WEEK 3 COMPLETE**:
+**Implementation Status (2025-10-04) - PHASE 2 COMPLETE**:
 - ✅ **Phase 1A (Setup Assistant)**: 100% extraction accuracy achieved with sub-batch splitting
 - ✅ **Phase 1B (Financial Query Agent)**: Complete - Text-to-SQL approach with Claude
   - Natural language to PostgreSQL query generation
@@ -36,14 +37,16 @@ dependencies: ["claude-api", "next.js", "service-layer", "event-system", "team-c
   - Portuguese/English bilingual support
   - Conversation context management
   - UI integrated: Chat tab (💬 Chat Inteligente)
-- ✅ **Phase 1C (Operations Agent)**: ADR-008 compliant, production ready
-  - Renamed from "Command Agent" for clarity
-  - Intent classification + smart inference operational
-  - CREATE/UPDATE/DELETE for all 4 entity types
-  - Natural language commands: "R$50 em gasolina ontem" → done
-  - Query Agent integration for entity lookup
-  - Context-rich prompts (not prescriptive)
-  - Confirmation workflow with Brazilian format support
+- ✅ **Phase 1C (Operations Agent)**: **COMPLETE** - Vercel AI SDK Migration (ADR-013)
+  - **PRODUCTION READY** with framework-based implementation
+  - Migrated from manual Anthropic SDK to Vercel AI SDK
+  - Code reduction: 850 → 400 lines (-53%)
+  - Multi-step tool calling with `stopWhen: stepCountIs(15)`
+  - Automatic conversation state management via `CoreMessage[]`
+  - CREATE/UPDATE/DELETE for all 4 entity types working correctly
+  - Natural language commands: "50 gasolina ontem" → ✅ expense created
+  - Context-rich system prompts with complete API documentation
+  - Zero conversation state bugs (framework-managed)
   - UI integrated: Comandos tab (🎯 Comandos)
 - ✅ **Phase 2 (Unified AI Router)**: Weeks 1, 2 & 3 COMPLETE
   - ✅ **Week 1-2 (Backend)**: Router infrastructure
@@ -208,17 +211,19 @@ Agent: "Dos 8 contratos concluídos, você recebeu R$ 652.000,00 (95%).
 - Uses ServiceContext pattern for team isolation
 - Validates input with AISchemas.query from validation layer
 
-#### **3. AI Operations Agent** 🔄 **SIMPLIFIED REBUILD (2025-10-01)**
+#### **3. AI Operations Agent** ✅ **COMPLETE (2025-10-04) - Vercel AI SDK Implementation**
 **"The Natural Language CRUD Expert"**
 
-**Status**: **Rebuilding with Simplified Architecture**
-**Implementation**: `lib/services/OperationsAgentService.ts` + `/api/ai/operations`
-**Lines of Code Target**: ~200 lines (down from 2,049)
+**Status**: ✅ **PRODUCTION READY**
+**Implementation**: `lib/services/OperationsAgentService.ts` (400 lines) + `/api/ai/operations`
+**Framework**: Vercel AI SDK v5 with Claude Sonnet 4
+**Documentation**: ADR-013 v3.0 (complete implementation guide)
 
-**Strategic Pivot (2025-10-01)**: **Trust Claude, Not Code**
-- **Previous approach**: 2,049 lines of manual orchestration, state machines, fuzzy matching
-- **New approach**: ~200 lines - give Claude full context, let it decide everything
-- **Key insight**: We were fighting Claude instead of trusting it
+**Final Architecture (2025-10-04)**: **Framework-Based Multi-Step Tool Calling**
+- **Previous approach**: 850 lines manual while-loop with Anthropic SDK
+- **Final approach**: 400 lines using Vercel AI SDK `generateText()` (-53% reduction)
+- **Key breakthrough**: `stopWhen: stepCountIs(15)` enables automatic agentic loop
+- **Critical learning**: System prompts must include complete API documentation
 
 **Purpose**: Execute CRUD operations through natural language commands
 **Wow Factor**: "R$50 em gasolina ontem" → Expense created in 5 seconds
@@ -226,27 +231,31 @@ Agent: "Dos 8 contratos concluídos, você recebeu R$ 652.000,00 (95%).
 **The AI Trinity**:
 1. ✅ **Setup Assistant** = Batch import (549 lines, working)
 2. ✅ **Query Agent** = Read data (288 lines, working)
-3. 🔄 **Operations Agent** = CRUD operations (rebuilding: 2,049 → ~200 lines)
+3. ✅ **Operations Agent** = CRUD operations (400 lines, Vercel AI SDK - COMPLETE)
 
-**New Simplified Architecture**:
-```
-User message + full conversation history
-  ↓
-Claude Sonnet 4 (single comprehensive prompt)
-  ↓
-Decision JSON:
-{
-  "action": "query" | "create" | "update" | "delete" | "clarify" | "route_to_setup",
-  "api_calls": [{ method, endpoint, body }],
-  "response": "natural language"
-}
-  ↓
-Execute API calls via service layer
-  ↓
-Return response
+**Current Architecture (Vercel AI SDK v5)**:
+```typescript
+import { generateText, tool, stepCountIs } from 'ai'
+
+const result = await generateText({
+  model: anthropic('claude-sonnet-4-20250514'),
+  system: detailedSystemPrompt,  // Complete API docs + database schema
+  messages: [...history, { role: 'user', content: message }],
+  tools: {
+    query_database: tool({ inputSchema, execute }),
+    call_service: tool({ inputSchema, execute })
+  },
+  stopWhen: stepCountIs(15)  // CRITICAL: Enable multi-step tool calling
+})
+
+// Framework handles:
+// - Tool execution
+// - State management (result.response.messages)
+// - Agentic loop continuation
+// - Type validation
 ```
 
-**That's it. No intermediate steps, no state machines, no fuzzy matching libraries.**
+**That's it. Framework handles state, we provide domain knowledge via system prompt.**
 
 **Capabilities** (Claude handles ALL of this naturally):
 - **CREATE**: All 4 entity types (contracts, receivables, expenses, recurring) - single or batch
@@ -273,20 +282,21 @@ Return response
   - Ask clarifying questions
   - Route to Setup Agent for document processing
 
-**What We Provide** (the entire service):
-```typescript
-class OperationsAgentService {
-  async processCommand(message: string, conversationHistory: Message[]): Promise<Response> {
-    // 1. Build comprehensive prompt with ALL context
-    // 2. Send to Claude
-    // 3. Parse JSON decision
-    // 4. Execute API calls if any
-    // 5. Return natural language response
-  }
-}
+**Production Testing Results**:
+```
+Test: "50 gasolina ontem"
+✅ Steps taken: 2 (tool call → final response)
+✅ finishReason: 'stop' (natural completion)
+✅ Expense created in database
+✅ Confirmation: "✅ Despesa de R$50,00 criada com sucesso!"
 ```
 
-**That's it. ~200 lines total.**
+**Key Implementation Details** (see ADR-013 for full guide):
+- ✅ System prompt includes complete API documentation (required vs optional fields)
+- ✅ Database schema provided for entity lookups
+- ✅ Conversation history preserved automatically by framework
+- ✅ Tool execution results passed back to Claude for Step 2
+- ✅ Zero manual state management needed
 
 **Example Interactions**:
 ```
@@ -321,23 +331,22 @@ User: "ok"
 Claude: [POST /api/receivables × 3] → "✅ 3 recebíveis criados!"
 ```
 
-**Implementation Status**:
-- 🔄 **Rebuilding** (2025-10-01)
-  - Scrapping 2,049 line implementation
-  - Building new ~200 line version
-  - Target: Working in 2-3 hours
+**Implementation Status**: ✅ **COMPLETE (2025-10-04)**
 
-**Key Files** (new):
-- `lib/services/OperationsAgentService.ts` (~200 lines)
-- `app/api/ai/operations/route.ts` (unchanged, still uses service)
-- Database schema shared with Query Agent (already exists)
+**Final Metrics**:
+- 📏 Code: 850 → 400 lines (-53%)
+- 🐛 Bugs: Conversation state bug → Fixed (framework-managed)
+- ⚡ Performance: 2+ steps per operation (multi-step tool calling working)
+- ✅ Production: Tested and deployed
 
-**Deleted** (no longer needed):
-- ❌ `lib/ai/fuzzy-match-utils.ts` (Claude does this naturally)
-- ❌ `lib/ai/entity-schemas.ts` (just use inline schema in prompt)
-- ❌ All complex state management code
-- ❌ Multi-phase intent classification
-- ❌ Separate query delegation system
+**Key Files** (production):
+- `lib/services/OperationsAgentService.ts` (400 lines - Vercel AI SDK)
+- `app/api/ai/operations/route.ts` (uses CoreMessage type)
+- `docs/decisions/013-operations-agent-agentic-loop-refactor.md` (ADR-013 v3.0)
+
+**Backup Files** (preserved for reference):
+- `lib/services/OperationsAgentService-oldv2.ts` (manual while-loop version)
+- `lib/services/OperationsAgentService-old.ts` (original Step 6)
 
 ---
 
