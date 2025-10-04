@@ -1,11 +1,12 @@
 /**
- * Operations Agent Service - Step 5: Multi-Entity Operations
+ * Operations Agent Service - Step 6: Structured Tool Use Migration
  *
  * Step 1: ✅ Chat with conversation context
  * Step 2: ✅ Create expenses
  * Step 3: ✅ Confirmation workflow
  * Step 4: ✅ Update and delete - Claude queries and uses APIs
  * Step 5: ✅ Multi-entity support (Expense, Contract, Receivable, RecurringExpense)
+ * Step 6: 🔄 Structured tool use (no JSON leakage)
  */
 
 import Anthropic from '@anthropic-ai/sdk'
@@ -17,7 +18,17 @@ import { RecurringExpenseService } from './RecurringExpenseService'
 
 export interface ConversationMessage {
   role: 'user' | 'assistant'
-  content: string
+  content: string | Anthropic.ContentBlock[]
+}
+
+// Helper: Extract text from content blocks or string
+function extractText(content: string | Anthropic.ContentBlock[]): string {
+  if (typeof content === 'string') return content
+
+  return content
+    .filter((block): block is Anthropic.TextBlock => block.type === 'text')
+    .map(block => block.text)
+    .join('\n')
 }
 
 export class OperationsAgentService {
@@ -41,13 +52,22 @@ export class OperationsAgentService {
   /**
    * Filter out internal messages that should not be displayed to users.
    * Internal messages are marked with special prefixes like [QUERY_RESULTS], [INTERNAL], etc.
+   * Also converts ContentBlock[] to string for display.
    */
   private filterInternalMessages(history: ConversationMessage[]): ConversationMessage[] {
-    return history.filter(msg =>
-      !msg.content.startsWith('[QUERY_RESULTS]') &&
-      !msg.content.startsWith('[INTERNAL]') &&
-      !msg.content.startsWith('[DEBUG]')
-    )
+    return history
+      .filter(msg => {
+        const text = extractText(msg.content)
+        return (
+          !text.startsWith('[QUERY_RESULTS]') &&
+          !text.startsWith('[INTERNAL]') &&
+          !text.startsWith('[DEBUG]')
+        )
+      })
+      .map(msg => ({
+        role: msg.role,
+        content: extractText(msg.content)  // Convert to string for display
+      }))
   }
 
   async processCommand(
@@ -87,36 +107,44 @@ Você pode atender dois tipos de solicitação:
 
 FERRAMENTAS DISPONÍVEIS:
 
-1. query_database - Consultar o database (PostgreSQL, apenas SELECT)
-   {"action": "query_database", "sql": "SELECT ... FROM ... WHERE \\"teamId\\" = '${teamId}' ..."}
+Você tem acesso a duas ferramentas:
 
-2. call_service - Executar operações (criar/editar/deletar)
-   {"action": "call_service", "service": "ExpenseService", "method": "create", "params": {...}}
+1. query_database - Para consultar dados financeiros no database PostgreSQL
+   - Use para responder perguntas sobre contratos, recebíveis, despesas
+   - SEMPRE inclua 'id' no SELECT (para operações futuras)
+   - SEMPRE filtre por teamId
 
-REGRAS CRÍTICAS PARA AÇÕES:
+2. call_service - Para criar, atualizar ou deletar registros
+   - Use para operações de CRUD em entidades financeiras
+   - Suporta operações em lote (bulkCreate, bulkUpdate, bulkDelete)
 
-⚠️ QUANDO EXECUTAR UMA QUERY OU OPERAÇÃO:
-- Retorne APENAS o JSON da ação, SEM NENHUM TEXTO antes ou depois
-- NÃO explique o que vai fazer
-- NÃO mostre o SQL ou JSON para o usuário
-- APENAS retorne o JSON puro para execução
+COMO USAR AS FERRAMENTAS:
 
-Exemplo ERRADO ❌:
-"Vou buscar suas despesas com Notion. {"action": "query_database", ...}"
+Use as ferramentas naturalmente para completar as solicitações do usuário:
 
-Exemplo CORRETO ✅:
-{"action": "query_database", ...}
+**query_database**: Para buscar informações
+- Sempre inclua 'id' nos SELECTs (útil para operações futuras)
+- Sempre filtre por teamId
+- Formate os resultados de forma amigável - nunca mostre IDs ou SQL ao usuário
 
-DEPOIS da query ser executada, você receberá os resultados e ENTÃO deve formatar para o usuário.
+**call_service**: Para criar, atualizar ou deletar
+- Use os IDs que você obteve de queries anteriores
+- Mostre prévia antes de executar
+- Confirme com o usuário antes de operações destrutivas
 
-REGRA CRÍTICA SOBRE RESULTADOS DE QUERY:
-- Você receberá resultados de query como: "[QUERY_RESULTS]...dados...[/QUERY_RESULTS]"
-- Esses dados são APENAS para você usar internamente
-- NUNCA NUNCA NUNCA inclua "[QUERY_RESULTS]" ou "{action:...}"ou os dados JSON na sua resposta ao usuário
-- NUNCA copie ou repita "[QUERY_RESULTS]...[/QUERY_RESULTS]" na sua mensagem
-- Ao invés disso, formate os dados de forma amigável e legível
-- Exemplo ERRADO ❌: "Encontrei contratos! [QUERY_RESULTS]...[/QUERY_RESULTS]"
-- Exemplo CORRETO ✅: "Encontrei 36 contratos: RV, Julia Melardi, Paula Saad..."
+APRESENTAÇÃO DE DADOS:
+
+Identifique entidades por informações descritivas, NÃO por IDs técnicos:
+- ❌ "Encontrei a despesa clx8dy4pz0001..."
+- ✅ "Encontrei a despesa de R$45,00 do Netflix em 15/09"
+
+Use: descrição, valor, data, nome do cliente/projeto - informações que o usuário reconheça.
+
+DICAS IMPORTANTES:
+
+- **Recebíveis vinculados a projetos**: Se o usuário mencionar um projeto, busque o contrato primeiro e use o contractId ao criar
+- **Deletar contratos**: Verifique se há recebíveis vinculados e pergunte ao usuário o que fazer com eles
+- **Operações em lote**: Use bulkCreate, bulkUpdate, bulkDelete quando apropriado
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -233,28 +261,87 @@ APIS DISPONÍVEIS:
 ╔═══════════════════════════════════════════════════════════════╗
 ║ ContractService                                                ║
 ╠═══════════════════════════════════════════════════════════════╣
-║ create(data), update(id, data)                               ║
+║ create(data)                                                   ║
+║   OBRIGATÓRIO: clientName, projectName, totalValue, signedDate║
+║   OPCIONAL: description, status, category, notes              ║
+║   Padrões: status = "active"                                  ║
+║                                                                ║
+║ bulkCreate(items)                                             ║
+║   items = [{clientName: "...", projectName: "...", ...}, ...]║
+║                                                                ║
+║ update(id, data)                                              ║
+║   Todos os campos são opcionais (atualiza apenas os enviados) ║
+║                                                                ║
+║ bulkUpdate(updates)                                           ║
+║   updates = [{id: "...", data: {totalValue: 20000}}, ...]    ║
+║                                                                ║
 ║ delete(id, options?)                                          ║
 ║   options = {mode: "contract-only" | "contract-and-receivables"}║
 ║   "contract-only" (padrão): Desvincula recebíveis do contrato║
 ║   "contract-and-receivables": Deleta contrato E recebíveis   ║
 ║   IMPORTANTE: Sempre pergunte ao usuário qual modo usar!     ║
 ║                                                                ║
-║ bulkCreate(items), bulkUpdate(updates), bulkDelete(ids)      ║
+║ bulkDelete(ids, options?)                                     ║
+║   ids = ["id1", "id2", ...]                                   ║
+║   options: mesmo comportamento do delete individual          ║
 ╚═══════════════════════════════════════════════════════════════╝
 
 ╔═══════════════════════════════════════════════════════════════╗
 ║ ReceivableService                                              ║
 ╠═══════════════════════════════════════════════════════════════╣
-║ create(data), update(id, data), delete(id)                   ║
-║ bulkCreate(items), bulkUpdate(updates), bulkDelete(ids)      ║
+║ create(data)                                                   ║
+║   OBRIGATÓRIO: expectedDate, amount                           ║
+║   OPCIONAL (vinculado a contrato):                            ║
+║     - contractId (use o id do contrato)                       ║
+║   OPCIONAL (standalone):                                       ║
+║     - clientName, description                                 ║
+║   OUTROS OPCIONAIS: status, receivedDate, receivedAmount,     ║
+║                     invoiceNumber, category, notes            ║
+║   Padrões: status = "pending"                                 ║
+║                                                                ║
+║ bulkCreate(items)                                             ║
+║   items = [{expectedDate: "...", amount: 1000, ...}, ...]    ║
+║   Dica: Para vincular ao mesmo projeto, use o mesmo contractId║
+║                                                                ║
+║ update(id, data)                                              ║
+║   Todos os campos são opcionais (atualiza apenas os enviados) ║
+║                                                                ║
+║ bulkUpdate(updates)                                           ║
+║   updates = [{id: "...", data: {status: "received"}}, ...]   ║
+║                                                                ║
+║ delete(id)                                                     ║
+║   OBRIGATÓRIO: id                                             ║
+║                                                                ║
+║ bulkDelete(ids)                                               ║
+║   ids = ["id1", "id2", "id3", ...]                            ║
 ╚═══════════════════════════════════════════════════════════════╝
 
 ╔═══════════════════════════════════════════════════════════════╗
 ║ RecurringExpenseService                                        ║
 ╠═══════════════════════════════════════════════════════════════╣
-║ create(data), update(id, data), delete(id)                   ║
-║ bulkCreate(items), bulkUpdate(updates), bulkDelete(ids)      ║
+║ create(data)                                                   ║
+║   OBRIGATÓRIO: description, amount, category, frequency,      ║
+║                interval, startDate                            ║
+║   OPCIONAL: endDate, dayOfMonth (para frequency="monthly"),  ║
+║             vendor, notes, isActive                           ║
+║   Padrões: interval = 1, isActive = true                      ║
+║   Frequency: "weekly", "monthly", "quarterly", "annual"       ║
+║   ATENÇÃO: NÃO tem campo "dueDate"! Use "startDate"          ║
+║                                                                ║
+║ bulkCreate(items)                                             ║
+║   items = [{description: "...", frequency: "monthly", ...}]  ║
+║                                                                ║
+║ update(id, data)                                              ║
+║   Todos os campos são opcionais (atualiza apenas os enviados) ║
+║                                                                ║
+║ bulkUpdate(updates)                                           ║
+║   updates = [{id: "...", data: {amount: 150}}, ...]          ║
+║                                                                ║
+║ delete(id)                                                     ║
+║   OBRIGATÓRIO: id                                             ║
+║                                                                ║
+║ bulkDelete(ids)                                               ║
+║   ids = ["id1", "id2", "id3", ...]                            ║
 ╚═══════════════════════════════════════════════════════════════╝
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -298,41 +385,9 @@ REGRAS IMPORTANTES:
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-WORKFLOW OBRIGATÓRIO:
+REGRAS ESPECIAIS:
 
-Para CONSULTAS:
-1. Use query_database (SEMPRE inclua 'id' no SELECT mesmo que seja só consulta!)
-2. Formate a resposta de forma amigável (não mostre os IDs para o usuário)
-3. Não retorne JSON bruto para o usuário
-
-IMPORTANTE: SEMPRE inclua 'id' em TODAS as queries, mesmo consultas simples!
-Isso permite que você possa atualizar/deletar depois sem fazer nova query.
-
-Para CRIAR:
-1. Extrair dados da mensagem do usuário
-2. Mostrar PRÉVIA formatada com emojis
-3. Pedir confirmação ("Confirma?")
-4. Aguardar confirmação
-5. Executar call_service
-
-Para ATUALIZAR/DELETAR:
-1. Use query_database para encontrar o registro (SEMPRE inclua 'id' na query!)
-2. MEMORIZE os IDs retornados na conversa - você verá os resultados
-3. Mostre PRÉVIA do que vai fazer usando os mesmos registros encontrados, em linguagem natural, NUNCA mostre um JSON de query nem action
-4. Aguardar confirmação
-5. Execute call_service usando EXATAMENTE os IDs que você viu nos resultados da query
-
-CRÍTICO:
-- Quando listar registros para o usuário, SEMPRE inclua 'id' na SELECT
-- Use os MESMOS IDs que você recebeu na primeira query
-- NÃO faça uma nova query para pegar IDs - use os que já tem na conversa!
-
-Exemplo correto:
-1. Query: SELECT "id", "description", "amount" FROM "Expense" WHERE ... LIMIT 3
-2. Você vê: [{id: "abc", ...}, {id: "def", ...}, {id: "ghi", ...}]
-3. Update: bulkUpdate com ids ["abc", "def", "ghi"]
-
-ESPECIAL - DELETAR CONTRATOS:
+DELETAR CONTRATOS:
 - Antes de deletar contrato, SEMPRE pergunte sobre os recebíveis vinculados!
 - Opções:
   1. Apenas contrato (recebíveis ficam desvinculados) - mode: "contract-only"
@@ -350,245 +405,240 @@ TOM E ESTILO:
 ✅ Confirme antes de operações destrutivas
 ✅ Explique o que está fazendo quando não for óbvio
 ✅ Use linguagem de negócios (não técnica) com o usuário
+✅ Identifique entidades por informações descritivas:
+   • "a despesa de R$45 do Netflix"
+   • "o contrato da Mari de R$5.000"
+   • "o recebível de R$1.200 para 15/10"
 
-❌ Não exponha detalhes técnicos (IDs, SQL) para o usuário
+❌ NUNCA exponha IDs técnicos (clx8dy4pz...) - use apenas internamente
+❌ Não mostre SQL, JSON, ou dados brutos
 ❌ Não seja prolixo - seja objetivo
 ❌ Não assuma - pergunte quando necessário`
+
+    // Define tools for structured tool use
+    const tools: Anthropic.Tool[] = [
+      {
+        name: 'query_database',
+        description: 'Execute SELECT query on PostgreSQL database to retrieve financial data',
+        input_schema: {
+          type: 'object',
+          properties: {
+            sql: {
+              type: 'string',
+              description: 'PostgreSQL SELECT query with proper column quoting. Must filter by teamId.'
+            }
+          },
+          required: ['sql']
+        }
+      },
+      {
+        name: 'call_service',
+        description: 'Execute CRUD operations on financial entities (contracts, receivables, expenses)',
+        input_schema: {
+          type: 'object',
+          properties: {
+            service: {
+              type: 'string',
+              enum: ['ExpenseService', 'ContractService', 'ReceivableService', 'RecurringExpenseService'],
+              description: 'Service to call'
+            },
+            method: {
+              type: 'string',
+              enum: ['create', 'update', 'delete', 'bulkCreate', 'bulkUpdate', 'bulkDelete'],
+              description: 'Method to execute'
+            },
+            params: {
+              type: 'object',
+              description: 'Operation parameters (entity data, IDs, etc.)'
+            }
+          },
+          required: ['service', 'method', 'params']
+        }
+      }
+    ]
 
     const response = await this.anthropic.messages.create({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 8192,  // Increased from 1500 to handle large bulk operations (up to ~400 IDs)
       system: systemPrompt,
+      tools: tools,  // Add structured tool use
       messages: [...history, { role: 'user' as const, content: message }]
     })
 
-    const content = response.content[0]
-    if (content.type !== 'text') throw new Error('Unexpected response')
-    const responseText = content.text.trim()
+    // Process content blocks (structured tool use)
+    const textBlocks: Anthropic.TextBlock[] = []
+    const toolUseBlocks: Anthropic.ToolUseBlock[] = []
 
-    // Extract JSON action if present
-    let action = null
-
-    // Method 1: Check for tool use format (Claude is mimicking function calling)
-    // Format: <invoke name="..."><parameter name="X">value</parameter>...</invoke>
-    if (responseText.includes('<invoke') || responseText.includes('<parameter')) {
-      try {
-        const serviceMatch = responseText.match(/<parameter name="service">\s*([^<]+)\s*<\/parameter>/i)
-        const methodMatch = responseText.match(/<parameter name="method">\s*([^<]+)\s*<\/parameter>/i)
-        const paramsMatch = responseText.match(/<parameter name="params">\s*(\{[\s\S]*?\})\s*<\/parameter>/i)
-        const actionTypeMatch = responseText.match(/<parameter name="action">\s*([^<]+)\s*<\/parameter>/i)
-        const sqlMatch = responseText.match(/<parameter name="sql">\s*([^<]+)\s*<\/parameter>/i)
-
-        if (serviceMatch && methodMatch && paramsMatch) {
-          // call_service format
-          const params = JSON.parse(paramsMatch[1].trim())
-          action = {
-            action: 'call_service',
-            service: serviceMatch[1].trim(),
-            method: methodMatch[1].trim(),
-            params
-          }
-          console.log('[Operations] Extracted tool use format (call_service):', action)
-        } else if (actionTypeMatch && actionTypeMatch[1].trim() === 'query_database' && sqlMatch) {
-          // query_database format
-          action = {
-            action: 'query_database',
-            sql: sqlMatch[1].trim()
-          }
-          console.log('[Operations] Extracted tool use format (query_database):', action)
-        }
-      } catch (error) {
-        console.error('[Operations] Tool use format parse error:', error)
+    for (const block of response.content) {
+      if (block.type === 'text') {
+        textBlocks.push(block)
+      } else if (block.type === 'tool_use') {
+        toolUseBlocks.push(block)
       }
     }
 
-    // Method 2: Try to extract inline JSON (fallback for simple format)
-    // Handle multiple JSON objects in response (for batch operations)
-    if (!action && responseText.includes('"action"')) {
-      try {
-        // Find all complete JSON objects (supporting nested objects)
-        const jsonObjects: any[] = []
-        let currentPos = 0
+    // If no tools used, return conversation response
+    if (toolUseBlocks.length === 0) {
+      const responseText = textBlocks.map(b => b.text).join('\n')
+      const fullHistory = [
+        ...history,
+        { role: 'user' as const, content: message },
+        { role: 'assistant' as const, content: responseText }
+      ]
 
-        while (currentPos < responseText.length) {
-          const jsonStart = responseText.indexOf('{', currentPos)
-          if (jsonStart === -1) break
+      return {
+        success: true,
+        message: responseText,
+        conversationHistory: fullHistory,
+        displayHistory: this.filterInternalMessages(fullHistory)
+      }
+    }
 
-          // Find matching closing brace
-          let braceCount = 0
-          let jsonEnd = -1
-          for (let i = jsonStart; i < responseText.length; i++) {
-            if (responseText[i] === '{') braceCount++
-            if (responseText[i] === '}') {
-              braceCount--
-              if (braceCount === 0) {
-                jsonEnd = i
-                break
+    // Execute tools
+    console.log(`[Operations] ${toolUseBlocks.length} tool(s) to execute`)
+
+    for (const toolUse of toolUseBlocks) {
+      console.log(`[Operations] Executing tool: ${toolUse.name}`)
+
+      if (toolUse.name === 'query_database') {
+        // Execute database query
+        const sql = (toolUse.input as any).sql
+        console.log('[Operations] Executing query_database:', sql)
+        const results = await this.executeQuery(sql)
+
+        // Log results
+        console.log('[Operations] Query returned', results.length, 'rows')
+        if (results.length > 0) {
+          const ids = results.map(r => r.id).filter(Boolean)
+          if (ids.length > 0) {
+            console.log('[Operations] IDs returned:', ids)
+          }
+        }
+
+        // Build conversation with tool results
+        const toolResultContent: Anthropic.ToolResultBlockParam = {
+          type: 'tool_result',
+          tool_use_id: toolUse.id,
+          content: JSON.stringify(results, null, 2)
+        }
+
+        const updatedHistory: Anthropic.MessageParam[] = [
+          ...history.map(h => ({
+            role: h.role,
+            content: h.content
+          })),
+          { role: 'user' as const, content: message },
+          { role: 'assistant' as const, content: response.content },
+          { role: 'user' as const, content: [toolResultContent] }
+        ]
+
+        // Call Claude again with tool results
+        const followUpResponse = await this.anthropic.messages.create({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 8192,
+          system: systemPrompt,
+          tools: tools,
+          messages: updatedHistory
+        })
+
+        // Check if Claude used MORE tools in follow-up
+        const followUpToolUses = followUpResponse.content.filter(
+          (b): b is Anthropic.ToolUseBlock => b.type === 'tool_use'
+        )
+
+        if (followUpToolUses.length > 0) {
+          // Claude wants to use more tools
+          console.log(`[Operations] Follow-up wants to use ${followUpToolUses.length} more tool(s)`)
+
+          // Process each additional tool
+          for (const followUpTool of followUpToolUses) {
+            if (followUpTool.name === 'query_database') {
+              const sql2 = (followUpTool.input as any).sql
+              console.log('[Operations] Executing follow-up query_database:', sql2)
+              const results2 = await this.executeQuery(sql2)
+
+              console.log('[Operations] Follow-up query returned', results2.length, 'rows')
+
+              // Add this tool result and call Claude one more time
+              const toolResult2: Anthropic.ToolResultBlockParam = {
+                type: 'tool_result',
+                tool_use_id: followUpTool.id,
+                content: JSON.stringify(results2, null, 2)
+              }
+
+              const finalHistory: Anthropic.MessageParam[] = [
+                ...updatedHistory,
+                { role: 'assistant' as const, content: followUpResponse.content },
+                { role: 'user' as const, content: [toolResult2] }
+              ]
+
+              const finalResponse = await this.anthropic.messages.create({
+                model: 'claude-sonnet-4-20250514',
+                max_tokens: 8192,
+                system: systemPrompt,
+                tools: tools,
+                messages: finalHistory
+              })
+
+              const finalText = finalResponse.content
+                .filter((b): b is Anthropic.TextBlock => b.type === 'text')
+                .map(b => b.text)
+                .join('\n')
+
+              const fullHistory = [
+                ...history,
+                { role: 'user' as const, content: message },
+                { role: 'assistant' as const, content: `[QUERY_RESULTS]${JSON.stringify(results)}[/QUERY_RESULTS]` },
+                { role: 'assistant' as const, content: `[QUERY_RESULTS]${JSON.stringify(results2)}[/QUERY_RESULTS]` },
+                { role: 'assistant' as const, content: finalText }
+              ]
+
+              return {
+                success: true,
+                message: finalText,
+                conversationHistory: fullHistory,
+                displayHistory: this.filterInternalMessages(fullHistory)
               }
             }
           }
-
-          if (jsonEnd === -1) break
-
-          try {
-            const jsonStr = responseText.substring(jsonStart, jsonEnd + 1)
-            const parsed = JSON.parse(jsonStr)
-            if (parsed.action) {
-              jsonObjects.push(parsed)
-            }
-          } catch (e) {
-            // Skip invalid JSON
-          }
-
-          currentPos = jsonEnd + 1
         }
 
-        if (jsonObjects.length === 1) {
-          action = jsonObjects[0]
-          console.log('[Operations] Extracted inline JSON:', action)
-        } else if (jsonObjects.length > 1) {
-          // Multiple actions - convert to bulkUpdate if they're all updates
-          const allUpdates = jsonObjects.every(obj =>
-            obj.action === 'call_service' &&
-            obj.method === 'update' &&
-            obj.service === jsonObjects[0].service
-          )
+        // No more tools - extract text response
+        const followUpText = followUpResponse.content
+          .filter((b): b is Anthropic.TextBlock => b.type === 'text')
+          .map(b => b.text)
+          .join('\n')
 
-          if (allUpdates) {
-            // Convert to bulkUpdate
-            const updates = jsonObjects.map(obj => ({
-              id: obj.params.id,
-              data: obj.params.data || (() => {
-                const { id, ...rest } = obj.params
-                return rest
-              })()
-            }))
+        const fullHistory = [
+          ...history,
+          { role: 'user' as const, content: message },
+          { role: 'assistant' as const, content: `[QUERY_RESULTS]${JSON.stringify(results)}[/QUERY_RESULTS]` },
+          { role: 'assistant' as const, content: followUpText }
+        ]
 
-            action = {
-              action: 'call_service',
-              service: jsonObjects[0].service,
-              method: 'bulkUpdate',
-              params: updates
-            }
-            console.log('[Operations] Converted multiple updates to bulkUpdate:', updates.length, 'items')
-          } else {
-            // Different operations - can't batch, use first one for now
-            action = jsonObjects[0]
-            console.log('[Operations] Multiple different actions detected, using first one only')
-          }
-        }
-      } catch (error) {
-        console.error('[Operations] JSON parse error:', error)
-      }
-    }
-
-    if (action) {
-      console.log('[Operations] Action detected:', {
-        actionType: action.action,
-        hasSQL: !!action.sql,
-        hasService: !!action.service,
-        hasMethod: !!action.method
-      })
-
-      try {
-        // QUERY DATABASE
-        if (action.action === 'query_database' && action.sql) {
-          console.log('[Operations] Executing query_database...')
-          const results = await this.executeQuery(action.sql)
-
-          // Log the actual results with IDs
-          console.log('[Operations] Query returned', results.length, 'rows')
-          if (results.length > 0) {
-            console.log('[Operations] Query results:', JSON.stringify(results, null, 2))
-            // Specifically highlight IDs if present
-            const ids = results.map(r => r.id).filter(Boolean)
-            if (ids.length > 0) {
-              console.log('[Operations] IDs returned by query:', ids)
-            }
-          }
-
-          // Use special markers to indicate this is internal data, not user-facing
-          const resultsMessage = `[QUERY_RESULTS]${JSON.stringify(results, null, 2)}[/QUERY_RESULTS]`
-
-          // Add query results to conversation and ask Claude what to do next
-          const updatedHistory = [
-            ...history,
-            { role: 'user' as const, content: message },
-            { role: 'assistant' as const, content: resultsMessage }
-          ]
-
-          // Call Claude again with results
-          const followUpResponse = await this.anthropic.messages.create({
-            model: 'claude-sonnet-4-20250514',
-            max_tokens: 8192,  // Same as initial call - handles large bulk operations
-            system: systemPrompt,
-            messages: updatedHistory
-          })
-
-          const followUpContent = followUpResponse.content[0]
-          if (followUpContent.type !== 'text') throw new Error('Unexpected response')
-
-          const fullHistory = [
-            ...updatedHistory,
-            { role: 'assistant' as const, content: followUpContent.text }
-          ]
-
-          return {
-            success: true,
-            message: followUpContent.text,
-            conversationHistory: fullHistory,
-            displayHistory: this.filterInternalMessages(fullHistory)
-          }
-        }
-
-        // CALL SERVICE (new unified handler)
-        if (action.action === 'call_service' && action.service && action.method && action.params) {
-          return await this.handleServiceCall(action.service, action.method, action.params, message, history)
-        }
-
-        // Legacy handlers (for backward compatibility during transition)
-        if (action.action === 'create_expense' && action.data) {
-          return await this.handleServiceCall('ExpenseService', 'create', action.data, message, history)
-        }
-
-        if (action.action === 'update_expense' && action.id && action.data) {
-          return await this.handleServiceCall('ExpenseService', 'update', { id: action.id, data: action.data }, message, history)
-        }
-
-        if (action.action === 'delete_expense' && action.id) {
-          return await this.handleServiceCall('ExpenseService', 'delete', { id: action.id }, message, history)
-        }
-
-      } catch (error) {
-        const errorMessage = `❌ Erro: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
         return {
-          success: false,
-          message: errorMessage,
-          conversationHistory: [
-            ...history,
-            { role: 'user' as const, content: message },
-            { role: 'assistant' as const, content: errorMessage }
-          ]
+          success: true,
+          message: followUpText,
+          conversationHistory: fullHistory,
+          displayHistory: this.filterInternalMessages(fullHistory)
         }
+      }
+
+      if (toolUse.name === 'call_service') {
+        // Execute service call
+        const input = toolUse.input as any
+        return await this.handleServiceCall(
+          input.service,
+          input.method,
+          input.params,
+          message,
+          history
+        )
       }
     }
 
-    // Normal conversation or preview (no action detected)
-    // If we got here, either no action was found OR action handlers didn't return
-    console.log('[Operations] No action detected or action not handled, returning response as-is')
-
-    const fullHistory = [
-      ...history,
-      { role: 'user' as const, content: message },
-      { role: 'assistant' as const, content: responseText }
-    ]
-
-    return {
-      success: true,
-      message: responseText,
-      conversationHistory: fullHistory,
-      displayHistory: this.filterInternalMessages(fullHistory)
-    }
+    // If we get here, tools were detected but not handled properly
+    throw new Error('Tool execution failed')
   }
 
   private async handleServiceCall(
