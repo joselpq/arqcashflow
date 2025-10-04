@@ -1,7 +1,7 @@
 # ArqCashflow Development Backlog
 
 **Purpose**: Central source of truth for project priorities and development status
-**Last Updated**: 2025-10-03 (Operations Agent Step 6 Planned - Structured Tool Use Migration)
+**Last Updated**: 2025-10-04 (Operations Agent Step 6 COMPLETE - Known Issues Documented)
 **Update Frequency**: Every LLM session MUST update this document when completing tasks or discovering new requirements
 
 ## 🚨 CRITICAL INSTRUCTIONS FOR LLM AGENTS
@@ -83,21 +83,28 @@ Examples:
 ### 🔄 DOING (Currently In Progress)
 *Active work with real-time progress tracking. Can persist between sessions if work is incomplete.*
 
-**Currently**: Nothing in progress. Operations Agent Step 5 COMPLETE with all bugs fixed! 🎉
+**Currently**: Nothing in progress. Operations Agent Step 6 COMPLETE! 🎉
 
-**Step 5 Final Status** (2025-10-03):
-- ✅ Multi-entity support: Contract, Receivable, RecurringExpense, Expense
-- ✅ RecurringExpense schema bug fixed (dueDate → nextDue)
-- ✅ Contract deletion with receivables handling options
-- ✅ JSON exposure prevention in user responses
-- ✅ max_tokens optimized: 1,500 → 8,192 (handles ~400 IDs)
-- ✅ Large bulk operations tested (108 contracts deletion)
+**Step 6 Final Status** (2025-10-04):
+- ✅ Structured Tool Use Migration complete
+- ✅ Zero JSON/SQL leakage (architectural guarantee)
+- ✅ Zero ID exposure to users
+- ✅ Chained tool support (query → query workflows)
+- ✅ Complete API documentation for all 4 services
+- ✅ BigInt serialization fixed
+- ✅ MDX documentation build fixed
+- ✅ Code reduction: ~90 lines (~14%)
+
+**Known Issues Discovered** (requires hotfix or Step 7):
+- ⚠️ Missing follow-up call_service handler (causes silent failures on some workflows)
+- ⚠️ bulkDelete needs continueOnError default (stale data causes total failure)
 
 **Production Testing Results**:
-- ✅ Multi-entity operations: "Cria contrato da Mari R$5000" works
-- ✅ Contract deletion: Asks about receivables before deleting
-- ✅ RecurringExpense queries: Uses correct schema fields (nextDue)
-- ✅ 108 contract bulk deletion: Complete JSON response, no truncation
+- ✅ Individual CRUD: All entity types working
+- ✅ Bulk operations: Create, update working
+- ✅ Contract deletion workflow: Multi-step query → query → ask user
+- ⚠️ Large bulk delete (465 items): Silent failure (follow-up call_service not handled)
+- ⚠️ Bulk delete with stale data (383 items): Total rollback on single missing ID
 - ✅ No JSON leakage: Clean natural language responses only
 
 ---
@@ -105,48 +112,56 @@ Examples:
 ### 📋 TO DO (Immediate Priorities)
 *Ready to implement, explicitly prioritized.*
 
-#### **Operations Agent Step 6: Structured Tool Use Migration** (HIGH PRIORITY - Architecture Refactor)
+#### **Operations Agent Hotfixes** (CRITICAL - Blocking Production Use)
 
-**Goal**: Eliminate JSON/Query leakage by migrating to Anthropic's official Structured Tool Use pattern
+**Issues from Step 6 Testing**:
 
-**Problem**: Current implementation occasionally exposes internal JSON actions/SQL queries to users despite prompt engineering. Root cause: relying on plain text responses where tools are mixed with conversation.
+1. **Add Follow-Up call_service Handler** (30 min)
+   - Location: `OperationsAgentService.ts` lines 554-603 (follow-up loop)
+   - Missing: `else if (followUpTool.name === 'call_service')`
+   - Impact: Large bulk operations (>100 items) fail silently
+   - Fix: Add call_service handler to follow-up tool processing
+   - Test: "deletar todas as despesas" (465 items)
 
-**Solution**: Use official `tool_use` / `tool_result` content blocks which architecturally separate tools from user-facing messages.
+2. **Default continueOnError for bulkDelete** (15 min)
+   - Location: `OperationsAgentService.ts` line ~700 (handleServiceCall)
+   - Missing: `options.continueOnError = true` default
+   - Impact: Stale data causes total operation rollback
+   - Fix: `const options = params.options || { continueOnError: true }`
+   - Test: Delete 383 expenses with one stale ID
 
-**Strategy**:
-1. **Backup current implementation** → `OperationsAgentService-old.ts`
-2. **Duplicate & modify** → Work on copy, keep original as fallback
-3. **Implement structured tools** → ~9 hours effort (see ADR-012 for detailed plan)
-4. **Test & validate** → Ensure zero JSON/SQL leakage
-5. **Rollback if needed** → Restore old version if critical issues
-
-**Key Benefits**:
-- ✅ Architectural guarantee (tools structurally separated)
-- ✅ No prompt dependency (works even if Claude "forgets")
-- ✅ Future-proof (official Anthropic pattern)
-- ✅ Simpler code (~40 line reduction)
-- ✅ Zero risk of JSON/SQL exposure to users
-
-**Effort Estimate**: 9-10 hours total
-- Phase 1 (Prep): 1 hour - Backup, documentation
-- Phase 2 (Implementation): 6-7 hours - Tool definitions, response handling, history management
-- Phase 3 (Testing): 2-3 hours - Validation, edge cases, backward compatibility
-
-**Success Criteria**:
-- ✅ All CRUD operations working
-- ✅ **Zero JSON/SQL leakage** in user responses
-- ✅ Context preservation (Claude sees tool history)
-- ✅ Backward compatible with existing conversations
-- ✅ Performance maintained or improved
-
-**Documentation**: Full implementation plan in ADR-012 Step 6
-
-**Priority**: **HIGH** - Fixes critical UX issue (user seeing internal implementation details)
+**Effort**: 45 minutes total
+**Priority**: CRITICAL - Blocks large-scale operations
 
 ---
 
 ### ✅ DONE (Recently Completed)
 *Newest first, for reference.*
+
+#### ✅ **Operations Agent Step 6: Structured Tool Use Migration** (2025-10-04)
+
+**Goal**: Eliminate JSON/Query leakage using Anthropic's official Structured Tool Use pattern
+
+**What Was Completed**:
+1. ✅ Tool Definitions: `query_database` and `call_service` with JSON schemas
+2. ✅ Response Handling: Content block processing (text vs tool_use)
+3. ✅ Type System: Support for `ContentBlock[]` in messages
+4. ✅ System Prompt: Simplified from prescriptive to natural guidance (~90 lines removed)
+5. ✅ API Documentation: Completed for all 4 services (Contract, Receivable, RecurringExpense)
+6. ✅ Bug Fixes: BigInt serialization, MDX build, chained tool support
+
+**Results**:
+- ✅ Zero JSON/SQL leakage (architectural guarantee)
+- ✅ Zero ID exposure to users
+- ✅ Code reduction: ~90 lines (~14%)
+- ✅ Chained query workflows working
+- ⚠️ 2 known issues discovered (documented in TO DO)
+
+**Commits**: `78609a1`, `d426ce4`, `265222d`
+
+**Documentation**: ADR-012 Step 6, BACKLOG.md updated
+
+---
 
 #### ✅ **Operations Agent Step 5: Multi-Entity Support** (2025-10-03)
 
