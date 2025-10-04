@@ -822,7 +822,16 @@ ${result.description ? `📝 ${result.description}` : ''}`
       }
 
       const result = await this.context.teamScopedPrisma.raw.$queryRawUnsafe(sql)
-      return Array.isArray(result) ? result : []
+      const arrayResult = Array.isArray(result) ? result : []
+
+      // Convert BigInt to Number for JSON serialization
+      return arrayResult.map(row => {
+        const converted: any = {}
+        for (const [key, value] of Object.entries(row)) {
+          converted[key] = typeof value === 'bigint' ? Number(value) : value
+        }
+        return converted
+      })
     } catch (error) {
       console.error('[Operations] Query error:', error)
       throw new Error('Erro ao executar consulta')
