@@ -5,16 +5,14 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { OperationsAgentService, ConversationMessage } from '@/lib/services/OperationsAgentService'
+import { OperationsAgentService } from '@/lib/services/OperationsAgentService'
 import { withTeamContext } from '@/lib/middleware/team-context'
 import { z } from 'zod'
+import type { CoreMessage } from 'ai'
 
 const RequestSchema = z.object({
   message: z.string().min(1),
-  conversationHistory: z.array(z.object({
-    role: z.enum(['user', 'assistant']),
-    content: z.string()
-  })).optional().default([])
+  conversationHistory: z.array(z.any()).optional().default([]) // CoreMessage[] type
 })
 
 export async function POST(request: NextRequest) {

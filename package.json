@@ -13,12 +13,14 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^2.0.23",
     "@anthropic-ai/sdk": "^0.62.0",
     "@heroicons/react": "^2.2.0",
     "@langchain/openai": "^0.6.11",
     "@prisma/client": "^6.16.1",
     "@types/bcryptjs": "^2.4.6",
     "@types/pdf-parse": "^1.1.5",
+    "ai": "^5.0.60",
     "bcryptjs": "^3.0.2",
     "cuid": "^2.1.8",
     "date-fns": "^4.1.0",
