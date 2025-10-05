@@ -83,7 +83,48 @@ Examples:
 ### 🔄 DOING (Currently In Progress)
 *Active work with real-time progress tracking. Can persist between sessions if work is incomplete.*
 
-**Currently Empty** - All active work completed
+#### **Dashboard Phase 1: Quick Wins - Minor UI Tweaks** (2025-10-04) 🔄 IN PROGRESS
+
+**Context**: First phase of dashboard evolution strategy (ADR-014). Focus on immediate clarity improvements with zero architectural changes.
+
+**Goal**: Improve dashboard metrics clarity and actionability
+
+**Changes to Implement**:
+
+1. **Active Contracts Display** (Metric Row 1)
+   - Change from: `5/10 contratos` (active/total)
+   - Change to: `5 contratos ativos` (active count only)
+   - Rationale: Total contracts is noise; active count matters for daily decisions
+
+2. **90-Day Focus for Pending Amounts** (Metric Row 2)
+   - Change from: "A Receber (Pendente)" / "A Pagar (Pendente)" (all future)
+   - Change to: "A Receber (próximos 90 dias)" / "A Pagar (próximos 90 dias)"
+   - Update metrics: Filter to only next 90 days
+   - Rationale: 90 days = actionable horizon; 5 years out = irrelevant for cash management
+
+3. **Split Overdue Items by Type** (Third Section)
+   - Change from: Single "Itens em Atraso" block (mixed)
+   - Change to: Two separate blocks:
+     - "Recebimentos Atrasados" with total overdue amount
+     - "Pagamentos Atrasados" with total overdue amount
+   - Rationale: Different actions needed (chase clients vs pay vendors)
+
+4. **Subtitle Update for Upcoming Expenses**
+   - Change from: "Pagamentos programados"
+   - Change to: "Pagamentos a fazer"
+   - Rationale: More natural Brazilian Portuguese
+
+**Files to Modify**:
+- `app/page.tsx` - Dashboard UI components
+- `app/api/dashboard/route.ts` - Metrics calculation logic
+
+**Effort**: 2-3 hours
+**Risk**: LOW (cosmetic changes, no architecture changes)
+**Testing**: Manual verification of metric calculations
+
+**See**: ADR-014 for full dashboard strategy and future phases
+
+---
 
 ---
 
