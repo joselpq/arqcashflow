@@ -1410,9 +1410,9 @@ const response = await fetch('/api/ai/operations', {
 
 ### Performance Targets
 
-- Response time: <10s for 95th percentile
-- Max iterations used: <10 for 99% of requests
-- Error recovery rate: >90% of recoverable errors
+- Response time: under 10s for 95th percentile
+- Max iterations used: under 10 for 99% of requests
+- Error recovery rate: over 90% of recoverable errors
 
 ## References
 

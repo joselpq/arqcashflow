@@ -308,7 +308,7 @@ class BusinessMetricsService extends BaseService {
     // 2. Sum expenses allocated to contract
     // 3. Calculate profit = revenue - expenses
     // 4. Calculate margin % = (profit / revenue) × 100
-    // 5. Classify: profitable (>15%), breakeven (0-15%), loss (<0%)
+    // 5. Classify: profitable (over 15%), breakeven (0-15%), loss (under 0%)
   }
 
   /**
@@ -615,13 +615,13 @@ interface ActionItem {
 
 **Phase 2**:
 - User satisfaction with new UX (survey or feedback)
-- Reduced time to find key metrics (<5 seconds)
+- Reduced time to find key metrics (under 5 seconds)
 - Increased dashboard engagement (analytics tracking)
 
 **Phase 3**:
 - BusinessMetricsService reused in 3+ places (dashboard, agents, exports)
 - AI agents provide intelligent recommendations based on metrics
-- Metric calculation performance <500ms per metric
+- Metric calculation performance under 500ms per metric
 
 **Phase 4**:
 - User engagement with visualizations (interaction tracking)
@@ -632,9 +632,9 @@ interface ActionItem {
 ## Technical Constraints
 
 **Performance**:
-- Dashboard load time <2s (current: ~1.5s)
-- Metric calculations <500ms each
-- Total dashboard data fetch <3s
+- Dashboard load time under 2s (current: ~1.5s)
+- Metric calculations under 500ms each
+- Total dashboard data fetch under 3s
 
 **Scalability**:
 - Support teams with 100+ contracts
