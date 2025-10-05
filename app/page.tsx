@@ -21,6 +21,8 @@ interface DashboardData {
     pendingExpenses: number
     activeContracts: number
     totalContracts: number
+    overdueReceivablesAmount: number
+    overdueExpensesAmount: number
   }
   cashFlowHealth: {
     status: 'good' | 'warning' | 'critical'
@@ -488,8 +490,8 @@ export default function Dashboard() {
           />
           <MetricCard
             title="Contratos Ativos"
-            value={`${data.metrics.activeContracts}/${data.metrics.totalContracts}`}
-            subtitle="contratos"
+            value={`${data.metrics.activeContracts}`}
+            subtitle="contratos ativos"
             color="blue"
           />
         </div>
@@ -497,55 +499,101 @@ export default function Dashboard() {
         {/* Outstanding Amounts */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
           <MetricCard
-            title="A Receber (Pendente)"
+            title="A Receber (próximos 90 dias)"
             value={formatCurrency(data.metrics.pendingReceivables)}
             subtitle="dinheiro esperado"
             color="green"
           />
           <MetricCard
-            title="A Pagar (Pendente)"
+            title="A Pagar (próximos 90 dias)"
             value={formatCurrency(data.metrics.pendingExpenses)}
             subtitle="contas a pagar"
             color="yellow"
           />
         </div>
 
-        {/* Critical Alerts */}
-        {data.alerts.overdueItems.length > 0 && (
-          <div className="mb-12">
-            <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+        {/* Critical Alerts - Split by Type */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
+          {/* Overdue Receivables */}
+          {data.alerts.overdueReceivables > 0 && (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-6">
               <div className="mb-4">
-                <h2 className="text-lg font-medium text-red-900 mb-1">
-                  Itens em Atraso
+                <h2 className="text-lg font-medium text-amber-900 mb-1">
+                  Recebimentos Atrasados
                 </h2>
-                <p className="text-sm text-red-700">{data.alerts.overdueItems.length} itens precisam de atenção</p>
+                <p className="text-sm text-amber-700">
+                  {data.alerts.overdueReceivables} {data.alerts.overdueReceivables === 1 ? 'item' : 'itens'} • Total: {formatCurrency(data.metrics.overdueReceivablesAmount)}
+                </p>
               </div>
               <div className="space-y-3">
-                {data.alerts.overdueItems.slice(0, 5).map((item) => (
-                  <div key={item.id} className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-white rounded border">
-                    <div>
-                      <p className="font-medium text-neutral-900">{item.description}</p>
-                      <p className="text-sm text-neutral-600">
-                        Venceu em {formatDate(item.dueDate)}
-                      </p>
+                {data.alerts.overdueItems
+                  .filter(item => item.type === 'receivable')
+                  .slice(0, 3)
+                  .map((item) => (
+                    <div key={item.id} className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-white rounded border border-amber-200">
+                      <div>
+                        <p className="font-medium text-neutral-900">{item.description}</p>
+                        <p className="text-sm text-neutral-600">
+                          Venceu em {formatDate(item.dueDate)}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => openModal(item.entityType, item.entityData)}
+                        className="mt-2 sm:mt-0 bg-amber-600 text-white px-4 py-2 rounded text-sm hover:bg-amber-700 transition-colors"
+                      >
+                        Resolver
+                      </button>
                     </div>
-                    <button
-                      onClick={() => openModal(item.entityType, item.entityData)}
-                      className="mt-2 sm:mt-0 bg-red-600 text-white px-4 py-2 rounded text-sm hover:bg-red-700 transition-colors"
-                    >
-                      Resolver
-                    </button>
-                  </div>
-                ))}
-                {data.alerts.overdueItems.length > 5 && (
+                  ))}
+                {data.alerts.overdueReceivables > 3 && (
                   <p className="text-sm text-neutral-600 text-center">
-                    ... e mais {data.alerts.overdueItems.length - 5} itens
+                    ... e mais {data.alerts.overdueReceivables - 3} {data.alerts.overdueReceivables - 3 === 1 ? 'recebimento' : 'recebimentos'}
                   </p>
                 )}
               </div>
             </div>
-          </div>
-        )}
+          )}
+
+          {/* Overdue Expenses */}
+          {data.alerts.overdueExpenses > 0 && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+              <div className="mb-4">
+                <h2 className="text-lg font-medium text-red-900 mb-1">
+                  Pagamentos Atrasados
+                </h2>
+                <p className="text-sm text-red-700">
+                  {data.alerts.overdueExpenses} {data.alerts.overdueExpenses === 1 ? 'item' : 'itens'} • Total: {formatCurrency(data.metrics.overdueExpensesAmount)}
+                </p>
+              </div>
+              <div className="space-y-3">
+                {data.alerts.overdueItems
+                  .filter(item => item.type === 'expense')
+                  .slice(0, 3)
+                  .map((item) => (
+                    <div key={item.id} className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-white rounded border border-red-200">
+                      <div>
+                        <p className="font-medium text-neutral-900">{item.description}</p>
+                        <p className="text-sm text-neutral-600">
+                          Venceu em {formatDate(item.dueDate)}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => openModal(item.entityType, item.entityData)}
+                        className="mt-2 sm:mt-0 bg-red-600 text-white px-4 py-2 rounded text-sm hover:bg-red-700 transition-colors"
+                      >
+                        Resolver
+                      </button>
+                    </div>
+                  ))}
+                {data.alerts.overdueExpenses > 3 && (
+                  <p className="text-sm text-neutral-600 text-center">
+                    ... e mais {data.alerts.overdueExpenses - 3} {data.alerts.overdueExpenses - 3 === 1 ? 'pagamento' : 'pagamentos'}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
           {/* Upcoming Receivables */}
@@ -578,7 +626,7 @@ export default function Dashboard() {
           <div className="bg-white border border-neutral-200 rounded-lg p-6">
             <div className="mb-6">
               <h2 className="text-lg font-medium text-neutral-900 mb-1">Próximas Despesas</h2>
-              <p className="text-sm text-neutral-500">Pagamentos programados</p>
+              <p className="text-sm text-neutral-500">Pagamentos a fazer</p>
             </div>
             {data.upcoming.expenses.length > 0 ? (
               <div className="space-y-3">

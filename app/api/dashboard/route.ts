@@ -62,13 +62,17 @@ export async function GET(request: NextRequest) {
     const thisMonthProfit = thisMonthReceived - thisMonthExpenses
     const totalProfit = totalReceived - totalExpenses
 
-    // Outstanding amounts
+    // Calculate 90 days from now for pending amounts
+    const next90Days = new Date()
+    next90Days.setDate(next90Days.getDate() + 90)
+
+    // Outstanding amounts (next 90 days only)
     const pendingReceivables = receivables
-      .filter(r => r.status === 'pending')
+      .filter(r => r.status === 'pending' && isDateInRange(r.expectedDate, today, next90Days))
       .reduce((sum, r) => sum + r.amount, 0)
 
     const pendingExpenses = expenses
-      .filter(e => e.status === 'pending')
+      .filter(e => e.status === 'pending' && isDateInRange(e.dueDate, today, next90Days))
       .reduce((sum, e) => sum + e.amount, 0)
 
     // Overdue items (critical alerts)
@@ -146,7 +150,9 @@ export async function GET(request: NextRequest) {
         pendingReceivables: pendingReceivables,
         pendingExpenses: pendingExpenses,
         activeContracts: activeContracts,
-        totalContracts: totalContracts
+        totalContracts: totalContracts,
+        overdueReceivablesAmount: overdueReceivables.reduce((sum, r) => sum + r.amount, 0),
+        overdueExpensesAmount: overdueExpenses.reduce((sum, e) => sum + e.amount, 0)
       },
 
       // Health status
