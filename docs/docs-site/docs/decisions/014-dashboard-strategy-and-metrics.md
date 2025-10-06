@@ -158,6 +158,208 @@ const aging = await metrics.getReceivablesAging()
 
 ---
 
+## Short-Term Tactical Improvements (Parallel Track)
+
+While planning dashboard Phases 2-4, several immediate UI/UX improvements have been identified across the application. These are quick wins that improve clarity and user experience without architectural changes.
+
+### **Assistente IA Tab Improvements** 📋 PLANNED
+
+**Context**: The AI assistant interface has evolved since initial implementation. The unified agent (Arnaldo) now handles all operations, making separate tabs redundant. Need to simplify and humanize the interface for non-technical users.
+
+**Current Issues**:
+1. ❌ Three separate tabs (Chat Inteligente, Comandos, IA Unificado) - confusing and redundant
+2. ❌ Generic name "IA Unificado" - impersonal, doesn't build user connection
+3. ❌ Technical messaging with colors/buttons - intimidating for non-technical users
+4. ❌ Setup Assistant mentions "multi-arquivo" - should be expected behavior, not a feature callout
+5. ❌ "Voltar ao início" button - wastes valuable screen space
+
+**Proposed Changes**:
+
+#### **1. Consolidate Tabs - Remove Redundant Interfaces**
+**Action**: Remove "Chat Inteligente" and "Comandos" tabs
+- **Before**: Three tabs (Chat Inteligente | Comandos | IA Unificado)
+- **After**: Single tab (Arnaldo | Configuração Rápida)
+- **Rationale**: All functionality now unified in Arnaldo agent; separate tabs create confusion
+- **Files**: `app/ai-chat/page.tsx` (or equivalent AI tab component)
+
+#### **2. Humanize Agent - Give Personality**
+**Action**: Rename "IA Unificado" → "Arnaldo"
+- **Before**: "IA Unificado - Assistente inteligente"
+- **After**: "Arnaldo - seu assistente financeiro"
+- **Rationale**:
+  - Personal name builds trust and connection
+  - "Seu assistente financeiro" is warmer than "assistente inteligente"
+  - Architects relate to people, not systems
+- **Files**: Tab labels, page titles, informational text
+
+#### **3. Simplify Messaging - Non-Technical Language**
+**Action**: Replace technical info box with friendly, concise explanation
+
+**Before** (Technical, Complex):
+```
+╔══════════════════════════════════════════════════════════╗
+║ IA Unificado - Assistente Inteligente                   ║
+╠══════════════════════════════════════════════════════════╣
+║ [Blue button] Chat Inteligente                           ║
+║ [Green button] Comandos                                  ║
+║ [Yellow button] Configuração                             ║
+║                                                          ║
+║ Use cores para navegar entre funcionalidades            ║
+╚══════════════════════════════════════════════════════════╝
+```
+
+**After** (Friendly, Simple):
+```
+┌──────────────────────────────────────────────────────────┐
+│ Arnaldo - seu assistente financeiro                      │
+├──────────────────────────────────────────────────────────┤
+│                                                          │
+│ Olá! Eu sou o Arnaldo. Posso ajudar você a:            │
+│                                                          │
+│ • Consultar seus dados financeiros                      │
+│   "Quanto eu faturei em setembro?"                      │
+│   "Quais projetos estão atrasados?"                     │
+│                                                          │
+│ • Criar e gerenciar registros                           │
+│   "50 reais de gasolina ontem"                          │
+│   "Marcar recebimento do projeto residencial"           │
+│                                                          │
+│ • Analisar sua situação                                 │
+│   "Como está meu fluxo de caixa?"                       │
+│   "Quais clientes me devem dinheiro?"                   │
+│                                                          │
+│ Digite sua pergunta ou comando abaixo.                  │
+└──────────────────────────────────────────────────────────┘
+```
+
+**Key Changes**:
+- ✅ Personal greeting ("Olá! Eu sou o Arnaldo")
+- ✅ Action-oriented bullets (what user can DO)
+- ✅ Real examples in layman's terms
+- ✅ No technical jargon (no "IA", "inteligente", "sistema")
+- ✅ Conversational tone (friendly, approachable)
+- ✅ Clear call-to-action ("Digite sua pergunta ou comando abaixo")
+
+**Rationale**:
+- Architects are busy professionals, not tech experts
+- Examples show capability better than abstract descriptions
+- Natural language examples ("50 reais de gasolina ontem") demonstrate ease of use
+- Removes intimidation factor of "AI" terminology
+
+#### **4. Simplify Setup Assistant Messaging**
+**Action**: Streamline Configuração Rápida tab description
+
+**Before** (Over-explained):
+```
+╔══════════════════════════════════════════════════════════╗
+║ Configuração Rápida - Multi-arquivo                     ║
+╠══════════════════════════════════════════════════════════╣
+║ Faça upload de múltiplos arquivos Excel com seus        ║
+║ contratos, despesas e recebíveis. O assistente          ║
+║ inteligente irá processar e registrar automaticamente.  ║
+╚══════════════════════════════════════════════════════════╝
+```
+
+**After** (Concise, Clear):
+```
+┌──────────────────────────────────────────────────────────┐
+│ Configuração Rápida                                     │
+├──────────────────────────────────────────────────────────┤
+│                                                          │
+│ Envie seus arquivos Excel com contratos, despesas e    │
+│ recebíveis. Vamos ler e registrar tudo para você.      │
+│                                                          │
+│ [Upload area]                                            │
+└──────────────────────────────────────────────────────────┘
+```
+
+**Key Changes**:
+- ✅ Removed "multi-arquivo" callout (expected behavior, not special)
+- ✅ Removed "assistente inteligente" (redundant, users already know it's AI)
+- ✅ "Vamos ler e registrar tudo" - simpler than "processar e registrar automaticamente"
+- ✅ Shorter = more approachable
+
+**Rationale**:
+- Multi-file upload is standard expectation in 2025
+- "Automatically" is implied by AI context
+- Shorter text = faster comprehension
+- "Vamos" (we) = partnership, not service
+
+#### **5. Remove "Voltar ao início" Button**
+**Action**: Remove unnecessary navigation button
+
+**Before**:
+```
+[Conversation area]
+
+[Voltar ao início] [Input field] [Enviar]
+```
+
+**After**:
+```
+[Conversation area]
+
+[Input field - full width] [Enviar]
+```
+
+**Rationale**:
+- Users can scroll up naturally
+- Button wastes horizontal space (especially on mobile)
+- No clear benefit - adds cognitive load ("should I click this?")
+- Input field can expand to use freed space
+
+**Space Savings**: ~120-150px horizontal space for input field expansion
+
+---
+
+### **Implementation Plan - Assistente IA Tab**
+
+**Effort**: 2-3 hours
+**Risk**: LOW (UI copy and layout changes only)
+**Impact**: HIGH (improved user experience for all AI interactions)
+
+**Files to Modify**:
+1. `app/ai-chat/page.tsx` (or main AI assistant component)
+   - Remove Chat Inteligente tab
+   - Remove Comandos tab
+   - Rename IA Unificado → Arnaldo
+   - Update info box content
+   - Remove "Voltar ao início" button
+
+2. Navigation/routing (if separate pages)
+   - Update menu items
+   - Remove obsolete routes
+
+**Testing Checklist**:
+- [ ] Only 2 tabs visible (Arnaldo | Configuração Rápida)
+- [ ] Tab labels updated ("Arnaldo - seu assistente financeiro")
+- [ ] New friendly messaging displays correctly
+- [ ] Examples are clear and natural
+- [ ] Setup Assistant text simplified
+- [ ] No "Voltar ao início" button
+- [ ] Input field uses full available width
+- [ ] Mobile responsive (text wraps properly)
+
+**User Validation**:
+- Show to non-technical architect for comprehension test
+- Verify examples resonate with actual use cases
+- Confirm tone feels friendly, not robotic
+
+---
+
+### **Next Tactical Improvements** 🔜
+
+**Status**: Awaiting user input for other tabs
+
+Areas mentioned for improvement:
+- Dashboard tab (Phase 1 complete ✅, more improvements pending?)
+- Projetos tab (TBD)
+- Other tabs (TBD)
+
+**Process**: Document each tactical improvement as user provides input, then batch implementation.
+
+---
+
 ## Implementation Phases
 
 ### **Phase 1: Quick Wins - Dashboard Minor Tweaks** ✅ COMPLETE (2025-10-04)
