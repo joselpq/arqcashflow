@@ -347,16 +347,371 @@ While planning dashboard Phases 2-4, several immediate UI/UX improvements have b
 
 ---
 
+### **Projetos Tab Restructuring** 📋 PLANNED
+
+**Context**: The current tab structure has "Projetos" as a parent with sub-tabs (Contratos, Recebíveis, Despesas). This creates unnecessary nesting and doesn't reflect that "Contratos" IS projects. Need to flatten hierarchy, condense filters, and enable business-specific terminology.
+
+**Current Issues**:
+1. ❌ Confusing hierarchy - "Projetos" with "Contratos" subtab (they're the same thing)
+2. ❌ Filters and search take too much vertical space (especially on smaller screens)
+3. ❌ Hard-coded "Projetos" terminology - doesn't fit all business types (doctors, construction, etc.)
+
+**Proposed Changes**:
+
+#### **1. Flatten Tab Hierarchy - Promote Sub-tabs to Main Tabs**
+**Action**: Convert sub-tabs to main navigation tabs
+
+**Before** (Nested):
+```
+[Dashboard] [Projetos ▼] [Assistente IA]
+              ↓
+            [Contratos | Recebíveis | Despesas]
+```
+
+**After** (Flat):
+```
+[Dashboard] [Projetos] [Recebíveis] [Despesas] [Assistente IA]
+```
+
+**Key Change**: Rename "Contratos" → "Projetos"
+
+**Rationale**:
+- Eliminates confusion: "Projetos > Contratos" implies difference when they're the same
+- Faster navigation: One click instead of two
+- Clearer mental model: Each entity type is a top-level concept
+- Better mobile UX: No dropdown menus needed
+- Consistent pattern: Dashboard, Projetos, Recebíveis, Despesas (all equal peers)
+
+**Implementation Notes**:
+- Internally, database model stays "Contract" (schema unchanged)
+- UI layer maps: "Contratos" model → "Projetos" display name
+- API routes unchanged (`/api/contracts`)
+- Service layer unchanged (`ContractService`)
+- Only presentation layer affected
+
+**Files to Modify**:
+- Navigation component (likely `app/components/Navigation.tsx` or layout)
+- Route: `app/projetos/page.tsx` (remove sub-tab logic, show contracts directly)
+- New routes: `app/recebíveis/page.tsx`, `app/despesas/page.tsx` (extract from projetos)
+- Breadcrumbs and page titles
+
+---
+
+#### **2. Condense Filters and Search - Maximize Content Space**
+**Action**: Redesign filter UI for compactness while maintaining usability
+
+**Current Problem**:
+```
+┌────────────────────────────────────────────────────────────┐
+│ [Search: _________________________________]  [🔍 Buscar]   │ ← 60-80px height
+├────────────────────────────────────────────────────────────┤
+│ Filtros:                                                   │
+│ [Status ▼] [Cliente ▼] [Data início] [Data fim] [Limpar] │ ← 60-80px height
+├────────────────────────────────────────────────────────────┤
+│ [Data table starts here...]                               │
+└────────────────────────────────────────────────────────────┘
+
+Total filter height: 120-160px (wastes valuable screen real estate)
+```
+
+**Proposed Solution A: Single-Row Compact Filters** (Recommended)
+```
+┌────────────────────────────────────────────────────────────┐
+│ [🔍 Search...] [Status ▼] [Cliente ▼] [📅 Período ▼] [×]  │ ← 40-50px height
+├────────────────────────────────────────────────────────────┤
+│ [Data table starts here - 70-120px more space!]           │
+└────────────────────────────────────────────────────────────┘
+
+Space saved: 70-120px vertical (15-25% more table rows visible)
+```
+
+**Key Features**:
+- ✅ Search field inline with filters (no separate row)
+- ✅ Search icon inside field (no separate button)
+- ✅ Compact dropdowns with icons
+- ✅ "Período" dropdown combines date range (one field instead of two)
+- ✅ Single clear button (×) at end
+- ✅ Auto-submit on change (no manual "Buscar" button needed)
+
+**Proposed Solution B: Collapsible Advanced Filters** (Alternative)
+```
+┌────────────────────────────────────────────────────────────┐
+│ [🔍 Search...] [Filtros avançados ▼] [× Limpar]          │ ← 40-50px when collapsed
+├────────────────────────────────────────────────────────────┤
+│ [Data table - maximum space]                              │
+└────────────────────────────────────────────────────────────┘
+
+When expanded:
+┌────────────────────────────────────────────────────────────┐
+│ [🔍 Search...] [Filtros avançados ▲] [× Limpar]          │
+├────────────────────────────────────────────────────────────┤
+│ Status: [Todos ▼]  Cliente: [Todos ▼]  Período: [30d ▼] │ ← Only when needed
+├────────────────────────────────────────────────────────────┤
+│ [Data table]                                              │
+└────────────────────────────────────────────────────────────┘
+```
+
+**Key Features**:
+- ✅ Search always visible (most common action)
+- ✅ Filters hidden by default (power users expand when needed)
+- ✅ Remembers last filter state
+- ✅ Visual indicator when filters active (e.g., badge count)
+
+**Recommendation**: **Solution A** (Single-Row Compact)
+- Simpler implementation
+- Filters always visible = no hidden functionality
+- Better for users who frequently filter
+- Architects likely filter by client/status often
+
+**Mobile Responsive Pattern**:
+```
+Desktop (>768px):
+[🔍 Search] [Status ▼] [Cliente ▼] [📅 Período ▼] [×]
+
+Tablet (481-768px):
+[🔍 Search________________________] [Filtros ▼] [×]
+  ↓ (when expanded)
+[Status ▼] [Cliente ▼] [📅 Período ▼]
+
+Mobile (<480px):
+[🔍 Search_______________]
+[Filtros ▼] [× Limpar]
+  ↓ (modal/drawer with filter options)
+```
+
+**Apply Pattern To**:
+- ✅ Projetos (contracts) tab
+- ✅ Recebíveis tab
+- ✅ Despesas tab
+- ✅ Any future entity tables
+
+**Technical Implementation**:
+- Shared filter component (`components/CompactFilters.tsx`)
+- Reusable across all entity tabs
+- Props: `searchPlaceholder`, `filterOptions`, `onFilterChange`
+- State management: URL query params (shareable filtered views)
+
+**Files to Modify**:
+- `app/components/CompactFilters.tsx` (new shared component)
+- `app/projetos/page.tsx` (use CompactFilters)
+- `app/recebíveis/page.tsx` (use CompactFilters)
+- `app/despesas/page.tsx` (use CompactFilters)
+
+---
+
+#### **3. Flexible Business Terminology - Support Multiple Industries**
+**Action**: Make "Projetos" terminology configurable per business type
+
+**Problem**: Hard-coded "Projetos" doesn't fit all users:
+- ❌ Doctors need "Pacientes" (patients)
+- ❌ Construction companies need "Obras" (construction sites)
+- ❌ Consultants might prefer "Clientes" (clients)
+- ❌ Event planners might use "Eventos" (events)
+
+**Solution: Configurable Entity Labels**
+
+**Architecture Options**:
+
+**Option A: Team-Level Configuration** (Recommended)
+```typescript
+// prisma/schema.prisma
+model Team {
+  id          String
+  name        String
+  // ... existing fields
+
+  // New fields for terminology customization
+  entityLabels Json? // { "contract": "Projeto", "receivable": "Recebível", ... }
+  businessType String? // "architecture" | "medical" | "construction" | "consulting"
+}
+
+// Default labels by business type
+const BUSINESS_TYPE_LABELS = {
+  architecture: {
+    contract: { singular: "Projeto", plural: "Projetos" },
+    receivable: { singular: "Recebível", plural: "Recebíveis" },
+    expense: { singular: "Despesa", plural: "Despesas" }
+  },
+  medical: {
+    contract: { singular: "Paciente", plural: "Pacientes" },
+    receivable: { singular: "Recebível", plural: "Recebíveis" },
+    expense: { singular: "Despesa", plural: "Despesas" }
+  },
+  construction: {
+    contract: { singular: "Obra", plural: "Obras" },
+    receivable: { singular: "Recebível", plural: "Recebíveis" },
+    expense: { singular: "Despesa", plural: "Despesas" }
+  },
+  consulting: {
+    contract: { singular: "Cliente", plural: "Clientes" },
+    receivable: { singular: "Recebível", plural: "Recebíveis" },
+    expense: { singular: "Despesa", plural: "Despesas" }
+  }
+}
+```
+
+**Usage in Components**:
+```typescript
+// app/hooks/useEntityLabels.ts
+export function useEntityLabels() {
+  const { team } = useTeam()
+
+  // Get labels from team config or default to architecture
+  const businessType = team.businessType || 'architecture'
+  const customLabels = team.entityLabels
+
+  return customLabels || BUSINESS_TYPE_LABELS[businessType]
+}
+
+// In navigation component
+function Navigation() {
+  const labels = useEntityLabels()
+
+  return (
+    <nav>
+      <Link href="/dashboard">Dashboard</Link>
+      <Link href="/projetos">{labels.contract.plural}</Link>  // "Projetos" or "Pacientes"
+      <Link href="/recebíveis">{labels.receivable.plural}</Link>
+      <Link href="/despesas">{labels.expense.plural}</Link>
+    </nav>
+  )
+}
+```
+
+**Option B: User Preference** (Future Enhancement)
+```typescript
+// Each user can override team defaults
+model User {
+  // ... existing fields
+  preferredLabels Json? // Optional override
+}
+```
+
+**Option C: Environment Variable** (Quick Prototype)
+```typescript
+// .env
+NEXT_PUBLIC_BUSINESS_TYPE=architecture
+
+// lib/constants/labels.ts
+export const ENTITY_LABELS = BUSINESS_TYPE_LABELS[
+  process.env.NEXT_PUBLIC_BUSINESS_TYPE || 'architecture'
+]
+```
+
+**Recommendation**: Start with **Option C** (environment variable) for quick testing, migrate to **Option A** (team-level config) for production multi-tenancy.
+
+**Implementation Phases**:
+
+**Phase 1: Proof of Concept** (2-3 hours)
+1. Create `lib/constants/entityLabels.ts` with business type presets
+2. Create `useEntityLabels()` hook reading from env variable
+3. Update navigation to use labels
+4. Update 3 main tabs (Projetos, Recebíveis, Despesas) page titles
+
+**Phase 2: Team Configuration** (4-6 hours)
+1. Add `businessType` and `entityLabels` to Team schema
+2. Create onboarding step: "What type of business are you?"
+3. Update `useEntityLabels()` to read from team context
+4. Add settings page for label customization
+
+**Phase 3: Full Localization** (8-12 hours)
+1. Extend to all UI text (buttons, forms, tooltips)
+2. Update AI agent prompts with business-specific terminology
+3. Add bulk find-replace for existing data (if needed)
+
+**Files to Modify (Phase 1 - Proof of Concept)**:
+- `lib/constants/entityLabels.ts` (new - label presets)
+- `lib/hooks/useEntityLabels.ts` (new - hook)
+- Navigation component (use hook)
+- `app/projetos/page.tsx` (use hook for title/breadcrumbs)
+- `app/recebíveis/page.tsx` (use hook)
+- `app/despesas/page.tsx` (use hook)
+
+**Benefits**:
+- ✅ Better user adoption (speaks their language)
+- ✅ Easier onboarding (familiar terminology)
+- ✅ Market expansion (serve multiple industries)
+- ✅ Professional appearance (not generic software)
+
+**Example Use Cases**:
+
+**Architect** (Default):
+```
+[Dashboard] [Projetos] [Recebíveis] [Despesas]
+             ↓
+          "Residência João Silva"
+```
+
+**Doctor**:
+```
+[Dashboard] [Pacientes] [Recebíveis] [Despesas]
+             ↓
+          "Maria Santos - Tratamento Ortodôntico"
+```
+
+**Construction**:
+```
+[Dashboard] [Obras] [Recebíveis] [Despesas]
+             ↓
+          "Edifício Comercial - Centro"
+```
+
+---
+
+### **Implementation Plan - Projetos Tab Restructuring**
+
+**Effort**: 6-10 hours total
+- Tab restructuring: 3-4 hours
+- Compact filters: 2-3 hours
+- Flexible terminology (Phase 1): 2-3 hours
+
+**Risk**: MEDIUM
+- Tab restructuring: Navigation changes affect user muscle memory
+- Filter condensing: Must maintain usability while reducing space
+- Flexible labels: Text changes throughout UI (easy to miss spots)
+
+**Impact**: HIGH
+- Better information architecture
+- More screen space for actual data
+- Scalable to multiple industries
+
+**Dependencies**:
+- None (can be done independently)
+- Recommendation: Do in order (1 → 2 → 3)
+
+**Testing Checklist**:
+- [ ] All tabs accessible from main navigation
+- [ ] No "Projetos" dropdown/nested tabs
+- [ ] "Contratos" internally, "Projetos" in UI (or configured label)
+- [ ] Filters condensed to single row (or collapsible)
+- [ ] Search auto-submits on input
+- [ ] Filter changes update table immediately
+- [ ] Clear button resets all filters
+- [ ] Mobile responsive (stacked or drawer)
+- [ ] Business type labels work (if implemented)
+- [ ] All entity references use label system
+
+**User Validation**:
+- Test with architect: "Where do I find my projects?"
+- Test filter discoverability: Can they find status/client filters?
+- Test mobile: Filters still accessible and usable?
+- Test label change: Switch to "medical" - does it make sense?
+
+---
+
 ### **Next Tactical Improvements** 🔜
 
-**Status**: Awaiting user input for other tabs
+**Status**: Ready to document more tabs
 
-Areas mentioned for improvement:
-- Dashboard tab (Phase 1 complete ✅, more improvements pending?)
-- Projetos tab (TBD)
-- Other tabs (TBD)
+Areas available for improvement:
+- Dashboard tab (Phase 1 complete ✅)
+- Projetos tab (documented ✅, awaiting more input)
+- Recebíveis tab (needs review)
+- Despesas tab (needs review)
+- Assistente IA tab (documented ✅)
+- Other tabs (settings, profile, exports, etc.)
 
-**Process**: Document each tactical improvement as user provides input, then batch implementation.
+**Process**: Continue documenting each tactical improvement as user provides input, then batch implementation.
 
 ---
 
