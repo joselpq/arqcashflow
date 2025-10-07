@@ -1,7 +1,7 @@
 # ArqCashflow Development Backlog
 
 **Purpose**: Central source of truth for project priorities and development status
-**Last Updated**: 2025-10-04 (Dashboard Phase 1 COMPLETE - Quick Wins Deployed)
+**Last Updated**: 2025-10-06 (Assistente IA Tab Improvements COMPLETE - ADR-014)
 **Update Frequency**: Every LLM session MUST update this document when completing tasks or discovering new requirements
 
 ## 🚨 CRITICAL INSTRUCTIONS FOR LLM AGENTS
@@ -90,12 +90,108 @@ Examples:
 ### 📋 TO DO (Immediate Priorities)
 *Ready to implement, explicitly prioritized.*
 
-**Currently Empty** - Next priorities to be determined
+#### **Frontend UX Improvements - Tactical Quick Wins** (ADR-014)
+
+**1. Projetos Tab Restructuring** 📋 READY
+- **Goal**: Flatten tab hierarchy, condense filters, enable business-specific terminology
+- **Effort**: 6-10 hours total (3-4h tabs + 2-3h filters + 2-3h labels)
+- **Risk**: MEDIUM (navigation changes affect muscle memory)
+- **Impact**: HIGH (better information architecture, more screen space, scalable to multiple industries)
+- **Changes**:
+  1. **Flatten hierarchy**: Convert nested "Projetos > Contratos" to flat top-level tabs
+     - Before: `[Dashboard] [Projetos ▼] → [Contratos | Recebíveis | Despesas]`
+     - After: `[Dashboard] [Projetos] [Recebíveis] [Despesas]`
+  2. **Condense filters**: Single-row compact design (saves 70-120px vertical space)
+     - Inline search + dropdowns + period picker
+     - Auto-submit on change (no manual button)
+  3. **Flexible terminology**: Configurable entity labels per business type
+     - Architecture: "Projetos" (default)
+     - Medical: "Pacientes"
+     - Construction: "Obras"
+     - Phase 1: Environment variable proof of concept
+- **Files**: Navigation component, `app/projetos/page.tsx`, `app/recebíveis/page.tsx`, `app/despesas/page.tsx`, `app/components/CompactFilters.tsx` (new)
+- **See**: ADR-014 "Projetos Tab Restructuring" section for detailed specs
+
+**Priority Order**: Either can be done first (independent), but recommended:
+1. Assistente IA tab (2-3h, low risk, immediate user-facing improvement)
+2. Projetos restructuring (6-10h, medium risk, architectural foundation for scalability)
+
+**Decision**: ADR-014 Phase 2 (UX/UI Strategy) identifies these as parallel quick wins while planning larger dashboard evolution (Phases 2-4)
 
 ---
 
 ### ✅ DONE (Recently Completed)
 *Newest first, for reference.*
+
+#### ✅ **Assistente IA Tab Improvements - COMPLETE** (2025-10-06)
+
+**Goal**: Simplify and humanize AI assistant interface for non-technical users
+
+**What Was Completed**:
+
+1. ✅ **Removed Page Title** (app/ai-chat/enhanced-page.tsx:127)
+   - Deleted: "🤖 Assistente IA" h1 header
+   - Saved: ~80px vertical space (tabs are self-explanatory)
+
+2. ✅ **Consolidated Tabs** (app/ai-chat/enhanced-page.tsx)
+   - Deleted: "Chat Inteligente" tab (💬 Chat Inteligente)
+   - Deleted: "Comandos" tab (🎯 Comandos)
+   - Renamed: "IA Unificado" → "🤖 Arnaldo AI"
+   - Reduced from 4 tabs → 2 tabs (50% reduction in navigation complexity)
+
+3. ✅ **Humanized Agent with Prominent Greeting** (app/ai-chat/enhanced-page.tsx:159-164)
+   - Tab label: "🤖 Arnaldo AI" (clear it's AI, but friendly)
+   - Greeting (separate line): "Olá, sou Arnaldo, seu assistente financeiro 👋"
+   - Personal name builds trust and connection
+
+4. ✅ **Compact Messaging with CRUD Examples** (app/ai-chat/enhanced-page.tsx:159-164)
+   - Before: Technical info box with bullet points (~10+ lines, 250px vertical space)
+   - After: Single-paragraph blue box (~3 lines, 60px vertical space)
+   - Inline examples: "Faça perguntas sobre suas finanças ("Quanto faturei em setembro?"), adicione novos projetos, despesas e recebíveis ("recebi 500 reais do projeto João e Maria", "salário Pedro R$5k todo dia 5") ou atualize/delete-os ("aumentar o salário do Pedro para 5500 a partir de Janeiro")."
+   - Shows comprehensive CRUD capabilities with realistic scenarios
+   - Saved: ~190px vertical space
+
+5. ✅ **Simplified Setup Assistant** (app/ai-chat/enhanced-page.tsx:223-228)
+   - Blue box consistency (both tabs use bg-blue-50)
+   - Accurate time estimate: "Leva alguns segundos ou minutos dependendo do tamanho do arquivo"
+   - Changed "e" → "ou" (despesas ou recebíveis - clearer)
+   - Removed legacy blue box from MultiFileSetupAssistant.tsx (no duplication)
+
+6. ✅ **Removed "Voltar ao início" Button** (app/ai-chat/enhanced-page.tsx:126)
+   - Input field now full width, cleaner interface
+
+7. ✅ **Simplified Empty Chat State** (app/ai-chat/enhanced-page.tsx:171-173)
+   - Before: "👋 Olá! Como posso ajudá-lo hoje? Converse naturalmente comigo..."
+   - After: "Converse naturalmente comigo sobre suas finanças. Posso responder perguntas ou fazer ações por você."
+   - More concise and direct
+
+**Technical Implementation**:
+- **Files Modified**:
+  - `app/ai-chat/enhanced-page.tsx`: 1,196 → 236 lines (**80% code reduction**)
+  - `app/components/setup-assistant/MultiFileSetupAssistant.tsx`: Removed legacy info box
+- **Build Status**: ✅ Compiled successfully, zero errors
+
+**Results** (After user feedback iterations):
+- **Space efficiency**: ~270px vertical space saved (removed title + compact messaging)
+- **Navigation**: 2 tabs vs 4 tabs (50% reduction)
+- **Personality**: "🤖 Arnaldo AI" with friendly greeting vs generic "IA Unificado"
+- **Comprehension**: Realistic inline CRUD examples vs technical routing explanations
+- **Consistency**: Blue boxes on both tabs (engaging, brand-aligned)
+- **Accuracy**: Time estimate reflects file size ("segundos ou minutos dependendo do tamanho")
+- **Mobile-friendly**: Full-width input, compact messaging
+
+**User Feedback Integration**:
+1. ✅ Greeting prominence: Separated to own line with 👋 emoji
+2. ✅ Example variety: Added create/update/delete scenarios
+3. ✅ Time accuracy: Reflects file size dependency
+4. ✅ Visual consistency: All info boxes use blue theme
+5. ✅ No duplication: Removed redundant box from MultiFileSetupAssistant
+
+**Time**: ~1 hour (faster than 2-3h estimate)
+**Risk**: LOW ✅ No issues
+**Impact**: HIGH - Immediate user-facing improvement, much more approachable for non-technical users
+
+---
 
 #### ✅ **Dashboard Phase 1: Quick Wins - UI Improvements COMPLETE** (2025-10-04)
 

@@ -285,19 +285,6 @@ export default function MultiFileSetupAssistant() {
 
   return (
     <div className="space-y-6">
-      {/* Info Box */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h3 className="text-lg font-bold text-blue-800 mb-2">📊 Assistente de Configuração - Multi-Arquivo</h3>
-        <p className="text-sm text-blue-700 mb-2">
-          Agora você pode enviar múltiplos arquivos de uma vez! Planilhas, PDFs e imagens serão processados sequencialmente.
-        </p>
-        <ul className="text-sm text-blue-700 space-y-1">
-          <li>• <strong>Novo:</strong> Suporte para múltiplos arquivos</li>
-          <li>• <strong>Progresso:</strong> Acompanhe o processamento em tempo real</li>
-          <li>• <strong>Resultados:</strong> Veja um resumo combinado de todos os arquivos</li>
-        </ul>
-      </div>
-
       {/* File Upload Area */}
       <div
         className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
