@@ -291,19 +291,19 @@ While planning dashboard Phases 2-4, several immediate UI/UX improvements have b
 
 ---
 
-### **Projetos Tab Restructuring** 📋 PLANNED
+### **Projetos Tab Restructuring** ✅ COMPLETE (2025-10-06)
 
-**Context**: The current tab structure has "Projetos" as a parent with sub-tabs (Contratos, Recebíveis, Despesas). This creates unnecessary nesting and doesn't reflect that "Contratos" IS projects. Need to flatten hierarchy, condense filters, and enable business-specific terminology.
+**Context**: The current tab structure had "Projetos" as a parent with sub-tabs (Contratos, Recebíveis, Despesas). This created unnecessary nesting and didn't reflect that "Contratos" IS projects. Implemented flattened hierarchy and configurable business terminology.
 
-**Current Issues**:
-1. ❌ Confusing hierarchy - "Projetos" with "Contratos" subtab (they're the same thing)
-2. ❌ Filters and search take too much vertical space (especially on smaller screens)
-3. ❌ Hard-coded "Projetos" terminology - doesn't fit all business types (doctors, construction, etc.)
+**Issues Resolved**:
+1. ✅ ~~Confusing hierarchy - "Projetos" with "Contratos" subtab (they're the same thing)~~
+2. ✅ ~~Filters and search take too much vertical space (especially on smaller screens)~~
+3. ✅ ~~Hard-coded "Projetos" terminology - doesn't fit all business types (doctors, construction, etc.)~~
 
-**Proposed Changes**:
+**Implemented Changes**:
 
-#### **1. Flatten Tab Hierarchy - Promote Sub-tabs to Main Tabs**
-**Action**: Convert sub-tabs to main navigation tabs
+#### **1. Flattened Tab Hierarchy** ✅
+**Action**: Promoted sub-tabs to main navigation
 
 **Before** (Nested):
 ```
@@ -314,35 +314,33 @@ While planning dashboard Phases 2-4, several immediate UI/UX improvements have b
 
 **After** (Flat):
 ```
-[Dashboard] [Projetos] [Recebíveis] [Despesas] [Assistente IA]
+[Dashboard] [📋 Projetos] [💰 Recebíveis] [💸 Despesas] [🤖 Assistente IA]
 ```
 
-**Key Change**: Rename "Contratos" → "Projetos"
+**Implementation**:
+- ✅ Updated `app/components/NavBar.tsx` with 5 flat tabs
+- ✅ Created `/recebiveis` route (alias to `/receivables`)
+- ✅ Created `/despesas` route (alias to `/expenses`)
+- ✅ Updated `/projetos` to show contracts directly (removed sub-tab logic)
+- ✅ Database/API layer unchanged (`Contract` model, `/api/contracts` routes)
+- ✅ Only presentation layer affected
 
-**Rationale**:
-- Eliminates confusion: "Projetos > Contratos" implies difference when they're the same
-- Faster navigation: One click instead of two
-- Clearer mental model: Each entity type is a top-level concept
-- Better mobile UX: No dropdown menus needed
-- Consistent pattern: Dashboard, Projetos, Recebíveis, Despesas (all equal peers)
+**Results**:
+- **Navigation**: One click instead of two (50% faster)
+- **Clarity**: No more "Projetos > Contratos" confusion
+- **Mobile UX**: No dropdown menus, all tabs visible
+- **Mental model**: Each entity is a top-level peer
 
-**Implementation Notes**:
-- Internally, database model stays "Contract" (schema unchanged)
-- UI layer maps: "Contratos" model → "Projetos" display name
-- API routes unchanged (`/api/contracts`)
-- Service layer unchanged (`ContractService`)
-- Only presentation layer affected
-
-**Files to Modify**:
-- Navigation component (likely `app/components/Navigation.tsx` or layout)
-- Route: `app/projetos/page.tsx` (remove sub-tab logic, show contracts directly)
-- New routes: `app/recebíveis/page.tsx`, `app/despesas/page.tsx` (extract from projetos)
-- Breadcrumbs and page titles
+**Files Changed**:
+- `app/components/NavBar.tsx` (navigation items updated)
+- `app/projetos/page.tsx` (simplified, direct ContractsTab)
+- `app/recebiveis/page.tsx` (new, alias to receivables)
+- `app/despesas/page.tsx` (new, alias to expenses)
 
 ---
 
-#### **2. Condense Filters and Search - Maximize Content Space**
-**Action**: Redesign filter UI for compactness while maintaining usability
+#### **2. Compact Filter Component** ✅
+**Action**: Created reusable compact filter component for all list views
 
 **Current Problem**:
 ```
@@ -443,20 +441,71 @@ Mobile (<480px):
 
 ---
 
-#### **3. Flexible Business Terminology - Support Multiple Industries**
-**Action**: Make "Projetos" terminology configurable per business type
+#### **3. Flexible Business Terminology** ✅
+**Action**: Made "Projetos" terminology configurable for different industries
 
-**Problem**: Hard-coded "Projetos" doesn't fit all users:
-- ❌ Doctors need "Pacientes" (patients)
-- ❌ Construction companies need "Obras" (construction sites)
-- ❌ Consultants might prefer "Clientes" (clients)
-- ❌ Event planners might use "Eventos" (events)
+**Problem Solved**: Hard-coded "Projetos" didn't fit all users:
+- ✅ ~~Doctors need "Pacientes" (patients)~~ → Now configurable
+- ✅ ~~Construction companies need "Obras" (construction sites)~~ → Now configurable
+- ✅ ~~Consultants might prefer "Clientes" (clients)~~ → Now configurable
+- ✅ ~~Event planners might use "Eventos" (events)~~ → Now configurable
 
-**Solution: Configurable Entity Labels**
+**Implementation**: Environment Variable Proof of Concept (Option C) ✅
 
-**Architecture Options**:
+**Created `lib/terminology.ts`**:
+```typescript
+// Industry presets
+const industryPresets = {
+  architecture: { projects: 'Projetos', project: 'Projeto', receivables: 'Recebíveis', expenses: 'Despesas' },
+  medical: { projects: 'Pacientes', project: 'Paciente', receivables: 'Honorários', expenses: 'Custos' },
+  construction: { projects: 'Obras', project: 'Obra', receivables: 'Recebimentos', expenses: 'Despesas' },
+  law: { projects: 'Casos', project: 'Caso', receivables: 'Honorários', expenses: 'Despesas' }
+}
 
-**Option A: Team-Level Configuration** (Recommended)
+// Reads from NEXT_PUBLIC_BUSINESS_TYPE env variable
+export const terminology = getBusinessTerminology()
+```
+
+**Updated `app/components/NavBar.tsx`**:
+```typescript
+import { terminology } from "@/lib/terminology"
+
+const navItems = [
+  { href: "/", label: "Dashboard" },
+  { href: "/projetos", label: `📋 ${terminology.projects}` },  // "Projetos" or "Pacientes" etc.
+  { href: "/recebiveis", label: `💰 ${terminology.receivables}` },
+  { href: "/despesas", label: `💸 ${terminology.expenses}` },
+  { href: "/ai-chat", label: "🤖 Assistente IA" }
+]
+```
+
+**Usage**: Set in `.env`:
+```bash
+NEXT_PUBLIC_BUSINESS_TYPE=architecture  # Default
+# NEXT_PUBLIC_BUSINESS_TYPE=medical     # For doctors
+# NEXT_PUBLIC_BUSINESS_TYPE=construction # For construction firms
+# NEXT_PUBLIC_BUSINESS_TYPE=law         # For law firms
+```
+
+**Results**:
+- ✅ Same codebase serves multiple industries
+- ✅ Navigation labels automatically adapt
+- ✅ Easy to test different industries (change env var)
+- ✅ Foundation for future team-level configuration
+
+**Files Created**:
+- `lib/terminology.ts` (presets + getter function)
+
+**Files Modified**:
+- `app/components/NavBar.tsx` (uses terminology)
+
+**Future Enhancement**: Migrate to Team-Level Configuration (Option A below) for true multi-tenancy
+
+---
+
+#### **Architecture Options for Future** (Reference)
+
+**Option A: Team-Level Configuration** (Recommended for Production)
 ```typescript
 // prisma/schema.prisma
 model Team {

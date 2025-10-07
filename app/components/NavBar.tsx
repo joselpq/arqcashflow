@@ -4,6 +4,7 @@ import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
+import { terminology } from "@/lib/terminology";
 
 export default function NavBar() {
   const { data: session } = useSession();
@@ -46,7 +47,9 @@ export default function NavBar() {
 
   const navItems = [
     { href: "/", label: "Dashboard" },
-    { href: "/projetos", label: "🏗️ Projetos" },
+    { href: "/projetos", label: `📋 ${terminology.projects}` },
+    { href: "/recebiveis", label: `💰 ${terminology.receivables}` },
+    { href: "/despesas", label: `💸 ${terminology.expenses}` },
     { href: "/ai-chat", label: "🤖 Assistente IA" }
   ];
 
@@ -67,8 +70,7 @@ export default function NavBar() {
               {navItems.map((item) => {
                 const isActive = item.href === "/"
                   ? pathname === "/"
-                  : pathname.startsWith(item.href) ||
-                    (item.href === "/projetos" && ["/contracts", "/receivables", "/expenses"].includes(pathname))
+                  : pathname.startsWith(item.href)
 
                 return (
                   <Link
@@ -124,8 +126,7 @@ export default function NavBar() {
             {navItems.map((item) => {
               const isActive = item.href === "/"
                 ? pathname === "/"
-                : pathname.startsWith(item.href) ||
-                  (item.href === "/projetos" && ["/contracts", "/receivables", "/expenses"].includes(pathname))
+                : pathname.startsWith(item.href)
 
               return (
                 <Link
