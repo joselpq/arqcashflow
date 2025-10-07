@@ -1,7 +1,7 @@
 # ArqCashflow Development Backlog
 
 **Purpose**: Central source of truth for project priorities and development status
-**Last Updated**: 2025-10-07 (Recurring Expenses UX Improvements COMPLETE - All frontend bugs resolved!)
+**Last Updated**: 2025-10-07 (TO DO priorities updated - Dashboard & Filter enhancements planned)
 **Update Frequency**: Every LLM session MUST update this document when completing tasks or discovering new requirements
 
 ## 🚨 CRITICAL INSTRUCTIONS FOR LLM AGENTS
@@ -83,21 +83,357 @@ Examples:
 ### 🔄 DOING (Currently In Progress)
 *Active work with real-time progress tracking. Can persist between sessions if work is incomplete.*
 
-**Currently Empty** - All active work completed
+#### **Compact Filters Enhancements: URL Persistence + AI Natural Language Filtering**
+**Goal**: Polish filter UX with shareable URLs and AI-powered natural language filtering
+
+**Progress Tracking**:
+
+**2A. URL Persistence** (2-3 hours) - HIGH VALUE ⏳ NEXT UP
+- [ ] Implement filter state in URL query parameters
+  - [ ] Add `useSearchParams` and `useRouter` hooks
+  - [ ] Serialize filter state to URL on filter change
+  - [ ] Parse URL params on page load and set initial filters
+- [ ] Ensure browser back/forward buttons work correctly
+  - [ ] Test navigation between filtered states
+  - [ ] Verify filter state restoration
+- [ ] Add "Copy Link" button for sharing filtered views
+  - [ ] Design button placement (near filter bar)
+  - [ ] Implement copy-to-clipboard functionality
+  - [ ] Show success toast on copy
+- [ ] Test with all filter combinations
+  - [ ] Test all entity tabs (Projetos, Recebíveis, Despesas)
+  - [ ] Test edge cases (empty filters, special characters)
+  - [ ] Verify URL is clean and readable
+
+**Benefits**:
+- Shareable filtered views (e.g., `/projetos?status=completed&category=Residencial&sort=totalValue&order=desc`)
+- Back button preserves filters
+- Bookmarkable searches
+- Better UX continuity
+
+---
+
+**2C. Quick Filter Chips** (2-3 hours) - VISUAL ENHANCEMENT
+- [ ] Design chip UI above tables
+  - [ ] Define chip component with hover/active states
+  - [ ] Design layout (horizontal scroll on mobile)
+  - [ ] Create icons for common filters
+- [ ] Implement common filter presets
+  - [ ] Define presets per entity (Atrasados, Este Mês, > R$10k, etc.)
+  - [ ] Create preset configuration structure
+  - [ ] Implement toggle behavior (single/multi-select)
+- [ ] Add visual indicator for active chips
+  - [ ] Highlight selected chips
+  - [ ] Show count badge if applicable
+- [ ] Integrate with existing filter state
+  - [ ] Update URL when chip selected
+  - [ ] Sync with dropdown filters
+  - [ ] Handle conflicts gracefully
+- [ ] Make chips customizable per entity type
+  - [ ] Projetos: Ativos, Finalizados Este Mês, > R$50k
+  - [ ] Recebíveis: Atrasados, Este Mês, > R$10k
+  - [ ] Despesas: Vencendo Esta Semana, Recorrentes, > R$5k
+
+**Visual Concept**:
+```
+┌────────────────────────────────────────────┐
+│ [Atrasados] [Este Mês] [> R$10k] [+ Mais] │  ← Quick toggle chips
+└────────────────────────────────────────────┘
+┌────────────────────────────────────────────┐
+│ [🔍 Search] [Status ▼] [Category ▼]       │  ← Existing filters
+└────────────────────────────────────────────┘
+```
+
+---
+
+**2D. Mobile Filter Drawer** (2-3 hours) - MOBILE UX
+- [ ] Detect mobile viewport (<480px)
+  - [ ] Add useMediaQuery hook or CSS media queries
+  - [ ] Test breakpoint responsiveness
+- [ ] Collapse filters into collapsible section/drawer
+  - [ ] Design drawer component (bottom sheet or slide-down)
+  - [ ] Implement open/close animations
+  - [ ] Add backdrop overlay
+- [ ] Add badge showing active filter count
+  - [ ] Calculate active filter count
+  - [ ] Display badge on collapsed button
+- [ ] Implement bottom sheet modal for filter selection
+  - [ ] Create modal with filter controls
+  - [ ] Add "Aplicar" and "Limpar" buttons
+  - [ ] Handle modal state management
+- [ ] Ensure touch-friendly interactions
+  - [ ] Larger touch targets (min 44px)
+  - [ ] Swipe-to-close gesture
+  - [ ] Test on real mobile devices
+
+**Visual Concept**:
+```
+Mobile (<480px):
+┌─────────────────────────────┐
+│ [🔍 Search] [Filtros (2) ▼] │  ← Collapsed (50px vs 150-200px)
+│   ↓ (tap to expand)         │
+│ ┌─────────────────────────┐ │
+│ │ Status: [Todos ▼]       │ │  ← Bottom sheet
+│ │ Categoria: [Todas ▼]    │ │
+│ │ [Aplicar] [Limpar]      │ │
+│ └─────────────────────────┘ │
+└─────────────────────────────┘
+```
+
+---
+
+**2E. AI Natural Language Filtering** (4-6 hours) - INTELLIGENT FEATURE
+- [ ] Add "Ask Arnaldo to filter/sort" text input
+  - [ ] Design input UI (above table or in filter bar)
+  - [ ] Add examples/placeholder text
+  - [ ] Implement submit handler
+- [ ] Integrate with QueryAgent or create specialized FilterAgent
+  - [ ] Review QueryAgent capabilities
+  - [ ] Create FilterAgent if needed (simpler, focused on filter/sort)
+  - [ ] Define agent prompt template
+- [ ] Parse natural language to filter/sort parameters
+  - [ ] Extract filter criteria from user input
+  - [ ] Extract sort criteria
+  - [ ] Handle ambiguous queries
+- [ ] Display interpreted filters with option to refine
+  - [ ] Show "Interpreted as: Status = Overdue, Amount > 10000"
+  - [ ] Add "Apply" or "Refine" buttons
+  - [ ] Allow manual override
+- [ ] Log successful queries for improving agent
+  - [ ] Track query → filter mappings
+  - [ ] Identify common patterns
+  - [ ] Use for prompt improvement
+
+**Example Queries**:
+- "Show overdue projects over 50k" → `{ status: 'overdue', minAmount: 50000 }`
+- "Sort by recent expenses" → `{ sort: 'dueDate', order: 'desc' }`
+- "Find São Paulo residential projects" → `{ category: 'Residencial', location: 'São Paulo' }`
+
+**Architecture**:
+```typescript
+// User types: "Show me overdue invoices over R$10,000"
+// Agent interprets → {
+//   filters: { status: 'overdue', minAmount: 10000 },
+//   sort: { field: 'amount', order: 'desc' }
+// }
+// UI applies filters + shows interpretation
+```
+
+**Dependencies**: QueryAgent or new FilterAgent implementation
+**Estimated Effort**: 9-14 hours total (all sub-tasks)
 
 ---
 
 ### 📋 TO DO (Immediate Priorities)
 *Ready to implement, explicitly prioritized.*
 
-**Currently Empty** - All Phase 2 UX improvements complete!
+#### **1. Dashboard Phase 2: UX/UI Design Strategy** (ADR-014 Priority)
+**Goal**: Define how to separate daily vs periodic metrics without overwhelming users
 
-**Next**: Dashboard Phases 2-4 (metrics, analytics, business intelligence) - See ADR-014 for roadmap
+**Design Exploration Required**:
+- **Option A**: Tabs within Dashboard (`[Visão Geral] [Análises] [Projeções]`)
+- **Option B**: Separate Pages (`/dashboard`, `/dashboard/analytics`, `/dashboard/forecast`)
+- **Option C**: Expandable Cards (daily metrics + "Ver Análises Detalhadas" modals)
+
+**Tasks**:
+- [ ] Create mockups/prototypes for each approach
+- [ ] Gather user feedback on preferred UX
+- [ ] Document decision rationale
+- [ ] Update ADR-014 with chosen approach
+
+**Dependencies**: User feedback/design input required before implementation
+**Estimated Effort**: 4-6 hours (design + prototyping)
+**Related**: ADR-014 sections on Dashboard strategy
+
+---
+
+#### **2. BusinessMetricsService: Dashboard Infrastructure** (ADR-014 Phase 3)
+**Goal**: Build reusable metrics calculation layer as foundation for dashboard
+
+**Architecture**:
+- Create `lib/services/BusinessMetricsService.ts`
+- Centralized metric calculations
+- Cacheable results
+- Reusable across all dashboard views
+- Foundation for future analytics
+
+**Metrics to Implement**:
+- [ ] Cash flow projections (next 30/60/90 days)
+- [ ] Revenue vs expenses trends (daily/weekly/monthly)
+- [ ] Contract completion rate
+- [ ] Overdue receivables analysis
+- [ ] Category breakdowns (spending by type)
+- [ ] Burn rate and runway calculations
+- [ ] Client payment patterns
+
+**Technical Requirements**:
+- [ ] Service layer following existing patterns
+- [ ] TypeScript interfaces for metric types
+- [ ] Caching strategy (Redis or in-memory)
+- [ ] Unit tests for calculations
+- [ ] Documentation in service file
+
+**Dependencies**: None - can build independently of UX decisions
+**Estimated Effort**: 4-6 hours
+**Related**: ADR-014 Phase 3, existing service patterns in `lib/services/`
+
+---
+
+#### **3. Global "Chat with Arnaldo" Integration**
+**Goal**: Add persistent chat interface accessible from all entity tabs
+
+**Requirements**:
+- [ ] Design floating chat button (bottom-right corner)
+  - [ ] Create floating action button (FAB) component
+  - [ ] Add pulsing animation or notification badge for hints
+  - [ ] Position fixed bottom-right (z-index management)
+  - [ ] Add accessibility label and keyboard support
+- [ ] Implement slide-out chat panel
+  - [ ] Create sidebar/drawer component (300-400px width)
+  - [ ] Slide-in/out animation from right side
+  - [ ] Add backdrop overlay to dim main content
+  - [ ] Handle responsive behavior (full-width on mobile)
+- [ ] Integrate with OperationsAgentService
+  - [ ] Connect to existing `/api/ai/operations` endpoint
+  - [ ] Implement streaming response handling
+  - [ ] Add loading states and error handling
+  - [ ] Format messages with markdown support
+- [ ] Add context-aware prompts per tab
+  - [ ] Detect current page/tab (usePathname hook)
+  - [ ] Show suggested prompts based on context:
+    - Projetos: "Analyze project profitability", "Show project timeline"
+    - Recebíveis: "Show overdue payments", "Forecast this month's revenue"
+    - Despesas: "Categorize spending patterns", "Find recurring expenses"
+  - [ ] Pre-fill context in agent prompt (current filters, selected items)
+- [ ] Preserve chat history during session
+  - [ ] Store messages in React state or context
+  - [ ] Optionally persist to localStorage
+  - [ ] Clear on logout or manual reset
+  - [ ] Show timestamp for each message
+- [ ] Add keyboard shortcut to open chat
+  - [ ] Implement Cmd/Ctrl + / listener
+  - [ ] Focus input field when opened via keyboard
+  - [ ] Add shortcut hint in UI tooltip
+
+**Visual Concept**:
+```
+┌───────────────────────────────┐
+│ Table content...              │
+│                               │
+│                     [💬]  ←─ Floating button (fixed position)
+│                               │
+└───────────────────────────────┘
+
+(Click opens sidebar):
+┌─────────────────┬─────────────┐
+│ Table           │ Chat Panel  │
+│ (dimmed)        │ ┌─────────┐ │
+│                 │ │ Arnaldo │ │
+│                 │ │ AI      │ │
+│                 │ ├─────────┤ │
+│                 │ │ Messages│ │
+│                 │ │ User: X │ │
+│                 │ │ AI: Y   │ │
+│                 │ ├─────────┤ │
+│                 │ │[Type...]│ │
+│                 │ └─────────┘ │
+└─────────────────┴─────────────┘
+```
+
+**Technical Architecture**:
+```typescript
+// Global layout wrapper
+<MainLayout>
+  {children} {/* Pages/tabs */}
+  <ArnaldoChatFAB /> {/* Floating button + panel */}
+</MainLayout>
+
+// Panel component structure
+<ChatPanel isOpen={isOpen} onClose={handleClose}>
+  <ChatHeader />
+  <ContextHints currentPage={pathname} />
+  <MessageList messages={messages} />
+  <ChatInput onSend={sendMessage} />
+</ChatPanel>
+```
+
+**Integration Points**:
+- Global layout component (app/layout.tsx or similar)
+- OperationsAgentService (`lib/services/OperationsAgentService.ts`)
+- Context detection (usePathname, current filters)
+- Session state management (React Context or Zustand)
+
+**Dependencies**:
+- ✅ OperationsAgentService (already exists)
+- ✅ Streaming API endpoint (already exists)
+- New: Chat UI components
+
+**Estimated Effort**: 6-8 hours
+**Related**: `lib/services/OperationsAgentService.ts`, existing AI chat at `/ai-chat`
+
+**Success Criteria**:
+- [ ] Chat accessible from any entity tab (Projetos, Recebíveis, Despesas, Dashboard)
+- [ ] Context-aware suggestions work correctly
+- [ ] Chat history persists during session
+- [ ] Keyboard shortcut works
+- [ ] Mobile responsive (full-width drawer)
+- [ ] No performance impact on main app
 
 ---
 
 ### ✅ DONE (Recently Completed)
 *Newest first, for reference.*
+
+#### **Compact Filters Implementation** ✅ COMPLETE (2025-10-07)
+**Impact**: 45-125px vertical space saved per page (2-5 additional table rows visible)
+
+**Implemented**:
+- ✅ Removed filter labels (self-documenting dropdowns with "Status: Ativos" format)
+- ✅ Merged search + filters into single row layout
+- ✅ Search icon integrated inside input field
+- ✅ Sortable column headers (click to sort, standard UX pattern)
+- ✅ Removed sort dropdowns from filter bar (moved to table headers)
+- ✅ Conditional "× Limpar" button (only shows when filters active)
+- ✅ Absolute positioned Add button (separate row, right-aligned)
+- ✅ Responsive behavior (mobile text truncation, wrapping on small screens)
+- ✅ Accessibility enhancements (aria-labels, focus states with ring)
+
+**Files Modified**:
+- `app/projetos/components/ContractsTab.tsx` - Projetos/Contratos
+- `app/receivables/page.tsx` - Recebíveis
+- `app/expenses/page.tsx` - Despesas
+
+**UX Pattern Established**:
+```
+┌──────────────────────────────────────────────┐
+│                    [+ Adicionar Button]      │  40px
+└──────────────────────────────────────────────┘
+┌──────────────────────────────────────────────┐
+│ [🔍 Search] [Filter ▼] [Filter ▼] [× Limpar]│  50px
+└──────────────────────────────────────────────┘
+┌──────────────────────────────────────────────┐
+│ [Sortable Column Headers with ↑/↓ icons]    │
+│ Table data rows...                           │
+└──────────────────────────────────────────────┘
+```
+
+**Sortable Columns**:
+- Projetos: Cliente/Projeto, Valor, Status, Data, Categoria
+- Recebíveis: Valor, Status, Data Prevista, Categoria
+- Despesas: Descrição, Valor, Status, Vencimento, Categoria
+
+**Benefits**:
+- 60-70% reduction in filter bar height
+- Industry-standard sortable columns (Gmail/Airtable pattern)
+- Cleaner visual hierarchy (less chrome, more content)
+- Better mobile experience (fewer controls to wrap)
+- Consistent UX across all entity tabs
+
+**Next Enhancement Opportunities** (BACKLOG):
+- URL persistence for filters (shareable links)
+- Quick filter chips above table ([Overdue] [This Month] etc.)
+- Mobile drawer for filters (<480px)
+- Keyboard shortcuts (Cmd+K for search)
 
 #### ✅ **Recurring Expenses UX Improvements - COMPLETE** (2025-10-07)
 

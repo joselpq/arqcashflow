@@ -57,21 +57,66 @@ function ExpensesPageContent() {
     fetchExpenses()
   }, [filters])
 
-  // Client-side search filtering
+  // Helper function to normalize text (remove accents and lowercase)
+  const normalizeText = (text: string) => {
+    return text
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+  }
+
+  // Client-side search filtering and sorting
   useEffect(() => {
-    if (!searchQuery.trim()) {
-      setFilteredExpenses(expenses)
-    } else {
-      const query = searchQuery.toLowerCase()
-      const filtered = expenses.filter((expense: any) =>
-        expense.description?.toLowerCase().includes(query) ||
-        expense.vendor?.toLowerCase().includes(query) ||
-        expense.category?.toLowerCase().includes(query) ||
-        expense.notes?.toLowerCase().includes(query)
+    let filtered = expenses
+
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = normalizeText(searchQuery)
+      filtered = expenses.filter((expense: any) =>
+        normalizeText(expense.description || '').includes(query) ||
+        normalizeText(expense.vendor || '').includes(query) ||
+        normalizeText(expense.category || '').includes(query) ||
+        normalizeText(expense.notes || '').includes(query)
       )
-      setFilteredExpenses(filtered)
     }
-  }, [expenses, searchQuery])
+
+    // Apply sorting
+    const sorted = [...filtered].sort((a: any, b: any) => {
+      let aVal, bVal
+
+      switch (filters.sortBy) {
+        case 'description':
+          aVal = normalizeText(a.description || '')
+          bVal = normalizeText(b.description || '')
+          break
+        case 'category':
+          aVal = normalizeText(a.category || '')
+          bVal = normalizeText(b.category || '')
+          break
+        case 'status':
+          aVal = normalizeText(a.status || '')
+          bVal = normalizeText(b.status || '')
+          break
+        case 'amount':
+          aVal = a.amount || 0
+          bVal = b.amount || 0
+          break
+        case 'dueDate':
+          aVal = new Date(a.dueDate || 0).getTime()
+          bVal = new Date(b.dueDate || 0).getTime()
+          break
+        default:
+          aVal = new Date(a.dueDate || 0).getTime()
+          bVal = new Date(b.dueDate || 0).getTime()
+      }
+
+      if (aVal < bVal) return filters.sortOrder === 'asc' ? -1 : 1
+      if (aVal > bVal) return filters.sortOrder === 'asc' ? 1 : -1
+      return 0
+    })
+
+    setFilteredExpenses(sorted)
+  }, [expenses, searchQuery, filters.sortBy, filters.sortOrder])
 
   // Handle auto-edit when URL parameter is present
   useEffect(() => {
@@ -111,8 +156,7 @@ function ExpensesPageContent() {
       if (filters.category !== 'all') params.set('category', filters.category)
       if (filters.type !== 'all') params.set('type', filters.type)
       if (filters.isRecurring !== 'all') params.set('isRecurring', filters.isRecurring)
-      params.set('sortBy', filters.sortBy)
-      params.set('sortOrder', filters.sortOrder)
+      // Note: Sorting handled client-side for better text/category sorting
 
       const res = await fetch(`/api/expenses?${params.toString()}`)
 
@@ -459,137 +503,156 @@ function ExpensesPageContent() {
     return statusOptions[status as keyof typeof statusOptions] || { label: status, color: 'bg-neutral-100 text-neutral-900' }
   }
 
+  function handleSort(column: string) {
+    if (filters.sortBy === column) {
+      setFilters({
+        ...filters,
+        sortOrder: filters.sortOrder === 'asc' ? 'desc' : 'asc'
+      })
+    } else {
+      setFilters({
+        ...filters,
+        sortBy: column,
+        sortOrder: 'desc'
+      })
+    }
+  }
+
+  function getSortIcon(column: string) {
+    if (filters.sortBy !== column) {
+      return (
+        <svg className="w-4 h-4 text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+        </svg>
+      )
+    }
+
+    if (filters.sortOrder === 'asc') {
+      return (
+        <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+        </svg>
+      )
+    } else {
+      return (
+        <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      )
+    }
+  }
+
   return (
     <div className="min-h-screen bg-neutral-50 px-4 sm:px-6 lg:px-8 py-6">
-      {/* Filters - Horizontal Bar */}
-      <div className="flex flex-wrap items-center gap-3 mb-4 p-4 bg-white rounded-lg border border-neutral-200 shadow-sm">
-        <div className="flex items-center gap-2">
-          <label className="text-sm font-medium text-neutral-700 whitespace-nowrap">Status:</label>
-          <select
-            className="border border-neutral-300 rounded-md px-3 py-1 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
-            value={filters.status}
-            onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-          >
-            <option value="all">Todos</option>
-            {uniqueStatuses.map(status => (
-              <option key={status} value={status}>
-                {status === 'pending' ? 'Pendente' : status === 'paid' ? 'Pago' : status === 'overdue' ? 'Atrasado' : 'Cancelado'}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <label className="text-sm font-medium text-neutral-700 whitespace-nowrap">Categoria:</label>
-          <select
-            className="border border-neutral-300 rounded-md px-3 py-1 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
-            value={filters.category}
-            onChange={(e) => setFilters({ ...filters, category: e.target.value })}
-          >
-            <option value="all">Todas</option>
-            {expenseCategories.map(category => (
-              <option key={category} value={category}>{category}</option>
-            ))}
-          </select>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <label className="text-sm font-medium text-neutral-700 whitespace-nowrap">Tipo:</label>
-          <select
-            className="border border-neutral-300 rounded-md px-3 py-1 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
-            value={filters.type}
-            onChange={(e) => setFilters({ ...filters, type: e.target.value })}
-          >
-            <option value="all">Todos</option>
-            {expenseTypes.map(type => (
-              <option key={type.value} value={type.value}>{type.label}</option>
-            ))}
-          </select>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <label className="text-sm font-medium text-neutral-700 whitespace-nowrap">Recorrente:</label>
-          <select
-            className="border border-neutral-300 rounded-md px-3 py-1 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
-            value={filters.isRecurring}
-            onChange={(e) => setFilters({ ...filters, isRecurring: e.target.value })}
-          >
-            <option value="all">Todos</option>
-            <option value="true">Sim</option>
-            <option value="false">Não</option>
-          </select>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <label className="text-sm font-medium text-neutral-700 whitespace-nowrap">Ordenar:</label>
-          <select
-            className="border border-neutral-300 rounded-md px-3 py-1 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
-            value={filters.sortBy}
-            onChange={(e) => setFilters({ ...filters, sortBy: e.target.value })}
-          >
-            <option value="dueDate">Data de Vencimento</option>
-            <option value="amount">Valor</option>
-            <option value="description">Descrição</option>
-          </select>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <select
-            className="border border-neutral-300 rounded-md px-3 py-1 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
-            value={filters.sortOrder}
-            onChange={(e) => setFilters({ ...filters, sortOrder: e.target.value })}
-          >
-            <option value="desc">↓ Desc</option>
-            <option value="asc">↑ Asc</option>
-          </select>
-        </div>
-
-        {(filters.status !== 'pending' || filters.category !== 'all' || filters.type !== 'all' || filters.isRecurring !== 'all' || searchQuery) && (
-          <button
-            onClick={() => {
-              setFilters({ contractId: 'all', status: 'pending', category: 'all', type: 'all', isRecurring: 'all', sortBy: 'dueDate', sortOrder: 'asc' })
-              setSearchQuery('')
-            }}
-            className="ml-2 text-sm text-blue-600 hover:text-blue-800 font-medium"
-          >
-            Limpar filtros
-          </button>
-        )}
+      {/* Header with Add Button */}
+      <div className="flex justify-end mb-3">
+        <button
+          onClick={openAddModal}
+          className="bg-blue-700 text-white px-4 py-2.5 rounded-lg hover:bg-blue-800 font-medium transition-colors flex items-center gap-2 whitespace-nowrap shadow-sm"
+          aria-label="Adicionar nova despesa"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          <span className="hidden sm:inline">Adicionar Despesa</span>
+          <span className="sm:hidden">Adicionar</span>
+        </button>
       </div>
 
-      {/* Search and Add Button */}
-      <div className="flex gap-3 mb-6">
-        <div className="relative flex-1">
-          <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-          <input
-            type="text"
-            placeholder="Buscar despesas, fornecedores, descrições..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 border-2 border-neutral-300 rounded-lg bg-white text-neutral-900 placeholder-neutral-500 focus:border-blue-600 focus:outline-none transition-colors"
-          />
-          {searchQuery && (
+      {/* Compact Filters - Single Row */}
+      <div className="mb-6">
+        <div className="flex flex-wrap items-center gap-2 p-3 bg-white rounded-lg border border-neutral-200 shadow-sm">
+          {/* Search Input */}
+          <div className="relative flex-1 min-w-[200px]">
+            <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              placeholder="Buscar despesas, fornecedores..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-8 py-2 text-sm border border-neutral-300 rounded-md bg-white text-neutral-900 placeholder-neutral-500 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 transition-colors"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
+                aria-label="Limpar busca"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
+
+          {/* Status Filter */}
+          <select
+            className="border border-neutral-300 rounded-md px-3 py-2 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 transition-colors"
+            value={filters.status}
+            onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+            aria-label="Filtrar por status"
+          >
+            <option value="all">Status: Todos</option>
+            <option value="pending">Status: Pendente</option>
+            <option value="paid">Status: Pago</option>
+            <option value="overdue">Status: Atrasado</option>
+            <option value="cancelled">Status: Cancelado</option>
+          </select>
+
+          {/* Category Filter */}
+          <select
+            className="border border-neutral-300 rounded-md px-3 py-2 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 transition-colors"
+            value={filters.category}
+            onChange={(e) => setFilters({ ...filters, category: e.target.value })}
+            aria-label="Filtrar por categoria"
+          >
+            <option value="all">Categoria: Todas</option>
+            {expenseCategories.map(category => (
+              <option key={category} value={category}>Categoria: {category}</option>
+            ))}
+          </select>
+
+          {/* Type Filter */}
+          <select
+            className="border border-neutral-300 rounded-md px-3 py-2 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 transition-colors"
+            value={filters.type}
+            onChange={(e) => setFilters({ ...filters, type: e.target.value })}
+            aria-label="Filtrar por tipo"
+          >
+            <option value="all">Tipo: Todos</option>
+            {expenseTypes.map(type => (
+              <option key={type.value} value={type.value}>Tipo: {type.label}</option>
+            ))}
+          </select>
+
+          {/* Recurring Filter */}
+          <select
+            className="border border-neutral-300 rounded-md px-3 py-2 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 transition-colors"
+            value={filters.isRecurring}
+            onChange={(e) => setFilters({ ...filters, isRecurring: e.target.value })}
+            aria-label="Filtrar por recorrência"
+          >
+            <option value="all">🔄 Recorrente: Todos</option>
+            <option value="true">🔄 Recorrente: Sim</option>
+            <option value="false">🔄 Recorrente: Não</option>
+          </select>
+
+          {/* Clear Filters Button */}
+          {(filters.status !== 'pending' || filters.category !== 'all' || filters.type !== 'all' || filters.isRecurring !== 'all' || searchQuery) && (
             <button
-              onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
+              onClick={() => {
+                setFilters({ contractId: 'all', status: 'pending', category: 'all', type: 'all', isRecurring: 'all', sortBy: 'dueDate', sortOrder: 'asc' })
+                setSearchQuery('')
+              }}
+              className="text-sm text-blue-600 hover:text-blue-800 font-medium whitespace-nowrap px-2 transition-colors"
+              aria-label="Limpar todos os filtros"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              × Limpar
             </button>
           )}
         </div>
-        <button
-          onClick={openAddModal}
-          className="bg-blue-700 text-white px-4 py-3 rounded-lg hover:bg-blue-800 font-medium transition-colors flex items-center gap-2 whitespace-nowrap"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Adicionar Despesa
-        </button>
       </div>
 
       {/* Expenses Table */}
@@ -605,20 +668,50 @@ function ExpensesPageContent() {
             <table className="w-full">
               <thead className="bg-neutral-50 border-b border-neutral-200">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                    Descrição
+                  <th className="px-4 py-3 text-left">
+                    <button
+                      onClick={() => handleSort('description')}
+                      className="group flex items-center gap-1 text-xs font-medium text-neutral-500 uppercase tracking-wider hover:text-neutral-700 transition-colors"
+                    >
+                      Descrição
+                      {getSortIcon('description')}
+                    </button>
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                    Valor
+                  <th className="px-4 py-3 text-right">
+                    <button
+                      onClick={() => handleSort('amount')}
+                      className="group flex items-center gap-1 ml-auto text-xs font-medium text-neutral-500 uppercase tracking-wider hover:text-neutral-700 transition-colors"
+                    >
+                      Valor
+                      {getSortIcon('amount')}
+                    </button>
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                    Status
+                  <th className="px-4 py-3 text-left">
+                    <button
+                      onClick={() => handleSort('status')}
+                      className="group flex items-center gap-1 text-xs font-medium text-neutral-500 uppercase tracking-wider hover:text-neutral-700 transition-colors"
+                    >
+                      Status
+                      {getSortIcon('status')}
+                    </button>
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                    Vencimento
+                  <th className="px-4 py-3 text-left">
+                    <button
+                      onClick={() => handleSort('dueDate')}
+                      className="group flex items-center gap-1 text-xs font-medium text-neutral-500 uppercase tracking-wider hover:text-neutral-700 transition-colors"
+                    >
+                      Vencimento
+                      {getSortIcon('dueDate')}
+                    </button>
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                    Categoria
+                  <th className="px-4 py-3 text-left">
+                    <button
+                      onClick={() => handleSort('category')}
+                      className="group flex items-center gap-1 text-xs font-medium text-neutral-500 uppercase tracking-wider hover:text-neutral-700 transition-colors"
+                    >
+                      Categoria
+                      {getSortIcon('category')}
+                    </button>
                   </th>
                   <th className="px-4 py-3 text-right text-xs font-medium text-neutral-500 uppercase tracking-wider">
                     Ações
