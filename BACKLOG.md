@@ -1,7 +1,7 @@
 # ArqCashflow Development Backlog
 
 **Purpose**: Central source of truth for project priorities and development status
-**Last Updated**: 2025-10-06 (Projetos Tab Restructuring COMPLETE - ADR-014 Phase 2 Quick Wins Done!)
+**Last Updated**: 2025-10-07 (Recurring Expenses UX Improvements COMPLETE - All frontend bugs resolved!)
 **Update Frequency**: Every LLM session MUST update this document when completing tasks or discovering new requirements
 
 ## 🚨 CRITICAL INSTRUCTIONS FOR LLM AGENTS
@@ -98,6 +98,74 @@ Examples:
 
 ### ✅ DONE (Recently Completed)
 *Newest first, for reference.*
+
+#### ✅ **Recurring Expenses UX Improvements - COMPLETE** (2025-10-07)
+
+**Goal**: Fix critical UX bugs in recurring expense editing and ensure consistent, reliable frequency management
+
+**What Was Completed**:
+
+1. ✅ **Unified Expense Form Modal**
+   - Before: Different modals for create vs edit (inconsistent UX)
+   - After: Single unified form handles all cases (create, edit non-recurring, edit recurring)
+   - Checkbox always visible (enabled for create/edit non-recurring, disabled when editing recurring)
+   - Clear scope info banner when editing recurring expenses
+   - File: `app/components/forms/ExpenseForm.tsx`
+
+2. ✅ **Fixed Intervalo Field Behavior**
+   - Problem: Number field affected by scroll wheel (accidental value changes)
+   - Solution: Changed to `type="text"` with numeric validation
+   - Added `onWheel blur` to prevent scroll changes
+   - CSS hides spinner arrows for cleaner UI
+   - Allows proper deletion (empty string) with blur validation
+   - Applied to: Intervalo, Máximo de Ocorrências fields
+
+3. ✅ **Frequency Change Logic - Simple CRUD Approach**
+   - Problem: Frequency/interval changes didn't persist for future expenses
+   - Solution: Delete + Recreate pattern using existing CRUD endpoints
+   - Step 1: Delete future/all expenses via `/api/expenses/[id]/recurring-action`
+   - Step 2: Create new RecurringExpense with new parameters
+   - No cron jobs, no complexity - just clean CRUD operations
+
+4. ✅ **Fixed Duplication and Start Date Issues**
+   - **scope="all"**: Preserves original start date (Oct → Oct with new frequency)
+   - **scope="future"**: Starts from current expense date (edit Dec → new series starts Dec)
+   - No duplicate entries
+   - Correct date calculations for all frequency types (weekly, monthly, quarterly, annual)
+
+5. ✅ **Removed "Tipo" Field**
+   - Removed unused expense type selector from form
+   - Simplified form UI
+   - Default to 'operational' type in backend
+
+**Example User Flow**:
+- User has monthly recurring expense (Oct, Nov, Dec, Jan...)
+- Edits December installment + future, changes to bi-monthly
+- System deletes Dec, Jan, Feb, Mar...
+- Creates new series starting Dec with interval=2
+- Result: Oct, Nov (old monthly), Dec, Feb, Apr... (new bi-monthly)
+- ✅ No duplication, correct dates, predictable behavior
+
+**Technical Implementation**:
+- **Files Modified**:
+  - `app/components/forms/ExpenseForm.tsx` (unified form logic)
+  - `app/expenses/page.tsx` (delete + create flow)
+- **Build**: ✅ Successful (4.0s compile time)
+- **TypeScript**: ✅ Zero errors
+- **Testing**: ✅ Verified all scopes (this, future, all)
+
+**UX Improvements Achieved**:
+- **Consistency**: Same modal for all expense operations
+- **Safety**: Clear scope info banners prevent confusion
+- **Predictability**: No accidental scroll changes
+- **Reliability**: Frequency changes always work correctly
+- **Simplicity**: Delete + Create is easy to understand and debug
+
+**Documentation Updated**:
+- ✅ ADR-014: Added "Recurring Expenses UX Improvements" section
+- ✅ BACKLOG.md: Added to DONE with implementation details
+
+---
 
 #### ✅ **Projetos Tab Restructuring - COMPLETE** (2025-10-06)
 

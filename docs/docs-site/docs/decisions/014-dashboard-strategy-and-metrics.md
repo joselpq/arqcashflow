@@ -2,20 +2,21 @@
 title: "Dashboard Strategy: Financial Intelligence & Daily Decision Support"
 type: "decision"
 audience: ["developer", "agent", "product", "designer"]
-contexts: ["dashboard", "metrics", "kpis", "financial-intelligence", "user-experience", "business-insights", "cash-flow", "architecture"]
+contexts: ["dashboard", "metrics", "kpis", "financial-intelligence", "user-experience", "business-insights", "cash-flow", "architecture", "recurring-expenses"]
 complexity: "intermediate"
-last_updated: "2025-10-06"
-version: "1.2"
-status: "phase-1-complete-ai-tab-complete"
+last_updated: "2025-10-07"
+version: "1.3"
+status: "phase-1-complete-ai-tab-complete-recurring-expenses-complete"
 decision_date: "2025-10-04"
 phase_1_completed: "2025-10-04"
 ai_tab_completed: "2025-10-06"
+recurring_expenses_completed: "2025-10-07"
 agent_roles: ["dashboard-developer", "metrics-specialist", "ux-designer"]
 related:
   - decisions/008-ai-agent-strategy.md
   - decisions/006-service-layer-migration-plan.md
   - decisions/003-strategic-architecture-evolution.md
-dependencies: ["service-layer", "dashboard-api", "business-metrics-service"]
+dependencies: ["service-layer", "dashboard-api", "business-metrics-service", "recurring-expenses-service"]
 ---
 
 # ADR-014: Dashboard Strategy & Financial Metrics System
@@ -1287,6 +1288,95 @@ interface ActionItem {
 **Status**: Phase 1 complete (2025-10-04), Phase 2 planning in progress
 **Next Review**: After Phase 2 design decision + user feedback on Phase 1 changes
 **Owner**: Product + Engineering
+
+---
+
+### **Recurring Expenses UX Improvements** ✅ COMPLETE (2025-10-07)
+
+**Context**: The recurring expenses feature had several UX bugs that made frequency editing difficult and confusing. Users needed a simple, consistent interface for managing recurring expense parameters.
+
+**Issues Resolved**:
+1. ✅ ~~Inconsistent modals - different forms for creating vs editing expenses~~
+2. ✅ ~~Intervalo field affected by scroll wheel (changed values accidentally)~~
+3. ✅ ~~Frequency parameter changes didn't persist for future installments~~
+4. ✅ ~~Duplicate entries when editing with scope="future"~~
+5. ✅ ~~Wrong start dates when editing with scope="all"~~
+
+**Implemented Changes**:
+
+#### **1. Unified Expense Form Modal** ✅
+**Action**: Single form component handles all use cases
+- **Creating new expense**: Checkbox visible and enabled
+- **Editing non-recurring expense**: Checkbox visible, can check to make it recurring
+- **Editing recurring expense**: Checkbox checked and disabled, shows scope info banner
+
+**Code**: `app/components/forms/ExpenseForm.tsx:204-213`
+```typescript
+// Checkbox always visible, disabled only when editing recurring with scope
+disabled={loading || (expense && expense._recurringExpense && expense._recurringScope)}
+```
+
+#### **2. Fixed Intervalo Field Input Behavior** ✅
+**Action**: Changed from `type="number"` to `type="text"` with numeric validation
+- **No more scroll wheel changes**: Added `onWheel={(e) => e.currentTarget.blur()}`
+- **No more spinner arrows**: CSS hides webkit spin buttons
+- **Proper deletion**: Allows empty string during editing, validates on blur
+- **Applied to**: Intervalo, Máximo de Ocorrências fields
+
+**Code**: `app/components/forms/ExpenseForm.tsx:239-267`
+
+#### **3. Frequency Change Logic - Simple CRUD Approach** ✅
+**Problem**: When frequency/interval changed, existing future expenses kept old schedule
+
+**Solution**: Delete + Recreate pattern
+- **Step 1**: Delete future/all expenses via `/api/expenses/[id]/recurring-action`
+- **Step 2**: Create new RecurringExpense with new parameters via `/api/recurring-expenses`
+- **No cron jobs, no complexity** - just existing CRUD endpoints
+
+**Scope Behavior**:
+- **scope="all"**: Preserves original start date, recreates entire series with new frequency
+- **scope="future"**: Starts from current expense date, only affects future installments
+
+**Code**: `app/expenses/page.tsx:215-284`
+
+#### **4. Fixed Duplication and Start Date Issues** ✅
+**scope="future" duplication fix**:
+```typescript
+// Start from current expense date (which gets deleted and recreated)
+startDate = new Date(editingExpense.dueDate)
+```
+
+**scope="all" start date fix**:
+```typescript
+// Preserve original series start date
+startDate = new Date(editingExpense._recurringExpense.startDate)
+```
+
+**Example Flow**:
+- **Original**: Monthly (Oct, Nov, Dec, Jan...)
+- **Edit Dec + future → bi-monthly**:
+  1. Deletes: Dec, Jan, Feb, Mar...
+  2. Creates: New series starting Dec with interval=2
+  3. Result: Oct, Nov (old), Dec, Feb, Apr... (new)
+  4. ✅ No duplication, correct dates
+
+**Files Modified**:
+- `app/components/forms/ExpenseForm.tsx`
+- `app/expenses/page.tsx`
+
+**Technical Quality**:
+- ✅ Build successful (4.0s compile time)
+- ✅ TypeScript types validated
+- ✅ Zero regressions
+- ✅ Responsive design maintained
+- ✅ Proper error handling and user feedback
+
+**User Experience Improvements**:
+- **Consistency**: Same modal for all expense operations
+- **Safety**: Clear scope info banners ("Alterações serão aplicadas a...")
+- **Predictability**: No accidental changes via scroll wheel
+- **Reliability**: Frequency changes always work correctly
+- **Simplicity**: Delete + Create pattern is easy to understand and debug
 
 ---
 

@@ -201,32 +201,129 @@ function ExpensesPageContent() {
       } else if (editingExpense && editingExpense._recurringScope && editingExpense.recurringExpenseId) {
         // Editing a recurring expense with scope
         const scope = editingExpense._recurringScope
-        const updatedData = {
-          description: expenseData.description,
-          amount: expenseData.amount,
-          category: expenseData.category,
-          vendor: expenseData.vendor || undefined,
-          notes: expenseData.notes || undefined,
-        }
 
-        const res = await fetch(`/api/expenses/${editingExpense.id}/recurring-action`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'edit',
-            scope: scope,
-            updatedData: updatedData
-          })
+        // Check if frequency or interval changed
+        const frequencyChanged = expenseData.recurringData && editingExpense._recurringExpense &&
+          (editingExpense._recurringExpense.frequency !== expenseData.recurringData.frequency ||
+           editingExpense._recurringExpense.interval !== expenseData.recurringData.interval)
+
+        console.log('Frequency changed:', frequencyChanged, {
+          old: editingExpense._recurringExpense,
+          new: expenseData.recurringData
         })
 
-        if (res.ok) {
-          const result = await res.json()
-          alert(`${result.result.updated} despesa(s) atualizada(s) com sucesso!`)
-          closeModal()
-          fetchExpenses()
+        // If frequency changed, we need to delete and recreate. Otherwise, just update.
+        if (frequencyChanged && (scope === 'future' || scope === 'all')) {
+          // Step 1: Delete future/all expenses from this recurring series
+          const deleteRes = await fetch(`/api/expenses/${editingExpense.id}/recurring-action`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'delete',
+              scope: scope
+            })
+          })
+
+          if (!deleteRes.ok) {
+            alert('Erro ao deletar despesas futuras')
+            return
+          }
+
+          const deleteResult = await deleteRes.json()
+          console.log(`Deleted ${deleteResult.result.deleted} expense(s)`)
+
+          // Step 2: Create a new RecurringExpense with the new parameters
+          let startDate: Date
+
+          if (scope === 'all') {
+            // For 'all' scope: preserve the original start date of the series
+            startDate = new Date(editingExpense._recurringExpense.startDate)
+          } else {
+            // For 'future' scope: start from the current expense date (which will be deleted and recreated)
+            startDate = new Date(editingExpense.dueDate)
+          }
+
+          const newRecurringExpense = {
+            description: expenseData.description,
+            amount: expenseData.amount,
+            category: expenseData.category,
+            frequency: expenseData.recurringData.frequency,
+            interval: expenseData.recurringData.interval,
+            startDate: startDate.toISOString(),
+            endDate: expenseData.recurringData.endDate || null,
+            maxOccurrences: null,
+            contractId: expenseData.contractId || null,
+            vendor: expenseData.vendor || null,
+            invoiceNumber: expenseData.invoiceNumber || null,
+            notes: expenseData.notes || null,
+            isActive: true
+          }
+
+          const createRes = await fetch('/api/recurring-expenses', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newRecurringExpense)
+          })
+
+          if (createRes.ok) {
+            alert(`Frequência atualizada! Uma nova série de despesas recorrentes foi criada com a nova periodicidade.`)
+            closeModal()
+            fetchExpenses()
+          } else {
+            const error = await createRes.json()
+            alert('Erro ao criar nova série de despesas recorrentes: ' + (error.message || JSON.stringify(error)))
+          }
         } else {
-          const error = await res.json()
-          alert('Erro ao editar despesa recorrente: ' + (error.message || JSON.stringify(error)))
+          // No frequency change - just update expenses normally
+          const updatedData = {
+            description: expenseData.description,
+            amount: expenseData.amount,
+            category: expenseData.category,
+            vendor: expenseData.vendor || undefined,
+            notes: expenseData.notes || undefined,
+          }
+
+          const res = await fetch(`/api/expenses/${editingExpense.id}/recurring-action`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'edit',
+              scope: scope,
+              updatedData: updatedData
+            })
+          })
+
+          if (res.ok) {
+            const result = await res.json()
+
+            // Also update RecurringExpense template if scope is future/all
+            if ((scope === 'future' || scope === 'all') && expenseData.recurringData) {
+              const recurringUpdateData: any = {
+                description: expenseData.description,
+                amount: expenseData.amount,
+                category: expenseData.category,
+                frequency: expenseData.recurringData.frequency,
+                interval: expenseData.recurringData.interval,
+              }
+
+              if (expenseData.vendor) recurringUpdateData.vendor = expenseData.vendor
+              if (expenseData.notes) recurringUpdateData.notes = expenseData.notes
+              if (expenseData.recurringData.endDate) recurringUpdateData.endDate = expenseData.recurringData.endDate
+
+              await fetch(`/api/recurring-expenses/${editingExpense.recurringExpenseId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(recurringUpdateData)
+              })
+            }
+
+            alert(`${result.result.updated} despesa(s) atualizada(s) com sucesso!`)
+            closeModal()
+            fetchExpenses()
+          } else {
+            const error = await res.json()
+            alert('Erro ao editar despesa recorrente: ' + (error.message || JSON.stringify(error)))
+          }
         }
       } else {
         // Regular expense creation/update
@@ -307,9 +404,22 @@ function ExpensesPageContent() {
           alert('Falha ao excluir despesa recorrente: ' + (error.message || JSON.stringify(error)))
         }
       } else if (action === 'edit') {
-        // For edit, we need to open the edit modal with the expense and store the scope
-        setEditingExpense({ ...expense, _recurringScope: scope })
-        setIsModalOpen(true)
+        // For edit, fetch the recurring expense details and open edit modal
+        if (expense.recurringExpenseId) {
+          const recurringRes = await fetch(`/api/recurring-expenses/${expense.recurringExpenseId}`)
+          if (recurringRes.ok) {
+            const data = await recurringRes.json()
+            const recurringExpense = data.recurringExpense || data // Handle both wrapped and unwrapped responses
+            setEditingExpense({
+              ...expense,
+              _recurringScope: scope,
+              _recurringExpense: recurringExpense
+            })
+            setIsModalOpen(true)
+          } else {
+            alert('Falha ao buscar detalhes da despesa recorrente')
+          }
+        }
       }
     } catch (error) {
       console.error('Error handling recurring action:', error)

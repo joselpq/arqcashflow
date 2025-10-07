@@ -1,15 +1,15 @@
 # Documentation Validation Report
 
-Generated on: 2025-10-03
+Generated on: 2025-10-07
 
 ## Summary
 
-- **Total files validated**: 80
+- **Total files validated**: 82
 - **Broken links**: 0
 - **Stale content**: 1
 - **Missing metadata**: 0
-- **Format inconsistencies**: 3
-- **Orphaned files**: 24
+- **Format inconsistencies**: 2
+- **Orphaned files**: 26
 
 ## Issues Found
 
@@ -22,18 +22,14 @@ Generated on: 2025-10-03
 
 - **File**: `optimization-opportunities.md`
   - **Last updated**: 2025-01-03
-  - **Days since update**: 273
+  - **Days since update**: 277
 
 
 ### 📋 Missing Metadata (0)
 
 ✅ All files have required metadata!
 
-### 📐 Format Inconsistencies (3)
-
-
-- **File**: `decisions/012-operations-agent-incremental-rebuild.md`
-  - **Issues**: Missing agent_roles or contexts in frontmatter
+### 📐 Format Inconsistencies (2)
 
 
 - **File**: `optimization-opportunities.md`
@@ -44,7 +40,7 @@ Generated on: 2025-10-03
   - **Issues**: Missing LLM Context section
 
 
-### 🔍 Orphaned Files (24)
+### 🔍 Orphaned Files (26)
 
 
 - `agents/contexts/validation-layer.md`
@@ -92,6 +88,12 @@ Generated on: 2025-10-03
 - `decisions/012-operations-agent-incremental-rebuild.md`
 
 
+- `decisions/013-operations-agent-agentic-loop-refactor.md`
+
+
+- `decisions/014-dashboard-strategy-and-metrics.md`
+
+
 - `developer/architecture/decisions/adr-002-claude-ai-integration.md`
 
 
@@ -137,7 +139,7 @@ Generated on: 2025-10-03
 
 ## Health Score
 
-**Overall Score**: 98% 🟢
+**Overall Score**: 99% 🟢
 
 ---
 

@@ -68,8 +68,19 @@ export default function ExpenseForm({ expense, contracts, onSubmit, onCancel, lo
         paidDate: expense.paidDate ? formatDateForInput(expense.paidDate) : '',
         paidAmount: expense.paidAmount ? expense.paidAmount.toString() : '',
       })
-      // Don't show recurring options when editing an existing expense
-      setIsRecurring(false)
+
+      // Check if this is a recurring expense being edited
+      if (expense._recurringExpense) {
+        setIsRecurring(true)
+        setRecurringData({
+          frequency: expense._recurringExpense.frequency || 'monthly',
+          interval: expense._recurringExpense.interval || 1,
+          endDate: expense._recurringExpense.endDate ? formatDateForInput(expense._recurringExpense.endDate) : '',
+          maxOccurrences: '', // Not stored in RecurringExpense schema
+        })
+      } else {
+        setIsRecurring(false)
+      }
     } else {
       // Reset form for new expense
       setFormData({
@@ -120,8 +131,8 @@ export default function ExpenseForm({ expense, contracts, onSubmit, onCancel, lo
       contractId: formData.contractId || null // Send null if empty string
     }
 
-    // Add recurring data if creating a recurring expense
-    if (isRecurring && !expense) {
+    // Add recurring data if creating or editing a recurring expense
+    if (isRecurring) {
       const interval = parseInt(recurringData.interval.toString())
       if (isNaN(interval) || interval < 1) {
         alert('Intervalo deve ser um número maior que 0')
@@ -168,85 +179,122 @@ export default function ExpenseForm({ expense, contracts, onSubmit, onCancel, lo
         />
       </div>
 
-      {/* Recurring Expense Toggle - Only for new expenses */}
-      {!expense && (
-        <div className="border-t border-neutral-200 pt-4 pb-4">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={isRecurring}
-              onChange={(e) => setIsRecurring(e.target.checked)}
-              className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-neutral-300 rounded"
-              disabled={loading}
-            />
-            <span className="font-medium text-neutral-900">🔄 Tornar esta despesa recorrente</span>
-          </label>
-
-          {isRecurring && (
-            <div className="mt-4 space-y-4 pl-6 border-l-2 border-blue-500">
+      {/* Recurring Expense Section - Unified for both new and edit */}
+      <div className="border-t border-neutral-200 pt-4 pb-4">
+        {/* Show info banner when editing recurring expense */}
+        {expense && expense._recurringExpense && expense._recurringScope && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+            <div className="flex items-start gap-2">
+              <svg className="w-5 h-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
               <div>
-                <label className="block mb-2 font-medium text-neutral-900">Frequência *</label>
-                <select
-                  required={isRecurring}
-                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900"
-                  value={recurringData.frequency}
-                  onChange={(e) => setRecurringData({ ...recurringData, frequency: e.target.value })}
-                  disabled={loading}
-                >
-                  {frequencyOptions.map(freq => (
-                    <option key={freq.value} value={freq.value}>
-                      {freq.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block mb-2 font-medium text-neutral-900">Intervalo *</label>
-                <input
-                  type="number"
-                  min="1"
-                  required={isRecurring}
-                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900"
-                  value={recurringData.interval}
-                  onChange={(e) => setRecurringData({ ...recurringData, interval: parseInt(e.target.value) || 1 })}
-                  onWheel={(e) => e.currentTarget.blur()}
-                  disabled={loading}
-                  placeholder="Ex: 1 para mensal, 2 para bimestral"
-                />
-                <p className="text-sm text-neutral-600 mt-1">
-                  Repetir a cada {recurringData.interval} {recurringData.frequency === 'weekly' ? 'semana(s)' : recurringData.frequency === 'monthly' ? 'mês(es)' : recurringData.frequency === 'quarterly' ? 'trimestre(s)' : 'ano(s)'}
+                <p className="font-medium text-blue-900">Editando despesa recorrente</p>
+                <p className="text-sm text-blue-700 mt-1">
+                  {expense._recurringScope === 'this' && 'Alterações serão aplicadas apenas a esta despesa'}
+                  {expense._recurringScope === 'future' && 'Alterações serão aplicadas a esta e futuras despesas'}
+                  {expense._recurringScope === 'all' && 'Alterações serão aplicadas a todas as despesas da série'}
                 </p>
               </div>
-
-              <div>
-                <label className="block mb-2 font-medium text-neutral-900">Data Final (Opcional)</label>
-                <input
-                  type="date"
-                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900"
-                  value={recurringData.endDate}
-                  onChange={(e) => setRecurringData({ ...recurringData, endDate: e.target.value })}
-                  disabled={loading}
-                />
-              </div>
-
-              <div>
-                <label className="block mb-2 font-medium text-neutral-900">Máximo de Ocorrências (Opcional)</label>
-                <input
-                  type="number"
-                  min="1"
-                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900"
-                  value={recurringData.maxOccurrences}
-                  onChange={(e) => setRecurringData({ ...recurringData, maxOccurrences: e.target.value })}
-                  onWheel={(e) => e.currentTarget.blur()}
-                  disabled={loading}
-                  placeholder="Deixe em branco para repetir indefinidamente"
-                />
-              </div>
             </div>
-          )}
-        </div>
-      )}
+          </div>
+        )}
+
+        {/* Checkbox - always show, but disabled when editing recurring with scope */}
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={isRecurring}
+            onChange={(e) => setIsRecurring(e.target.checked)}
+            className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-neutral-300 rounded"
+            disabled={loading || (expense && expense._recurringExpense && expense._recurringScope)}
+          />
+          <span className="font-medium text-neutral-900">🔄 Tornar esta despesa recorrente</span>
+        </label>
+
+        {/* Recurring fields - show when checkbox is checked OR when editing with proper scope */}
+        {isRecurring && (
+          <div className="mt-4 space-y-4 pl-6 border-l-2 border-blue-500">
+            <div>
+              <label className="block mb-2 font-medium text-neutral-900">Frequência *</label>
+              <select
+                required={isRecurring}
+                className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900"
+                value={recurringData.frequency}
+                onChange={(e) => setRecurringData({ ...recurringData, frequency: e.target.value })}
+                disabled={loading || (expense && expense._recurringScope === 'this')}
+              >
+                {frequencyOptions.map(freq => (
+                  <option key={freq.value} value={freq.value}>
+                    {freq.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block mb-2 font-medium text-neutral-900">Intervalo *</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                required={isRecurring}
+                className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                value={recurringData.interval}
+                onChange={(e) => {
+                  const value = e.target.value
+                  // Allow empty string for deletion, otherwise parse as number
+                  if (value === '') {
+                    setRecurringData({ ...recurringData, interval: '' as any })
+                  } else {
+                    const num = parseInt(value)
+                    if (!isNaN(num) && num >= 1) {
+                      setRecurringData({ ...recurringData, interval: num })
+                    }
+                  }
+                }}
+                onBlur={(e) => {
+                  // On blur, ensure we have at least 1
+                  if (recurringData.interval === '' || recurringData.interval < 1) {
+                    setRecurringData({ ...recurringData, interval: 1 })
+                  }
+                }}
+                onWheel={(e) => e.currentTarget.blur()}
+                disabled={loading || (expense && expense._recurringScope === 'this')}
+                placeholder="Ex: 1 para mensal, 2 para bimestral"
+              />
+              <p className="text-sm text-neutral-600 mt-1">
+                Repetir a cada {recurringData.interval || 1} {recurringData.frequency === 'weekly' ? 'semana(s)' : recurringData.frequency === 'monthly' ? 'mês(es)' : recurringData.frequency === 'quarterly' ? 'trimestre(s)' : 'ano(s)'}
+              </p>
+            </div>
+
+            <div>
+              <label className="block mb-2 font-medium text-neutral-900">Data Final (Opcional)</label>
+              <input
+                type="date"
+                className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900"
+                value={recurringData.endDate}
+                onChange={(e) => setRecurringData({ ...recurringData, endDate: e.target.value })}
+                disabled={loading || (expense && expense._recurringScope === 'this')}
+              />
+            </div>
+
+            <div>
+              <label className="block mb-2 font-medium text-neutral-900">Máximo de Ocorrências (Opcional)</label>
+              <input
+                type="number"
+                min="1"
+                className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                value={recurringData.maxOccurrences}
+                onChange={(e) => setRecurringData({ ...recurringData, maxOccurrences: e.target.value })}
+                onWheel={(e) => e.currentTarget.blur()}
+                disabled={loading || (expense && expense._recurringScope === 'this')}
+                placeholder="Deixe em branco para repetir indefinidamente"
+              />
+            </div>
+          </div>
+        )}
+      </div>
 
       <div>
         <label className="block mb-2 font-medium text-neutral-900">Data de Vencimento *</label>
