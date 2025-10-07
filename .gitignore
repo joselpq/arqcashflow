@@ -49,6 +49,8 @@ prisma/dev.db
 # Test and debug files
 Testando.xlsx
 test*.csv
+test-*.ts
+test-*.js
 debug-*.js
 sample_data.csv
 teste_pdf.pdf
