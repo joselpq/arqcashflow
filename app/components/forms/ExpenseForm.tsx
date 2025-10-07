@@ -26,16 +26,30 @@ export default function ExpenseForm({ expense, contracts, onSubmit, onCancel, lo
     paidAmount: '',
   })
 
+  const [isRecurring, setIsRecurring] = useState(false)
+  const [recurringData, setRecurringData] = useState({
+    frequency: 'monthly',
+    interval: 1,
+    endDate: '',
+    maxOccurrences: '',
+  })
+
   const expenseCategories = [
     'Salários', 'Escritório', 'Software', 'Marketing', 'Transporte', 'Equipamentos', 'Impostos', 'Outros'
   ]
-
 
   const statusOptions = [
     { value: 'pending', label: 'Pendente' },
     { value: 'paid', label: 'Pago' },
     { value: 'overdue', label: 'Atrasado' },
     { value: 'cancelled', label: 'Cancelado' },
+  ]
+
+  const frequencyOptions = [
+    { value: 'weekly', label: 'Semanal' },
+    { value: 'monthly', label: 'Mensal' },
+    { value: 'quarterly', label: 'Trimestral' },
+    { value: 'annual', label: 'Anual' },
   ]
 
   // Initialize form data when expense changes
@@ -54,6 +68,8 @@ export default function ExpenseForm({ expense, contracts, onSubmit, onCancel, lo
         paidDate: expense.paidDate ? formatDateForInput(expense.paidDate) : '',
         paidAmount: expense.paidAmount ? expense.paidAmount.toString() : '',
       })
+      // Don't show recurring options when editing an existing expense
+      setIsRecurring(false)
     } else {
       // Reset form for new expense
       setFormData({
@@ -64,10 +80,17 @@ export default function ExpenseForm({ expense, contracts, onSubmit, onCancel, lo
         contractId: '',
         vendor: '',
         invoiceNumber: '',
-            notes: '',
+        notes: '',
         status: 'pending',
         paidDate: '',
         paidAmount: '',
+      })
+      setIsRecurring(false)
+      setRecurringData({
+        frequency: 'monthly',
+        interval: 1,
+        endDate: '',
+        maxOccurrences: '',
       })
     }
   }, [expense])
@@ -90,11 +113,28 @@ export default function ExpenseForm({ expense, contracts, onSubmit, onCancel, lo
       }
     }
 
-    const submissionData = {
+    const submissionData: any = {
       ...formData,
       amount,
       paidAmount,
       contractId: formData.contractId || null // Send null if empty string
+    }
+
+    // Add recurring data if creating a recurring expense
+    if (isRecurring && !expense) {
+      const interval = parseInt(recurringData.interval.toString())
+      if (isNaN(interval) || interval < 1) {
+        alert('Intervalo deve ser um número maior que 0')
+        return
+      }
+
+      submissionData.isRecurring = true
+      submissionData.recurringData = {
+        frequency: recurringData.frequency,
+        interval,
+        endDate: recurringData.endDate || null,
+        maxOccurrences: recurringData.maxOccurrences ? parseInt(recurringData.maxOccurrences) : null,
+      }
     }
 
     await onSubmit(submissionData)
@@ -118,6 +158,7 @@ export default function ExpenseForm({ expense, contracts, onSubmit, onCancel, lo
         <label className="block mb-2 font-medium text-neutral-900">Valor *</label>
         <input
           type="number"
+          step="0.01"
           required
           className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           value={formData.amount}
@@ -126,6 +167,86 @@ export default function ExpenseForm({ expense, contracts, onSubmit, onCancel, lo
           disabled={loading}
         />
       </div>
+
+      {/* Recurring Expense Toggle - Only for new expenses */}
+      {!expense && (
+        <div className="border-t border-neutral-200 pt-4 pb-4">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={isRecurring}
+              onChange={(e) => setIsRecurring(e.target.checked)}
+              className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-neutral-300 rounded"
+              disabled={loading}
+            />
+            <span className="font-medium text-neutral-900">🔄 Tornar esta despesa recorrente</span>
+          </label>
+
+          {isRecurring && (
+            <div className="mt-4 space-y-4 pl-6 border-l-2 border-blue-500">
+              <div>
+                <label className="block mb-2 font-medium text-neutral-900">Frequência *</label>
+                <select
+                  required={isRecurring}
+                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900"
+                  value={recurringData.frequency}
+                  onChange={(e) => setRecurringData({ ...recurringData, frequency: e.target.value })}
+                  disabled={loading}
+                >
+                  {frequencyOptions.map(freq => (
+                    <option key={freq.value} value={freq.value}>
+                      {freq.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block mb-2 font-medium text-neutral-900">Intervalo *</label>
+                <input
+                  type="number"
+                  min="1"
+                  required={isRecurring}
+                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900"
+                  value={recurringData.interval}
+                  onChange={(e) => setRecurringData({ ...recurringData, interval: parseInt(e.target.value) || 1 })}
+                  onWheel={(e) => e.currentTarget.blur()}
+                  disabled={loading}
+                  placeholder="Ex: 1 para mensal, 2 para bimestral"
+                />
+                <p className="text-sm text-neutral-600 mt-1">
+                  Repetir a cada {recurringData.interval} {recurringData.frequency === 'weekly' ? 'semana(s)' : recurringData.frequency === 'monthly' ? 'mês(es)' : recurringData.frequency === 'quarterly' ? 'trimestre(s)' : 'ano(s)'}
+                </p>
+              </div>
+
+              <div>
+                <label className="block mb-2 font-medium text-neutral-900">Data Final (Opcional)</label>
+                <input
+                  type="date"
+                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900"
+                  value={recurringData.endDate}
+                  onChange={(e) => setRecurringData({ ...recurringData, endDate: e.target.value })}
+                  disabled={loading}
+                />
+              </div>
+
+              <div>
+                <label className="block mb-2 font-medium text-neutral-900">Máximo de Ocorrências (Opcional)</label>
+                <input
+                  type="number"
+                  min="1"
+                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900"
+                  value={recurringData.maxOccurrences}
+                  onChange={(e) => setRecurringData({ ...recurringData, maxOccurrences: e.target.value })}
+                  onWheel={(e) => e.currentTarget.blur()}
+                  disabled={loading}
+                  placeholder="Deixe em branco para repetir indefinidamente"
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       <div>
         <label className="block mb-2 font-medium text-neutral-900">Data de Vencimento *</label>
@@ -150,12 +271,11 @@ export default function ExpenseForm({ expense, contracts, onSubmit, onCancel, lo
         >
           {expenseCategories.map(category => (
             <option key={category} value={category}>
-              {category.charAt(0).toUpperCase() + category.slice(1)}
+              {category}
             </option>
           ))}
         </select>
       </div>
-
 
       <div>
         <label className="block mb-2 font-medium text-neutral-900">Projeto (Opcional)</label>
@@ -268,6 +388,7 @@ export default function ExpenseForm({ expense, contracts, onSubmit, onCancel, lo
             <label className="block mb-2 font-medium text-neutral-900">Valor Pago</label>
             <input
               type="number"
+              step="0.01"
               className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               value={formData.paidAmount}
               onChange={(e) => setFormData({ ...formData, paidAmount: e.target.value })}
