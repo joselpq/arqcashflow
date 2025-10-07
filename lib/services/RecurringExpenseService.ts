@@ -632,9 +632,8 @@ export class RecurringExpenseService extends BaseService<
         })
 
         if (!existingExpense) {
-          // Generate expense description with date context
-          const dateStr = currentDate.toLocaleDateString('pt-BR')
-          const description = `${recurringExpense.description} (${dateStr})`
+          // Use recurring expense description without date suffix (date is visible in dueDate column)
+          const description = recurringExpense.description
 
           // Determine if past expense should be marked as paid
           const isPastExpense = isBefore(currentDate, now)

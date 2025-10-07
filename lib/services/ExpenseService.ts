@@ -271,19 +271,38 @@ export class ExpenseService extends BaseService<
   async create(data: ExpenseCreateData): Promise<ExpenseWithRelations> {
     await this.validateBusinessRules(data)
 
+    // Extract contractId and recurringData before processing
+    const { contractId, isRecurring, recurringData, ...rest } = data as any
+
     // Process dates
-    const processedData = {
-      ...data,
+    const processedData: any = {
+      ...rest,
       dueDate: createDateForStorage(data.dueDate),
       paidDate: data.paidDate ? createDateForStorage(data.paidDate) : null,
       // Normalize empty strings to null
       vendor: ValidationUtils.normalizeEmptyString(data.vendor),
       invoiceNumber: ValidationUtils.normalizeEmptyString(data.invoiceNumber),
       notes: ValidationUtils.normalizeEmptyString(data.notes),
-      receiptUrl: ValidationUtils.normalizeEmptyString(data.receiptUrl)
+      receiptUrl: ValidationUtils.normalizeEmptyString(data.receiptUrl),
+      isRecurring: isRecurring || false
     }
 
-    return await super.create(processedData as any, {
+    // Handle contract relationship
+    if (contractId) {
+      processedData.contract = {
+        connect: { id: contractId }
+      }
+    }
+
+    // Handle recurring expense (will be implemented when recurring expenses feature is added)
+    // For now, just store the data in the expense
+    if (isRecurring && recurringData) {
+      // This would create a RecurringExpense record and link it
+      // For now, we'll just note that this expense is recurring
+      processedData.isRecurring = true
+    }
+
+    return await super.create(processedData, {
       contract: true,
       recurringExpense: true
     })

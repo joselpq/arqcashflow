@@ -3,6 +3,8 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { formatDateForInput, formatDateFull as formatDateForDisplay } from '@/lib/date-utils'
+import Modal from '../components/Modal'
+import ReceivableForm from '../components/forms/ReceivableForm'
 
 function ReceivablesPageContent() {
   const searchParams = useSearchParams()
@@ -12,6 +14,7 @@ function ReceivablesPageContent() {
   const [contracts, setContracts] = useState([])
   const [loading, setLoading] = useState(true)
   const [editingReceivable, setEditingReceivable] = useState<any>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
   const [uniqueCategories, setUniqueCategories] = useState<string[]>([])
   const [uniqueStatuses] = useState(['pending', 'received', 'overdue', 'cancelled'])
   const [filters, setFilters] = useState({
@@ -21,44 +24,39 @@ function ReceivablesPageContent() {
     sortBy: 'expectedDate',
     sortOrder: 'asc',
   })
-  const [formData, setFormData] = useState({
-    contractId: '',
-    expectedDate: '',
-    amount: '',
-    invoiceNumber: '',
-    category: '',
-    notes: '',
-    receivedDate: '',
-    receivedAmount: '',
-  })
-  const [customCategory, setCustomCategory] = useState('')
-  const [showCustomCategory, setShowCustomCategory] = useState(false)
-  const [predefinedCategories, setPredefinedCategories] = useState([
-    'projeto',
-    'obra',
-    'RT'
-  ])
+  const [searchQuery, setSearchQuery] = useState('')
+  const [filteredReceivables, setFilteredReceivables] = useState([])
 
   useEffect(() => {
     fetchContracts()
   }, [])
 
   useEffect(() => {
-    // Always fetch receivables when filters change, regardless of contracts
-    // This allows receivables to load even if there are no contracts
     fetchReceivables()
   }, [filters])
+
+  // Client-side search filtering
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredReceivables(receivables)
+    } else {
+      const query = searchQuery.toLowerCase()
+      const filtered = receivables.filter((receivable: any) =>
+        receivable.contract?.projectName?.toLowerCase().includes(query) ||
+        receivable.contract?.clientName?.toLowerCase().includes(query) ||
+        receivable.category?.toLowerCase().includes(query) ||
+        receivable.description?.toLowerCase().includes(query)
+      )
+      setFilteredReceivables(filtered)
+    }
+  }, [receivables, searchQuery])
 
   // Handle auto-edit when URL parameter is present
   useEffect(() => {
     if (editId && receivables.length > 0) {
       const receivableToEdit = receivables.find((r: any) => r.id === editId)
       if (receivableToEdit) {
-        editReceivable(receivableToEdit)
-        // Scroll to form
-        setTimeout(() => {
-          document.getElementById('receivable-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-        }, 100)
+        openEditModal(receivableToEdit)
       }
     }
   }, [editId, receivables])
@@ -116,13 +114,22 @@ function ReceivablesPageContent() {
     }
   }
 
-  async function fetchData() {
-    await fetchContracts()
-    await fetchReceivables()
+  function openAddModal() {
+    setEditingReceivable(null)
+    setIsModalOpen(true)
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
+  function openEditModal(receivable: any) {
+    setEditingReceivable(receivable)
+    setIsModalOpen(true)
+  }
+
+  function closeModal() {
+    setIsModalOpen(false)
+    setEditingReceivable(null)
+  }
+
+  async function handleFormSubmit(receivableData: any) {
     try {
       const url = editingReceivable ? `/api/receivables/${editingReceivable.id}` : '/api/receivables'
       const method = editingReceivable ? 'PUT' : 'POST'
@@ -130,20 +137,12 @@ function ReceivablesPageContent() {
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData,
-          amount: parseFloat(formData.amount),
-          receivedAmount: formData.receivedAmount ? parseFloat(formData.receivedAmount) : null,
-        }),
+        body: JSON.stringify(receivableData),
       })
 
       if (res.ok) {
-        const result = await res.json()
-
-
-        alert(editingReceivable ? 'Conta a receber atualizada com sucesso!' : 'Conta a receber criada com sucesso!')
-        resetForm()
-        fetchData()
+        closeModal()
+        fetchReceivables()
       } else {
         const error = await res.json()
         alert('Erro: ' + JSON.stringify(error))
@@ -153,50 +152,8 @@ function ReceivablesPageContent() {
     }
   }
 
-  function resetForm() {
-    setFormData({
-      contractId: '',
-      expectedDate: '',
-      amount: '',
-      invoiceNumber: '',
-      category: '',
-      notes: '',
-      receivedDate: '',
-      receivedAmount: '',
-    })
-    setEditingReceivable(null)
-    setCustomCategory('')
-    setShowCustomCategory(false)
-  }
-
-  function editReceivable(receivable: any) {
-    setEditingReceivable(receivable)
-    const category = receivable.category || ''
-
-    // Check if category is in predefined list
-    if (category && !predefinedCategories.includes(category)) {
-      // If not in list, show as custom
-      setShowCustomCategory(true)
-      setCustomCategory(category)
-    } else {
-      setShowCustomCategory(false)
-      setCustomCategory('')
-    }
-
-    setFormData({
-      contractId: receivable.contractId || '',
-      expectedDate: receivable.expectedDate ? formatDateForInput(receivable.expectedDate) : '',
-      amount: receivable.amount ? receivable.amount.toString() : '',
-      invoiceNumber: receivable.invoiceNumber || '',
-      category: category || '',
-      notes: receivable.notes || '',
-      receivedDate: receivable.receivedDate ? formatDateForInput(receivable.receivedDate) : '',
-      receivedAmount: receivable.receivedAmount ? receivable.receivedAmount.toString() : '',
-    })
-  }
-
-  async function deleteReceivable(id: string) {
-    if (!confirm('Tem certeza de que deseja excluir esta conta a receber?')) return
+  async function deleteReceivable(id: string, receivable: any) {
+    if (!confirm(`Tem certeza que deseja excluir o recebível "${receivable.contract?.projectName || 'sem projeto'}"?`)) return
 
     try {
       const res = await fetch(`/api/receivables/${id}`, {
@@ -204,8 +161,7 @@ function ReceivablesPageContent() {
       })
 
       if (res.ok) {
-        alert('Conta a receber excluída com sucesso!')
-        fetchData()
+        fetchReceivables()
       } else {
         alert('Falha ao excluir conta a receber')
       }
@@ -213,7 +169,6 @@ function ReceivablesPageContent() {
       alert('Falha ao excluir conta a receber')
     }
   }
-
 
   async function markAsReceived(id: string, amount: number) {
     const receivedDate = prompt('Insira a data de recebimento (AAAA-MM-DD):')
@@ -232,8 +187,7 @@ function ReceivablesPageContent() {
         })
 
         if (res.ok) {
-          alert('Marcado como recebido!')
-          fetchData()
+          fetchReceivables()
         }
       } catch (error) {
         alert('Falha ao atualizar conta a receber')
@@ -242,322 +196,237 @@ function ReceivablesPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50 p-8">
-      <div className="mb-4">
-        <a href="/" className="text-blue-600 hover:underline">← Voltar ao Início</a>
-      </div>
-
-      <h1 className="text-3xl font-bold mb-8 text-neutral-900">Gerenciamento de Contas a Receber</h1>
-
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div>
-          {/* Toggle between AI and Manual */}
-
-          {contracts.length === 0 ? (
-            <div className="bg-yellow-50 border border-yellow-200 p-4 rounded">
-              <p className="text-yellow-800">⚠️ Nenhum contrato disponível</p>
-              <p className="text-sm text-yellow-700 mt-1">
-                Para criar contas a receber, você precisa primeiro <a href="/projetos?tab=contratos" className="underline">criar um contrato</a>.
-              </p>
-            </div>
-          ) : (
-            <div>
-              <h2 className="text-xl font-bold mb-4 text-neutral-900">
-                {editingReceivable ? 'Editar Conta a Receber' : 'Adicionar Conta a Receber'}
-              </h2>
-            </div>
-          )}
-
-          {contracts.length > 0 && (
-            <form onSubmit={handleSubmit} className="space-y-4" id="receivable-form">
-              <div>
-                <label className="block mb-2 font-medium text-neutral-900">Contrato *</label>
-                <select
-                  required
-                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
-                  value={formData.contractId || ''}
-                  onChange={(e) => setFormData({ ...formData, contractId: e.target.value })}
-                >
-                  <option value="">Selecione um contrato</option>
-                  {contracts.map((contract: any) => (
-                    <option key={contract.id} value={contract.id}>
-                      {contract.projectName} - {contract.clientName}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block mb-2 font-medium text-neutral-900">Data Prevista *</label>
-                <input
-                  type="date"
-                  required
-                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
-                  value={formData.expectedDate || ''}
-                  onChange={(e) => setFormData({ ...formData, expectedDate: e.target.value })}
-                />
-              </div>
-
-              <div>
-                <label className="block mb-2 font-medium text-neutral-900">Valor *</label>
-                <input
-                  type="number"
-                  required
-                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
-                  value={formData.amount || ''}
-                  onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                />
-              </div>
-
-              <div>
-                <label className="block mb-2 font-medium text-neutral-900">Número da Nota Fiscal</label>
-                <input
-                  type="text"
-                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
-                  value={formData.invoiceNumber || ''}
-                  onChange={(e) => setFormData({ ...formData, invoiceNumber: e.target.value })}
-                />
-              </div>
-
-              <div>
-                <label className="block mb-2 font-medium text-neutral-900">Data de Recebimento</label>
-                <input
-                  type="date"
-                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
-                  value={formData.receivedDate || ''}
-                  onChange={(e) => setFormData({ ...formData, receivedDate: e.target.value })}
-                />
-              </div>
-
-              <div>
-                <label className="block mb-2 font-medium text-neutral-900">Valor Recebido</label>
-                <input
-                  type="number"
-                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
-                  value={formData.receivedAmount || ''}
-                  onChange={(e) => setFormData({ ...formData, receivedAmount: e.target.value })}
-                />
-              </div>
-
-              <div>
-                <label className="block mb-2 font-medium text-neutral-900">Categoria</label>
-                <select
-                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
-                  value={showCustomCategory ? 'custom' : (formData.category || '')}
-                  onChange={(e) => {
-                    const value = e.target.value
-                    if (value === 'custom') {
-                      setShowCustomCategory(true)
-                      setFormData({ ...formData, category: '' })
-                    } else if (value === 'add_new') {
-                      const newCategory = prompt('Insira o nome da nova categoria:')
-                      if (newCategory && newCategory.trim()) {
-                        setPredefinedCategories(prev => [...prev, newCategory.trim()])
-                        setFormData({ ...formData, category: newCategory.trim() })
-                        setShowCustomCategory(false)
-                      }
-                    } else {
-                      setFormData({ ...formData, category: value })
-                      setShowCustomCategory(false)
-                      setCustomCategory('')
-                    }
-                  }}
-                >
-                  <option value="">Selecione uma categoria</option>
-                  {predefinedCategories.map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
-                  <option value="add_new">➕ Adicionar nova categoria...</option>
-                  <option value="custom">✏️ Inserir categoria personalizada...</option>
-                </select>
-                {showCustomCategory && (
-                  <input
-                    type="text"
-                    className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 mt-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
-                    placeholder="Inserir categoria personalizada"
-                    value={customCategory || ''}
-                    onChange={(e) => {
-                      setCustomCategory(e.target.value)
-                      setFormData({ ...formData, category: e.target.value })
-                    }}
-                  />
-                )}
-              </div>
-
-              <div>
-                <label className="block mb-2 font-medium text-neutral-900">Observações</label>
-                <textarea
-                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
-                  value={formData.notes || ''}
-                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                />
-              </div>
-
-              <div className="flex gap-2">
-                <button
-                  type="submit"
-                  className="bg-blue-700 text-white px-6 py-2 rounded-lg hover:bg-blue-800 font-medium transition-colors"
-                >
-                  {editingReceivable ? 'Atualizar Conta a Receber' : 'Criar Conta a Receber'}
-                </button>
-                {editingReceivable && (
-                  <button
-                    type="button"
-                    onClick={resetForm}
-                    className="bg-neutral-600 text-white px-6 py-2 rounded-lg hover:bg-neutral-700 font-medium transition-colors"
-                  >
-                    Cancelar
-                  </button>
-                )}
-              </div>
-            </form>
-          )}
+    <div className="min-h-screen bg-neutral-50 px-4 sm:px-6 lg:px-8 py-6">
+      {/* Filters - Horizontal Bar */}
+      <div className="flex flex-wrap items-center gap-3 mb-4 p-4 bg-white rounded-lg border border-neutral-200 shadow-sm">
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-medium text-neutral-700 whitespace-nowrap">Contrato:</label>
+          <select
+            className="border border-neutral-300 rounded-md px-3 py-1 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
+            value={filters.contractId}
+            onChange={(e) => setFilters({ ...filters, contractId: e.target.value })}
+          >
+            <option value="all">Todos</option>
+            {contracts.map((contract: any) => (
+              <option key={contract.id} value={contract.id}>
+                {contract.projectName}
+              </option>
+            ))}
+          </select>
         </div>
 
-        <div>
-          <h2 className="text-xl font-bold mb-4 text-neutral-900">Próximas Contas a Receber</h2>
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-medium text-neutral-700 whitespace-nowrap">Status:</label>
+          <select
+            className="border border-neutral-300 rounded-md px-3 py-1 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
+            value={filters.status}
+            onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+          >
+            <option value="all">Todos</option>
+            {uniqueStatuses.map(status => (
+              <option key={status} value={status}>{status}</option>
+            ))}
+          </select>
+        </div>
 
-          {/* Filters and Sorting */}
-          <div className="mb-4 space-y-3 p-4 bg-white border-2 border-neutral-300 rounded-lg shadow-sm">
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-              <div>
-                <label className="block text-sm font-semibold text-neutral-900 mb-2">Contrato</label>
-                <select
-                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
-                  value={filters.contractId}
-                  onChange={(e) => setFilters({ ...filters, contractId: e.target.value })}
-                >
-                  <option value="all">Todos os Contratos</option>
-                  {contracts.map((contract: any) => (
-                    <option key={contract.id} value={contract.id}>
-                      {contract.projectName}
-                    </option>
-                  ))}
-                </select>
-              </div>
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-medium text-neutral-700 whitespace-nowrap">Categoria:</label>
+          <select
+            className="border border-neutral-300 rounded-md px-3 py-1 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
+            value={filters.category}
+            onChange={(e) => setFilters({ ...filters, category: e.target.value })}
+          >
+            <option value="all">Todas</option>
+            {uniqueCategories.map(category => (
+              <option key={category} value={category}>{category}</option>
+            ))}
+          </select>
+        </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-neutral-900 mb-2">Status</label>
-                <select
-                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
-                  value={filters.status}
-                  onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-                >
-                  <option value="all">Todos os Status</option>
-                  {uniqueStatuses.map(status => (
-                    <option key={status} value={status}>{status}</option>
-                  ))}
-                </select>
-              </div>
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-medium text-neutral-700 whitespace-nowrap">Ordenar:</label>
+          <select
+            className="border border-neutral-300 rounded-md px-3 py-1 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
+            value={filters.sortBy}
+            onChange={(e) => setFilters({ ...filters, sortBy: e.target.value })}
+          >
+            <option value="expectedDate">Data Prevista</option>
+            <option value="amount">Valor</option>
+            <option value="status">Status</option>
+            <option value="category">Categoria</option>
+          </select>
+        </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-neutral-900 mb-2">Categoria</label>
-                <select
-                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
-                  value={filters.category}
-                  onChange={(e) => setFilters({ ...filters, category: e.target.value })}
-                >
-                  <option value="all">Todas as Categorias</option>
-                  {uniqueCategories.map(category => (
-                    <option key={category} value={category}>{category}</option>
-                  ))}
-                </select>
-              </div>
+        <div className="flex items-center gap-2">
+          <select
+            className="border border-neutral-300 rounded-md px-3 py-1 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
+            value={filters.sortOrder}
+            onChange={(e) => setFilters({ ...filters, sortOrder: e.target.value })}
+          >
+            <option value="desc">↓ Desc</option>
+            <option value="asc">↑ Asc</option>
+          </select>
+        </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-neutral-900 mb-2">Ordenar Por</label>
-                <select
-                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
-                  value={filters.sortBy}
-                  onChange={(e) => setFilters({ ...filters, sortBy: e.target.value })}
-                >
-                  <option value="expectedDate">Data Prevista</option>
-                  <option value="amount">Valor</option>
-                  <option value="status">Status</option>
-                  <option value="category">Categoria</option>
-                  <option value="receivedDate">Data de Recebimento</option>
-                  <option value="createdAt">Data de Criação</option>
-                </select>
-              </div>
+        {(filters.status !== 'pending' || filters.contractId !== 'all' || filters.category !== 'all' || searchQuery) && (
+          <button
+            onClick={() => {
+              setFilters({ contractId: 'all', status: 'pending', category: 'all', sortBy: 'expectedDate', sortOrder: 'asc' })
+              setSearchQuery('')
+            }}
+            className="ml-2 text-sm text-blue-600 hover:text-blue-800 font-medium"
+          >
+            Limpar filtros
+          </button>
+        )}
+      </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-neutral-900 mb-2">Ordem</label>
-                <select
-                  className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none"
-                  value={filters.sortOrder}
-                  onChange={(e) => setFilters({ ...filters, sortOrder: e.target.value })}
-                >
-                  <option value="asc">Crescente</option>
-                  <option value="desc">Decrescente</option>
-                </select>
-              </div>
-            </div>
+      {/* Search and Add Button */}
+      <div className="flex gap-3 mb-6">
+        <div className="relative flex-1">
+          <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            type="text"
+            placeholder="Buscar recebíveis, clientes, projetos..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-3 border-2 border-neutral-300 rounded-lg bg-white text-neutral-900 placeholder-neutral-500 focus:border-blue-600 focus:outline-none transition-colors"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
+        </div>
+        <button
+          onClick={openAddModal}
+          className="bg-blue-700 text-white px-4 py-3 rounded-lg hover:bg-blue-800 font-medium transition-colors flex items-center gap-2 whitespace-nowrap"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          Adicionar Recebível
+        </button>
+      </div>
+
+      {/* Receivables Table */}
+      {loading ? (
+        <p>Carregando...</p>
+      ) : filteredReceivables.length === 0 ? (
+        <p className="text-neutral-900 font-medium">
+          {searchQuery ? `Nenhum recebível encontrado para "${searchQuery}"` : 'Nenhum recebível ainda'}
+        </p>
+      ) : (
+        <div className="bg-white border border-neutral-200 rounded-lg overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-neutral-50 border-b border-neutral-200">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                    Projeto / Cliente
+                  </th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                    Valor
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                    Data Prevista
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                    Categoria
+                  </th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                    Ações
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-neutral-200">
+                {filteredReceivables.map((receivable: any) => (
+                  <tr key={receivable.id} className="group hover:bg-neutral-50 transition-colors">
+                    <td className="px-4 py-4">
+                      <div>
+                        <div className="font-semibold text-neutral-900">{receivable.contract?.projectName || 'Sem projeto'}</div>
+                        <div className="text-sm text-neutral-600">{receivable.contract?.clientName || '-'}</div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-4 text-right">
+                      <div className="font-bold text-lg text-neutral-900">
+                        R$ {receivable.amount.toLocaleString('pt-BR')}
+                      </div>
+                    </td>
+                    <td className="px-4 py-4">
+                      <span className={`px-2 py-1 rounded-md text-xs font-medium ${
+                        receivable.status === 'received' ? 'bg-green-100 text-green-800' :
+                        receivable.status === 'overdue' ? 'bg-red-100 text-red-800' :
+                        'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {receivable.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4 text-sm text-neutral-900">
+                      {formatDateForDisplay(receivable.expectedDate)}
+                    </td>
+                    <td className="px-4 py-4 text-sm text-neutral-900">
+                      {receivable.category || '-'}
+                    </td>
+                    <td className="px-4 py-4 text-right">
+                      <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        {(receivable.status === 'pending' || receivable.status === 'overdue') && (
+                          <button
+                            onClick={() => markAsReceived(receivable.id, receivable.amount)}
+                            className="bg-green-600 text-white px-2 py-1 rounded text-xs hover:bg-green-700 font-medium transition-colors"
+                            title="Marcar como recebido"
+                          >
+                            ✓
+                          </button>
+                        )}
+                        <button
+                          onClick={() => openEditModal(receivable)}
+                          className="bg-blue-700 text-white px-2 py-1 rounded text-xs hover:bg-blue-800 font-medium transition-colors"
+                          title="Editar recebível"
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          onClick={() => deleteReceivable(receivable.id, receivable)}
+                          className="bg-red-600 text-white px-2 py-1 rounded text-xs hover:bg-red-700 font-medium transition-colors"
+                          title="Excluir recebível"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-          {loading ? (
-            <p>Carregando...</p>
-          ) : receivables.length === 0 ? (
-            <p className="text-neutral-900 font-medium">Nenhuma conta a receber ainda</p>
-          ) : (
-            <div className="space-y-4 max-h-96 overflow-y-auto">
-              {receivables.map((receivable: any) => (
-                <div key={receivable.id} className="bg-white border-2 border-neutral-300 p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <h3 className="font-bold text-lg text-neutral-900">{receivable.contract.projectName}</h3>
-                      <p className="text-sm text-neutral-900 font-medium">Cliente: {receivable.contract.clientName}</p>
-                      <p className="text-sm font-medium text-neutral-900">
-                        Previsto: {formatDateForDisplay(receivable.expectedDate)}
-                      </p>
-                      <p className="text-sm font-semibold text-neutral-900">Valor: R${receivable.amount.toLocaleString()}</p>
-                      {receivable.category && (
-                        <p className="text-sm font-medium text-neutral-900">Categoria: {receivable.category}</p>
-                      )}
-                      <p className="text-sm font-medium text-neutral-900">
-                        Status: <span className={
-                          receivable.status === 'received' ? 'text-green-600' :
-                          receivable.status === 'overdue' ? 'text-red-600' :
-                          'text-yellow-600'
-                        }>{receivable.status}</span>
-                      </p>
-                      {receivable.receivedDate && (
-                        <p className="text-sm text-green-600">
-                          Recebido: {formatDateForDisplay(receivable.receivedDate)}
-                          {receivable.receivedAmount && ` - R$${receivable.receivedAmount.toLocaleString()}`}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex gap-2 ml-4">
-                      <button
-                        onClick={() => editReceivable(receivable)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-sm font-medium transition-colors"
-                      >
-                        Editar
-                      </button>
-                      <button
-                        onClick={() => deleteReceivable(receivable.id)}
-                        className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-sm font-medium transition-colors"
-                      >
-                        Excluir
-                      </button>
-                    </div>
-                  </div>
-                  <div className="mt-2 flex gap-2">
-                    {(receivable.status === 'pending' || receivable.status === 'overdue') && (
-                      <button
-                        onClick={() => markAsReceived(receivable.id, receivable.amount)}
-                        className="text-sm bg-green-600 text-white px-3 py-1 rounded-lg hover:bg-green-700 font-medium transition-colors"
-                      >
-                        Marcar como Recebido
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
-      </div>
+      )}
+
+      {/* Modal */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        title={editingReceivable ? 'Editar Recebível' : 'Adicionar Recebível'}
+        size="lg"
+      >
+        <ReceivableForm
+          receivable={editingReceivable}
+          onSubmit={handleFormSubmit}
+          onCancel={closeModal}
+          contracts={contracts}
+        />
+      </Modal>
     </div>
   )
 }
