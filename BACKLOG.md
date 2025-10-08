@@ -78,13 +78,77 @@ Examples:
 - "Contracts API: Bulk import via CSV with validation and rollback"
 - "Event System: Phase 2 AI agent coordination handlers"
 
-## 📊 Status Categories (Legacy - DO NOT USE BELOW SECTIONS)
+## 📊 Status Categories
 
+### 🔄 DOING (Currently In Progress)
+*Work actively being implemented RIGHT NOW.*
+
+#### **BusinessMetricsService: Dashboard Infrastructure** (ADR-014 Phase 3)
+**Goal**: Build reusable metrics calculation layer as foundation for dashboard
+**Started**: 2025-10-08
+**Approach**: Incremental extraction with unit tests
+
+**Implementation Strategy**: 3-Phase Incremental Approach
+
+**Phase 1: Extract Existing Metrics** (~2 hours) ✅ **COMPLETE (2025-10-08)**
+- [x] Create `BusinessMetricsService` class extending BaseService
+- [x] Extract `getMonthMetrics()` from dashboard API
+  - thisMonthRevenue, thisMonthExpenses, thisMonthProfit, totalProfit
+- [x] Extract `getPendingAmounts(days)` from dashboard API
+  - pendingReceivables, pendingExpenses (filtered by date range)
+- [x] Extract `getOverdueAnalysis()` from dashboard API
+  - overdueReceivables/Expenses amounts, overdueItems list
+- [x] Define TypeScript interfaces for all return types
+- [x] Write unit tests for extracted metrics
+
+**Phase 1 Results**:
+- ✅ `BusinessMetricsService.ts` created (382 lines)
+- ✅ Unit tests created (397 lines, 15+ test cases)
+- ✅ Build successful (4.6s, zero errors)
+- ✅ Type-safe interfaces for all metrics
+- ✅ Team-scoped security by default
+- ✅ Matches existing dashboard API behavior exactly
+
+**Phase 2: Complete Extraction** (~2 hours) ⏱️ **NEXT SESSION**
+- [ ] Extract `getCashFlowHealth()` from dashboard API
+- [ ] Extract `getUpcomingItems(days)` from dashboard API
+- [ ] Extract `getMonthlyTrend(months)` from dashboard API
+- [ ] Refactor `/api/dashboard/route.ts` to use service
+- [ ] Validate dashboard works identically (zero regressions)
+- [ ] Update unit tests
+
+**Phase 3: New Advanced Metrics** (~2-3 hours) ⏱️ **FUTURE SESSION**
+- [ ] Implement `calculateCashFlowForecast(days)` - NEW
+  - Projected balances, cash gaps, inflows/outflows timeline
+- [ ] Implement `getReceivablesAging()` - NEW
+  - Aging buckets (0-30, 31-60, 61-90, 90+), DSO calculation
+- [ ] Implement `getProjectProfitability(contractId?)` - NEW
+  - Revenue vs expenses per contract, profit margin %
+- [ ] Implement `getExpenseBreakdown(period)` - NEW
+  - Total by category, percentage breakdown
+- [ ] Implement `getClientRevenueRanking(limit)` - NEW
+  - Top clients by revenue, concentration risk
+- [ ] Write unit tests for new metrics
+
+**Technical Decisions**:
+- ✅ Service layer pattern (extends BaseService)
+- ✅ TypeScript interfaces for type safety
+- ❌ NO caching in Phase 1 (add later if needed)
+- ✅ Unit tests written as we go (scalable testing)
+- ✅ Team-scoped via teamScopedPrisma
+- ✅ Date utilities from existing `lib/date-utils.ts`
+
+**Current Focus**: Phase 1 - Extract existing metrics with minimal risk
+**Dependencies**: None - uses existing service patterns
+**Estimated Effort**: 6-7 hours total (spread across 3 sessions)
+**Related**: ADR-014 Phase 3, `/app/api/dashboard/route.ts` (218 lines to refactor)
+
+---
 
 ### 📋 TO DO (Immediate Priorities)
 *Ready to implement, explicitly prioritized.*
 
-#### **1. Dashboard Phase 2: UX/UI Design Strategy** (ADR-014 Priority)
+#### **Dashboard Phase 2: UX/UI Design Strategy** (ADR-014 Priority)
 **Goal**: Define how to separate daily vs periodic metrics without overwhelming users
 
 **Design Exploration Required**:
@@ -101,38 +165,6 @@ Examples:
 **Dependencies**: User feedback/design input required before implementation
 **Estimated Effort**: 4-6 hours (design + prototyping)
 **Related**: ADR-014 sections on Dashboard strategy
-
----
-
-#### **2. BusinessMetricsService: Dashboard Infrastructure** (ADR-014 Phase 3)
-**Goal**: Build reusable metrics calculation layer as foundation for dashboard
-
-**Architecture**:
-- Create `lib/services/BusinessMetricsService.ts`
-- Centralized metric calculations
-- Cacheable results
-- Reusable across all dashboard views
-- Foundation for future analytics
-
-**Metrics to Implement**:
-- [ ] Cash flow projections (next 30/60/90 days)
-- [ ] Revenue vs expenses trends (daily/weekly/monthly)
-- [ ] Contract completion rate
-- [ ] Overdue receivables analysis
-- [ ] Category breakdowns (spending by type)
-- [ ] Burn rate and runway calculations
-- [ ] Client payment patterns
-
-**Technical Requirements**:
-- [ ] Service layer following existing patterns
-- [ ] TypeScript interfaces for metric types
-- [ ] Caching strategy (Redis or in-memory)
-- [ ] Unit tests for calculations
-- [ ] Documentation in service file
-
-**Dependencies**: None - can build independently of UX decisions
-**Estimated Effort**: 4-6 hours
-**Related**: ADR-014 Phase 3, existing service patterns in `lib/services/`
 
 ---
 
@@ -234,57 +266,63 @@ window.addEventListener('arnaldo-data-updated', () => {
 **📁 For older completed work, see [DONE.md](/DONE.md)**
 
 ---
-## 🎯 BACKLOG PRIORITIZATION ANALYSIS (2025-09-30 - UPDATED)
+## 🎯 BACKLOG PRIORITIZATION ANALYSIS (Updated 2025-10-08)
 
-### Strategic Context (Updated 2025-09-30)
-**Current State**: Command Agent Phases 1 & 2 complete, core CRUD functional! 🎉
+### Strategic Context (Updated 2025-10-08)
+**Current State**: All Phase 1 AI agents complete! 🎉
 **AI Agent Status**:
 - Setup Assistant ✅ (100% extraction accuracy)
 - Financial Query ✅ (Text-to-SQL with Claude)
-- Command Agent 🔄 (Phases 1-2 ✅, Phase 3 in progress)
+- **Operations Agent ✅ (Natural Language CRUD - previously "Command Agent")** - COMPLETE with Global Chat integration
 **Foundation Status**: Service layer ✅, Event system ✅, Validation ✅, Team isolation ✅
-**Next Major Milestone**: Complete Command Agent (Phases 3-5) → UI Integration
+**Next Major Milestone**: Dashboard enhancements → Phase 2 AI features (Audit, Insights)
 
-### 🚨 **PRIORITY SHIFT: AI Command Agent Added**
+### 🎉 **Operations Agent (Command Agent) - DELIVERED**
 
-**New Focus**: Complete the AI agent ecosystem BEFORE UX overhaul
-**Rationale**: Command Agent is the missing piece that makes AI truly useful for daily tasks
+**Note**: The "Command Agent" mentioned in earlier strategic planning was successfully delivered as **OperationsAgentService** with the following capabilities:
 
-### High-Priority Items (REVISED Recommended Next Steps)
+**Delivered Features** (via OperationsAgentService + Global Chat):
+- ✅ Natural language CRUD: "salário Pedro R$5k todo dia 5" creates recurring expense
+- ✅ Intent classification & parameter extraction
+- ✅ Smart inference & disambiguation
+- ✅ Query capabilities: "Quanto faturei em setembro?"
+- ✅ Update operations: "aumentar o salário do Pedro para 5500 a partir de Janeiro"
+- ✅ Delete operations with confirmation
+- ✅ Global accessibility via floating chat (Cmd/Ctrl + /)
+- ✅ Live data refresh across all pages
+- ✅ Conversation context preservation
 
-#### 🥇 Tier 1: AI Command Agent - Natural Language CRUD (2-3 weeks) ⭐ **NEW**
-**Why First**: Completes the AI trinity and delivers immediate value
-- **Impact**: VERY HIGH - Core product differentiator, daily use feature
-- **Risk**: LOW - All infrastructure exists (service layer, validation, events)
-- **Dependencies**: Financial Query ✅, Setup Assistant ✅, Service layer ✅
-- **Rationale**: "R$50 em gasolina ontem" → done. This is the killer feature.
-- **ROI**: Massive - reduces friction for every financial operation
-
-**The AI Trinity**:
+**The AI Trinity - COMPLETE**:
 1. ✅ Setup Assistant = Batch import (onboarding)
 2. ✅ Financial Query = Read data (insights)
-3. **🆕 Command Agent = CRUD operations (daily tasks)** ← Missing piece!
+3. ✅ **Operations Agent = CRUD operations (daily tasks)** ← DELIVERED!
 
-**Why This Changes Everything**:
-- Users can create expenses/receivables in seconds vs minutes
-- Natural language = no form friction
-- Smart inference = less data entry
-- Conversation context = progressive disclosure
-- Tool integration = unified AI experience
+**Why This Was Delivered Incrementally**:
+- ADR-012: Operations Agent incremental rebuild (tool-based architecture)
+- ADR-013: Agentic loop refactor (reliability improvements)
+- Global Chat integration (2025-10-08): Universal access point
+
+### High-Priority Items (REVISED - Post AI Trinity Completion)
+
+#### 🥇 Tier 1: Dashboard Enhancements (1-2 weeks)
+**Why First**: Natural next step after AI foundation is complete
+- **Impact**: HIGH - Daily-use feature, business intelligence
+- **Risk**: LOW - Well-defined metrics and service patterns exist
+- **Dependencies**: None - can build now
+- **Rationale**: Complete dashboard with metrics service + UX strategy
+- **ROI**: Better business insights, informed decision-making
 
 **Deliverables**:
-1. Intent classification & parameter extraction (Week 1)
-2. CRUD operations for all entities (Week 1)
-3. Smart inference & disambiguation (Week 2)
-4. Batch operations & document support (Week 2)
-5. UI integration & testing (Week 3)
+1. BusinessMetricsService with reusable calculations (4-6 hours) 🔄 IN PROGRESS
+2. Dashboard UX strategy decision (tabs vs pages vs cards) (4-6 hours)
+3. Implementation of chosen dashboard approach (1 week)
 
 #### 🥈 Tier 2: AI Agent Error Handling Standardization (3-4 days)
 **Why Second**: Quality improvement for all 3 agents
 - **Impact**: MEDIUM-HIGH - Better UX across entire AI system
 - **Risk**: LOW - Well-defined technical task
-- **Dependencies**: Command Agent complete (benefit from lessons learned)
-- **Rationale**: Standardize error handling across Setup, Query, and Command agents
+- **Dependencies**: None - can build on existing agents
+- **Rationale**: Standardize error handling across Setup, Query, and Operations agents
 - **ROI**: Immediate improvement to all existing AI features
 
 **Deliverables**:
@@ -294,18 +332,12 @@ window.addEventListener('arnaldo-data-updated', () => {
 4. Error monitoring integration
 
 #### 🥉 Tier 3: Customer Journey & UX Optimization (3-4 weeks)
-**Why Third**: Foundation for future improvements (moved from #1)
+**Why Third**: Foundation for future improvements
 - **Impact**: HIGH - Affects retention and adoption
 - **Risk**: LOW - Research-driven, iterative implementation
-- **Dependencies**: Command Agent complete (understand new AI-first workflows)
-- **Rationale**: UX research AFTER Command Agent to understand new user patterns
+- **Dependencies**: Dashboard complete (understand full AI-first workflows)
+- **Rationale**: UX research AFTER dashboard to understand complete user patterns with AI
 - **ROI**: Every future feature benefits from better UX foundation
-
-**Why Moved to #3**:
-- Command Agent changes user workflows significantly
-- Better to understand AI-first patterns before redesigning UX
-- Research should include how users interact with Command Agent
-- Can design for AI-first platform (ADR-003 vision)
 
 **Deliverables**:
 1. User journey maps (including AI agent usage patterns)
@@ -314,11 +346,11 @@ window.addEventListener('arnaldo-data-updated', () => {
 4. Quick wins implementation
 
 #### 🏅 Tier 4: Custom KPI Dashboard Builder (3-4 weeks)
-**Why Fourth**: Advanced feature after core AI is complete
+**Why Fourth**: Advanced feature after core dashboard exists
 - **Impact**: HIGH - Unique competitive advantage
 - **Risk**: MEDIUM - Complex technical implementation
-- **Dependencies**: Command Agent ✅, Query Agent ✅, UX research insights
-- **Rationale**: Build on top of complete AI foundation
+- **Dependencies**: BusinessMetricsService ✅, Dashboard UX complete, Query Agent ✅
+- **Rationale**: Build advanced customization on top of solid dashboard foundation
 - **ROI**: Potential game-changer for power users
 
 **Deliverables**:
@@ -368,41 +400,38 @@ window.addEventListener('arnaldo-data-updated', () => {
 
 ---
 
-### 🎯 RECOMMENDED 3-MONTH ROADMAP (REVISED)
+### 🎯 RECOMMENDED 3-MONTH ROADMAP (Updated 2025-10-08)
 
-**Month 1 (Weeks 1-3)**: AI Command Agent 🚀 **PRIORITY**
-- ✅ Week 1 (Days 1-3): Foundation & architecture (intent, confirmation, tools)
-- ✅ Week 1 (Days 4-7): Core CRUD operations (all 4 entities)
-- ✅ Week 2 (Days 1-4): Intelligence & context (disambiguation, inference)
-- ✅ Week 2 (Days 5-7): Multi-operation & document support
-- ✅ Week 3: UI integration, testing, polish
-
-**Week 4**: Error Handling Standardization
-- ✅ Standardize errors across all 3 agents (Setup, Query, Command)
-- ✅ User-friendly messages, retry logic, monitoring
+**Month 1 (Weeks 1-4)**: Dashboard Foundation & Enhancements 📊 **CURRENT PRIORITY**
+- 🔄 Week 1 (Days 1-3): BusinessMetricsService implementation (IN PROGRESS)
+- ⏱️ Week 1 (Days 4-7): Dashboard UX strategy decision + mockups
+- ⏱️ Week 2-3: Dashboard implementation (chosen approach)
+- ⏱️ Week 4: Error handling standardization (all 3 agents)
 
 **Month 2 (Weeks 5-8)**: UX Foundation & Research
-- ✅ Week 5: Customer journey mapping (with AI agent workflows)
-- ✅ Week 6-7: UX improvements (AI-first navigation, quick wins)
-- ✅ Week 8: Dashboard tab optimization (cash flow, profitability)
+- ⏱️ Week 5: Customer journey mapping (with AI agent workflows)
+- ⏱️ Week 6-7: UX improvements (AI-first navigation, quick wins)
+- ⏱️ Week 8: Phase 2 AI agents planning or additional UX polish
 - Small win: Receivable title enhancement (2 days)
 
-**Month 3 (Weeks 9-12)**: Dashboard Innovation
-- ✅ Week 9-10: Custom KPI dashboard builder (core features)
-- ✅ Week 11-12: Dashboard polish + export features
+**Month 3 (Weeks 9-12)**: Dashboard Innovation & Phase 2 AI
+- ⏱️ Week 9-10: Custom KPI dashboard builder (core features)
+- ⏱️ Week 11-12: Dashboard polish + export features OR Phase 2 AI agents (Audit, Insights)
 - Planning: Frontend infrastructure refactor strategy
 
-**Key Difference from Original Roadmap**:
-- **Command Agent moved to Month 1** (was not in original plan)
-- **UX research moved to Month 2** (was Month 1) - better timing after Command Agent
-- **Dashboard builder moved to Month 3** (was Month 2) - build on complete AI foundation
+**Recent Completion (2025-10-08)**:
+- ✅ AI Trinity Complete (Setup, Query, Operations)
+- ✅ Global Chat with live data refresh
+- ✅ Full CRUD operations via natural language
+- ✅ Event-driven architecture foundation
 
 **Strategic Rationale**:
-1. Complete AI trinity first (Setup → Query → Command)
-2. Understand AI-first user patterns before UX overhaul
-3. Build advanced features (dashboard) on solid AI foundation
+1. ✅ AI trinity complete - Focus on dashboard and business intelligence
+2. Build metrics infrastructure before advanced visualizations
+3. Understand complete user workflows (AI + dashboard) before UX overhaul
+4. Phase 2 AI agents (Audit, Insights) can build on mature data patterns
 
-**Ongoing Throughout**: Monitor Command Agent usage patterns, collect user feedback on AI interactions
+**Ongoing Throughout**: Monitor Operations Agent usage patterns, collect user feedback on AI interactions
 
 ---
 
@@ -1194,14 +1223,18 @@ window.addEventListener('arnaldo-data-updated', () => {
 ## 📈 Metrics & Progress
 
 ### Current System Status
+- **AI Agents**: ✅ **TRINITY COMPLETE** - Setup Assistant, Financial Query, Operations Agent (with Global Chat)
 - **Setup Assistant**: ✅ **COMPLETE** - 100% extraction accuracy achieved with sub-batch splitting
+- **Financial Query Agent**: ✅ **COMPLETE** - Text-to-SQL approach with conversational interface
+- **Operations Agent**: ✅ **COMPLETE** - Natural language CRUD with global accessibility
 - **Excel Processing**: ✅ **COMPLETE** - Token optimization (90% reduction) + sub-batch splitting for large sheets
 - **Contract Management**: ✅ **COMPLETE** - All bugs fixed (modal responsive + auto-numbering)
 - **Multi-File Processing**: ✅ **COMPLETE** - Sequential processing with retry logic
 - **Architecture**: ✅ **COMPLETE** - Service layer, validation, team context, event system all implemented
 
 ### Overall Project Health
-- **Documentation**: 100% health score
+- **Documentation**: 99% health score
+- **AI Agents**: Phase 1 complete (Setup, Query, Operations)
 - **Core Features**: 100% complete (all phases shipped)
 - **Extraction Accuracy**: ~100% (sub-batch splitting solves 8K output token limit)
 - **Architecture**: Modern and complete

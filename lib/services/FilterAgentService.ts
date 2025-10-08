@@ -46,7 +46,7 @@ export class FilterAgentService {
     const systemPrompt = this.buildSystemPrompt(filterContext)
 
     const response = await this.anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
+      model: 'claude-sonnet-4-20250514',
       max_tokens: 1000,
       temperature: 0.1, // Low temperature for consistency
       system: systemPrompt,
@@ -67,7 +67,15 @@ export class FilterAgentService {
     console.log('[FilterAgent] Raw Claude response:', content.text)
 
     try {
-      const parsed = JSON.parse(content.text)
+      // Strip markdown code blocks if present (Claude Sonnet 4 sometimes wraps JSON in ```json ... ```)
+      let jsonText = content.text.trim()
+      if (jsonText.startsWith('```json')) {
+        jsonText = jsonText.replace(/^```json\s*/, '').replace(/\s*```$/, '')
+      } else if (jsonText.startsWith('```')) {
+        jsonText = jsonText.replace(/^```\s*/, '').replace(/\s*```$/, '')
+      }
+
+      const parsed = JSON.parse(jsonText)
       console.log('[FilterAgent] Parsed successfully:', JSON.stringify(parsed, null, 2))
       return parsed as FilterResult
     } catch (error) {
@@ -84,8 +92,11 @@ export class FilterAgentService {
     const schema = this.getPrismaSchema(filterContext.entity)
     const examples = this.getExamples(filterContext.entity)
     const statuses = this.getAvailableStatuses(filterContext.entity)
+    const today = new Date().toISOString()
 
     return `You are a Prisma query generator for ArqCashflow financial data.
+
+CURRENT DATE: ${today}
 
 DATABASE SCHEMA:
 ${schema}
