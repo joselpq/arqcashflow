@@ -36,6 +36,7 @@ function ReceivablesPageContent() {
     const params = new URLSearchParams()
 
     // Add filters to URL (skip defaults to keep URL clean)
+    if (filters.contractId !== 'all') params.set('contractId', filters.contractId)
     if (filters.status !== 'pending') params.set('status', filters.status)
     if (filters.category !== 'all') params.set('category', filters.category)
     if (filters.sortBy !== 'expectedDate') params.set('sortBy', filters.sortBy)
@@ -401,7 +402,7 @@ function ReceivablesPageContent() {
           )}
 
           {/* Copy Link Button - show when filters are active */}
-          {(filters.status !== 'pending' || filters.category !== 'all' || filters.sortBy !== 'expectedDate' || filters.sortOrder !== 'asc' || searchQuery) && (
+          {(filters.contractId !== 'all' || filters.status !== 'pending' || filters.category !== 'all' || filters.sortBy !== 'expectedDate' || filters.sortOrder !== 'asc' || searchQuery) && (
             <button
               onClick={() => {
                 navigator.clipboard.writeText(window.location.href)
