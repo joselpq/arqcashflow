@@ -34,6 +34,16 @@ export default function ContractsTab() {
   })
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '')
   const [activeQuickFilter, setActiveQuickFilter] = useState<string | null>(null)
+  const [moreFiltersOpen, setMoreFiltersOpen] = useState(false)
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
+
+  // Count active filters (excluding defaults)
+  const getActiveFilterCount = () => {
+    let count = 0
+    if (filters.status !== 'active') count++
+    if (filters.category !== 'all') count++
+    return count
+  }
 
   // Sync filters and search to URL
   useEffect(() => {
@@ -97,7 +107,24 @@ export default function ContractsTab() {
     // Apply quick filter
     if (activeQuickFilter === 'high-value') {
       filtered = filtered.filter((contract: any) => (contract.totalValue || 0) > 50000)
+    } else if (activeQuickFilter === 'completed-this-month') {
+      const now = new Date()
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+      filtered = filtered.filter((contract: any) => {
+        if (contract.status !== 'completed' || !contract.completedDate) return false
+        const completedDate = new Date(contract.completedDate)
+        return completedDate >= startOfMonth && completedDate <= endOfMonth
+      })
+    } else if (activeQuickFilter === 'last-30-days') {
+      const today = new Date()
+      const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000)
+      filtered = filtered.filter((contract: any) => {
+        const createdDate = new Date(contract.createdAt)
+        return createdDate >= thirtyDaysAgo && createdDate <= today
+      })
     }
+    // Note: 'active' and 'cancelled' are handled by status filter
     // Note: 'active' is handled by status filter, not here
 
     // Apply search filter
@@ -352,39 +379,128 @@ export default function ContractsTab() {
 
   return (
     <div className="min-h-screen bg-neutral-50 px-4 sm:px-6 lg:px-8 py-6">
-      {/* Header with Add Button */}
-      <div className="flex justify-end mb-3">
-        <button
-          onClick={openAddModal}
-          className="bg-blue-700 text-white px-4 py-2.5 rounded-lg hover:bg-blue-800 font-medium transition-colors flex items-center gap-2 whitespace-nowrap shadow-sm"
-          aria-label="Adicionar novo contrato"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          <span className="hidden sm:inline">Adicionar Contrato</span>
-          <span className="sm:hidden">Adicionar</span>
-        </button>
-      </div>
-
-      {/* Quick Filter Chips */}
+      {/* Quick Filter Chips + Add Button (merged row - saves ~40px) */}
       <div className="mb-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <button onClick={() => {
-            if (activeQuickFilter === 'active') {
-              setFilters({...filters, status: 'all'})
-              setActiveQuickFilter(null)
-            } else {
-              setFilters({...filters, status: 'active'})
-              setActiveQuickFilter('active')
-            }
-          }} className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${activeQuickFilter === 'active' ? 'bg-green-100 text-green-800 border border-green-300' : 'bg-neutral-100 text-neutral-700 border border-neutral-200 hover:bg-neutral-200'}`}>✅ Ativos</button>
-          <button onClick={() => setActiveQuickFilter(activeQuickFilter === 'high-value' ? null : 'high-value')} className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${activeQuickFilter === 'high-value' ? 'bg-purple-100 text-purple-800 border border-purple-300' : 'bg-neutral-100 text-neutral-700 border border-neutral-200 hover:bg-neutral-200'}`}>💰 Acima de R$50k</button>
+        <div className="flex flex-wrap items-center gap-2 justify-between">
+          {/* Left side: Quick filter chips */}
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => {
+                if (activeQuickFilter === 'active') {
+                  setFilters({ ...filters, status: 'all' })
+                  setActiveQuickFilter(null)
+                } else {
+                  setFilters({ ...filters, status: 'active' })
+                  setActiveQuickFilter('active')
+                }
+              }}
+              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                activeQuickFilter === 'active'
+                  ? 'bg-green-100 text-green-800 border border-green-300'
+                  : 'bg-neutral-100 text-neutral-700 border border-neutral-200 hover:bg-neutral-200'
+              }`}
+            >
+              ✅ Ativos
+            </button>
+
+            <button
+              onClick={() => {
+                if (activeQuickFilter === 'high-value') {
+                  setActiveQuickFilter(null)
+                } else {
+                  setActiveQuickFilter('high-value')
+                }
+              }}
+              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                activeQuickFilter === 'high-value'
+                  ? 'bg-purple-100 text-purple-800 border border-purple-300'
+                  : 'bg-neutral-100 text-neutral-700 border border-neutral-200 hover:bg-neutral-200'
+              }`}
+            >
+              💰 Acima de R$50k
+            </button>
+
+            {/* [+ Mais] dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setMoreFiltersOpen(!moreFiltersOpen)}
+                className="px-3 py-1.5 rounded-full text-sm font-medium transition-colors bg-neutral-100 text-neutral-700 border border-neutral-200 hover:bg-neutral-200 flex items-center gap-1"
+              >
+                + Mais
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {moreFiltersOpen && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setMoreFiltersOpen(false)} />
+                  <div className="absolute left-0 top-full mt-1 w-56 bg-white rounded-lg shadow-lg border border-neutral-200 py-1 z-20">
+                    <button
+                      onClick={() => {
+                        setActiveQuickFilter(activeQuickFilter === 'completed-this-month' ? null : 'completed-this-month')
+                        setMoreFiltersOpen(false)
+                      }}
+                      className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 ${
+                        activeQuickFilter === 'completed-this-month'
+                          ? 'bg-blue-50 text-blue-700 font-medium'
+                          : 'hover:bg-neutral-50'
+                      }`}
+                    >
+                      ✅ Concluídos Este Mês
+                      {activeQuickFilter === 'completed-this-month' && <span className="ml-auto text-blue-600">✓</span>}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setActiveQuickFilter(activeQuickFilter === 'last-30-days' ? null : 'last-30-days')
+                        setMoreFiltersOpen(false)
+                      }}
+                      className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 ${
+                        activeQuickFilter === 'last-30-days'
+                          ? 'bg-blue-50 text-blue-700 font-medium'
+                          : 'hover:bg-neutral-50'
+                      }`}
+                    >
+                      📅 Últimos 30 Dias
+                      {activeQuickFilter === 'last-30-days' && <span className="ml-auto text-blue-600">✓</span>}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setFilters({ ...filters, status: 'cancelled' })
+                        setActiveQuickFilter('cancelled')
+                        setMoreFiltersOpen(false)
+                      }}
+                      className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 ${
+                        activeQuickFilter === 'cancelled'
+                          ? 'bg-blue-50 text-blue-700 font-medium'
+                          : 'hover:bg-neutral-50'
+                      }`}
+                    >
+                      ❌ Cancelados
+                      {activeQuickFilter === 'cancelled' && <span className="ml-auto text-blue-600">✓</span>}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Right side: Add button */}
+          <button
+            onClick={openAddModal}
+            className="bg-blue-700 text-white px-4 py-2 rounded-lg hover:bg-blue-800 font-medium transition-colors flex items-center gap-2 whitespace-nowrap shadow-sm text-sm"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            <span className="hidden sm:inline">Adicionar Contrato</span>
+            <span className="sm:hidden">Adicionar</span>
+          </button>
         </div>
       </div>
 
-      {/* Compact Filters - Single Row (Search + Status + Category only) */}
-      <div className="mb-6">
+      {/* Compact Filters - Desktop (hidden on mobile) */}
+      <div className="mb-6 hidden md:block">
         <div className="flex flex-wrap items-center gap-2 p-3 bg-white rounded-lg border border-neutral-200 shadow-sm">
           {/* Search Input - Takes remaining space */}
           <div className="relative flex-1 min-w-[200px]">
@@ -438,7 +554,7 @@ export default function ContractsTab() {
           </select>
 
           {/* Clear Filters Button - Only shows when filters are active */}
-          {(filters.status !== 'active' || filters.category !== 'all' || searchQuery) && (
+          {(filters.status !== 'active' || filters.category !== 'all' || searchQuery || activeQuickFilter) && (
             <button
               onClick={() => {
                 setFilters({ status: 'active', category: 'all', sortBy: 'signedDate', sortOrder: 'desc' })
@@ -453,7 +569,7 @@ export default function ContractsTab() {
           )}
 
           {/* Copy Link Button - show when filters are active */}
-          {(filters.status !== 'active' || filters.category !== 'all' || filters.sortBy !== 'createdAt' || filters.sortOrder !== 'desc' || searchQuery) && (
+          {(filters.status !== 'active' || filters.category !== 'all' || filters.sortBy !== 'createdAt' || filters.sortOrder !== 'desc' || searchQuery || activeQuickFilter) && (
             <button
               onClick={() => {
                 navigator.clipboard.writeText(window.location.href)
@@ -471,6 +587,130 @@ export default function ContractsTab() {
           )}
         </div>
       </div>
+
+      {/* Mobile Filters - Collapsed (shown only on mobile) */}
+      <div className="mb-6 md:hidden">
+        <div className="flex items-center gap-2 p-3 bg-white rounded-lg border border-neutral-200 shadow-sm">
+          {/* Search Input */}
+          <div className="relative flex-1">
+            <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              placeholder="Buscar..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-8 py-2.5 text-sm border border-neutral-300 rounded-md bg-white text-neutral-900 placeholder-neutral-500 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 transition-colors"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
+
+          {/* Filters Button with Badge */}
+          <button
+            onClick={() => setMobileFiltersOpen(true)}
+            className="relative px-4 py-2.5 bg-neutral-100 text-neutral-700 rounded-md font-medium text-sm hover:bg-neutral-200 transition-colors whitespace-nowrap flex items-center gap-2 min-h-[44px]"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+            </svg>
+            Filtros
+            {getActiveFilterCount() > 0 && (
+              <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                {getActiveFilterCount()}
+              </span>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile Filter Drawer */}
+      {mobileFiltersOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 z-40"
+            onClick={() => setMobileFiltersOpen(false)}
+          />
+
+          {/* Bottom Sheet */}
+          <div className="fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-2xl z-50 max-h-[80vh] overflow-y-auto">
+            {/* Header */}
+            <div className="sticky top-0 bg-white border-b border-neutral-200 px-4 py-4 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-neutral-900">Filtros</h3>
+              <button
+                onClick={() => setMobileFiltersOpen(false)}
+                className="p-2 hover:bg-neutral-100 rounded-full transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Filter Options */}
+            <div className="p-4 space-y-4">
+              {/* Status */}
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">Status</label>
+                <select
+                  className="w-full border border-neutral-300 rounded-lg px-4 py-3 text-base bg-white text-neutral-900 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  value={filters.status}
+                  onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+                >
+                  <option value="all">Todos</option>
+                  <option value="active">Ativos</option>
+                  <option value="completed">Finalizados</option>
+                  <option value="cancelled">Cancelados</option>
+                </select>
+              </div>
+
+              {/* Category */}
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">Categoria</label>
+                <select
+                  className="w-full border border-neutral-300 rounded-lg px-4 py-3 text-base bg-white text-neutral-900 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  value={filters.category}
+                  onChange={(e) => setFilters({ ...filters, category: e.target.value })}
+                >
+                  <option value="all">Todas</option>
+                  {uniqueCategories.map(category => (
+                    <option key={category} value={category}>{category}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Footer Actions */}
+            <div className="sticky bottom-0 bg-white border-t border-neutral-200 p-4 flex gap-3">
+              <button
+                onClick={() => {
+                  setFilters({ status: 'active', category: 'all', sortBy: 'signedDate', sortOrder: 'desc' })
+                  setActiveQuickFilter(null)
+                }}
+                className="flex-1 px-4 py-3 text-blue-600 bg-blue-50 rounded-lg font-medium hover:bg-blue-100 transition-colors min-h-[48px]"
+              >
+                Limpar
+              </button>
+              <button
+                onClick={() => setMobileFiltersOpen(false)}
+                className="flex-1 px-4 py-3 text-white bg-blue-600 rounded-lg font-medium hover:bg-blue-700 transition-colors min-h-[48px]"
+              >
+                Aplicar
+              </button>
+            </div>
+          </div>
+        </>
+      )}
 
         {/* Contract Table */}
         {loading ? (

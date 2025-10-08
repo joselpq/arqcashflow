@@ -1,7 +1,7 @@
 # ArqCashflow Development Backlog
 
 **Purpose**: Central source of truth for project priorities and development status
-**Last Updated**: 2025-10-07 (2C Quick Filters Enhanced - [+ Mais] dropdown complete for Expenses tab)
+**Last Updated**: 2025-10-08 (2C/2D Compact Filters Complete - All tabs enhanced; 2E AI Filtering documented)
 **Update Frequency**: Every LLM session MUST update this document when completing tasks or discovering new requirements
 
 ## 🚨 CRITICAL INSTRUCTIONS FOR LLM AGENTS
@@ -83,145 +83,50 @@ Examples:
 ### 🔄 DOING (Currently In Progress)
 *Active work with real-time progress tracking. Can persist between sessions if work is incomplete.*
 
-#### **2C Extended: Apply [+ Mais] Dropdown to Remaining Tabs** ⏳ IN PROGRESS
-**Status**: Expenses tab complete, Receivables & Projetos pending
+#### **2E: AI Natural Language Filtering - Implementation** 🚧 NEXT
+**Status**: Architecture documented in ADR-014, ready to implement
+**Decision**: Trust-the-LLM approach - Prisma query object generation
+**Estimated Effort**: 8-12 hours total
 
-**Completed (Expenses tab only)**:
-- ✅ Merged chips + Add button into single row (saves ~40px vertical space)
-- ✅ Added [+ Mais] dropdown with additional presets:
-  - 📅 Últimos 7 Dias
-  - 📅 Últimos 30 Dias
-  - ❌ Cancelados
-  - 📝 Sem Categoria
-- ✅ Visual active state (blue highlight + checkmark)
-- ✅ Toggle behavior (click to select/deselect)
-- ✅ Fixed "× Limpar" to show when any quick filter is active
-- ✅ Fixed "Copiar Link" to include quick filter state
+**Architecture Summary**:
+- LLM receives Prisma schema + user input
+- Returns Prisma query object (`where`, `orderBy`, `interpretation`)
+- Direct execution, zero preprocessing
+- No fuzzy matching, no custom handlers
 
-**Pending (Receivables & Projetos tabs)**:
-- [ ] Apply same [+ Mais] dropdown pattern to Receivables
-  - Presets: Últimos 7 Dias, Últimos 30 Dias, Recebidos Este Mês, etc.
-- [ ] Apply same [+ Mais] dropdown pattern to Projetos
-  - Presets: Concluídos Este Mês, Últimos 30 Dias, etc.
-- [ ] Merge chips + Add button layout on both tabs
+**Implementation Phases**:
+- [ ] **Phase 1: Backend Service** (4-6 hours)
+  - [ ] Create `lib/services/FilterAgentService.ts`
+    - Prisma query generation
+    - System prompt with schema context
+    - Examples for common query patterns
+  - [ ] Create API endpoint `/api/filters/ai`
+    - Parse filter via FilterAgentService
+    - Execute Prisma query with team isolation
+    - Return results + interpretation
+- [ ] **Phase 2: Frontend Integration** (3-4 hours)
+  - [ ] Create `app/components/AdvancedFilterModal.tsx`
+    - Textarea with examples
+    - Loading + result states
+    - Interpretation display
+    - Results preview
+  - [ ] Add modal trigger to [+ Mais] dropdown (all 3 tabs)
+    - Expenses
+    - Receivables
+    - Contracts/Projetos
+- [ ] **Phase 3: Testing & Refinement** (1-2 hours)
+  - [ ] Test common query patterns
+  - [ ] Validate LLM accuracy (>95% target)
+  - [ ] Error handling and user feedback
 
-**Files Modified So Far**:
-- `app/expenses/page.tsx` (complete)
-- `app/receivables/page.tsx` (needs update)
-- `app/projetos/components/ContractsTab.tsx` (needs update)
+**Key Features to Support**:
+- ✅ Boolean logic (OR, AND, NOT)
+- ✅ Sorting (asc/desc)
+- ✅ Date ranges (relative + absolute)
+- ✅ Numeric comparisons (gt, lt, gte, lte)
+- ✅ Text search (case-insensitive, nested relations)
 
-**Estimated Time Remaining**: 10-15 minutes
-
----
-
-**2C. Quick Filter Chips** (2-3 hours) - VISUAL ENHANCEMENT
-- [ ] Design chip UI above tables
-  - [ ] Define chip component with hover/active states
-  - [ ] Design layout (horizontal scroll on mobile)
-  - [ ] Create icons for common filters
-- [ ] Implement common filter presets
-  - [ ] Define presets per entity (Atrasados, Este Mês, > R$10k, etc.)
-  - [ ] Create preset configuration structure
-  - [ ] Implement toggle behavior (single/multi-select)
-- [ ] Add visual indicator for active chips
-  - [ ] Highlight selected chips
-  - [ ] Show count badge if applicable
-- [ ] Integrate with existing filter state
-  - [ ] Update URL when chip selected
-  - [ ] Sync with dropdown filters
-  - [ ] Handle conflicts gracefully
-- [ ] Make chips customizable per entity type
-  - [ ] Projetos: Ativos, Finalizados Este Mês, > R$50k
-  - [ ] Recebíveis: Atrasados, Este Mês, > R$10k
-  - [ ] Despesas: Vencendo Esta Semana, Recorrentes, > R$5k
-
-**Visual Concept**:
-```
-┌────────────────────────────────────────────┐
-│ [Atrasados] [Este Mês] [> R$10k] [+ Mais] │  ← Quick toggle chips
-└────────────────────────────────────────────┘
-┌────────────────────────────────────────────┐
-│ [🔍 Search] [Status ▼] [Category ▼]       │  ← Existing filters
-└────────────────────────────────────────────┘
-```
-
----
-
-**2D. Mobile Filter Drawer** (2-3 hours) - MOBILE UX
-- [ ] Detect mobile viewport (<480px)
-  - [ ] Add useMediaQuery hook or CSS media queries
-  - [ ] Test breakpoint responsiveness
-- [ ] Collapse filters into collapsible section/drawer
-  - [ ] Design drawer component (bottom sheet or slide-down)
-  - [ ] Implement open/close animations
-  - [ ] Add backdrop overlay
-- [ ] Add badge showing active filter count
-  - [ ] Calculate active filter count
-  - [ ] Display badge on collapsed button
-- [ ] Implement bottom sheet modal for filter selection
-  - [ ] Create modal with filter controls
-  - [ ] Add "Aplicar" and "Limpar" buttons
-  - [ ] Handle modal state management
-- [ ] Ensure touch-friendly interactions
-  - [ ] Larger touch targets (min 44px)
-  - [ ] Swipe-to-close gesture
-  - [ ] Test on real mobile devices
-
-**Visual Concept**:
-```
-Mobile (<480px):
-┌─────────────────────────────┐
-│ [🔍 Search] [Filtros (2) ▼] │  ← Collapsed (50px vs 150-200px)
-│   ↓ (tap to expand)         │
-│ ┌─────────────────────────┐ │
-│ │ Status: [Todos ▼]       │ │  ← Bottom sheet
-│ │ Categoria: [Todas ▼]    │ │
-│ │ [Aplicar] [Limpar]      │ │
-│ └─────────────────────────┘ │
-└─────────────────────────────┘
-```
-
----
-
-**2E. AI Natural Language Filtering** (4-6 hours) - INTELLIGENT FEATURE
-- [ ] Add "Ask Arnaldo to filter/sort" text input
-  - [ ] Design input UI (above table or in filter bar)
-  - [ ] Add examples/placeholder text
-  - [ ] Implement submit handler
-- [ ] Integrate with QueryAgent or create specialized FilterAgent
-  - [ ] Review QueryAgent capabilities
-  - [ ] Create FilterAgent if needed (simpler, focused on filter/sort)
-  - [ ] Define agent prompt template
-- [ ] Parse natural language to filter/sort parameters
-  - [ ] Extract filter criteria from user input
-  - [ ] Extract sort criteria
-  - [ ] Handle ambiguous queries
-- [ ] Display interpreted filters with option to refine
-  - [ ] Show "Interpreted as: Status = Overdue, Amount > 10000"
-  - [ ] Add "Apply" or "Refine" buttons
-  - [ ] Allow manual override
-- [ ] Log successful queries for improving agent
-  - [ ] Track query → filter mappings
-  - [ ] Identify common patterns
-  - [ ] Use for prompt improvement
-
-**Example Queries**:
-- "Show overdue projects over 50k" → `{ status: 'overdue', minAmount: 50000 }`
-- "Sort by recent expenses" → `{ sort: 'dueDate', order: 'desc' }`
-- "Find São Paulo residential projects" → `{ category: 'Residencial', location: 'São Paulo' }`
-
-**Architecture**:
-```typescript
-// User types: "Show me overdue invoices over R$10,000"
-// Agent interprets → {
-//   filters: { status: 'overdue', minAmount: 10000 },
-//   sort: { field: 'amount', order: 'desc' }
-// }
-// UI applies filters + shows interpretation
-```
-
-**Dependencies**: QueryAgent or new FilterAgent implementation
-**Estimated Effort**: 9-14 hours total (all sub-tasks)
+**See**: ADR-014 for full technical specification
 
 ---
 
@@ -385,37 +290,59 @@ Mobile (<480px):
 ### ✅ DONE (Recently Completed)
 *Newest first, for reference.*
 
-#### **2C. Quick Filter Chips with [+ Mais] Dropdown** ✅ PARTIAL COMPLETE (2025-10-07)
-**Impact**: One-click access to common filter combinations, improved UX with merged layout
+#### **2D. Mobile Filter Drawer** ✅ COMPLETE (2025-10-08)
+**Impact**: 100-150px vertical space saved on mobile, improved touch-friendly UX
+**Time Spent**: ~2 hours
+**Status**: Fully implemented across all 3 entity tabs
 
-**Status**: Fully implemented on Expenses tab, basic chips on Receivables & Projetos
-
-**Implemented (All Tabs)**:
-- ✅ Basic quick filter chips above filter bar
-  - Expenses: ⏰ Vencendo Esta Semana, 🔄 Recorrentes, 💰 Acima de R$5k
-  - Receivables: ⚠️ Atrasados, 📅 Este Mês, 💰 Acima de R$10k
-  - Projetos: ✅ Ativos, 💰 Acima de R$50k
-- ✅ Toggle behavior (click to activate/deactivate)
-- ✅ Color-coded active states (amber, blue, green, purple, red)
-- ✅ Client-side filtering integrated with existing filter logic
-- ✅ Chips clear when "× Limpar" button clicked
-
-**Enhanced Implementation (Expenses Tab Only)**:
-- ✅ **Merged layout**: Chips + Add button on same row (saves ~40px vertical space)
-- ✅ **[+ Mais] dropdown** with additional presets:
-  - 📅 Últimos 7 Dias (date-range filtering)
-  - 📅 Últimos 30 Dias (date-range filtering)
-  - ❌ Cancelados (status filter)
-  - 📝 Sem Categoria (category filter)
-- ✅ **Visual active state**: Selected options show blue highlight + checkmark (✓)
-- ✅ **Toggle behavior**: Click again to deselect
-- ✅ **Fixed "× Limpar" button**: Shows when ANY quick filter is active (including date filters)
-- ✅ **Fixed "Copiar Link" button**: Includes quick filter state in URL
+**Implemented**:
+- ✅ **Desktop filters hidden on mobile** (<md breakpoint)
+- ✅ **Collapsed mobile view**: Search + "Filtros" button with badge count
+- ✅ **Bottom sheet modal** with:
+  - Sticky header with title + close button
+  - All filter options (Status, Category, Type, etc.)
+  - Touch-friendly controls (44-48px tap targets)
+  - Sticky footer with "Limpar" and "Aplicar" buttons
+  - 80vh max height with scroll
+  - Backdrop overlay (tap to close)
+- ✅ **Active filter count badge** on button
+- ✅ **Applied to all tabs**:
+  - Expenses (Status, Category, Type, Recurring)
+  - Receivables (Status, Category, Projeto)
+  - Contratos (Status, Category)
 
 **Files Modified**:
-- `app/expenses/page.tsx` - Full implementation with [+ Mais] dropdown
-- `app/receivables/page.tsx` - Basic chips only (pending enhancement)
-- `app/projetos/components/ContractsTab.tsx` - Basic chips only (pending enhancement)
+- `app/expenses/page.tsx` (added mobile drawer + filter count logic)
+- `app/receivables/page.tsx` (added mobile drawer + filter count logic)
+- `app/projetos/components/ContractsTab.tsx` (added mobile drawer + filter count logic)
+
+**Build**: ✅ Successful (5.2s compile, zero errors)
+
+---
+
+#### **2C. Quick Filter Chips with [+ Mais] Dropdown** ✅ COMPLETE (2025-10-08)
+**Impact**: One-click access to common filter combinations, 40px vertical space saved
+**Time Spent**: ~1 hour total
+**Status**: Fully implemented across all 3 entity tabs
+
+**Implemented (All Tabs)**:
+- ✅ **Merged layout**: Chips + Add button on same row (saves ~40px vertical space)
+- ✅ **[+ Mais] dropdown** with additional presets:
+  - **Expenses**: Últimos 7 Dias, Últimos 30 Dias, Cancelados, Sem Categoria
+  - **Receivables**: Últimos 7 Dias, Últimos 30 Dias, Recebidos Este Mês, Cancelados
+  - **Contratos**: Concluídos Este Mês, Últimos 30 Dias, Cancelados
+- ✅ **Visual active state**: Selected options show blue highlight + checkmark (✓)
+- ✅ **Toggle behavior**: Click again to deselect
+- ✅ **Fixed "× Limpar" button**: Shows when ANY quick filter is active (including [+ Mais] filters)
+- ✅ **Fixed "Copiar Link" button**: Includes quick filter state in URL
+- ✅ **Date-range logic**: Implemented for "Últimos 7 Dias", "Últimos 30 Dias", "Recebidos Este Mês", etc.
+
+**Files Modified**:
+- `app/expenses/page.tsx` (complete with dropdown)
+- `app/receivables/page.tsx` (complete with dropdown)
+- `app/projetos/components/ContractsTab.tsx` (complete with dropdown)
+
+**Build**: ✅ Successful (5.0s compile, zero errors)
 
 **Technical Implementation**:
 ```typescript

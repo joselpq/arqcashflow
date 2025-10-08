@@ -693,15 +693,505 @@ export const ENTITY_LABELS = BUSINESS_TYPE_LABELS[
 
 ---
 
+### **2E: AI Natural Language Filtering** 🚧 IN PROGRESS (2025-10-08)
+
+**Context**: Users need a fast, intuitive way to filter complex data without learning filter syntax or clicking through multiple dropdowns. Natural language filtering powered by AI allows users to type queries like "atrasados do João Silva acima de 10k ordenados por valor" and get instant results.
+
+**Status**: 2C (Compact Filters + [+ Mais] dropdown) ✅ Complete, 2D (Mobile Filter Drawer) ✅ Complete, **2E (AI Filtering) 🚧 In Progress**
+
+**Issues Addressed**:
+1. ✅ Complex filtering requires multiple clicks and dropdowns
+2. ✅ Boolean logic (OR, AND) not supported in UI
+3. ✅ Sorting requires separate interaction
+4. ✅ No way to combine multiple conditions efficiently
+5. ✅ Power users want faster workflows
+
+**Design Decision: Trust the LLM**
+
+**Core Philosophy**:
+- No fuzzy matching, no preprocessing, no custom handlers
+- LLM receives database schema + user input → returns Prisma query object
+- Direct execution, zero complexity
+
+---
+
+#### **Architecture: Prisma Query Generation**
+
+**Flow**:
+```
+User Input → FilterAgentService → Claude (with schema context) →
+Prisma Query Object → Execute → Return Results
+```
+
+**Why Prisma Query Object?**
+- ✅ Type-safe (Prisma validates structure)
+- ✅ No SQL injection risk
+- ✅ Supports OR, AND, NOT natively
+- ✅ Direct execution, zero preprocessing
+- ✅ LLM is trained on Prisma syntax
+
+**Example Input/Output**:
+```typescript
+// User: "atrasados do João Silva acima de 10k desc"
+{
+  where: {
+    status: "overdue",
+    amount: { gt: 10000 },
+    contract: {
+      OR: [
+        { projectName: { contains: "Silva", mode: "insensitive" } },
+        { clientName: { contains: "Silva", mode: "insensitive" } }
+      ]
+    }
+  },
+  orderBy: { amount: "desc" },
+  interpretation: "Recebíveis atrasados de projetos 'Silva' acima de R$10k, ordenados por valor (maior → menor)"
+}
+```
+
+---
+
+#### **Implementation Plan**
+
+**Phase 1: Backend Service** (4-6 hours)
+
+**1. Create `lib/services/FilterAgentService.ts`**:
+```typescript
+interface FilterContext {
+  entity: 'contracts' | 'receivables' | 'expenses'
+  teamId: string
+}
+
+interface FilterResult {
+  where: any           // Prisma where clause
+  orderBy?: any        // Prisma orderBy clause
+  interpretation: string  // Human-readable explanation
+}
+
+class FilterAgentService extends BaseService {
+  async parseFilter(input: string, context: FilterContext): Promise<FilterResult> {
+    const systemPrompt = this.buildSystemPrompt(context)
+
+    const response = await this.claude.messages.create({
+      model: 'claude-3-5-sonnet-20241022',
+      max_tokens: 1000,
+      temperature: 0.1,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: input }]
+    })
+
+    return JSON.parse(response.content[0].text)
+  }
+
+  private buildSystemPrompt(context: FilterContext): string {
+    return `You are a Prisma query generator for ${context.entity}.
+
+DATABASE SCHEMA:
+${this.getPrismaSchema(context.entity)}
+
+CONTEXT:
+- Team isolation handled by middleware (don't include teamId)
+- Available statuses: ${this.getAvailableStatuses(context.entity)}
+
+EXAMPLES:
+[... see examples below ...]
+
+Return ONLY valid JSON with "where", "orderBy" (optional), and "interpretation".`
+  }
+}
+```
+
+**2. Create API Endpoint `/api/filters/ai`**:
+```typescript
+export async function POST(req: Request) {
+  const { input, entity } = await req.json()
+  const context = await withTeamContext(req)
+
+  const filterService = new FilterAgentService(context)
+  const parsed = await filterService.parseFilter(input, { entity, teamId: context.teamId })
+
+  // Execute Prisma query
+  const results = await executeQuery(entity, parsed.where, parsed.orderBy, context)
+
+  return Response.json({
+    query: parsed,
+    results,
+    count: results.length
+  })
+}
+
+async function executeQuery(entity: string, where: any, orderBy: any, context: TeamContext) {
+  const baseWhere = { teamId: context.teamId, ...where }
+
+  switch (entity) {
+    case 'receivables':
+      return prisma.receivable.findMany({ where: baseWhere, orderBy, include: { contract: true } })
+    case 'expenses':
+      return prisma.expense.findMany({ where: baseWhere, orderBy })
+    case 'contracts':
+      return prisma.contract.findMany({ where: baseWhere, orderBy })
+  }
+}
+```
+
+**Phase 2: Frontend Integration** (3-4 hours)
+
+**1. Add to [+ Mais] Dropdown** (Desktop & Mobile):
+```tsx
+<button
+  onClick={() => setAdvancedFilterModalOpen(true)}
+  className="w-full text-left px-4 py-2 text-sm hover:bg-neutral-50"
+>
+  🤖 Filtros Avançados (IA)
+</button>
+```
+
+**2. Create Modal Component `app/components/AdvancedFilterModal.tsx`**:
+```tsx
+export function AdvancedFilterModal({ entity, isOpen, onClose, onResultsReceived }: Props) {
+  const [input, setInput] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [result, setResult] = useState<any>(null)
+
+  const handleFilter = async () => {
+    setLoading(true)
+    const response = await fetch('/api/filters/ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ input, entity })
+    })
+    const data = await response.json()
+    setResult(data)
+    setLoading(false)
+  }
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose}>
+      <div className="p-6">
+        <h2 className="text-2xl font-bold mb-4">🤖 Filtros Avançados com Arnaldo</h2>
+
+        <textarea
+          placeholder="Descreva o que você quer filtrar...
+
+Exemplos:
+• atrasados do João Silva acima de 10k
+• despesas recorrentes OU canceladas nos últimos 30 dias
+• contratos finalizados este mês ordenados por valor"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          rows={4}
+          className="w-full p-3 border rounded-lg mb-4"
+        />
+
+        <button onClick={handleFilter} disabled={loading}>
+          {loading ? '🔄 Processando...' : '🤖 Filtrar'}
+        </button>
+
+        {result && (
+          <>
+            <div className="p-3 bg-blue-50 rounded-lg mb-4">
+              <strong>✓ Interpretado como:</strong><br/>
+              {result.query.interpretation}
+            </div>
+
+            <div className="p-3 bg-green-50 rounded-lg mb-4">
+              <strong>📊 Resultado:</strong> {result.count} item(ns) encontrado(s)
+            </div>
+
+            {/* Preview results */}
+            <div className="max-h-60 overflow-y-auto border rounded-lg">
+              {result.results.map((item: any) => (
+                <div key={item.id} className="p-3 border-b hover:bg-neutral-50">
+                  {/* Item preview */}
+                </div>
+              ))}
+            </div>
+
+            <button onClick={() => {
+              onResultsReceived(result.results)
+              onClose()
+            }}>
+              ✓ Usar Estes Resultados
+            </button>
+          </>
+        )}
+      </div>
+    </Modal>
+  )
+}
+```
+
+---
+
+#### **LLM Context: Prisma Schema**
+
+**What to provide to Claude**:
+- Full Prisma schema for relevant entity
+- Available status/category values
+- Relationship structure
+- Team isolation note (handled by middleware)
+
+**Example System Prompt**:
+```
+DATABASE SCHEMA:
+model Receivable {
+  id            String
+  amount        Float
+  status        String  // "pending" | "received" | "overdue" | "cancelled"
+  expectedDate  DateTime
+  receivedDate  DateTime?
+  category      String?
+  description   String?
+  contractId    String
+  contract      Contract @relation(...)
+  teamId        String
+}
+
+model Contract {
+  id           String
+  projectName  String
+  clientName   String
+  status       String  // "active" | "completed" | "cancelled"
+  totalValue   Float?
+  receivables  Receivable[]
+  teamId       String
+}
+
+EXAMPLES:
+User: "atrasados acima de 10k"
+Output: {
+  where: { status: "overdue", amount: { gt: 10000 } },
+  orderBy: { amount: "desc" },
+  interpretation: "Recebíveis atrasados acima de R$10.000, ordenados por valor"
+}
+
+User: "recebíveis do João Silva nos últimos 30 dias"
+Output: {
+  where: {
+    contract: {
+      OR: [
+        { projectName: { contains: "João Silva", mode: "insensitive" } },
+        { clientName: { contains: "João Silva", mode: "insensitive" } }
+      ]
+    },
+    expectedDate: { gte: "2024-09-08T00:00:00.000Z" }
+  },
+  orderBy: { expectedDate: "asc" },
+  interpretation: "Recebíveis de projetos/clientes 'João Silva' dos últimos 30 dias"
+}
+
+User: "despesas recorrentes OU canceladas"
+Output: {
+  where: {
+    OR: [
+      { recurringExpenseId: { not: null } },
+      { status: "cancelled" }
+    ]
+  },
+  interpretation: "Despesas recorrentes ou canceladas"
+}
+```
+
+---
+
+#### **Features Supported**
+
+**1. Boolean Logic**:
+- ✅ OR conditions: "recorrentes OU canceladas"
+- ✅ AND conditions: "atrasados E acima de 10k"
+- ✅ NOT conditions: "não recorrentes"
+
+**2. Sorting**:
+- ✅ Descending: "ordenar por valor decrescente" → `{ amount: "desc" }`
+- ✅ Ascending: "ordenar por data" → `{ expectedDate: "asc" }`
+
+**3. Date Ranges**:
+- ✅ Relative: "últimos 30 dias", "este mês"
+- ✅ Absolute: "depois de janeiro 2024"
+
+**4. Numeric Comparisons**:
+- ✅ Greater than: "acima de 10k" → `{ gt: 10000 }`
+- ✅ Less than: "abaixo de 5k" → `{ lt: 5000 }`
+- ✅ Range: "entre 5k e 10k" → `{ gte: 5000, lte: 10000 }`
+
+**5. Text Search**:
+- ✅ Case-insensitive: `{ contains: "Silva", mode: "insensitive" }`
+- ✅ Nested relations: Contract name/client search
+
+---
+
+#### **UI/UX Pattern**
+
+**Placement**:
+- Desktop: In [+ Mais] dropdown → "🤖 Filtros Avançados (IA)"
+- Mobile: In filter drawer, [+ Mais] section → Same button
+
+**Modal Workflow**:
+1. User clicks "Filtros Avançados (IA)"
+2. Modal opens with textarea + examples
+3. User types natural language query
+4. Click "Filtrar" → Shows interpretation + result count
+5. Preview results in modal
+6. Click "Usar Estes Resultados" → Apply to table
+
+**Feedback**:
+- ✓ Interpretation shown (transparency)
+- 📊 Count shown (confidence)
+- Preview results (verify before applying)
+- Option to refine query
+
+---
+
+#### **Technical Implementation**
+
+**Files to Create**:
+- `lib/services/FilterAgentService.ts` (new)
+- `app/api/filters/ai/route.ts` (new)
+- `app/components/AdvancedFilterModal.tsx` (new)
+
+**Files to Modify**:
+- `app/expenses/page.tsx` (add modal trigger in [+ Mais])
+- `app/receivables/page.tsx` (add modal trigger)
+- `app/projetos/components/ContractsTab.tsx` (add modal trigger)
+
+**Dependencies**:
+- Anthropic SDK (already installed)
+- Prisma (already installed)
+- Team context middleware (already exists)
+
+---
+
+#### **Performance & Cost**
+
+**Performance**:
+- Single LLM call: ~500-800ms
+- Prisma query execution: ~100-300ms
+- **Total**: ~600-1100ms (acceptable for advanced feature)
+
+**Cost**:
+- Input tokens: ~1500 (schema + examples)
+- Output tokens: ~200 (query object)
+- **Per request**: ~$0.01 (Claude Sonnet 3.5)
+- **Monthly** (100 users, 10 queries/user): ~$10
+
+**Caching**:
+- Cache Prisma schema in memory (static)
+- No query result caching (real-time data)
+
+---
+
+#### **Security Considerations**
+
+**✅ Safe**:
+- No SQL injection (Prisma validates structure)
+- Team isolation enforced by middleware
+- LLM can't access other teams' data
+- Prisma query object validated before execution
+
+**⚠️ Rate Limiting**:
+- Implement per-user rate limit (10 queries/minute)
+- Prevent abuse/excessive costs
+
+---
+
+#### **Testing Strategy**
+
+**Unit Tests**:
+- FilterAgentService prompt generation
+- Prisma query object validation
+- Edge cases (malformed input, invalid queries)
+
+**Integration Tests**:
+- End-to-end: Input → Query → Results
+- All entity types (receivables, expenses, contracts)
+- Boolean logic (OR, AND, NOT)
+- Sorting variations
+- Date range calculations
+
+**User Testing**:
+- 5-10 test queries per entity
+- Verify interpretation accuracy
+- Validate result correctness
+- Measure response time
+
+---
+
+#### **Rollout Plan**
+
+**Phase 1: Expenses Tab Only** (1 week)
+- Implement full stack (service + API + modal)
+- Deploy to staging
+- Internal testing (10+ test queries)
+- Iterate based on accuracy
+
+**Phase 2: All Tabs** (3-5 days)
+- Roll out to Receivables, Contracts
+- Consistent UX across tabs
+- Production deployment
+
+**Phase 3: Enhancements** (Future)
+- Query history (save favorite filters)
+- Query suggestions (autocomplete)
+- Multi-entity queries ("projetos ativos com recebíveis atrasados")
+
+---
+
+#### **Success Metrics**
+
+**Accuracy**:
+- 95%+ queries return expected results
+- User confirms interpretation matches intent
+
+**Adoption**:
+- 30%+ of power users try AI filtering
+- 10%+ use it regularly (5+ times/month)
+
+**Performance**:
+- 90%+ queries complete under 1 second
+- Zero errors in production
+
+**User Satisfaction**:
+- Positive feedback in surveys
+- Feature request: "Add to X page"
+
+---
+
+#### **Open Questions & Decisions**
+
+1. **Multi-entity queries**: Support "projetos com recebíveis atrasados"?
+   - **Decision**: Phase 3 enhancement (complex joins)
+
+2. **Query history**: Save/bookmark favorite filters?
+   - **Decision**: Phase 3 enhancement (requires user preferences storage)
+
+3. **Mobile UX**: Full modal or simplified drawer?
+   - **Decision**: Same modal, responsive design
+
+4. **Error handling**: What if LLM returns invalid query?
+   - **Decision**: Catch Prisma validation error, show friendly message, ask user to rephrase
+
+5. **Fallback**: What if API is down?
+   - **Decision**: Graceful degradation, show "AI filtering temporarily unavailable, use manual filters"
+
+---
+
+**Status**: Architecture finalized ✅, Implementation pending 🔜
+**Estimated Effort**: 8-12 hours total
+**Risk**: LOW-MEDIUM (depends on LLM accuracy, but safe architecture)
+**Impact**: HIGH (power users gain 10x faster filtering)
+
+---
+
 ### **Next Tactical Improvements** 🔜
 
 **Status**: Ready to document more tabs
 
 Areas available for improvement:
 - Dashboard tab (Phase 1 complete ✅)
-- Projetos tab (documented ✅, awaiting more input)
-- Recebíveis tab (needs review)
-- Despesas tab (needs review)
+- Projetos tab (2C/2D complete ✅)
+- Recebíveis tab (2C/2D complete ✅)
+- Despesas tab (2C/2D complete ✅)
+- **2E AI Filtering (all tabs)** 🚧 In Progress
 - Assistente IA tab (documented ✅)
 - Other tabs (settings, profile, exports, etc.)
 

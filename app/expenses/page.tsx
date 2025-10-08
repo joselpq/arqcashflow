@@ -35,6 +35,7 @@ function ExpensesPageContent() {
   const [filteredExpenses, setFilteredExpenses] = useState([])
   const [activeQuickFilter, setActiveQuickFilter] = useState<string | null>(null)
   const [moreFiltersOpen, setMoreFiltersOpen] = useState(false)
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
   const [recurringActionModal, setRecurringActionModal] = useState<{
     isOpen: boolean
     expense: any
@@ -44,6 +45,16 @@ function ExpensesPageContent() {
     expense: null,
     action: 'edit'
   })
+
+  // Count active filters (excluding defaults)
+  const getActiveFilterCount = () => {
+    let count = 0
+    if (filters.status !== 'pending') count++
+    if (filters.category !== 'all') count++
+    if (filters.type !== 'all') count++
+    if (filters.isRecurring !== 'all') count++
+    return count
+  }
 
   const expenseCategories = [
     'Salários', 'Escritório', 'Software', 'Marketing', 'Transporte', 'Equipamentos', 'Impostos', 'Outros'
@@ -752,8 +763,8 @@ function ExpensesPageContent() {
         </div>
       </div>
 
-      {/* Compact Filters - Single Row */}
-      <div className="mb-6">
+      {/* Compact Filters - Desktop (hidden on mobile) */}
+      <div className="mb-6 hidden md:block">
         <div className="flex flex-wrap items-center gap-2 p-3 bg-white rounded-lg border border-neutral-200 shadow-sm">
           {/* Search Input */}
           <div className="relative flex-1 min-w-[200px]">
@@ -867,6 +878,160 @@ function ExpensesPageContent() {
           )}
         </div>
       </div>
+
+      {/* Mobile Filters - Collapsed (shown only on mobile) */}
+      <div className="mb-6 md:hidden">
+        <div className="flex items-center gap-2 p-3 bg-white rounded-lg border border-neutral-200 shadow-sm">
+          {/* Search Input */}
+          <div className="relative flex-1">
+            <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              placeholder="Buscar..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-8 py-2.5 text-sm border border-neutral-300 rounded-md bg-white text-neutral-900 placeholder-neutral-500 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 transition-colors"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
+
+          {/* Filters Button with Badge */}
+          <button
+            onClick={() => setMobileFiltersOpen(true)}
+            className="relative px-4 py-2.5 bg-neutral-100 text-neutral-700 rounded-md font-medium text-sm hover:bg-neutral-200 transition-colors whitespace-nowrap flex items-center gap-2 min-h-[44px]"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+            </svg>
+            Filtros
+            {getActiveFilterCount() > 0 && (
+              <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                {getActiveFilterCount()}
+              </span>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile Filter Drawer */}
+      {mobileFiltersOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 z-40"
+            onClick={() => setMobileFiltersOpen(false)}
+          />
+
+          {/* Bottom Sheet */}
+          <div className="fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-2xl z-50 max-h-[80vh] overflow-y-auto">
+            {/* Header */}
+            <div className="sticky top-0 bg-white border-b border-neutral-200 px-4 py-4 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-neutral-900">Filtros</h3>
+              <button
+                onClick={() => setMobileFiltersOpen(false)}
+                className="p-2 hover:bg-neutral-100 rounded-full transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Filter Options */}
+            <div className="p-4 space-y-4">
+              {/* Status */}
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">Status</label>
+                <select
+                  className="w-full border border-neutral-300 rounded-lg px-4 py-3 text-base bg-white text-neutral-900 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  value={filters.status}
+                  onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+                >
+                  <option value="all">Todos</option>
+                  <option value="pending">Pendente</option>
+                  <option value="paid">Pago</option>
+                  <option value="overdue">Atrasado</option>
+                  <option value="cancelled">Cancelado</option>
+                </select>
+              </div>
+
+              {/* Category */}
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">Categoria</label>
+                <select
+                  className="w-full border border-neutral-300 rounded-lg px-4 py-3 text-base bg-white text-neutral-900 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  value={filters.category}
+                  onChange={(e) => setFilters({ ...filters, category: e.target.value })}
+                >
+                  <option value="all">Todas</option>
+                  {expenseCategories.map(category => (
+                    <option key={category} value={category}>{category}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Type */}
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">Tipo</label>
+                <select
+                  className="w-full border border-neutral-300 rounded-lg px-4 py-3 text-base bg-white text-neutral-900 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  value={filters.type}
+                  onChange={(e) => setFilters({ ...filters, type: e.target.value })}
+                >
+                  <option value="all">Todos</option>
+                  {expenseTypes.map(type => (
+                    <option key={type.value} value={type.value}>{type.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Recurring */}
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">Recorrente</label>
+                <select
+                  className="w-full border border-neutral-300 rounded-lg px-4 py-3 text-base bg-white text-neutral-900 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  value={filters.isRecurring}
+                  onChange={(e) => setFilters({ ...filters, isRecurring: e.target.value })}
+                >
+                  <option value="all">Todos</option>
+                  <option value="true">Sim</option>
+                  <option value="false">Não</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Footer Actions */}
+            <div className="sticky bottom-0 bg-white border-t border-neutral-200 p-4 flex gap-3">
+              <button
+                onClick={() => {
+                  setFilters({ contractId: 'all', status: 'pending', category: 'all', type: 'all', isRecurring: 'all', sortBy: 'dueDate', sortOrder: 'asc' })
+                  setActiveQuickFilter(null)
+                }}
+                className="flex-1 px-4 py-3 text-blue-600 bg-blue-50 rounded-lg font-medium hover:bg-blue-100 transition-colors min-h-[48px]"
+              >
+                Limpar
+              </button>
+              <button
+                onClick={() => setMobileFiltersOpen(false)}
+                className="flex-1 px-4 py-3 text-white bg-blue-600 rounded-lg font-medium hover:bg-blue-700 transition-colors min-h-[48px]"
+              >
+                Aplicar
+              </button>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Expenses Table */}
       {loading ? (
