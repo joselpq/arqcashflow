@@ -117,6 +117,20 @@ Before creating ANY validation schemas:
 2. Check `grep -r "BaseFieldSchemas\|EnumSchemas" lib/validation/`
 3. Only create new schemas if truly novel functionality needed
 
+**For Business Metrics / Dashboard Work:**
+```
+- docs/docs-site/docs/reference/business-metrics.md (complete metrics reference - READ THIS FIRST)
+- lib/services/BusinessMetricsService.ts (service implementation)
+- app/api/dashboard/route.ts (example usage)
+```
+
+**⚠️ CRITICAL BUSINESS METRICS REMINDER:**
+Before implementing new metrics calculations:
+1. Check `lib/services/BusinessMetricsService.ts` for existing methods
+2. Review `docs/docs-site/docs/reference/business-metrics.md` for Phase 3 planned metrics
+3. Add new metrics to the service rather than calculating inline
+4. Always use Promise.all for parallel execution when fetching multiple metrics
+
 ### Efficient Navigation Strategy
 
 #### Pattern 1: Metadata-First Reading
