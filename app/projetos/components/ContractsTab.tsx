@@ -71,6 +71,16 @@ export default function ContractsTab() {
     fetchContracts()
   }, [filters, searchQuery])
 
+  // Listen for Arnaldo chat updates and refetch data
+  useEffect(() => {
+    const handleDataUpdate = () => {
+      fetchContracts()
+    }
+
+    window.addEventListener('arnaldo-data-updated', handleDataUpdate)
+    return () => window.removeEventListener('arnaldo-data-updated', handleDataUpdate)
+  }, [filters, searchQuery]) // Include filters so it refetches with current filter state
+
   // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {

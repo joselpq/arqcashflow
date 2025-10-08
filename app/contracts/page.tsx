@@ -45,6 +45,16 @@ function ContractsPageContent() {
     fetchContracts()
   }, [filters])
 
+  // Listen for Arnaldo chat updates and refetch data
+  useEffect(() => {
+    const handleDataUpdate = () => {
+      fetchContracts()
+    }
+
+    window.addEventListener('arnaldo-data-updated', handleDataUpdate)
+    return () => window.removeEventListener('arnaldo-data-updated', handleDataUpdate)
+  }, [filters]) // Include filters so it refetches with current filter state
+
   // Handle auto-edit when URL parameter is present
   useEffect(() => {
     if (editId && contracts.length > 0) {

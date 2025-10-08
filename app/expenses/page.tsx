@@ -99,6 +99,17 @@ function ExpensesPageContent() {
     fetchExpenses()
   }, [filters])
 
+  // Listen for Arnaldo chat updates and refetch data
+  useEffect(() => {
+    const handleDataUpdate = () => {
+      fetchExpenses()
+      fetchContracts()
+    }
+
+    window.addEventListener('arnaldo-data-updated', handleDataUpdate)
+    return () => window.removeEventListener('arnaldo-data-updated', handleDataUpdate)
+  }, [filters]) // Include filters so it refetches with current filter state
+
   // Helper function to normalize text (remove accents and lowercase)
   const normalizeText = (text: string) => {
     return text

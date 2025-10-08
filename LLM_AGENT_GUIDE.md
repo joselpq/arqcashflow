@@ -175,9 +175,12 @@ arqcashflow/
 ├── lib/                   # Utilities and helpers
 │   ├── auth.ts           # Authentication logic
 │   ├── db.ts            # Database utilities
+│   ├── services/        # Service layer (business logic)
+│   ├── validation/      # Unified validation schemas
 │   └── utils/           # Date, currency, validation utilities
 ├── prisma/               # Database schema and migrations
-├── docs/                 # NEW documentation system
+├── scripts/              # Admin utilities (user deletion, cleanup)
+├── docs/                 # Documentation system
 │   └── docs-site/       # Docusaurus application
 └── [backup docs]        # Original docs (README, DEVELOPMENT, etc.)
 ```
@@ -350,6 +353,18 @@ cd docs/docs-site && npm start
 
 # Build documentation
 cd docs/docs-site && npm run build
+```
+
+### Admin Scripts
+```bash
+# List all users in database
+npx tsx scripts/list-users.ts
+
+# Delete test user and their team (pre-launch cleanup)
+npx tsx scripts/delete-test-user.ts <email>
+npx tsx scripts/delete-test-user.ts teste5@teste.com.br  # Example
+
+# See scripts/README.md for full documentation
 ```
 
 ## ⚠️ Critical Rules for Agents
