@@ -34,6 +34,7 @@ function ExpensesPageContent() {
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '')
   const [filteredExpenses, setFilteredExpenses] = useState([])
   const [activeQuickFilter, setActiveQuickFilter] = useState<string | null>(null)
+  const [moreFiltersOpen, setMoreFiltersOpen] = useState(false)
   const [recurringActionModal, setRecurringActionModal] = useState<{
     isOpen: boolean
     expense: any
@@ -96,7 +97,7 @@ function ExpensesPageContent() {
   useEffect(() => {
     let filtered = expenses
 
-    // Apply quick filter (this-week or high-value)
+    // Apply quick filter
     if (activeQuickFilter === 'this-week') {
       const today = new Date()
       const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000)
@@ -106,6 +107,20 @@ function ExpensesPageContent() {
       })
     } else if (activeQuickFilter === 'high-value') {
       filtered = filtered.filter((expense: any) => expense.amount > 5000)
+    } else if (activeQuickFilter === 'last-7-days') {
+      const today = new Date()
+      const sevenDaysAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000)
+      filtered = filtered.filter((expense: any) => {
+        const dueDate = new Date(expense.dueDate)
+        return dueDate >= sevenDaysAgo && dueDate <= today
+      })
+    } else if (activeQuickFilter === 'last-30-days') {
+      const today = new Date()
+      const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000)
+      filtered = filtered.filter((expense: any) => {
+        const dueDate = new Date(expense.dueDate)
+        return dueDate >= thirtyDaysAgo && dueDate <= today
+      })
     }
 
     // Apply search filter
@@ -583,82 +598,156 @@ function ExpensesPageContent() {
 
   return (
     <div className="min-h-screen bg-neutral-50 px-4 sm:px-6 lg:px-8 py-6">
-      {/* Header with Add Button */}
-      <div className="flex justify-end mb-3">
-        <button
-          onClick={openAddModal}
-          className="bg-blue-700 text-white px-4 py-2.5 rounded-lg hover:bg-blue-800 font-medium transition-colors flex items-center gap-2 whitespace-nowrap shadow-sm"
-          aria-label="Adicionar nova despesa"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          <span className="hidden sm:inline">Adicionar Despesa</span>
-          <span className="sm:hidden">Adicionar</span>
-        </button>
-      </div>
-
-      {/* Quick Filter Chips */}
+      {/* Quick Filter Chips + Add Button (merged row - saves ~40px) */}
       <div className="mb-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            onClick={() => {
-              if (activeQuickFilter === 'this-week') {
-                // Deactivate - reset to defaults
-                setFilters({ ...filters, status: 'pending' })
-                setActiveQuickFilter(null)
-              } else {
-                // Activate - show pending expenses due this week
-                setFilters({ ...filters, status: 'pending' })
-                setActiveQuickFilter('this-week')
-              }
-            }}
-            className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-              activeQuickFilter === 'this-week'
-                ? 'bg-amber-100 text-amber-800 border border-amber-300'
-                : 'bg-neutral-100 text-neutral-700 border border-neutral-200 hover:bg-neutral-200'
-            }`}
-            aria-label="Filtrar por despesas vencendo esta semana"
-          >
-            ⏰ Vencendo Esta Semana
-          </button>
+        <div className="flex flex-wrap items-center gap-2 justify-between">
+          {/* Left side: Quick filter chips */}
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => {
+                if (activeQuickFilter === 'this-week') {
+                  setFilters({ ...filters, status: 'pending' })
+                  setActiveQuickFilter(null)
+                } else {
+                  setFilters({ ...filters, status: 'pending' })
+                  setActiveQuickFilter('this-week')
+                }
+              }}
+              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                activeQuickFilter === 'this-week'
+                  ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                  : 'bg-neutral-100 text-neutral-700 border border-neutral-200 hover:bg-neutral-200'
+              }`}
+            >
+              ⏰ Vencendo Esta Semana
+            </button>
 
-          <button
-            onClick={() => {
-              if (activeQuickFilter === 'recurring') {
-                setFilters({ ...filters, isRecurring: 'all' })
-                setActiveQuickFilter(null)
-              } else {
-                setFilters({ ...filters, isRecurring: 'true' })
-                setActiveQuickFilter('recurring')
-              }
-            }}
-            className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-              activeQuickFilter === 'recurring'
-                ? 'bg-blue-100 text-blue-800 border border-blue-300'
-                : 'bg-neutral-100 text-neutral-700 border border-neutral-200 hover:bg-neutral-200'
-            }`}
-            aria-label="Filtrar por despesas recorrentes"
-          >
-            🔄 Recorrentes
-          </button>
+            <button
+              onClick={() => {
+                if (activeQuickFilter === 'recurring') {
+                  setFilters({ ...filters, isRecurring: 'all' })
+                  setActiveQuickFilter(null)
+                } else {
+                  setFilters({ ...filters, isRecurring: 'true' })
+                  setActiveQuickFilter('recurring')
+                }
+              }}
+              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                activeQuickFilter === 'recurring'
+                  ? 'bg-blue-100 text-blue-800 border border-blue-300'
+                  : 'bg-neutral-100 text-neutral-700 border border-neutral-200 hover:bg-neutral-200'
+              }`}
+            >
+              🔄 Recorrentes
+            </button>
 
+            <button
+              onClick={() => {
+                if (activeQuickFilter === 'high-value') {
+                  setActiveQuickFilter(null)
+                } else {
+                  setActiveQuickFilter('high-value')
+                }
+              }}
+              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                activeQuickFilter === 'high-value'
+                  ? 'bg-purple-100 text-purple-800 border border-purple-300'
+                  : 'bg-neutral-100 text-neutral-700 border border-neutral-200 hover:bg-neutral-200'
+              }`}
+            >
+              💰 Acima de R$5k
+            </button>
+
+            {/* [+ Mais] dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setMoreFiltersOpen(!moreFiltersOpen)}
+                className="px-3 py-1.5 rounded-full text-sm font-medium transition-colors bg-neutral-100 text-neutral-700 border border-neutral-200 hover:bg-neutral-200 flex items-center gap-1"
+              >
+                + Mais
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {moreFiltersOpen && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setMoreFiltersOpen(false)} />
+                  <div className="absolute left-0 top-full mt-1 w-56 bg-white rounded-lg shadow-lg border border-neutral-200 py-1 z-20">
+                    <button
+                      onClick={() => {
+                        setActiveQuickFilter(activeQuickFilter === 'last-7-days' ? null : 'last-7-days')
+                        setMoreFiltersOpen(false)
+                      }}
+                      className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 ${
+                        activeQuickFilter === 'last-7-days'
+                          ? 'bg-blue-50 text-blue-700 font-medium'
+                          : 'hover:bg-neutral-50'
+                      }`}
+                    >
+                      📅 Últimos 7 Dias
+                      {activeQuickFilter === 'last-7-days' && <span className="ml-auto text-blue-600">✓</span>}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setActiveQuickFilter(activeQuickFilter === 'last-30-days' ? null : 'last-30-days')
+                        setMoreFiltersOpen(false)
+                      }}
+                      className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 ${
+                        activeQuickFilter === 'last-30-days'
+                          ? 'bg-blue-50 text-blue-700 font-medium'
+                          : 'hover:bg-neutral-50'
+                      }`}
+                    >
+                      📅 Últimos 30 Dias
+                      {activeQuickFilter === 'last-30-days' && <span className="ml-auto text-blue-600">✓</span>}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setFilters({ ...filters, status: 'cancelled' })
+                        setActiveQuickFilter('cancelled')
+                        setMoreFiltersOpen(false)
+                      }}
+                      className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 ${
+                        activeQuickFilter === 'cancelled'
+                          ? 'bg-blue-50 text-blue-700 font-medium'
+                          : 'hover:bg-neutral-50'
+                      }`}
+                    >
+                      ❌ Cancelados
+                      {activeQuickFilter === 'cancelled' && <span className="ml-auto text-blue-600">✓</span>}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setFilters({ ...filters, category: 'Outros' })
+                        setActiveQuickFilter('no-category')
+                        setMoreFiltersOpen(false)
+                      }}
+                      className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 ${
+                        activeQuickFilter === 'no-category'
+                          ? 'bg-blue-50 text-blue-700 font-medium'
+                          : 'hover:bg-neutral-50'
+                      }`}
+                    >
+                      📝 Sem Categoria
+                      {activeQuickFilter === 'no-category' && <span className="ml-auto text-blue-600">✓</span>}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Right side: Add button */}
           <button
-            onClick={() => {
-              if (activeQuickFilter === 'high-value') {
-                setActiveQuickFilter(null)
-              } else {
-                setActiveQuickFilter('high-value')
-              }
-            }}
-            className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-              activeQuickFilter === 'high-value'
-                ? 'bg-purple-100 text-purple-800 border border-purple-300'
-                : 'bg-neutral-100 text-neutral-700 border border-neutral-200 hover:bg-neutral-200'
-            }`}
-            aria-label="Filtrar por despesas acima de R$5.000"
+            onClick={openAddModal}
+            className="bg-blue-700 text-white px-4 py-2 rounded-lg hover:bg-blue-800 font-medium transition-colors flex items-center gap-2 whitespace-nowrap shadow-sm text-sm"
           >
-            💰 Acima de R$5k
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            <span className="hidden sm:inline">Adicionar Despesa</span>
+            <span className="sm:hidden">Adicionar</span>
           </button>
         </div>
       </div>
@@ -744,7 +833,7 @@ function ExpensesPageContent() {
           </select>
 
           {/* Clear Filters Button */}
-          {(filters.status !== 'pending' || filters.category !== 'all' || filters.type !== 'all' || filters.isRecurring !== 'all' || searchQuery) && (
+          {(filters.status !== 'pending' || filters.category !== 'all' || filters.type !== 'all' || filters.isRecurring !== 'all' || searchQuery || activeQuickFilter) && (
             <button
               onClick={() => {
                 setFilters({ contractId: 'all', status: 'pending', category: 'all', type: 'all', isRecurring: 'all', sortBy: 'dueDate', sortOrder: 'asc' })
@@ -759,7 +848,7 @@ function ExpensesPageContent() {
           )}
 
           {/* Copy Link Button - show when filters are active */}
-          {(filters.contractId !== 'all' || filters.status !== 'pending' || filters.category !== 'all' || filters.type !== 'all' || filters.isRecurring !== 'all' || filters.sortBy !== 'dueDate' || filters.sortOrder !== 'asc' || searchQuery) && (
+          {(filters.contractId !== 'all' || filters.status !== 'pending' || filters.category !== 'all' || filters.type !== 'all' || filters.isRecurring !== 'all' || filters.sortBy !== 'dueDate' || filters.sortOrder !== 'asc' || searchQuery || activeQuickFilter) && (
             <button
               onClick={() => {
                 navigator.clipboard.writeText(window.location.href)
