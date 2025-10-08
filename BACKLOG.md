@@ -1,7 +1,7 @@
 # ArqCashflow Development Backlog
 
 **Purpose**: Central source of truth for project priorities and development status
-**Last Updated**: 2025-10-08 (2E AI Natural Language Filtering Complete - All tabs enhanced with instant AI-powered filtering)
+**Last Updated**: 2025-10-08 (Global Chat with Arnaldo - Implementation started)
 **Update Frequency**: Every LLM session MUST update this document when completing tasks or discovering new requirements
 
 ## 🚨 CRITICAL INSTRUCTIONS FOR LLM AGENTS
@@ -83,7 +83,155 @@ Examples:
 ### 🔄 DOING (Currently In Progress)
 *Active work with real-time progress tracking. Can persist between sessions if work is incomplete.*
 
-**No active tasks** - Ready for next priority
+#### **Global "Chat with Arnaldo" Integration** 🚧 IN PROGRESS
+**Goal**: Add persistent chat interface accessible from all entity tabs
+**Estimated Effort**: 6-8 hours
+**Started**: 2025-10-08
+
+**Implementation Plan**:
+
+##### **Phase 1: Core UI Components** (2-3 hours)
+- [ ] **Step 1.1**: Create floating action button (FAB) component
+  - File: `app/components/chat/ArnaldoChatFAB.tsx`
+  - Features: Fixed bottom-right position, pulsing animation, notification badge
+  - Styling: Gradient blue-purple (consistent with AI branding), z-index 50
+  - Accessibility: Keyboard support, ARIA labels
+
+- [ ] **Step 1.2**: Create chat panel/drawer component
+  - File: `app/components/chat/ChatPanel.tsx`
+  - Features: 350-400px width (desktop), full-width (mobile)
+  - Animation: Slide-in from right, backdrop overlay
+  - Layout: Header + Context hints + Message list + Input
+  - Close: X button, backdrop click, Escape key
+
+- [ ] **Step 1.3**: Create chat header component
+  - File: `app/components/chat/ChatHeader.tsx`
+  - Content: "💬 Chat com Arnaldo", close button, minimize option
+  - Styling: Gradient header matching modal style
+
+- [ ] **Step 1.4**: Create message list component
+  - File: `app/components/chat/MessageList.tsx`
+  - Features: Scrollable area, auto-scroll to bottom on new messages
+  - Message types: User message, AI message, loading indicator
+  - Styling: User messages (blue bg), AI messages (gray bg)
+
+- [ ] **Step 1.5**: Create chat input component
+  - File: `app/components/chat/ChatInput.tsx`
+  - Features: Textarea with auto-resize, send button, character counter
+  - Shortcuts: Enter to send (Shift+Enter for new line)
+  - Validation: Max length, empty message prevention
+
+##### **Phase 2: State Management & Integration** (1-2 hours)
+- [ ] **Step 2.1**: Create chat context provider
+  - File: `app/contexts/ChatContext.tsx`
+  - State: messages, isOpen, isLoading, currentContext
+  - Actions: openChat, closeChat, sendMessage, clearHistory
+
+- [ ] **Step 2.2**: Integrate FAB in root layout
+  - File: `app/layout.tsx`
+  - Wrap with ChatProvider
+  - Add ArnaldoChatFAB at root level (after main content)
+  - Ensure proper z-index layering
+
+- [ ] **Step 2.3**: Connect to OperationsAgentService
+  - Use existing `/api/ai/operations` endpoint
+  - Implement streaming response handling
+  - Add error handling and retry logic
+  - Show loading states during API calls
+
+##### **Phase 3: Context-Aware Features** (1-2 hours)
+- [ ] **Step 3.1**: Implement page detection
+  - Use `usePathname()` hook to detect current page
+  - Map paths to contexts: `/projetos` → "contracts", `/despesas` → "expenses", etc.
+
+- [ ] **Step 3.2**: Create context hints component
+  - File: `app/components/chat/ContextHints.tsx`
+  - Show 3-4 suggested prompts based on current page
+  - Examples:
+    - Projetos: "Analisar lucratividade dos projetos", "Mostrar projetos atrasados"
+    - Recebíveis: "Mostrar pagamentos em atraso", "Prever receita deste mês"
+    - Despesas: "Categorizar padrões de gastos", "Encontrar despesas recorrentes"
+  - Styling: Small chips/buttons that pre-fill the input
+
+- [ ] **Step 3.3**: Add context to agent prompts
+  - Detect current filters/search state
+  - Pass current page context to API
+  - Include selected items if any
+
+##### **Phase 4: Polish & Enhancements** (1-2 hours)
+- [ ] **Step 4.1**: Implement keyboard shortcut (Cmd/Ctrl + /)
+  - Add global keyboard listener
+  - Show tooltip hint on FAB hover
+  - Focus input when opened via shortcut
+
+- [ ] **Step 4.2**: Add session persistence
+  - Store messages in React state
+  - Optional: localStorage backup
+  - Clear on logout or manual reset
+  - Add "Limpar histórico" button
+
+- [ ] **Step 4.3**: Mobile responsive design
+  - Full-width drawer on mobile (<768px)
+  - Bottom-up animation instead of right slide
+  - Touch-friendly tap targets (48px minimum)
+  - Keyboard handling for mobile
+
+- [ ] **Step 4.4**: Add markdown support for AI responses
+  - Install/use markdown renderer (react-markdown)
+  - Style code blocks, lists, bold, italic
+  - Handle line breaks properly
+
+##### **Phase 5: Testing & Documentation** (30-60 min)
+- [ ] **Step 5.1**: Test all user flows
+  - Open/close chat from different pages
+  - Send messages and receive responses
+  - Test context hints work correctly
+  - Test keyboard shortcut
+  - Test mobile responsive behavior
+
+- [ ] **Step 5.2**: Update documentation
+  - Add component documentation
+  - Update user guide (how to use global chat)
+  - Document context-aware prompts
+
+- [ ] **Step 5.3**: Final build and deployment check
+  - Run `npm run build`
+  - Check bundle size impact
+  - Verify no TypeScript errors
+  - Test in production-like environment
+
+**Technical Stack**:
+- React Context for state management
+- Existing OperationsAgentService for backend
+- Tailwind CSS for styling
+- React Markdown for message formatting
+
+**Files to Create** (~5 new files):
+- `app/components/chat/ArnaldoChatFAB.tsx`
+- `app/components/chat/ChatPanel.tsx`
+- `app/components/chat/ChatHeader.tsx`
+- `app/components/chat/MessageList.tsx`
+- `app/components/chat/ChatInput.tsx`
+- `app/components/chat/ContextHints.tsx`
+- `app/contexts/ChatContext.tsx`
+
+**Files to Modify** (~2 files):
+- `app/layout.tsx` (add FAB integration)
+- Possibly `globals.css` (chat-specific styles if needed)
+
+**Success Criteria**:
+- ✅ Chat accessible from any page via floating button
+- ✅ Context-aware prompts show correctly
+- ✅ Messages stream properly from AI
+- ✅ Keyboard shortcut works (Cmd/Ctrl + /)
+- ✅ Mobile responsive (full-width drawer)
+- ✅ No performance degradation
+- ✅ Build successful with no errors
+
+**Related**:
+- Existing: `lib/services/OperationsAgentService.ts`
+- Existing: `/api/ai/operations` endpoint
+- Reference: `/ai-chat` page for streaming patterns
 
 ---
 
@@ -141,106 +289,6 @@ Examples:
 **Related**: ADR-014 Phase 3, existing service patterns in `lib/services/`
 
 ---
-
-#### **3. Global "Chat with Arnaldo" Integration**
-**Goal**: Add persistent chat interface accessible from all entity tabs
-
-**Requirements**:
-- [ ] Design floating chat button (bottom-right corner)
-  - [ ] Create floating action button (FAB) component
-  - [ ] Add pulsing animation or notification badge for hints
-  - [ ] Position fixed bottom-right (z-index management)
-  - [ ] Add accessibility label and keyboard support
-- [ ] Implement slide-out chat panel
-  - [ ] Create sidebar/drawer component (300-400px width)
-  - [ ] Slide-in/out animation from right side
-  - [ ] Add backdrop overlay to dim main content
-  - [ ] Handle responsive behavior (full-width on mobile)
-- [ ] Integrate with OperationsAgentService
-  - [ ] Connect to existing `/api/ai/operations` endpoint
-  - [ ] Implement streaming response handling
-  - [ ] Add loading states and error handling
-  - [ ] Format messages with markdown support
-- [ ] Add context-aware prompts per tab
-  - [ ] Detect current page/tab (usePathname hook)
-  - [ ] Show suggested prompts based on context:
-    - Projetos: "Analyze project profitability", "Show project timeline"
-    - Recebíveis: "Show overdue payments", "Forecast this month's revenue"
-    - Despesas: "Categorize spending patterns", "Find recurring expenses"
-  - [ ] Pre-fill context in agent prompt (current filters, selected items)
-- [ ] Preserve chat history during session
-  - [ ] Store messages in React state or context
-  - [ ] Optionally persist to localStorage
-  - [ ] Clear on logout or manual reset
-  - [ ] Show timestamp for each message
-- [ ] Add keyboard shortcut to open chat
-  - [ ] Implement Cmd/Ctrl + / listener
-  - [ ] Focus input field when opened via keyboard
-  - [ ] Add shortcut hint in UI tooltip
-
-**Visual Concept**:
-```
-┌───────────────────────────────┐
-│ Table content...              │
-│                               │
-│                     [💬]  ←─ Floating button (fixed position)
-│                               │
-└───────────────────────────────┘
-
-(Click opens sidebar):
-┌─────────────────┬─────────────┐
-│ Table           │ Chat Panel  │
-│ (dimmed)        │ ┌─────────┐ │
-│                 │ │ Arnaldo │ │
-│                 │ │ AI      │ │
-│                 │ ├─────────┤ │
-│                 │ │ Messages│ │
-│                 │ │ User: X │ │
-│                 │ │ AI: Y   │ │
-│                 │ ├─────────┤ │
-│                 │ │[Type...]│ │
-│                 │ └─────────┘ │
-└─────────────────┴─────────────┘
-```
-
-**Technical Architecture**:
-```typescript
-// Global layout wrapper
-<MainLayout>
-  {children} {/* Pages/tabs */}
-  <ArnaldoChatFAB /> {/* Floating button + panel */}
-</MainLayout>
-
-// Panel component structure
-<ChatPanel isOpen={isOpen} onClose={handleClose}>
-  <ChatHeader />
-  <ContextHints currentPage={pathname} />
-  <MessageList messages={messages} />
-  <ChatInput onSend={sendMessage} />
-</ChatPanel>
-```
-
-**Integration Points**:
-- Global layout component (app/layout.tsx or similar)
-- OperationsAgentService (`lib/services/OperationsAgentService.ts`)
-- Context detection (usePathname, current filters)
-- Session state management (React Context or Zustand)
-
-**Dependencies**:
-- ✅ OperationsAgentService (already exists)
-- ✅ Streaming API endpoint (already exists)
-- New: Chat UI components
-
-**Estimated Effort**: 6-8 hours
-**Related**: `lib/services/OperationsAgentService.ts`, existing AI chat at `/ai-chat`
-
-**Success Criteria**:
-- [ ] Chat accessible from any entity tab (Projetos, Recebíveis, Despesas, Dashboard)
-- [ ] Context-aware suggestions work correctly
-- [ ] Chat history persists during session
-- [ ] Keyboard shortcut works
-- [ ] Mobile responsive (full-width drawer)
-- [ ] No performance impact on main app
 
 ---
 
