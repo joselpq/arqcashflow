@@ -280,25 +280,155 @@ export class BusinessMetricsService {
     }
   }
 
-  // ===== PHASE 2: REMAINING EXISTING METRICS (To be implemented next session) =====
+  // ===== PHASE 2: REMAINING EXISTING METRICS =====
 
   /**
-   * TODO (Phase 2): Extract getCashFlowHealth()
-   * Assess overall cash flow status based on overdue items and monthly profit
+   * Assess overall cash flow health status
+   * Analyzes overdue items and monthly profit to determine health status
+   *
+   * Logic:
+   * - CRITICAL: Any overdue receivables or expenses
+   * - WARNING: Negative profit this month OR more pending expenses than receivables
+   * - GOOD: Otherwise
+   *
+   * @returns CashFlowHealth with status and localized message
    */
-  // async getCashFlowHealth(): Promise<CashFlowHealth>
+  async getCashFlowHealth(): Promise<CashFlowHealth> {
+    // Get overdue analysis
+    const overdueAnalysis = await this.getOverdueAnalysis()
+
+    // Get month metrics for profit check
+    const monthMetrics = await this.getMonthMetrics()
+
+    // Get pending amounts for balance check
+    const pendingAmounts = await this.getPendingAmounts(90)
+
+    // Determine health status
+    let status: 'good' | 'warning' | 'critical' = 'good'
+    let message = 'Fluxo de caixa saudável'
+
+    if (overdueAnalysis.overdueReceivables > 0 || overdueAnalysis.overdueExpenses > 0) {
+      status = 'critical'
+      const totalOverdue = overdueAnalysis.overdueReceivables + overdueAnalysis.overdueExpenses
+      message = `${totalOverdue} itens em atraso precisam de atenção`
+    } else if (monthMetrics.thisMonthProfit < 0) {
+      status = 'warning'
+      message = 'Despesas superiores à receita este mês'
+    } else if (pendingAmounts.pendingExpenses > pendingAmounts.pendingReceivables) {
+      status = 'warning'
+      message = 'Mais dinheiro a pagar do que a receber'
+    }
+
+    return { status, message }
+  }
 
   /**
-   * TODO (Phase 2): Extract getUpcomingItems()
-   * Get receivables and expenses due within next N days (default: 7)
+   * Get upcoming receivables and expenses within next N days
+   * Returns sorted lists (earliest first) limited to top 5 of each
+   *
+   * @param days - Time window in days (default: 7)
+   * @returns UpcomingItems with receivables and expenses lists
    */
-  // async getUpcomingItems(days: number = 7): Promise<UpcomingItems>
+  async getUpcomingItems(days: number = 7): Promise<UpcomingItems> {
+    const today = new Date()
+    const endDate = new Date()
+    endDate.setDate(endDate.getDate() + days)
+
+    // Fetch receivables and expenses with contract relations
+    const receivables = await this.context.teamScopedPrisma.receivable.findMany({
+      include: { contract: true }
+    })
+    const expenses = await this.context.teamScopedPrisma.expense.findMany()
+
+    // Filter upcoming receivables (not overdue, within time window)
+    const upcomingReceivables = receivables
+      .filter(r =>
+        r.status === 'pending' &&
+        !isDateBefore(r.expectedDate, today) &&
+        isDateInRange(r.expectedDate, today, endDate)
+      )
+      .sort((a, b) => new Date(a.expectedDate).getTime() - new Date(b.expectedDate).getTime())
+      .slice(0, 5)
+      .map(r => ({
+        id: r.id,
+        client: r.contract?.clientName || r.clientName || 'Cliente',
+        project: r.contract?.projectName || r.description || 'Recebível',
+        amount: r.amount,
+        expectedDate: r.expectedDate.toISOString(),
+        entityType: 'receivable' as const,
+        entityId: r.id
+      }))
+
+    // Filter upcoming expenses (not overdue, within time window)
+    const upcomingExpenses = expenses
+      .filter(e =>
+        e.status === 'pending' &&
+        !isDateBefore(e.dueDate, today) &&
+        isDateInRange(e.dueDate, today, endDate)
+      )
+      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+      .slice(0, 5)
+      .map(e => ({
+        id: e.id,
+        description: e.description,
+        vendor: e.vendor,
+        amount: e.amount,
+        dueDate: e.dueDate.toISOString(),
+        entityType: 'expense' as const,
+        entityId: e.id
+      }))
+
+    return {
+      receivables: upcomingReceivables,
+      expenses: upcomingExpenses,
+      days
+    }
+  }
 
   /**
-   * TODO (Phase 2): Extract getMonthlyTrend()
-   * Get last N months of revenue/expenses/profit trend data
+   * Get monthly trend data for last N months
+   * Calculates revenue, expenses, and profit for each month
+   *
+   * @param months - Number of months to include (default: 6)
+   * @returns Array of MonthlyTrendData ordered from oldest to newest
    */
-  // async getMonthlyTrend(months: number = 6): Promise<MonthlyTrendData[]>
+  async getMonthlyTrend(months: number = 6): Promise<MonthlyTrendData[]> {
+    const now = new Date()
+
+    // Fetch all receivables and expenses
+    const receivables = await this.context.teamScopedPrisma.receivable.findMany()
+    const expenses = await this.context.teamScopedPrisma.expense.findMany()
+
+    // Build monthly data array
+    const monthlyData: MonthlyTrendData[] = []
+
+    for (let i = months - 1; i >= 0; i--) {
+      const monthDate = new Date(now.getFullYear(), now.getMonth() - i, 1)
+      const monthStart = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1)
+      const monthEnd = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0, 23, 59, 59)
+
+      // Calculate revenue for this month (received in this month)
+      const monthRevenue = receivables
+        .filter(r => r.status === 'received' && r.receivedDate &&
+          isDateInRange(r.receivedDate, monthStart, monthEnd))
+        .reduce((sum, r) => sum + (r.receivedAmount || r.amount), 0)
+
+      // Calculate expenses for this month (paid in this month)
+      const monthExpenses = expenses
+        .filter(e => e.status === 'paid' && e.paidDate &&
+          isDateInRange(e.paidDate, monthStart, monthEnd))
+        .reduce((sum, e) => sum + (e.paidAmount || e.amount), 0)
+
+      monthlyData.push({
+        month: monthDate.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' }),
+        revenue: monthRevenue,
+        expenses: monthExpenses,
+        profit: monthRevenue - monthExpenses
+      })
+    }
+
+    return monthlyData
+  }
 
   // ===== PHASE 3: NEW ADVANCED METRICS (Future implementation) =====
 

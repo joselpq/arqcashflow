@@ -419,4 +419,309 @@ describe('BusinessMetricsService', () => {
       expect(mockContext.teamScopedPrisma.expense.findMany).toHaveBeenCalled()
     })
   })
+
+  // ===== PHASE 2: NEW METHODS TESTS =====
+
+  // ===== getCashFlowHealth() Tests =====
+
+  describe('getCashFlowHealth()', () => {
+    it('should return critical status when overdue items exist', async () => {
+      const health = await service.getCashFlowHealth()
+
+      // We have 1 overdue receivable + 1 overdue expense = 2 total
+      expect(health.status).toBe('critical')
+      expect(health.message).toContain('2 itens em atraso')
+    })
+
+    it('should return warning when profit is negative', async () => {
+      // Create context with negative profit
+      const negativeContext = {
+        ...mockContext,
+        teamScopedPrisma: {
+          contract: { findMany: jest.fn().mockResolvedValue(mockContracts) },
+          receivable: {
+            findMany: jest.fn().mockResolvedValue([
+              // Only received last month (not this month)
+              mockReceivables[1]
+            ])
+          },
+          expense: {
+            findMany: jest.fn().mockResolvedValue([
+              // Paid this month
+              mockExpenses[0]
+            ])
+          },
+          raw: {} as any
+        } as any
+      }
+
+      const negativeService = new BusinessMetricsService(negativeContext)
+      const health = await negativeService.getCashFlowHealth()
+
+      // This month revenue = 0, expenses = 8000 → profit = -8000
+      expect(health.status).toBe('warning')
+      expect(health.message).toContain('Despesas superiores à receita')
+    })
+
+    it('should return warning when pending expenses exceed pending receivables', async () => {
+      // Create context with no overdue, positive profit, but more pending expenses
+      const imbalancedContext = {
+        ...mockContext,
+        teamScopedPrisma: {
+          contract: { findMany: jest.fn().mockResolvedValue(mockContracts) },
+          receivable: {
+            findMany: jest.fn().mockResolvedValue([
+              // Received this month
+              mockReceivables[0],
+              // Small pending
+              { ...mockReceivables[2], amount: 1000 }
+            ])
+          },
+          expense: {
+            findMany: jest.fn().mockResolvedValue([
+              // Paid this month
+              mockExpenses[0],
+              // Large pending
+              { ...mockExpenses[2], amount: 50000 }
+            ])
+          },
+          raw: {} as any
+        } as any
+      }
+
+      const imbalancedService = new BusinessMetricsService(imbalancedContext)
+      const health = await imbalancedService.getCashFlowHealth()
+
+      expect(health.status).toBe('warning')
+      expect(health.message).toContain('Mais dinheiro a pagar do que a receber')
+    })
+
+    it('should return good status when all indicators are healthy', async () => {
+      // Create context with no overdue, positive profit, balanced pending
+      const healthyContext = {
+        ...mockContext,
+        teamScopedPrisma: {
+          contract: { findMany: jest.fn().mockResolvedValue(mockContracts) },
+          receivable: {
+            findMany: jest.fn().mockResolvedValue([
+              // Received this month
+              mockReceivables[0],
+              // Good pending
+              mockReceivables[2]
+            ])
+          },
+          expense: {
+            findMany: jest.fn().mockResolvedValue([
+              // Paid this month
+              mockExpenses[0],
+              // Small pending
+              mockExpenses[2]
+            ])
+          },
+          raw: {} as any
+        } as any
+      }
+
+      const healthyService = new BusinessMetricsService(healthyContext)
+      const health = await healthyService.getCashFlowHealth()
+
+      expect(health.status).toBe('good')
+      expect(health.message).toBe('Fluxo de caixa saudável')
+    })
+  })
+
+  // ===== getUpcomingItems() Tests =====
+
+  describe('getUpcomingItems()', () => {
+    it('should return upcoming receivables within 7 days', async () => {
+      const upcoming = await service.getUpcomingItems(7)
+
+      // receivable-3 is due next week (NEXT_WEEK = 7 days from TODAY)
+      expect(upcoming.receivables).toHaveLength(1)
+      expect(upcoming.receivables[0].id).toBe('receivable-3')
+      expect(upcoming.receivables[0].amount).toBe(15000)
+      expect(upcoming.receivables[0].client).toBe('João Silva')
+      expect(upcoming.receivables[0].project).toBe('Residência')
+    })
+
+    it('should return upcoming expenses within 7 days', async () => {
+      const upcoming = await service.getUpcomingItems(7)
+
+      // expense-3 is due next week
+      expect(upcoming.expenses).toHaveLength(1)
+      expect(upcoming.expenses[0].id).toBe('expense-3')
+      expect(upcoming.expenses[0].amount).toBe(5000)
+      expect(upcoming.expenses[0].description).toBe('Fornecedor')
+      expect(upcoming.expenses[0].vendor).toBe('Fornecedor ABC')
+    })
+
+    it('should not include overdue items', async () => {
+      const upcoming = await service.getUpcomingItems(30)
+
+      // receivable-4 and expense-4 are overdue (before TODAY)
+      const hasOverdueReceivable = upcoming.receivables.some(r => r.id === 'receivable-4')
+      const hasOverdueExpense = upcoming.expenses.some(e => e.id === 'expense-4')
+
+      expect(hasOverdueReceivable).toBe(false)
+      expect(hasOverdueExpense).toBe(false)
+    })
+
+    it('should sort items by date (earliest first)', async () => {
+      // Add more upcoming items
+      const multiContext = {
+        ...mockContext,
+        teamScopedPrisma: {
+          contract: { findMany: jest.fn().mockResolvedValue(mockContracts) },
+          receivable: {
+            findMany: jest.fn().mockResolvedValue([
+              { ...mockReceivables[2], id: 'r1', expectedDate: new Date('2025-01-20') },
+              { ...mockReceivables[2], id: 'r2', expectedDate: new Date('2025-01-18') },
+              { ...mockReceivables[2], id: 'r3', expectedDate: new Date('2025-01-22') }
+            ])
+          },
+          expense: { findMany: jest.fn().mockResolvedValue([]) },
+          raw: {} as any
+        } as any
+      }
+
+      const multiService = new BusinessMetricsService(multiContext)
+      const upcoming = await multiService.getUpcomingItems(30)
+
+      // Should be sorted by date (earliest first)
+      expect(upcoming.receivables[0].id).toBe('r2') // 2025-01-18
+      expect(upcoming.receivables[1].id).toBe('r1') // 2025-01-20
+      expect(upcoming.receivables[2].id).toBe('r3') // 2025-01-22
+    })
+
+    it('should limit to 5 items per type', async () => {
+      // Create 10 upcoming items
+      const manyReceivables = Array.from({ length: 10 }, (_, i) => ({
+        ...mockReceivables[2],
+        id: `receivable-${i}`,
+        expectedDate: new Date(`2025-01-${16 + i}`)
+      }))
+
+      const limitContext = {
+        ...mockContext,
+        teamScopedPrisma: {
+          contract: { findMany: jest.fn().mockResolvedValue(mockContracts) },
+          receivable: {
+            findMany: jest.fn().mockResolvedValue(manyReceivables)
+          },
+          expense: { findMany: jest.fn().mockResolvedValue([]) },
+          raw: {} as any
+        } as any
+      }
+
+      const limitService = new BusinessMetricsService(limitContext)
+      const upcoming = await limitService.getUpcomingItems(30)
+
+      // Should return only 5 items
+      expect(upcoming.receivables).toHaveLength(5)
+    })
+
+    it('should default to 7 days if no parameter provided', async () => {
+      const upcoming = await service.getUpcomingItems()
+
+      expect(upcoming.days).toBe(7)
+    })
+
+    it('should include entity metadata for frontend linking', async () => {
+      const upcoming = await service.getUpcomingItems(7)
+
+      if (upcoming.receivables.length > 0) {
+        expect(upcoming.receivables[0].entityType).toBe('receivable')
+        expect(upcoming.receivables[0].entityId).toBeDefined()
+      }
+
+      if (upcoming.expenses.length > 0) {
+        expect(upcoming.expenses[0].entityType).toBe('expense')
+        expect(upcoming.expenses[0].entityId).toBeDefined()
+      }
+    })
+  })
+
+  // ===== getMonthlyTrend() Tests =====
+
+  describe('getMonthlyTrend()', () => {
+    it('should return 6 months of data by default', async () => {
+      const trend = await service.getMonthlyTrend()
+
+      expect(trend).toHaveLength(6)
+    })
+
+    it('should return correct number of months when specified', async () => {
+      const trend = await service.getMonthlyTrend(3)
+
+      expect(trend).toHaveLength(3)
+    })
+
+    it('should calculate revenue for each month correctly', async () => {
+      const trend = await service.getMonthlyTrend(6)
+
+      // Find current month (jan 2025)
+      const currentMonth = trend.find(m => m.month.includes('jan'))
+      expect(currentMonth).toBeDefined()
+      // receivable-1 was received this month: 30,000
+      expect(currentMonth?.revenue).toBe(30000)
+
+      // Find last month (dez 2024)
+      const lastMonth = trend.find(m => m.month.includes('dez'))
+      expect(lastMonth).toBeDefined()
+      // receivable-2 was received last month: 20,000
+      expect(lastMonth?.revenue).toBe(20000)
+    })
+
+    it('should calculate expenses for each month correctly', async () => {
+      const trend = await service.getMonthlyTrend(6)
+
+      // Current month
+      const currentMonth = trend.find(m => m.month.includes('jan'))
+      expect(currentMonth?.expenses).toBe(8000) // expense-1
+
+      // Last month
+      const lastMonth = trend.find(m => m.month.includes('dez'))
+      expect(lastMonth?.expenses).toBe(3000) // expense-2
+    })
+
+    it('should calculate profit correctly', async () => {
+      const trend = await service.getMonthlyTrend(6)
+
+      const currentMonth = trend.find(m => m.month.includes('jan'))
+      // Profit = 30,000 - 8,000 = 22,000
+      expect(currentMonth?.profit).toBe(22000)
+    })
+
+    it('should format month names in Portuguese', async () => {
+      const trend = await service.getMonthlyTrend(6)
+
+      // Should have Portuguese month abbreviations (e.g., "jan 2025", "dez 2024")
+      trend.forEach(item => {
+        expect(item.month).toMatch(/^[a-z]{3}\s\d{4}$/)
+      })
+    })
+
+    it('should return months in chronological order (oldest to newest)', async () => {
+      const trend = await service.getMonthlyTrend(3)
+
+      // Should be ordered oldest → newest
+      // For January 15, 2025, last 3 months are: Nov 2024, Dec 2024, Jan 2025
+      expect(trend[0].month).toContain('nov')
+      expect(trend[1].month).toContain('dez')
+      expect(trend[2].month).toContain('jan')
+    })
+
+    it('should handle months with zero revenue/expenses', async () => {
+      const trend = await service.getMonthlyTrend(6)
+
+      // Months without data should have zero values
+      const emptyMonths = trend.filter(m => !m.month.includes('jan') && !m.month.includes('dez'))
+
+      emptyMonths.forEach(month => {
+        expect(month.revenue).toBe(0)
+        expect(month.expenses).toBe(0)
+        expect(month.profit).toBe(0)
+      })
+    })
+  })
 })

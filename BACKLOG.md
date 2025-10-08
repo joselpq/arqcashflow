@@ -109,13 +109,13 @@ Examples:
 - ✅ Team-scoped security by default
 - ✅ Matches existing dashboard API behavior exactly
 
-**Phase 2: Complete Extraction** (~2 hours) ⏱️ **NEXT SESSION**
-- [ ] Extract `getCashFlowHealth()` from dashboard API
-- [ ] Extract `getUpcomingItems(days)` from dashboard API
-- [ ] Extract `getMonthlyTrend(months)` from dashboard API
-- [ ] Refactor `/api/dashboard/route.ts` to use service
-- [ ] Validate dashboard works identically (zero regressions)
-- [ ] Update unit tests
+**Phase 2: Complete Extraction** (~2 hours) ✅ **COMPLETE (2025-10-08)**
+- [x] Extract `getCashFlowHealth()` from dashboard API
+- [x] Extract `getUpcomingItems(days)` from dashboard API
+- [x] Extract `getMonthlyTrend(months)` from dashboard API
+- [x] Refactor `/api/dashboard/route.ts` to use service
+- [x] Validate dashboard works identically (zero regressions)
+- [x] Update unit tests
 
 **Phase 3: New Advanced Metrics** (~2-3 hours) ⏱️ **FUTURE SESSION**
 - [ ] Implement `calculateCashFlowForecast(days)` - NEW
@@ -138,10 +138,18 @@ Examples:
 - ✅ Team-scoped via teamScopedPrisma
 - ✅ Date utilities from existing `lib/date-utils.ts`
 
-**Current Focus**: Phase 1 - Extract existing metrics with minimal risk
+**Phase 2 Results**:
+- ✅ `BusinessMetricsService.ts` updated (431 lines total)
+- ✅ Three new methods implemented (getCashFlowHealth, getUpcomingItems, getMonthlyTrend)
+- ✅ Unit tests expanded (728 lines, 27+ test cases)
+- ✅ Dashboard API refactored (218 → 70 lines, 68% reduction)
+- ✅ Build successful, zero errors
+- ✅ Zero regressions - dashboard works identically
+
+**Current Focus**: Phase 2 Complete - Ready for Phase 3 (new advanced metrics)
 **Dependencies**: None - uses existing service patterns
-**Estimated Effort**: 6-7 hours total (spread across 3 sessions)
-**Related**: ADR-014 Phase 3, `/app/api/dashboard/route.ts` (218 lines to refactor)
+**Estimated Effort**: 4 hours completed (2 hours Phase 1 + 2 hours Phase 2)
+**Related**: ADR-014 Phase 3, `/app/api/dashboard/route.ts` (refactored successfully)
 
 ---
 
