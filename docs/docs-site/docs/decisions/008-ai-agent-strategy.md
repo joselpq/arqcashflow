@@ -2,10 +2,10 @@
 title: "AI Agent Strategy: Specialized Financial Intelligence Architecture"
 type: "decision"
 audience: ["developer", "agent", "product"]
-contexts: ["ai-agents", "product-strategy", "financial-intelligence", "user-experience", "automation", "small-business", "professional-services", "document-processing", "business-insights"]
+contexts: ["ai-agents", "product-strategy", "financial-intelligence", "user-experience", "automation", "small-business", "professional-services", "document-processing", "business-insights", "global-chat", "context-aware-ui"]
 complexity: "advanced"
-last_updated: "2025-10-04"
-version: "1.4"
+last_updated: "2025-10-08"
+version: "1.5"
 agent_roles: ["ai-architect", "product-strategist", "business-analyst"]
 related:
   - decisions/003-strategic-architecture-evolution.md
@@ -218,6 +218,7 @@ Agent: "Dos 8 contratos concluídos, você recebeu R$ 652.000,00 (95%).
 **Implementation**: `lib/services/OperationsAgentService.ts` (400 lines) + `/api/ai/operations`
 **Framework**: Vercel AI SDK v5 with Claude Sonnet 4
 **Documentation**: ADR-013 v3.0 (complete implementation guide)
+**Access**: Dedicated `/ai-chat` page + 🚧 **Global Chat Integration (In Progress)** - Floating chat accessible from all tabs
 
 **Final Architecture (2025-10-04)**: **Framework-Based Multi-Step Tool Calling**
 - **Previous approach**: 850 lines manual while-loop with Anthropic SDK
