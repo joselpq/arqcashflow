@@ -1,7 +1,7 @@
 # ArqCashflow Development Backlog
 
 **Purpose**: Central source of truth for project priorities and development status
-**Last Updated**: 2025-10-07 (2A URL Persistence COMPLETE - Shareable filtered views implemented)
+**Last Updated**: 2025-10-07 (2C Quick Filters Enhanced - [+ Mais] dropdown complete for Expenses tab)
 **Update Frequency**: Every LLM session MUST update this document when completing tasks or discovering new requirements
 
 ## 🚨 CRITICAL INSTRUCTIONS FOR LLM AGENTS
@@ -83,7 +83,34 @@ Examples:
 ### 🔄 DOING (Currently In Progress)
 *Active work with real-time progress tracking. Can persist between sessions if work is incomplete.*
 
-**Currently Empty** - 2A URL Persistence complete! Ready for next enhancement.
+#### **2C Extended: Apply [+ Mais] Dropdown to Remaining Tabs** ⏳ IN PROGRESS
+**Status**: Expenses tab complete, Receivables & Projetos pending
+
+**Completed (Expenses tab only)**:
+- ✅ Merged chips + Add button into single row (saves ~40px vertical space)
+- ✅ Added [+ Mais] dropdown with additional presets:
+  - 📅 Últimos 7 Dias
+  - 📅 Últimos 30 Dias
+  - ❌ Cancelados
+  - 📝 Sem Categoria
+- ✅ Visual active state (blue highlight + checkmark)
+- ✅ Toggle behavior (click to select/deselect)
+- ✅ Fixed "× Limpar" to show when any quick filter is active
+- ✅ Fixed "Copiar Link" to include quick filter state
+
+**Pending (Receivables & Projetos tabs)**:
+- [ ] Apply same [+ Mais] dropdown pattern to Receivables
+  - Presets: Últimos 7 Dias, Últimos 30 Dias, Recebidos Este Mês, etc.
+- [ ] Apply same [+ Mais] dropdown pattern to Projetos
+  - Presets: Concluídos Este Mês, Últimos 30 Dias, etc.
+- [ ] Merge chips + Add button layout on both tabs
+
+**Files Modified So Far**:
+- `app/expenses/page.tsx` (complete)
+- `app/receivables/page.tsx` (needs update)
+- `app/projetos/components/ContractsTab.tsx` (needs update)
+
+**Estimated Time Remaining**: 10-15 minutes
 
 ---
 
@@ -357,6 +384,78 @@ Mobile (<480px):
 
 ### ✅ DONE (Recently Completed)
 *Newest first, for reference.*
+
+#### **2C. Quick Filter Chips with [+ Mais] Dropdown** ✅ PARTIAL COMPLETE (2025-10-07)
+**Impact**: One-click access to common filter combinations, improved UX with merged layout
+
+**Status**: Fully implemented on Expenses tab, basic chips on Receivables & Projetos
+
+**Implemented (All Tabs)**:
+- ✅ Basic quick filter chips above filter bar
+  - Expenses: ⏰ Vencendo Esta Semana, 🔄 Recorrentes, 💰 Acima de R$5k
+  - Receivables: ⚠️ Atrasados, 📅 Este Mês, 💰 Acima de R$10k
+  - Projetos: ✅ Ativos, 💰 Acima de R$50k
+- ✅ Toggle behavior (click to activate/deactivate)
+- ✅ Color-coded active states (amber, blue, green, purple, red)
+- ✅ Client-side filtering integrated with existing filter logic
+- ✅ Chips clear when "× Limpar" button clicked
+
+**Enhanced Implementation (Expenses Tab Only)**:
+- ✅ **Merged layout**: Chips + Add button on same row (saves ~40px vertical space)
+- ✅ **[+ Mais] dropdown** with additional presets:
+  - 📅 Últimos 7 Dias (date-range filtering)
+  - 📅 Últimos 30 Dias (date-range filtering)
+  - ❌ Cancelados (status filter)
+  - 📝 Sem Categoria (category filter)
+- ✅ **Visual active state**: Selected options show blue highlight + checkmark (✓)
+- ✅ **Toggle behavior**: Click again to deselect
+- ✅ **Fixed "× Limpar" button**: Shows when ANY quick filter is active (including date filters)
+- ✅ **Fixed "Copiar Link" button**: Includes quick filter state in URL
+
+**Files Modified**:
+- `app/expenses/page.tsx` - Full implementation with [+ Mais] dropdown
+- `app/receivables/page.tsx` - Basic chips only (pending enhancement)
+- `app/projetos/components/ContractsTab.tsx` - Basic chips only (pending enhancement)
+
+**Technical Implementation**:
+```typescript
+// State management
+const [activeQuickFilter, setActiveQuickFilter] = useState<string | null>(null)
+const [moreFiltersOpen, setMoreFiltersOpen] = useState(false)
+
+// Date-range filtering for "Últimos 7 Dias"
+if (activeQuickFilter === 'last-7-days') {
+  const today = new Date()
+  const sevenDaysAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000)
+  filtered = filtered.filter((expense: any) => {
+    const dueDate = new Date(expense.dueDate)
+    return dueDate >= sevenDaysAgo && dueDate <= today
+  })
+}
+
+// Visual active state in dropdown
+className={`... ${
+  activeQuickFilter === 'last-7-days'
+    ? 'bg-blue-50 text-blue-700 font-medium'
+    : 'hover:bg-neutral-50'
+}`}
+```
+
+**User Benefits**:
+- Faster navigation to frequently viewed data subsets
+- Visual feedback with color-coded states
+- Space efficiency (merged layout)
+- More preset options without cluttering main UI
+- Clear visual indication of active filters
+
+**Build Status**: ✅ Compiled successfully (5.0s)
+
+**Next Steps** (documented in DOING section):
+- Apply [+ Mais] dropdown to Receivables tab
+- Apply [+ Mais] dropdown to Projetos tab
+- Merge layout on remaining tabs
+
+---
 
 #### **2A. URL Persistence for Filters** ✅ COMPLETE (2025-10-07)
 **Impact**: Shareable filtered views, bookmarkable searches, improved UX continuity
