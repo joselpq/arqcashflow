@@ -33,6 +33,7 @@ function ExpensesPageContent() {
   })
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '')
   const [filteredExpenses, setFilteredExpenses] = useState([])
+  const [activeQuickFilter, setActiveQuickFilter] = useState<string | null>(null)
   const [recurringActionModal, setRecurringActionModal] = useState<{
     isOpen: boolean
     expense: any
@@ -95,10 +96,22 @@ function ExpensesPageContent() {
   useEffect(() => {
     let filtered = expenses
 
+    // Apply quick filter (this-week or high-value)
+    if (activeQuickFilter === 'this-week') {
+      const today = new Date()
+      const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000)
+      filtered = filtered.filter((expense: any) => {
+        const dueDate = new Date(expense.dueDate)
+        return expense.status === 'pending' && dueDate >= today && dueDate <= nextWeek
+      })
+    } else if (activeQuickFilter === 'high-value') {
+      filtered = filtered.filter((expense: any) => expense.amount > 5000)
+    }
+
     // Apply search filter
     if (searchQuery.trim()) {
       const query = normalizeText(searchQuery)
-      filtered = expenses.filter((expense: any) =>
+      filtered = filtered.filter((expense: any) =>
         normalizeText(expense.description || '').includes(query) ||
         normalizeText(expense.vendor || '').includes(query) ||
         normalizeText(expense.category || '').includes(query) ||
@@ -142,7 +155,7 @@ function ExpensesPageContent() {
     })
 
     setFilteredExpenses(sorted)
-  }, [expenses, searchQuery, filters.sortBy, filters.sortOrder])
+  }, [expenses, searchQuery, filters.sortBy, filters.sortOrder, activeQuickFilter])
 
   // Handle auto-edit when URL parameter is present
   useEffect(() => {
@@ -585,6 +598,71 @@ function ExpensesPageContent() {
         </button>
       </div>
 
+      {/* Quick Filter Chips */}
+      <div className="mb-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => {
+              if (activeQuickFilter === 'this-week') {
+                // Deactivate - reset to defaults
+                setFilters({ ...filters, status: 'pending' })
+                setActiveQuickFilter(null)
+              } else {
+                // Activate - show pending expenses due this week
+                setFilters({ ...filters, status: 'pending' })
+                setActiveQuickFilter('this-week')
+              }
+            }}
+            className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              activeQuickFilter === 'this-week'
+                ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                : 'bg-neutral-100 text-neutral-700 border border-neutral-200 hover:bg-neutral-200'
+            }`}
+            aria-label="Filtrar por despesas vencendo esta semana"
+          >
+            ⏰ Vencendo Esta Semana
+          </button>
+
+          <button
+            onClick={() => {
+              if (activeQuickFilter === 'recurring') {
+                setFilters({ ...filters, isRecurring: 'all' })
+                setActiveQuickFilter(null)
+              } else {
+                setFilters({ ...filters, isRecurring: 'true' })
+                setActiveQuickFilter('recurring')
+              }
+            }}
+            className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              activeQuickFilter === 'recurring'
+                ? 'bg-blue-100 text-blue-800 border border-blue-300'
+                : 'bg-neutral-100 text-neutral-700 border border-neutral-200 hover:bg-neutral-200'
+            }`}
+            aria-label="Filtrar por despesas recorrentes"
+          >
+            🔄 Recorrentes
+          </button>
+
+          <button
+            onClick={() => {
+              if (activeQuickFilter === 'high-value') {
+                setActiveQuickFilter(null)
+              } else {
+                setActiveQuickFilter('high-value')
+              }
+            }}
+            className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              activeQuickFilter === 'high-value'
+                ? 'bg-purple-100 text-purple-800 border border-purple-300'
+                : 'bg-neutral-100 text-neutral-700 border border-neutral-200 hover:bg-neutral-200'
+            }`}
+            aria-label="Filtrar por despesas acima de R$5.000"
+          >
+            💰 Acima de R$5k
+          </button>
+        </div>
+      </div>
+
       {/* Compact Filters - Single Row */}
       <div className="mb-6">
         <div className="flex flex-wrap items-center gap-2 p-3 bg-white rounded-lg border border-neutral-200 shadow-sm">
@@ -671,6 +749,7 @@ function ExpensesPageContent() {
               onClick={() => {
                 setFilters({ contractId: 'all', status: 'pending', category: 'all', type: 'all', isRecurring: 'all', sortBy: 'dueDate', sortOrder: 'asc' })
                 setSearchQuery('')
+                setActiveQuickFilter(null)
               }}
               className="text-sm text-blue-600 hover:text-blue-800 font-medium whitespace-nowrap px-2 transition-colors"
               aria-label="Limpar todos os filtros"

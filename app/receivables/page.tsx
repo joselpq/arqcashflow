@@ -30,6 +30,7 @@ function ReceivablesPageContent() {
   })
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '')
   const [filteredReceivables, setFilteredReceivables] = useState([])
+  const [activeQuickFilter, setActiveQuickFilter] = useState<string | null>(null)
 
   // Sync filters and search to URL
   useEffect(() => {
@@ -71,10 +72,24 @@ function ReceivablesPageContent() {
   useEffect(() => {
     let filtered = receivables
 
+    // Apply quick filter
+    if (activeQuickFilter === 'this-month') {
+      const now = new Date()
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+      filtered = filtered.filter((receivable: any) => {
+        const expectedDate = new Date(receivable.expectedDate)
+        return expectedDate >= startOfMonth && expectedDate <= endOfMonth
+      })
+    } else if (activeQuickFilter === 'high-value') {
+      filtered = filtered.filter((receivable: any) => receivable.amount > 10000)
+    }
+    // Note: 'overdue' is handled by status filter, not here
+
     // Apply search filter
     if (searchQuery.trim()) {
       const query = normalizeText(searchQuery)
-      filtered = receivables.filter((receivable: any) =>
+      filtered = filtered.filter((receivable: any) =>
         normalizeText(receivable.contract?.projectName || '').includes(query) ||
         normalizeText(receivable.contract?.clientName || '').includes(query) ||
         normalizeText(receivable.category || '').includes(query) ||
@@ -118,7 +133,7 @@ function ReceivablesPageContent() {
     })
 
     setFilteredReceivables(sorted)
-  }, [receivables, searchQuery, filters.sortBy, filters.sortOrder])
+  }, [receivables, searchQuery, filters.sortBy, filters.sortOrder, activeQuickFilter])
 
   // Handle auto-edit when URL parameter is present
   useEffect(() => {
@@ -319,6 +334,67 @@ function ReceivablesPageContent() {
         </button>
       </div>
 
+      {/* Quick Filter Chips */}
+      <div className="mb-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => {
+              if (activeQuickFilter === 'overdue') {
+                setFilters({ ...filters, status: 'pending' })
+                setActiveQuickFilter(null)
+              } else {
+                setFilters({ ...filters, status: 'overdue' })
+                setActiveQuickFilter('overdue')
+              }
+            }}
+            className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              activeQuickFilter === 'overdue'
+                ? 'bg-red-100 text-red-800 border border-red-300'
+                : 'bg-neutral-100 text-neutral-700 border border-neutral-200 hover:bg-neutral-200'
+            }`}
+            aria-label="Filtrar por recebíveis atrasados"
+          >
+            ⚠️ Atrasados
+          </button>
+
+          <button
+            onClick={() => {
+              if (activeQuickFilter === 'this-month') {
+                setActiveQuickFilter(null)
+              } else {
+                setActiveQuickFilter('this-month')
+              }
+            }}
+            className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              activeQuickFilter === 'this-month'
+                ? 'bg-blue-100 text-blue-800 border border-blue-300'
+                : 'bg-neutral-100 text-neutral-700 border border-neutral-200 hover:bg-neutral-200'
+            }`}
+            aria-label="Filtrar por recebíveis deste mês"
+          >
+            📅 Este Mês
+          </button>
+
+          <button
+            onClick={() => {
+              if (activeQuickFilter === 'high-value') {
+                setActiveQuickFilter(null)
+              } else {
+                setActiveQuickFilter('high-value')
+              }
+            }}
+            className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              activeQuickFilter === 'high-value'
+                ? 'bg-green-100 text-green-800 border border-green-300'
+                : 'bg-neutral-100 text-neutral-700 border border-neutral-200 hover:bg-neutral-200'
+            }`}
+            aria-label="Filtrar por recebíveis acima de R$10.000"
+          >
+            💰 Acima de R$10k
+          </button>
+        </div>
+      </div>
+
       {/* Compact Filters - Single Row */}
       <div className="mb-6">
         <div className="flex flex-wrap items-center gap-2 p-3 bg-white rounded-lg border border-neutral-200 shadow-sm">
@@ -393,6 +469,7 @@ function ReceivablesPageContent() {
               onClick={() => {
                 setFilters({ contractId: 'all', status: 'pending', category: 'all', sortBy: 'expectedDate', sortOrder: 'asc' })
                 setSearchQuery('')
+                setActiveQuickFilter(null)
               }}
               className="text-sm text-blue-600 hover:text-blue-800 font-medium whitespace-nowrap px-2 transition-colors"
               aria-label="Limpar todos os filtros"

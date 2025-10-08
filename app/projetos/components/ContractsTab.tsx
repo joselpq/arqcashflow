@@ -33,6 +33,7 @@ export default function ContractsTab() {
     sortOrder: (searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc',
   })
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '')
+  const [activeQuickFilter, setActiveQuickFilter] = useState<string | null>(null)
 
   // Sync filters and search to URL
   useEffect(() => {
@@ -93,10 +94,16 @@ export default function ContractsTab() {
   useEffect(() => {
     let filtered = contracts
 
+    // Apply quick filter
+    if (activeQuickFilter === 'high-value') {
+      filtered = filtered.filter((contract: any) => (contract.totalValue || 0) > 50000)
+    }
+    // Note: 'active' is handled by status filter, not here
+
     // Apply search filter
     if (searchQuery.trim()) {
       const query = normalizeText(searchQuery)
-      filtered = contracts.filter((contract: any) =>
+      filtered = filtered.filter((contract: any) =>
         normalizeText(contract.clientName || '').includes(query) ||
         normalizeText(contract.projectName || '').includes(query) ||
         normalizeText(contract.category || '').includes(query) ||
@@ -144,7 +151,7 @@ export default function ContractsTab() {
     })
 
     setFilteredContracts(sorted)
-  }, [contracts, searchQuery, filters.sortBy, filters.sortOrder])
+  }, [contracts, searchQuery, filters.sortBy, filters.sortOrder, activeQuickFilter])
 
   async function fetchContracts() {
     try {
@@ -360,6 +367,22 @@ export default function ContractsTab() {
         </button>
       </div>
 
+      {/* Quick Filter Chips */}
+      <div className="mb-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <button onClick={() => {
+            if (activeQuickFilter === 'active') {
+              setFilters({...filters, status: 'all'})
+              setActiveQuickFilter(null)
+            } else {
+              setFilters({...filters, status: 'active'})
+              setActiveQuickFilter('active')
+            }
+          }} className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${activeQuickFilter === 'active' ? 'bg-green-100 text-green-800 border border-green-300' : 'bg-neutral-100 text-neutral-700 border border-neutral-200 hover:bg-neutral-200'}`}>✅ Ativos</button>
+          <button onClick={() => setActiveQuickFilter(activeQuickFilter === 'high-value' ? null : 'high-value')} className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${activeQuickFilter === 'high-value' ? 'bg-purple-100 text-purple-800 border border-purple-300' : 'bg-neutral-100 text-neutral-700 border border-neutral-200 hover:bg-neutral-200'}`}>💰 Acima de R$50k</button>
+        </div>
+      </div>
+
       {/* Compact Filters - Single Row (Search + Status + Category only) */}
       <div className="mb-6">
         <div className="flex flex-wrap items-center gap-2 p-3 bg-white rounded-lg border border-neutral-200 shadow-sm">
@@ -420,6 +443,7 @@ export default function ContractsTab() {
               onClick={() => {
                 setFilters({ status: 'active', category: 'all', sortBy: 'signedDate', sortOrder: 'desc' })
                 setSearchQuery('')
+                setActiveQuickFilter(null)
               }}
               className="text-sm text-blue-600 hover:text-blue-800 font-medium whitespace-nowrap px-2 transition-colors"
               aria-label="Limpar todos os filtros"
