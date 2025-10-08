@@ -38,6 +38,7 @@ function ExpensesPageContent() {
   const [moreFiltersOpen, setMoreFiltersOpen] = useState(false)
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
   const [advancedFilterModalOpen, setAdvancedFilterModalOpen] = useState(false)
+  const [isAiFiltered, setIsAiFiltered] = useState(false)
   const [recurringActionModal, setRecurringActionModal] = useState<{
     isOpen: boolean
     expense: any
@@ -106,8 +107,48 @@ function ExpensesPageContent() {
       .replace(/[\u0300-\u036f]/g, '')
   }
 
+  // Helper function to apply normalized sorting
+  const applySorting = (expenses: any[]) => {
+    return [...expenses].sort((a: any, b: any) => {
+      let aVal, bVal
+
+      switch (filters.sortBy) {
+        case 'description':
+          aVal = normalizeText(a.description || '')
+          bVal = normalizeText(b.description || '')
+          break
+        case 'category':
+          aVal = normalizeText(a.category || '')
+          bVal = normalizeText(b.category || '')
+          break
+        case 'status':
+          aVal = normalizeText(a.status || '')
+          bVal = normalizeText(b.status || '')
+          break
+        case 'amount':
+          aVal = a.amount || 0
+          bVal = b.amount || 0
+          break
+        case 'dueDate':
+          aVal = new Date(a.dueDate || 0).getTime()
+          bVal = new Date(b.dueDate || 0).getTime()
+          break
+        default:
+          aVal = new Date(a.dueDate || 0).getTime()
+          bVal = new Date(b.dueDate || 0).getTime()
+      }
+
+      if (aVal < bVal) return filters.sortOrder === 'asc' ? -1 : 1
+      if (aVal > bVal) return filters.sortOrder === 'asc' ? 1 : -1
+      return 0
+    })
+  }
+
   // Client-side search filtering and sorting
   useEffect(() => {
+    // If AI filter is active, don't refilter
+    if (isAiFiltered) return
+
     let filtered = expenses
 
     // Apply quick filter
@@ -148,42 +189,9 @@ function ExpensesPageContent() {
     }
 
     // Apply sorting
-    const sorted = [...filtered].sort((a: any, b: any) => {
-      let aVal, bVal
-
-      switch (filters.sortBy) {
-        case 'description':
-          aVal = normalizeText(a.description || '')
-          bVal = normalizeText(b.description || '')
-          break
-        case 'category':
-          aVal = normalizeText(a.category || '')
-          bVal = normalizeText(b.category || '')
-          break
-        case 'status':
-          aVal = normalizeText(a.status || '')
-          bVal = normalizeText(b.status || '')
-          break
-        case 'amount':
-          aVal = a.amount || 0
-          bVal = b.amount || 0
-          break
-        case 'dueDate':
-          aVal = new Date(a.dueDate || 0).getTime()
-          bVal = new Date(b.dueDate || 0).getTime()
-          break
-        default:
-          aVal = new Date(a.dueDate || 0).getTime()
-          bVal = new Date(b.dueDate || 0).getTime()
-      }
-
-      if (aVal < bVal) return filters.sortOrder === 'asc' ? -1 : 1
-      if (aVal > bVal) return filters.sortOrder === 'asc' ? 1 : -1
-      return 0
-    })
-
+    const sorted = applySorting(filtered)
     setFilteredExpenses(sorted)
-  }, [expenses, searchQuery, filters.sortBy, filters.sortOrder, activeQuickFilter])
+  }, [expenses, searchQuery, filters.sortBy, filters.sortOrder, activeQuickFilter, isAiFiltered])
 
   // Handle auto-edit when URL parameter is present
   useEffect(() => {
@@ -860,12 +868,13 @@ function ExpensesPageContent() {
           </select>
 
           {/* Clear Filters Button */}
-          {(filters.status !== 'pending' || filters.category !== 'all' || filters.type !== 'all' || filters.isRecurring !== 'all' || searchQuery || activeQuickFilter) && (
+          {(filters.status !== 'pending' || filters.category !== 'all' || filters.type !== 'all' || filters.isRecurring !== 'all' || searchQuery || activeQuickFilter || isAiFiltered) && (
             <button
               onClick={() => {
                 setFilters({ contractId: 'all', status: 'pending', category: 'all', type: 'all', isRecurring: 'all', sortBy: 'dueDate', sortOrder: 'asc' })
                 setSearchQuery('')
                 setActiveQuickFilter(null)
+                setIsAiFiltered(false)
               }}
               className="text-sm text-blue-600 hover:text-blue-800 font-medium whitespace-nowrap px-2 transition-colors"
               aria-label="Limpar todos os filtros"
@@ -874,8 +883,8 @@ function ExpensesPageContent() {
             </button>
           )}
 
-          {/* Copy Link Button - show when filters are active */}
-          {(filters.contractId !== 'all' || filters.status !== 'pending' || filters.category !== 'all' || filters.type !== 'all' || filters.isRecurring !== 'all' || filters.sortBy !== 'dueDate' || filters.sortOrder !== 'asc' || searchQuery || activeQuickFilter) && (
+          {/* Copy Link Button - show when filters are active (but not AI filter since that's not in URL) */}
+          {(filters.contractId !== 'all' || filters.status !== 'pending' || filters.category !== 'all' || filters.type !== 'all' || filters.isRecurring !== 'all' || filters.sortBy !== 'dueDate' || filters.sortOrder !== 'asc' || searchQuery || activeQuickFilter) && !isAiFiltered && (
             <button
               onClick={() => {
                 navigator.clipboard.writeText(window.location.href)
@@ -1208,8 +1217,10 @@ function ExpensesPageContent() {
         isOpen={advancedFilterModalOpen}
         onClose={() => setAdvancedFilterModalOpen(false)}
         onResultsReceived={(results) => {
-          // Apply AI-filtered results
-          setFilteredExpenses(results)
+          // Apply AI-filtered results with normalized sorting
+          const sorted = applySorting(results)
+          setFilteredExpenses(sorted)
+          setIsAiFiltered(true)
         }}
       />
     </div>

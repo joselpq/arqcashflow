@@ -38,6 +38,7 @@ export default function ContractsTab() {
   const [moreFiltersOpen, setMoreFiltersOpen] = useState(false)
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
   const [advancedFilterModalOpen, setAdvancedFilterModalOpen] = useState(false)
+  const [isAiFiltered, setIsAiFiltered] = useState(false)
 
   // Count active filters (excluding defaults)
   const getActiveFilterCount = () => {
@@ -102,8 +103,52 @@ export default function ContractsTab() {
       .replace(/[\u0300-\u036f]/g, '')
   }
 
+  // Helper function to apply normalized sorting
+  const applySorting = (contracts: any[]) => {
+    return [...contracts].sort((a: any, b: any) => {
+      let aVal, bVal
+
+      switch (filters.sortBy) {
+        case 'projectName':
+          aVal = normalizeText(a.projectName || '')
+          bVal = normalizeText(b.projectName || '')
+          break
+        case 'clientName':
+          aVal = normalizeText(a.clientName || '')
+          bVal = normalizeText(b.clientName || '')
+          break
+        case 'category':
+          aVal = normalizeText(a.category || '')
+          bVal = normalizeText(b.category || '')
+          break
+        case 'status':
+          aVal = normalizeText(a.status || '')
+          bVal = normalizeText(b.status || '')
+          break
+        case 'totalValue':
+          aVal = a.totalValue || 0
+          bVal = b.totalValue || 0
+          break
+        case 'signedDate':
+          aVal = new Date(a.signedDate || 0).getTime()
+          bVal = new Date(b.signedDate || 0).getTime()
+          break
+        default:
+          aVal = a.signedDate || ''
+          bVal = b.signedDate || ''
+      }
+
+      if (aVal < bVal) return filters.sortOrder === 'asc' ? -1 : 1
+      if (aVal > bVal) return filters.sortOrder === 'asc' ? 1 : -1
+      return 0
+    })
+  }
+
   // Client-side search filtering and sorting
   useEffect(() => {
+    // If AI filter is active, don't refilter
+    if (isAiFiltered) return
+
     let filtered = contracts
 
     // Apply quick filter
@@ -141,46 +186,9 @@ export default function ContractsTab() {
     }
 
     // Apply sorting
-    const sorted = [...filtered].sort((a: any, b: any) => {
-      let aVal, bVal
-
-      switch (filters.sortBy) {
-        case 'projectName':
-          aVal = normalizeText(a.projectName || '')
-          bVal = normalizeText(b.projectName || '')
-          break
-        case 'clientName':
-          aVal = normalizeText(a.clientName || '')
-          bVal = normalizeText(b.clientName || '')
-          break
-        case 'category':
-          aVal = normalizeText(a.category || '')
-          bVal = normalizeText(b.category || '')
-          break
-        case 'status':
-          aVal = normalizeText(a.status || '')
-          bVal = normalizeText(b.status || '')
-          break
-        case 'totalValue':
-          aVal = a.totalValue || 0
-          bVal = b.totalValue || 0
-          break
-        case 'signedDate':
-          aVal = new Date(a.signedDate || 0).getTime()
-          bVal = new Date(b.signedDate || 0).getTime()
-          break
-        default:
-          aVal = a.signedDate || ''
-          bVal = b.signedDate || ''
-      }
-
-      if (aVal < bVal) return filters.sortOrder === 'asc' ? -1 : 1
-      if (aVal > bVal) return filters.sortOrder === 'asc' ? 1 : -1
-      return 0
-    })
-
+    const sorted = applySorting(filtered)
     setFilteredContracts(sorted)
-  }, [contracts, searchQuery, filters.sortBy, filters.sortOrder, activeQuickFilter])
+  }, [contracts, searchQuery, filters.sortBy, filters.sortOrder, activeQuickFilter, isAiFiltered])
 
   async function fetchContracts() {
     try {
@@ -570,12 +578,13 @@ export default function ContractsTab() {
           </select>
 
           {/* Clear Filters Button - Only shows when filters are active */}
-          {(filters.status !== 'active' || filters.category !== 'all' || searchQuery || activeQuickFilter) && (
+          {(filters.status !== 'active' || filters.category !== 'all' || searchQuery || activeQuickFilter || isAiFiltered) && (
             <button
               onClick={() => {
                 setFilters({ status: 'active', category: 'all', sortBy: 'signedDate', sortOrder: 'desc' })
                 setSearchQuery('')
                 setActiveQuickFilter(null)
+                setIsAiFiltered(false)
               }}
               className="text-sm text-blue-600 hover:text-blue-800 font-medium whitespace-nowrap px-2 transition-colors"
               aria-label="Limpar todos os filtros"
@@ -584,8 +593,8 @@ export default function ContractsTab() {
             </button>
           )}
 
-          {/* Copy Link Button - show when filters are active */}
-          {(filters.status !== 'active' || filters.category !== 'all' || filters.sortBy !== 'createdAt' || filters.sortOrder !== 'desc' || searchQuery || activeQuickFilter) && (
+          {/* Copy Link Button - show when filters are active (but not AI filter since that's not in URL) */}
+          {(filters.status !== 'active' || filters.category !== 'all' || filters.sortBy !== 'createdAt' || filters.sortOrder !== 'desc' || searchQuery || activeQuickFilter) && !isAiFiltered && (
             <button
               onClick={() => {
                 navigator.clipboard.writeText(window.location.href)
@@ -944,8 +953,10 @@ export default function ContractsTab() {
         isOpen={advancedFilterModalOpen}
         onClose={() => setAdvancedFilterModalOpen(false)}
         onResultsReceived={(results) => {
-          // Apply AI-filtered results
-          setFilteredContracts(results)
+          // Apply AI-filtered results with normalized sorting
+          const sorted = applySorting(results)
+          setFilteredContracts(sorted)
+          setIsAiFiltered(true)
         }}
       />
     </div>

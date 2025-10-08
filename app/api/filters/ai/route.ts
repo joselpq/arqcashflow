@@ -37,8 +37,11 @@ export async function POST(request: NextRequest) {
       }
 
       // Parse filter using FilterAgentService
+      console.log('[AI Filter] Processing query:', { input, entity, teamId: context.teamId })
       const filterService = new FilterAgentService(context)
       const parsedFilter = await filterService.parseFilter(input, filterContext)
+
+      console.log('[AI Filter] Parsed query:', JSON.stringify(parsedFilter, null, 2))
 
       // Execute Prisma query with team isolation
       const results = await executeQuery(
@@ -48,6 +51,8 @@ export async function POST(request: NextRequest) {
         context
       )
 
+      console.log('[AI Filter] Query results:', { count: results.length })
+
       return Response.json({
         success: true,
         query: parsedFilter,
@@ -56,7 +61,9 @@ export async function POST(request: NextRequest) {
       })
 
     } catch (error) {
-      console.error('AI Filtering error:', error)
+      console.error('=== AI Filtering ERROR ===')
+      console.error('Error details:', error)
+      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace')
 
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
 

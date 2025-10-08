@@ -35,6 +35,7 @@ function ReceivablesPageContent() {
   const [moreFiltersOpen, setMoreFiltersOpen] = useState(false)
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
   const [advancedFilterModalOpen, setAdvancedFilterModalOpen] = useState(false)
+  const [isAiFiltered, setIsAiFiltered] = useState(false)
 
   // Count active filters (excluding defaults)
   const getActiveFilterCount = () => {
@@ -81,8 +82,48 @@ function ReceivablesPageContent() {
       .replace(/[\u0300-\u036f]/g, '')
   }
 
+  // Helper function to apply normalized sorting
+  const applySorting = (receivables: any[]) => {
+    return [...receivables].sort((a: any, b: any) => {
+      let aVal, bVal
+
+      switch (filters.sortBy) {
+        case 'projectName':
+          aVal = normalizeText(a.contract?.projectName || '')
+          bVal = normalizeText(b.contract?.projectName || '')
+          break
+        case 'category':
+          aVal = normalizeText(a.category || '')
+          bVal = normalizeText(b.category || '')
+          break
+        case 'status':
+          aVal = normalizeText(a.status || '')
+          bVal = normalizeText(b.status || '')
+          break
+        case 'amount':
+          aVal = a.amount || 0
+          bVal = b.amount || 0
+          break
+        case 'expectedDate':
+          aVal = new Date(a.expectedDate || 0).getTime()
+          bVal = new Date(b.expectedDate || 0).getTime()
+          break
+        default:
+          aVal = new Date(a.expectedDate || 0).getTime()
+          bVal = new Date(b.expectedDate || 0).getTime()
+      }
+
+      if (aVal < bVal) return filters.sortOrder === 'asc' ? -1 : 1
+      if (aVal > bVal) return filters.sortOrder === 'asc' ? 1 : -1
+      return 0
+    })
+  }
+
   // Client-side search filtering and sorting
   useEffect(() => {
+    // If AI filter is active, don't refilter
+    if (isAiFiltered) return
+
     let filtered = receivables
 
     // Apply quick filter
@@ -134,42 +175,9 @@ function ReceivablesPageContent() {
     }
 
     // Apply sorting
-    const sorted = [...filtered].sort((a: any, b: any) => {
-      let aVal, bVal
-
-      switch (filters.sortBy) {
-        case 'projectName':
-          aVal = normalizeText(a.contract?.projectName || '')
-          bVal = normalizeText(b.contract?.projectName || '')
-          break
-        case 'category':
-          aVal = normalizeText(a.category || '')
-          bVal = normalizeText(b.category || '')
-          break
-        case 'status':
-          aVal = normalizeText(a.status || '')
-          bVal = normalizeText(b.status || '')
-          break
-        case 'amount':
-          aVal = a.amount || 0
-          bVal = b.amount || 0
-          break
-        case 'expectedDate':
-          aVal = new Date(a.expectedDate || 0).getTime()
-          bVal = new Date(b.expectedDate || 0).getTime()
-          break
-        default:
-          aVal = new Date(a.expectedDate || 0).getTime()
-          bVal = new Date(b.expectedDate || 0).getTime()
-      }
-
-      if (aVal < bVal) return filters.sortOrder === 'asc' ? -1 : 1
-      if (aVal > bVal) return filters.sortOrder === 'asc' ? 1 : -1
-      return 0
-    })
-
+    const sorted = applySorting(filtered)
     setFilteredReceivables(sorted)
-  }, [receivables, searchQuery, filters.sortBy, filters.sortOrder, activeQuickFilter])
+  }, [receivables, searchQuery, filters.sortBy, filters.sortOrder, activeQuickFilter, isAiFiltered])
 
   // Handle auto-edit when URL parameter is present
   useEffect(() => {
@@ -589,12 +597,13 @@ function ReceivablesPageContent() {
           </select>
 
           {/* Clear Filters Button */}
-          {(filters.status !== 'pending' || filters.contractId !== 'all' || filters.category !== 'all' || searchQuery || activeQuickFilter) && (
+          {(filters.status !== 'pending' || filters.contractId !== 'all' || filters.category !== 'all' || searchQuery || activeQuickFilter || isAiFiltered) && (
             <button
               onClick={() => {
                 setFilters({ contractId: 'all', status: 'pending', category: 'all', sortBy: 'expectedDate', sortOrder: 'asc' })
                 setSearchQuery('')
                 setActiveQuickFilter(null)
+                setIsAiFiltered(false)
               }}
               className="text-sm text-blue-600 hover:text-blue-800 font-medium whitespace-nowrap px-2 transition-colors"
               aria-label="Limpar todos os filtros"
@@ -603,8 +612,8 @@ function ReceivablesPageContent() {
             </button>
           )}
 
-          {/* Copy Link Button - show when filters are active */}
-          {(filters.contractId !== 'all' || filters.status !== 'pending' || filters.category !== 'all' || filters.sortBy !== 'expectedDate' || filters.sortOrder !== 'asc' || searchQuery || activeQuickFilter) && (
+          {/* Copy Link Button - show when filters are active (but not AI filter since that's not in URL) */}
+          {(filters.contractId !== 'all' || filters.status !== 'pending' || filters.category !== 'all' || filters.sortBy !== 'expectedDate' || filters.sortOrder !== 'asc' || searchQuery || activeQuickFilter) && !isAiFiltered && (
             <button
               onClick={() => {
                 navigator.clipboard.writeText(window.location.href)
@@ -913,8 +922,10 @@ function ReceivablesPageContent() {
         isOpen={advancedFilterModalOpen}
         onClose={() => setAdvancedFilterModalOpen(false)}
         onResultsReceived={(results) => {
-          // Apply AI-filtered results
-          setFilteredReceivables(results)
+          // Apply AI-filtered results with normalized sorting
+          const sorted = applySorting(results)
+          setFilteredReceivables(sorted)
+          setIsAiFiltered(true)
         }}
       />
     </div>

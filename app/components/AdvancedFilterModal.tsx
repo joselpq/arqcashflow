@@ -54,8 +54,37 @@ export function AdvancedFilterModal({
         body: JSON.stringify({ input, entity })
       })
 
+      console.log('[Modal] Response status:', response.status)
+      console.log('[Modal] Response OK?', response.ok)
+
       const data = await response.json()
-      setResult(data)
+      console.log('[Modal] Response data RAW:', JSON.stringify(data, null, 2))
+      console.log('[Modal] data keys:', Object.keys(data))
+      console.log('[Modal] data.success:', data.success)
+      console.log('[Modal] Has query?', !!data.query)
+      console.log('[Modal] Has results?', !!data.results)
+
+      // Validate response has required fields for success case
+      const isValidSuccess = data.success === true && data.query && data.results !== undefined
+
+      const normalizedData = {
+        ...data,
+        success: isValidSuccess,
+        // Ensure query exists even if success is false
+        query: data.query || { where: {}, interpretation: '' },
+        results: data.results || [],
+        count: data.count || 0
+      }
+      console.log('[Modal] Normalized data:', normalizedData)
+
+      // If successful, immediately apply and close (no UI rendering)
+      if (isValidSuccess && normalizedData.results.length > 0) {
+        onResultsReceived(normalizedData.results)
+        handleClose()
+      } else {
+        // Show in modal if there's an error or no results
+        setResult(normalizedData)
+      }
     } catch (error) {
       console.error('AI Filtering error:', error)
       setResult({
@@ -227,9 +256,15 @@ Exemplos:
 
   return (
     <>
-      {/* Backdrop */}
+      {/* Backdrop - Glassy blurred effect */}
       <div
-        className="fixed inset-0 bg-black bg-opacity-50 z-50"
+        className="fixed inset-0 z-50 transition-all duration-300"
+        style={{
+          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+          backdropFilter: 'blur(8px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(8px) saturate(180%)',
+          border: '1px solid rgba(255, 255, 255, 0.1)'
+        }}
         onClick={handleClose}
       />
 
@@ -311,40 +346,25 @@ Exemplos:
                 {result.success ? (
                   <>
                     {/* Interpretation */}
-                    <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                      <p className="text-sm font-medium text-blue-900 mb-1">✓ Interpretado como:</p>
-                      <p className="text-blue-800">{result.query.interpretation}</p>
-                    </div>
-
-                    {/* Result count */}
-                    <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-                      <p className="text-sm font-medium text-green-900">
-                        📊 Resultado: <span className="font-bold">{result.count}</span> item(ns) encontrado(s)
-                        {result.count === 100 && <span className="text-green-700"> (limitado a 100)</span>}
-                      </p>
-                    </div>
-
-                    {/* Preview results */}
-                    {result.count > 0 && (
-                      <div>
-                        <p className="text-sm font-medium text-neutral-700 mb-2">
-                          Prévia dos resultados:
-                        </p>
-                        <div className="border rounded-lg overflow-hidden max-h-60 overflow-y-auto">
-                          {result.results.map((item: any) => formatResultPreview(item))}
-                        </div>
+                    {result.query?.interpretation && (
+                      <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                        <p className="text-sm font-medium text-blue-900 mb-1">✓ Interpretado como:</p>
+                        <p className="text-blue-800">{result.query.interpretation}</p>
                       </div>
                     )}
 
-                    {/* Apply button */}
-                    {result.count > 0 && (
-                      <button
-                        onClick={handleApplyResults}
-                        className="w-full bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 transition-colors"
-                      >
-                        ✓ Usar Estes Resultados
-                      </button>
-                    )}
+                    {/* Result count with auto-close message */}
+                    <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                      <p className="text-sm font-medium text-green-900">
+                        ✓ <span className="font-bold">{result.count}</span> item(ns) encontrado(s)
+                        {result.count === 100 && <span className="text-green-700"> (limitado a 100)</span>}
+                      </p>
+                      {result.count > 0 && (
+                        <p className="text-xs text-green-700 mt-1">
+                          Aplicando filtros...
+                        </p>
+                      )}
+                    </div>
                   </>
                 ) : (
                   /* Error message */

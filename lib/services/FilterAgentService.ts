@@ -64,10 +64,15 @@ export class FilterAgentService {
       throw new Error('Unexpected response type from Claude')
     }
 
+    console.log('[FilterAgent] Raw Claude response:', content.text)
+
     try {
       const parsed = JSON.parse(content.text)
+      console.log('[FilterAgent] Parsed successfully:', JSON.stringify(parsed, null, 2))
       return parsed as FilterResult
     } catch (error) {
+      console.error('[FilterAgent] JSON parse failed!')
+      console.error('[FilterAgent] Raw text was:', content.text)
       throw new Error(`Failed to parse Claude response as JSON: ${content.text}`)
     }
   }

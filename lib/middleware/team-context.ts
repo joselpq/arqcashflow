@@ -213,6 +213,12 @@ export async function withTeamContext<T>(
       teamScopedPrisma
     })
 
+    // If handler already returns a Response, return it directly
+    if (result instanceof Response) {
+      return result
+    }
+
+    // Otherwise, wrap in NextResponse.json
     return NextResponse.json(result)
   } catch (error) {
     // Handle auth errors (maintains existing behavior)
