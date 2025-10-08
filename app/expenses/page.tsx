@@ -6,6 +6,7 @@ import { formatDateForInput, formatDateFull as formatDateForDisplay } from '@/li
 import Modal from '../components/Modal'
 import ExpenseForm from '../components/forms/ExpenseForm'
 import RecurringExpenseActionModal from '../components/RecurringExpenseActionModal'
+import { AdvancedFilterModal } from '../components/AdvancedFilterModal'
 
 function ExpensesPageContent() {
   const searchParams = useSearchParams()
@@ -36,6 +37,7 @@ function ExpensesPageContent() {
   const [activeQuickFilter, setActiveQuickFilter] = useState<string | null>(null)
   const [moreFiltersOpen, setMoreFiltersOpen] = useState(false)
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
+  const [advancedFilterModalOpen, setAdvancedFilterModalOpen] = useState(false)
   const [recurringActionModal, setRecurringActionModal] = useState<{
     isOpen: boolean
     expense: any
@@ -743,6 +745,20 @@ function ExpensesPageContent() {
                       📝 Sem Categoria
                       {activeQuickFilter === 'no-category' && <span className="ml-auto text-blue-600">✓</span>}
                     </button>
+
+                    {/* Separator */}
+                    <div className="border-t border-neutral-200 my-1" />
+
+                    {/* AI Filtering */}
+                    <button
+                      onClick={() => {
+                        setAdvancedFilterModalOpen(true)
+                        setMoreFiltersOpen(false)
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm flex items-center gap-2 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 text-blue-700 font-medium"
+                    >
+                      🤖 Filtros Avançados (IA)
+                    </button>
                   </div>
                 </>
               )}
@@ -1184,6 +1200,17 @@ function ExpensesPageContent() {
         expense={recurringActionModal.expense}
         action={recurringActionModal.action}
         onActionConfirm={handleRecurringAction}
+      />
+
+      {/* Advanced AI Filter Modal */}
+      <AdvancedFilterModal
+        entity="expense"
+        isOpen={advancedFilterModalOpen}
+        onClose={() => setAdvancedFilterModalOpen(false)}
+        onResultsReceived={(results) => {
+          // Apply AI-filtered results
+          setFilteredExpenses(results)
+        }}
       />
     </div>
   )

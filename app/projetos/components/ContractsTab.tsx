@@ -6,6 +6,7 @@ import { formatDateFull as formatDateForDisplay } from '@/lib/date-utils'
 import Modal from '../../components/Modal'
 import ContractForm from '../../components/forms/ContractForm'
 import ContractDeletionModal from '../../components/ContractDeletionModal'
+import { AdvancedFilterModal } from '../../components/AdvancedFilterModal'
 
 export default function ContractsTab() {
   const searchParams = useSearchParams()
@@ -36,6 +37,7 @@ export default function ContractsTab() {
   const [activeQuickFilter, setActiveQuickFilter] = useState<string | null>(null)
   const [moreFiltersOpen, setMoreFiltersOpen] = useState(false)
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
+  const [advancedFilterModalOpen, setAdvancedFilterModalOpen] = useState(false)
 
   // Count active filters (excluding defaults)
   const getActiveFilterCount = () => {
@@ -479,6 +481,20 @@ export default function ContractsTab() {
                       ❌ Cancelados
                       {activeQuickFilter === 'cancelled' && <span className="ml-auto text-blue-600">✓</span>}
                     </button>
+
+                    {/* Separator */}
+                    <div className="border-t border-neutral-200 my-1" />
+
+                    {/* AI Filtering */}
+                    <button
+                      onClick={() => {
+                        setAdvancedFilterModalOpen(true)
+                        setMoreFiltersOpen(false)
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm flex items-center gap-2 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 text-blue-700 font-medium"
+                    >
+                      🤖 Filtros Avançados (IA)
+                    </button>
                   </div>
                 </>
               )}
@@ -921,6 +937,17 @@ export default function ContractsTab() {
           onDeleteConfirm={handleDeleteConfirm}
         />
       )}
+
+      {/* Advanced AI Filter Modal */}
+      <AdvancedFilterModal
+        entity="contract"
+        isOpen={advancedFilterModalOpen}
+        onClose={() => setAdvancedFilterModalOpen(false)}
+        onResultsReceived={(results) => {
+          // Apply AI-filtered results
+          setFilteredContracts(results)
+        }}
+      />
     </div>
   )
 }

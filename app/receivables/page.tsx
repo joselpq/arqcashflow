@@ -5,6 +5,7 @@ import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { formatDateForInput, formatDateFull as formatDateForDisplay } from '@/lib/date-utils'
 import Modal from '../components/Modal'
 import ReceivableForm from '../components/forms/ReceivableForm'
+import { AdvancedFilterModal } from '../components/AdvancedFilterModal'
 
 function ReceivablesPageContent() {
   const searchParams = useSearchParams()
@@ -33,6 +34,7 @@ function ReceivablesPageContent() {
   const [activeQuickFilter, setActiveQuickFilter] = useState<string | null>(null)
   const [moreFiltersOpen, setMoreFiltersOpen] = useState(false)
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
+  const [advancedFilterModalOpen, setAdvancedFilterModalOpen] = useState(false)
 
   // Count active filters (excluding defaults)
   const getActiveFilterCount = () => {
@@ -484,6 +486,20 @@ function ReceivablesPageContent() {
                       ❌ Cancelados
                       {activeQuickFilter === 'cancelled' && <span className="ml-auto text-blue-600">✓</span>}
                     </button>
+
+                    {/* Separator */}
+                    <div className="border-t border-neutral-200 my-1" />
+
+                    {/* AI Filtering */}
+                    <button
+                      onClick={() => {
+                        setAdvancedFilterModalOpen(true)
+                        setMoreFiltersOpen(false)
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm flex items-center gap-2 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 text-blue-700 font-medium"
+                    >
+                      🤖 Filtros Avançados (IA)
+                    </button>
                   </div>
                 </>
               )}
@@ -890,6 +906,17 @@ function ReceivablesPageContent() {
           contracts={contracts}
         />
       </Modal>
+
+      {/* Advanced AI Filter Modal */}
+      <AdvancedFilterModal
+        entity="receivable"
+        isOpen={advancedFilterModalOpen}
+        onClose={() => setAdvancedFilterModalOpen(false)}
+        onResultsReceived={(results) => {
+          // Apply AI-filtered results
+          setFilteredReceivables(results)
+        }}
+      />
     </div>
   )
 }
