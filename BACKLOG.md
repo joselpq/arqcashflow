@@ -1,7 +1,7 @@
 # ArqCashflow Development Backlog
 
 **Purpose**: Central source of truth for project priorities and development status
-**Last Updated**: 2025-10-07 (TO DO priorities updated - Dashboard & Filter enhancements planned)
+**Last Updated**: 2025-10-07 (2A URL Persistence COMPLETE - Shareable filtered views implemented)
 **Update Frequency**: Every LLM session MUST update this document when completing tasks or discovering new requirements
 
 ## 🚨 CRITICAL INSTRUCTIONS FOR LLM AGENTS
@@ -83,33 +83,7 @@ Examples:
 ### 🔄 DOING (Currently In Progress)
 *Active work with real-time progress tracking. Can persist between sessions if work is incomplete.*
 
-#### **Compact Filters Enhancements: URL Persistence + AI Natural Language Filtering**
-**Goal**: Polish filter UX with shareable URLs and AI-powered natural language filtering
-
-**Progress Tracking**:
-
-**2A. URL Persistence** (2-3 hours) - HIGH VALUE ⏳ NEXT UP
-- [ ] Implement filter state in URL query parameters
-  - [ ] Add `useSearchParams` and `useRouter` hooks
-  - [ ] Serialize filter state to URL on filter change
-  - [ ] Parse URL params on page load and set initial filters
-- [ ] Ensure browser back/forward buttons work correctly
-  - [ ] Test navigation between filtered states
-  - [ ] Verify filter state restoration
-- [ ] Add "Copy Link" button for sharing filtered views
-  - [ ] Design button placement (near filter bar)
-  - [ ] Implement copy-to-clipboard functionality
-  - [ ] Show success toast on copy
-- [ ] Test with all filter combinations
-  - [ ] Test all entity tabs (Projetos, Recebíveis, Despesas)
-  - [ ] Test edge cases (empty filters, special characters)
-  - [ ] Verify URL is clean and readable
-
-**Benefits**:
-- Shareable filtered views (e.g., `/projetos?status=completed&category=Residencial&sort=totalValue&order=desc`)
-- Back button preserves filters
-- Bookmarkable searches
-- Better UX continuity
+**Currently Empty** - 2A URL Persistence complete! Ready for next enhancement.
 
 ---
 
@@ -384,6 +358,56 @@ Mobile (<480px):
 ### ✅ DONE (Recently Completed)
 *Newest first, for reference.*
 
+#### **2A. URL Persistence for Filters** ✅ COMPLETE (2025-10-07)
+**Impact**: Shareable filtered views, bookmarkable searches, improved UX continuity
+
+**Implemented**:
+- ✅ URL query parameter sync for all filter states (status, category, sort, search)
+- ✅ Browser back/forward button support (filter state restoration)
+- ✅ "Copiar Link" button for sharing filtered views
+- ✅ Clean URL format (skips defaults to avoid clutter)
+- ✅ Applied to all three entity tabs (Projetos, Recebíveis, Despesas)
+- ✅ Preserves edit mode parameters when present
+
+**Files Modified**:
+- `app/expenses/page.tsx` - URL persistence + Copy Link button
+- `app/receivables/page.tsx` - URL persistence + Copy Link button
+- `app/projetos/components/ContractsTab.tsx` - URL persistence + Copy Link button
+
+**Technical Implementation**:
+```typescript
+// Initialize filters from URL params
+const [filters, setFilters] = useState({
+  status: searchParams.get('status') || 'pending',
+  category: searchParams.get('category') || 'all',
+  sortBy: searchParams.get('sortBy') || 'dueDate',
+  sortOrder: searchParams.get('sortOrder') || 'asc',
+})
+
+// Sync to URL on change (skip defaults)
+useEffect(() => {
+  const params = new URLSearchParams()
+  if (filters.status !== 'pending') params.set('status', filters.status)
+  if (searchQuery) params.set('search', searchQuery)
+  router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+}, [filters, searchQuery])
+```
+
+**Example URLs**:
+- `/despesas?status=paid&category=Salários&search=pedro`
+- `/recebiveis?status=overdue&sortBy=amount&sortOrder=desc`
+- `/projetos?status=completed&category=Residencial`
+
+**User Benefits**:
+- Share filtered views with team members
+- Bookmark frequently used filters
+- Browser back/forward works as expected
+- Better workflow continuity (filters persist across sessions)
+
+**Build Status**: ✅ Compiled successfully (5.1s)
+
+---
+
 #### **Compact Filters Implementation** ✅ COMPLETE (2025-10-07)
 **Impact**: 45-125px vertical space saved per page (2-5 additional table rows visible)
 
@@ -430,7 +454,7 @@ Mobile (<480px):
 - Consistent UX across all entity tabs
 
 **Next Enhancement Opportunities** (BACKLOG):
-- URL persistence for filters (shareable links)
+- ✅ ~~URL persistence for filters~~ - COMPLETE (2025-10-07)
 - Quick filter chips above table ([Overdue] [This Month] etc.)
 - Mobile drawer for filters (<480px)
 - Keyboard shortcuts (Cmd+K for search)

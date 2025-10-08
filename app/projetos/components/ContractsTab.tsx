@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { formatDateFull as formatDateForDisplay } from '@/lib/date-utils'
 import Modal from '../../components/Modal'
 import ContractForm from '../../components/forms/ContractForm'
@@ -9,6 +9,8 @@ import ContractDeletionModal from '../../components/ContractDeletionModal'
 
 export default function ContractsTab() {
   const searchParams = useSearchParams()
+  const router = useRouter()
+  const pathname = usePathname()
   const editId = searchParams.get('edit')
 
   const [contracts, setContracts] = useState([])
@@ -22,13 +24,34 @@ export default function ContractsTab() {
   const [statusDropdownOpen, setStatusDropdownOpen] = useState<string | null>(null)
   const [deletionModalOpen, setDeletionModalOpen] = useState(false)
   const [contractToDelete, setContractToDelete] = useState<any>(null)
+
+  // Initialize filters from URL params
   const [filters, setFilters] = useState({
-    status: 'active',
-    category: 'all',
-    sortBy: 'createdAt',
-    sortOrder: 'desc',
+    status: searchParams.get('status') || 'active',
+    category: searchParams.get('category') || 'all',
+    sortBy: searchParams.get('sortBy') || 'createdAt',
+    sortOrder: (searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc',
   })
-  const [searchQuery, setSearchQuery] = useState('')
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '')
+
+  // Sync filters and search to URL
+  useEffect(() => {
+    const params = new URLSearchParams()
+
+    // Add filters to URL (skip defaults to keep URL clean)
+    if (filters.status !== 'active') params.set('status', filters.status)
+    if (filters.category !== 'all') params.set('category', filters.category)
+    if (filters.sortBy !== 'createdAt') params.set('sortBy', filters.sortBy)
+    if (filters.sortOrder !== 'desc') params.set('sortOrder', filters.sortOrder)
+    if (searchQuery) params.set('search', searchQuery)
+
+    // Preserve edit param if present
+    if (editId) params.set('edit', editId)
+
+    // Update URL without triggering navigation
+    const newUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname
+    router.replace(newUrl, { scroll: false })
+  }, [filters, searchQuery, pathname, router, editId])
 
   useEffect(() => {
     fetchContracts()
@@ -402,6 +425,24 @@ export default function ContractsTab() {
               aria-label="Limpar todos os filtros"
             >
               × Limpar
+            </button>
+          )}
+
+          {/* Copy Link Button - show when filters are active */}
+          {(filters.status !== 'active' || filters.category !== 'all' || filters.sortBy !== 'createdAt' || filters.sortOrder !== 'desc' || searchQuery) && (
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(window.location.href)
+                alert('Link copiado! Você pode compartilhar esta visualização filtrada.')
+              }}
+              className="text-sm text-neutral-600 hover:text-neutral-800 font-medium whitespace-nowrap px-2 transition-colors flex items-center gap-1"
+              aria-label="Copiar link desta visualização"
+              title="Copiar link"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+              <span className="hidden sm:inline">Copiar Link</span>
             </button>
           )}
         </div>
