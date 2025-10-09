@@ -9,26 +9,40 @@ interface ChatInputProps {
 
 export default function ChatInput({ onSend, disabled = false }: ChatInputProps) {
   const [message, setMessage] = useState('')
+  const [isSending, setIsSending] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
-  // Auto-resize textarea
+  // Auto-resize textarea while preserving cursor position
   useEffect(() => {
     if (textareaRef.current) {
+      // Save cursor position before DOM manipulation
+      const start = textareaRef.current.selectionStart
+      const end = textareaRef.current.selectionEnd
+
       textareaRef.current.style.height = 'auto'
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`
+
+      // Restore cursor position after height adjustment
+      textareaRef.current.setSelectionRange(start, end)
     }
   }, [message])
 
-  const handleSend = () => {
-    if (message.trim() && !disabled) {
-      onSend(message.trim())
-      setMessage('')
+  const handleSend = async () => {
+    if (message.trim() && !disabled && !isSending) {
+      setIsSending(true)
+      const messageToSend = message.trim()
+      setMessage('') // Clear immediately after storing the message
+      try {
+        await onSend(messageToSend)
+      } finally {
+        setIsSending(false)
+      }
     }
   }
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    // Send on Enter (without Shift)
-    if (e.key === 'Enter' && !e.shiftKey) {
+    // Send on Enter (without Shift) - only if not currently sending
+    if (e.key === 'Enter' && !e.shiftKey && !isSending) {
       e.preventDefault()
       handleSend()
     }
@@ -42,14 +56,13 @@ export default function ChatInput({ onSend, disabled = false }: ChatInputProps) 
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Digite sua mensagem..."
-          disabled={disabled}
+          placeholder={disabled ? "Aguarde a resposta..." : "Digite sua mensagem..."}
           rows={1}
-          className="flex-1 resize-none rounded-lg border border-neutral-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-neutral-100 disabled:cursor-not-allowed max-h-32 overflow-y-auto"
+          className="flex-1 resize-none rounded-lg border border-neutral-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 max-h-32 overflow-y-auto"
         />
         <button
           onClick={handleSend}
-          disabled={!message.trim() || disabled}
+          disabled={!message.trim() || disabled || isSending}
           className="bg-blue-500 text-white rounded-lg px-4 py-2 hover:bg-blue-600 disabled:bg-neutral-300 disabled:cursor-not-allowed transition-colors h-10 flex items-center justify-center"
           aria-label="Enviar mensagem"
         >

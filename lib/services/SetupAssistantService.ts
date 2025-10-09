@@ -2255,12 +2255,13 @@ Return a JSON object with this EXACT structure (no markdown, just JSON):
 
         // Use service layer to create receivable
         // Note: Validation schemas expect strings for dates
+        // IMPORTANT: Do NOT copy contract category to receivable - they have separate category systems
         const receivable: ReceivableCreateData = {
           contractId,
           expectedDate: receivableData.expectedDate,  // Keep as string (YYYY-MM-DD format)
           amount: Number(receivableData.amount),
           invoiceNumber: receivableData.invoiceNumber || null,
-          category: receivableData.category || null,
+          category: null,  // Receivables have their own category system, don't inherit from contracts
           notes: receivableData.notes || '',  // Empty string instead of null
           status: 'pending'
         }

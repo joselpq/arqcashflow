@@ -10,12 +10,14 @@ interface ConversationMessage {
 
 interface ChatContextType {
   isOpen: boolean
+  isExpanded: boolean
   messages: Message[]
   loading: boolean
   fullHistory: ConversationMessage[]
   openChat: () => void
   closeChat: () => void
   toggleChat: () => void
+  toggleExpanded: () => void
   sendMessage: (message: string) => Promise<void>
   clearHistory: () => void
 }
@@ -24,6 +26,7 @@ const ChatContext = createContext<ChatContextType | undefined>(undefined)
 
 export function ChatProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false)
+  const [isExpanded, setIsExpanded] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const [fullHistory, setFullHistory] = useState<ConversationMessage[]>([])
   const [loading, setLoading] = useState(false)
@@ -31,6 +34,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const openChat = useCallback(() => setIsOpen(true), [])
   const closeChat = useCallback(() => setIsOpen(false), [])
   const toggleChat = useCallback(() => setIsOpen(prev => !prev), [])
+  const toggleExpanded = useCallback(() => setIsExpanded(prev => !prev), [])
 
   const clearHistory = useCallback(() => {
     setMessages([])
@@ -127,12 +131,14 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     <ChatContext.Provider
       value={{
         isOpen,
+        isExpanded,
         messages,
         loading,
         fullHistory,
         openChat,
         closeChat,
         toggleChat,
+        toggleExpanded,
         sendMessage,
         clearHistory
       }}

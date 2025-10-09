@@ -15,10 +15,16 @@ interface MessageListProps {
 
 export default function MessageList({ messages, loading = false }: MessageListProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
 
-  // Auto-scroll to bottom on new messages
+  // Auto-scroll to bottom on new messages - improved reliability
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    // Use requestAnimationFrame to ensure DOM has updated
+    requestAnimationFrame(() => {
+      if (containerRef.current) {
+        containerRef.current.scrollTop = containerRef.current.scrollHeight
+      }
+    })
   }, [messages, loading])
 
   if (messages.length === 0 && !loading) {
@@ -48,7 +54,7 @@ export default function MessageList({ messages, loading = false }: MessageListPr
   }
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+    <div ref={containerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
       {messages.map((msg, index) => (
         <div
           key={index}

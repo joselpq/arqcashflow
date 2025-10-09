@@ -6,7 +6,7 @@ import ArnaldoChatFAB from './ArnaldoChatFAB'
 import ChatPanel from './ChatPanel'
 
 export default function GlobalChat() {
-  const { isOpen, messages, loading, openChat, closeChat, sendMessage } = useChat()
+  const { isOpen, isExpanded, messages, loading, openChat, closeChat, toggleExpanded, sendMessage } = useChat()
 
   // Keyboard shortcut: Cmd/Ctrl + /
   useEffect(() => {
@@ -26,7 +26,9 @@ export default function GlobalChat() {
       <ArnaldoChatFAB onClick={openChat} />
       <ChatPanel
         isOpen={isOpen}
+        isExpanded={isExpanded}
         onClose={closeChat}
+        onToggleExpand={toggleExpanded}
         messages={messages}
         loading={loading}
         onSendMessage={sendMessage}

@@ -111,7 +111,12 @@ export default function LandingPage() {
               >
                 Começar Grátis Agora
               </Link>
-              <button className="border border-neutral-300 text-neutral-700 px-8 py-4 rounded-lg text-lg font-medium hover:bg-neutral-50 transition-colors">
+              <button
+                onClick={() => {
+                  document.getElementById('solucao')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="border border-neutral-300 text-neutral-700 px-8 py-4 rounded-lg text-lg font-medium hover:bg-neutral-50 transition-colors"
+              >
                 Ver Como Funciona
               </button>
             </div>
@@ -240,7 +245,7 @@ export default function LandingPage() {
       </section>
 
       {/* Solution Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
+      <section id="solucao" className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-neutral-900 mb-6">
@@ -419,9 +424,12 @@ export default function LandingPage() {
             >
               Começar Grátis Agora
             </Link>
-            <button className="border border-neutral-600 text-neutral-300 px-8 py-4 rounded-lg text-lg font-medium hover:bg-neutral-800 transition-colors">
+            <a
+              href="mailto:contato@arqcashflow.com?subject=Quero falar com um especialista"
+              className="border border-neutral-600 text-neutral-300 px-8 py-4 rounded-lg text-lg font-medium hover:bg-neutral-800 transition-colors inline-block"
+            >
               Falar com Especialista
-            </button>
+            </a>
           </div>
 
           <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-3xl mx-auto">
@@ -458,9 +466,9 @@ export default function LandingPage() {
               <Link href="/termos" className="hover:text-neutral-700 transition-colors">
                 Termos
               </Link>
-              <Link href="/contact" className="hover:text-neutral-700 transition-colors">
+              <a href="mailto:contato@arqcashflow.com" className="hover:text-neutral-700 transition-colors">
                 Contato
-              </Link>
+              </a>
             </div>
           </div>
           <div className="mt-8 pt-8 border-t border-neutral-200 text-center text-sm text-neutral-500">

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import MultiFileSetupAssistant from '../components/setup-assistant/MultiFileSetupAssistant'
 
 interface Message {
@@ -31,6 +31,32 @@ export default function EnhancedAIChatPage() {
   const [loading, setLoading] = useState(false)
   const [activeTab, setActiveTab] = useState<'arnaldo' | 'setup'>('arnaldo')
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    requestAnimationFrame(() => {
+      if (messagesContainerRef.current) {
+        messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight
+      }
+    })
+  }, [messages, loading])
+
+  // Auto-resize textarea while preserving cursor position
+  useEffect(() => {
+    if (textareaRef.current) {
+      // Save cursor position before DOM manipulation
+      const start = textareaRef.current.selectionStart
+      const end = textareaRef.current.selectionEnd
+
+      textareaRef.current.style.height = 'auto'
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`
+
+      // Restore cursor position after height adjustment
+      textareaRef.current.setSelectionRange(start, end)
+    }
+  }, [message])
 
   // Unified AI Submit - Arnaldo handles everything
   const handleUnifiedSubmit = async (e: React.FormEvent) => {
@@ -165,7 +191,7 @@ export default function EnhancedAIChatPage() {
             </div>
 
             {/* Chat Messages */}
-            <div className="mb-6 space-y-4 max-h-96 overflow-y-auto bg-white border-2 border-neutral-300 rounded-lg p-4">
+            <div ref={messagesContainerRef} className="mb-6 space-y-4 max-h-96 overflow-y-auto bg-white border-2 border-neutral-300 rounded-lg p-4">
               {messages.length === 0 ? (
                 <div className="text-center text-neutral-600 py-8">
                   <p className="text-sm">
@@ -198,14 +224,21 @@ export default function EnhancedAIChatPage() {
 
             {/* Input Form */}
             <div className="bg-white border-2 border-neutral-300 rounded-lg p-4">
-              <form onSubmit={handleUnifiedSubmit} className="flex gap-2">
-                <input
-                  type="text"
+              <form onSubmit={handleUnifiedSubmit} className="flex gap-2 items-end">
+                <textarea
+                  ref={textareaRef}
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Digite sua pergunta ou comando..."
-                  className="flex-1 px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  disabled={loading}
+                  onKeyDown={(e) => {
+                    // Send on Enter (without Shift)
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault()
+                      handleUnifiedSubmit(e)
+                    }
+                  }}
+                  placeholder={loading ? "Aguarde a resposta..." : "Digite sua pergunta ou comando..."}
+                  rows={1}
+                  className="flex-1 resize-none px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 max-h-32 overflow-y-auto"
                 />
                 <button
                   type="submit"
@@ -215,6 +248,9 @@ export default function EnhancedAIChatPage() {
                   {loading ? 'Processando...' : 'Enviar'}
                 </button>
               </form>
+              <p className="text-xs text-neutral-500 mt-2">
+                Pressione Enter para enviar, Shift+Enter para nova linha
+              </p>
             </div>
           </div>
         ) : (

@@ -4,8 +4,8 @@ type: "feature"
 audience: ["developer", "user"]
 contexts: ["chat", "ai", "ux", "react"]
 complexity: "intermediate"
-last_updated: "2025-10-08"
-version: "1.0"
+last_updated: "2025-10-09"
+version: "1.1"
 agent_roles: ["frontend-developer", "ai-developer", "ux-designer"]
 related:
   - agents/contexts/ai-assistant.md
@@ -37,6 +37,9 @@ The Global Chat feature provides users with instant access to Arnaldo, the AI fi
 - **Live Data Refresh**: Automatically updates page data when chat creates/modifies entries
 - **Mobile Responsive**: Full-width drawer on mobile, 400px on desktop
 - **Conversation History**: Maintains full and display history for context preservation
+- **Auto-expanding Textarea**: Input field expands up to 5-6 lines as you type
+- **Auto-scroll**: Messages automatically scroll to bottom on new messages
+- **Cursor Preservation**: Cursor position maintained even when switching windows
 
 ## Architecture
 
@@ -75,8 +78,8 @@ app/
 │   ├── ArnaldoChatFAB.tsx        // Floating action button
 │   ├── ChatPanel.tsx             // Main drawer container
 │   ├── ChatHeader.tsx            // Header with close button
-│   ├── MessageList.tsx           // Message display + welcome screen
-│   └── ChatInput.tsx             // Textarea input with auto-resize
+│   ├── MessageList.tsx           // Message display + auto-scroll
+│   └── ChatInput.tsx             // Auto-expanding textarea with cursor preservation
 └── layout.tsx                     // Integration point (ChatProvider + GlobalChat)
 ```
 
@@ -224,12 +227,22 @@ Alguns exemplos:
 
 ### Message Flow
 
-1. User types message and presses Enter (Shift+Enter for new line)
-2. Message appears immediately in chat with timestamp
-3. Loading indicator shows (3 bouncing dots)
-4. AI response streams back from OperationsAgentService
-5. If operation created/updated data, page refreshes automatically
-6. User can continue conversation with full context preserved
+1. User types message in auto-expanding textarea (up to 5-6 lines)
+2. Presses Enter to send (Shift+Enter for new line)
+3. Input field clears immediately
+4. Message appears in chat with timestamp
+5. Chat auto-scrolls to show new message
+6. Loading indicator shows (3 bouncing dots)
+7. AI response streams back from OperationsAgentService
+8. Chat auto-scrolls to show response
+9. If operation created/updated data, page refreshes automatically
+10. User can continue conversation with full context preserved
+
+**UX Improvements (v1.1 - 2025-10-09)**:
+- Input clears immediately on send (no waiting for API response)
+- Auto-scroll to bottom on new messages using requestAnimationFrame
+- Cursor position preserved during auto-resize (no jumping when switching windows)
+- Textarea expands smoothly as you type multi-line messages
 
 ### Keyboard Controls
 

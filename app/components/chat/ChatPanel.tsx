@@ -7,7 +7,9 @@ import ChatInput from './ChatInput'
 
 interface ChatPanelProps {
   isOpen: boolean
+  isExpanded: boolean
   onClose: () => void
+  onToggleExpand: () => void
   messages: Message[]
   loading: boolean
   onSendMessage: (message: string) => void
@@ -15,7 +17,9 @@ interface ChatPanelProps {
 
 export default function ChatPanel({
   isOpen,
+  isExpanded,
   onClose,
+  onToggleExpand,
   messages,
   loading,
   onSendMessage
@@ -48,12 +52,16 @@ export default function ChatPanel({
         className={`
           fixed right-0 top-0 h-full bg-white shadow-2xl z-50
           flex flex-col
-          transition-transform duration-300 ease-in-out
+          transition-all duration-300 ease-in-out
           ${isOpen ? 'translate-x-0' : 'translate-x-full'}
-          w-full md:w-[400px]
+          w-full ${isExpanded ? 'md:w-[75%]' : 'md:w-[400px]'}
         `}
       >
-        <ChatHeader onClose={onClose} />
+        <ChatHeader
+          isExpanded={isExpanded}
+          onClose={onClose}
+          onToggleExpand={onToggleExpand}
+        />
         <MessageList messages={messages} loading={loading} />
         <ChatInput onSend={onSendMessage} disabled={loading} />
       </div>

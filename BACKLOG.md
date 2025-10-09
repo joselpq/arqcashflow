@@ -1,7 +1,7 @@
 # ArqCashflow Development Backlog
 
 **Purpose**: Central source of truth for project priorities and development status
-**Last Updated**: 2025-10-08 (Global Chat with Arnaldo - Implementation started)
+**Last Updated**: 2025-10-09 (Chat expand/maximize button complete)
 **Update Frequency**: Every LLM session MUST update this document when completing tasks or discovering new requirements
 
 ## 🚨 CRITICAL INSTRUCTIONS FOR LLM AGENTS
@@ -83,6 +83,56 @@ Examples:
 ### 🔄 DOING (Currently In Progress)
 *Work actively being implemented RIGHT NOW.*
 
+#### **Low-Hanging Fruits: Quick UX Wins** ✅ COMPLETE (2025-10-09)
+**Goal**: Complete 5 quick fixes to improve UX with minimal effort
+**Started**: 2025-10-09
+**Completed**: 2025-10-09
+**Total Time**: ~3 hours (under estimated 5-7 hours)
+**Impact**: Significant UX improvements across chat, landing page, and data accuracy
+
+**Tasks** (all completed in priority order):
+- [x] **Chat Auto-Scroll** (1 hour) - Messages should auto-scroll to bottom ✅ COMPLETE (2025-10-09)
+  - Location: `app/components/chat/MessageList.tsx`
+  - Implementation: Used requestAnimationFrame + scrollTop for reliable scrolling
+  - Impact: Standard chat UX pattern
+  - Result: Improved reliability with direct scroll manipulation
+
+- [x] **Receivables Tab Category Bug** (1-2 hours) - Showing project category instead of receivable category ✅ COMPLETE (2025-10-09)
+  - Location: `lib/services/SetupAssistantService.ts:2264`
+  - Implementation: Fixed data creation layer - receivables no longer inherit contract category
+  - Root Cause: Setup Assistant was copying category from extracted data (which could be contract category)
+  - Impact: Data accuracy restored - receivables have independent category system
+  - Result: Build successful, bug fixed at source
+
+- [x] **Chat Cursor Reset Bug** (30 min - 1 hour) - Cursor jumps to beginning on focus change ✅ COMPLETE (2025-10-09)
+  - Locations:
+    - `app/components/chat/ChatInput.tsx:15-27` (floating chat)
+    - `app/ai-chat/enhanced-page.tsx:46-59,225-254` (Assistente IA page)
+  - Implementation:
+    - Replaced single-line input with auto-expanding textarea in Assistente IA page
+    - Save and restore cursor position around textarea height manipulation
+    - Added keyboard shortcuts (Enter to send, Shift+Enter for new line)
+  - Root Cause: Auto-resize effect's DOM manipulation reset cursor position + single-line input scrolling
+  - Impact: Smooth typing flow preserved, multi-line support, consistent UX across both chat interfaces
+  - Result: Cursor position maintained during auto-resize in both floating chat and Assistente IA page
+
+- [x] **Landing Page Broken Links** (1-2 hours) - Some navigation links don't work ✅ COMPLETE (2025-10-09)
+  - Location: `app/components/LandingPage.tsx`
+  - Implementation: Fixed 3 broken navigation elements
+  - Fixes: "Ver Como Funciona" scrolls to solution section, "Falar com Especialista" opens email, "/contact" link now uses mailto
+  - Impact: Improved first impressions and user navigation
+  - Result: All landing page navigation functional
+
+- [x] **Allow Typing While Processing** (1-2 hours) - Input field disabled during processing ✅ COMPLETE (2025-10-09)
+  - Location: `app/components/chat/ChatInput.tsx`
+  - Implementation: Removed disabled prop from textarea, only disable send button
+  - Added: `isSending` state to prevent double submissions
+  - Added: Dynamic placeholder showing "Aguarde a resposta..." during processing
+  - Impact: Users can now queue next message while AI processes
+  - Result: Improved UX with non-blocking input field
+
+---
+
 #### **BusinessMetricsService: Dashboard Infrastructure** (ADR-014 Phase 3)
 **Goal**: Build reusable metrics calculation layer as foundation for dashboard
 **Started**: 2025-10-08
@@ -156,64 +206,77 @@ Examples:
 ### 📋 TO DO (Immediate Priorities)
 *Ready to implement, explicitly prioritized.*
 
-#### **User Feedback Improvements** (HIGH PRIORITY - 2025-10-08)
-**Context**: User testing revealed critical UX issues and bugs that need immediate attention.
+#### **User Feedback Improvements - Remaining** (HIGH PRIORITY - 2025-10-08)
+**Context**: User testing revealed critical UX issues and bugs. Low-hanging fruits moved to DOING.
 
-**Bugs (Fix First)**:
-- [ ] **Receivables Tab Category Bug** - Showing project category instead of receivable category (Projeto, RT)
-  - Location: `/projetos` receivables tab
-  - Impact: Users see wrong category information
-  - Effort: 1-2 hours
-
-- [ ] **Chat Input Cursor Reset Bug** - Cursor jumps to beginning when window loses/regains focus
-  - Location: `app/components/chat/ChatInput.tsx`
-  - Impact: Interrupts user typing flow
-  - Effort: 30 minutes - 1 hour
-
-- [ ] **Landing Page Broken Links** - Some navigation links don't work
-  - Location: Landing page components
-  - Impact: Poor first impression
-  - Effort: 1-2 hours
-
-**Performance Issues (Critical)**:
-- [ ] **Chat with Arnaldo Latency** - Interaction too slow
-  - Current: User perceives lag
-  - Goal: Sub-second response start
-  - Investigation needed: Claude API latency, streaming implementation
-  - Effort: 4-6 hours (profiling + optimization)
-
-- [ ] **File Import Performance & Reliability** - Import slow and failing with multiple files
+**Performance Issues (Critical - Harder Problems)**:
+- [ ] **File Import Performance & Reliability** (6-8 hours) - Import slow and failing with multiple files
   - Issues: Errors + slow processing
   - Need: Debug logs, error handling, performance profiling
   - Priority: HIGH (affects onboarding experience)
   - Effort: 6-8 hours (debugging + optimization)
 
-**UX Improvements (High Impact)**:
-- [ ] **Make Chat with Arnaldo More Evident** - Primary method for entity creation
+- [ ] **Chat with Arnaldo Latency** (4-6 hours) - Interaction too slow
+  - Current: User perceives lag
+  - Goal: Sub-second response start
+  - Investigation needed: Claude API latency, streaming implementation
+  - Effort: 4-6 hours (profiling + optimization)
+
+**UX Improvements (High Impact - Requires Design)**:
+- [ ] **Make Chat with Arnaldo More Evident** (2-3 hours) - Primary method for entity creation
   - Current: FAB in corner, not prominent enough
   - Ideas: Onboarding tooltips, persistent banner, empty state CTAs
   - Goal: User discovers and adopts chat as primary interaction
   - Effort: 2-3 hours
 
-- [ ] **Chat Auto-Scroll** - Messages should auto-scroll to bottom
-  - Current: User has to manually scroll
-  - Standard chat UX pattern
+**Note**: Quick wins (auto-scroll, category bug, cursor reset, landing links, typing while processing) COMPLETE (2025-10-09).
+
+---
+
+#### **Chat & Landing Page UX Improvements** (HIGH PRIORITY - 2025-10-09)
+**Context**: User testing revealed additional UX improvements for chat and landing page.
+
+**Chat Enhancements**:
+- [ ] **Change Floating Chat Icon to AI Symbol** (1 hour) - Update FAB icon from chat to AI symbol
+  - Current: Generic chat bubble icon
+  - Goal: Use modern AI symbol (3 floating stars ✨ or sparkles) to emphasize AI capability
+  - Impact: Better visual communication of AI-powered assistant
+  - Location: `app/components/chat/ArnaldoChatFAB.tsx`
   - Effort: 1 hour
 
-- [ ] **Allow Typing While Processing** - Don't block chat input, only sending
-  - Current: Input field disabled during processing
-  - Better UX: Allow typing, disable send button only
-  - Effort: 1-2 hours
+- [x] **Add Expand/Maximize Button to Chat Panel** (2-3 hours) - Allow chat to occupy larger screen area ✅ COMPLETE (2025-10-09)
+  - Implementation: Added expand/collapse button to ChatHeader with dynamic width (400px → 75% screen)
+  - Features: Desktop-only expand button, smooth transitions, state management via ChatContext
+  - Result: Users can now expand chat to 75% of screen width for extended conversations
+  - Files Modified:
+    - `app/contexts/ChatContext.tsx` (added isExpanded state and toggleExpanded)
+    - `app/components/chat/ChatHeader.tsx` (added expand/collapse button)
+    - `app/components/chat/ChatPanel.tsx` (dynamic width based on expanded state)
+    - `app/components/chat/GlobalChat.tsx` (wired up state to components)
+  - Build Status: ✅ Compiled successfully (7.5s, zero errors)
 
-**Priority Order**:
-1. Receivables category bug (data accuracy)
-2. File import reliability (onboarding blocker)
-3. Chat latency (user satisfaction)
-4. Make chat more evident (adoption)
-5. Chat auto-scroll + input blocking UX
-6. Cursor reset bug + landing page links
-
-**Total Estimated Effort**: 16-24 hours (2-3 days)
+**Landing Page Redesign**:
+- [ ] **Landing Page Redesign - More Professional & Focused** (8-12 hours) - Complete redesign
+  - Current issues:
+    - Too wordy, needs to be more objective
+    - Missing pricing information
+    - Doesn't emphasize conversational AI as primary interaction method
+    - Too many sections dilute the message
+  - Goals:
+    - **More professional look**: Modern, clean design with better typography
+    - **Add pricing section**: Clear pricing tiers and value proposition
+    - **Focus on conversational AI**: Emphasize Arnaldo as the primary way to interact
+    - **Reduce content**: Remove redundant sections, be more concise
+    - **Show agent in action**: More prominent demo/video of conversational interaction
+  - Specific changes:
+    - Add pricing tab/section with clear tiers
+    - Feature conversational AI prominently in hero section
+    - Reduce problem section from 6 cards to 3 most important
+    - Condense features section
+    - Add interactive demo or animated showcase of agent
+  - Impact: Better conversion rates, clearer value proposition
+  - Location: `app/components/LandingPage.tsx`
+  - Effort: 8-12 hours (design + implementation)
 
 ---
 
@@ -507,6 +570,29 @@ window.addEventListener('arnaldo-data-updated', () => {
 ### 🗂️ BACKLOG (Future Work)
 *Important but not immediate. Do not start unless specifically requested.*
 
+#### Business Metrics Evolution (ADR-015)
+
+**0. Scalable Metrics Refactor - Phase 1** (NEXT PRIORITY AFTER USER FEEDBACK FIXES)
+- **Problem**: Current BusinessMetricsService has hardcoded time periods and in-memory filtering (not scalable)
+- **Context**: Phase 1 & 2 complete, but metrics inflexible (can't do "profit for Q1 2024" or daily trends)
+- **Solution**: Transform to flexible, database-optimized queries with custom date ranges and grouping
+- **Capabilities**:
+  - Flexible time ranges: Custom date ranges instead of hardcoded "current month"
+  - Time-series grouping: day/week/month/quarter/year aggregation
+  - Database-level filtering: Push queries to Prisma/PostgreSQL (scalable to 10,000+ entities)
+  - Generic `getTimeSeries()` method for any metric over any period
+- **Technical Scope**:
+  - Add `TimeRange` parameters to all methods
+  - Implement `getTimeSeries(startDate, endDate, groupBy, metrics)` method
+  - Replace in-memory filtering with Prisma `where` clauses
+  - Database query optimization (use `aggregate()`, `groupBy()`)
+  - Add database indexes when needed (receivedDate, expectedDate, dueDate)
+- **Prerequisites**: BusinessMetricsService Phase 2 complete ✅
+- **Priority**: **NEXT** after user feedback fixes (foundation for all analytics features)
+- **Effort**: 2-3 days
+- **Related**: ADR-015 Phase 1, foundation for charts/analytics page
+- **Added**: 2025-10-09 from strategic planning (ADR-015)
+
 #### Financial Automation & Integrations
 
 **1. Open Finance Integration** (LONG-TERM FUTURE)
@@ -634,7 +720,7 @@ window.addEventListener('arnaldo-data-updated', () => {
 
 ---
 
-## 📋 ADR Implementation Status (All 11 ADRs)
+## 📋 ADR Implementation Status (All 15 ADRs)
 
 ### ✅ COMPLETED ADRs (Fully Implemented)
 
@@ -648,10 +734,27 @@ window.addEventListener('arnaldo-data-updated', () => {
 8. **ADR-009: Advanced Date Filtering** ✅ IMPLEMENTED (Sept 26)
 9. **ADR-010: Excel Token Optimization** ✅ IMPLEMENTED (Sept 29)
 10. **ADR-011: Extraction Accuracy Enhancement** ✅ COMPLETE (Sept 30)
+11. **ADR-012: Operations Agent Incremental Rebuild** ✅ COMPLETE (Oct 2024)
+12. **ADR-013: Operations Agent Agentic Loop Refactor** ✅ COMPLETE (Oct 2024)
+13. **ADR-014: Dashboard Strategy & Metrics - Phases 1-2** ✅ COMPLETE (Oct 2024)
 
-### 🔮 PENDING ADRs
+### 📋 ACTIVE ADRs (In Progress)
 
-11. **ADR-003: Strategic Architecture Evolution** 🔮 LONG-TERM VISION
+14. **ADR-014: Dashboard Strategy - Phase 3** 🔄 IN PROGRESS
+    - BusinessMetricsService Phase 3 (New Advanced Metrics)
+    - Cash flow forecast, receivables aging, project profitability, expense breakdown
+
+### 🔮 STRATEGIC ADRs (Long-Term Planning)
+
+15. **ADR-015: Business Metrics Scalability Strategy** 📊 STRATEGIC DOCUMENT (2025-10-09)
+    - **Phase 1**: Scalable Metrics Refactor (2-3 days) - 🎯 NEXT PRIORITY
+    - **Phase 2**: Charts & Analytics Page (1-2 days) - Quick win
+    - **Phase 3**: Customizable KPI Dashboard (3-4 weeks) - Q1 2026
+    - **Phase 4**: AI Agent Integration (6-8 weeks) - Q2 2026
+    - **Phase 5**: ETL Pipeline for Scale (3-6 months) - Q3-Q4 2026
+    - Related: `docs/docs-site/docs/decisions/015-business-metrics-scalability-strategy.md`
+
+16. **ADR-003: Strategic Architecture Evolution** 🔮 LONG-TERM VISION
     - Stage 1: Dual-Interface Architecture (6-12 months)
     - Stage 2: AI-First Platform (12-24 months)
 
