@@ -156,6 +156,67 @@ Examples:
 ### 📋 TO DO (Immediate Priorities)
 *Ready to implement, explicitly prioritized.*
 
+#### **User Feedback Improvements** (HIGH PRIORITY - 2025-10-08)
+**Context**: User testing revealed critical UX issues and bugs that need immediate attention.
+
+**Bugs (Fix First)**:
+- [ ] **Receivables Tab Category Bug** - Showing project category instead of receivable category (Projeto, RT)
+  - Location: `/projetos` receivables tab
+  - Impact: Users see wrong category information
+  - Effort: 1-2 hours
+
+- [ ] **Chat Input Cursor Reset Bug** - Cursor jumps to beginning when window loses/regains focus
+  - Location: `app/components/chat/ChatInput.tsx`
+  - Impact: Interrupts user typing flow
+  - Effort: 30 minutes - 1 hour
+
+- [ ] **Landing Page Broken Links** - Some navigation links don't work
+  - Location: Landing page components
+  - Impact: Poor first impression
+  - Effort: 1-2 hours
+
+**Performance Issues (Critical)**:
+- [ ] **Chat with Arnaldo Latency** - Interaction too slow
+  - Current: User perceives lag
+  - Goal: Sub-second response start
+  - Investigation needed: Claude API latency, streaming implementation
+  - Effort: 4-6 hours (profiling + optimization)
+
+- [ ] **File Import Performance & Reliability** - Import slow and failing with multiple files
+  - Issues: Errors + slow processing
+  - Need: Debug logs, error handling, performance profiling
+  - Priority: HIGH (affects onboarding experience)
+  - Effort: 6-8 hours (debugging + optimization)
+
+**UX Improvements (High Impact)**:
+- [ ] **Make Chat with Arnaldo More Evident** - Primary method for entity creation
+  - Current: FAB in corner, not prominent enough
+  - Ideas: Onboarding tooltips, persistent banner, empty state CTAs
+  - Goal: User discovers and adopts chat as primary interaction
+  - Effort: 2-3 hours
+
+- [ ] **Chat Auto-Scroll** - Messages should auto-scroll to bottom
+  - Current: User has to manually scroll
+  - Standard chat UX pattern
+  - Effort: 1 hour
+
+- [ ] **Allow Typing While Processing** - Don't block chat input, only sending
+  - Current: Input field disabled during processing
+  - Better UX: Allow typing, disable send button only
+  - Effort: 1-2 hours
+
+**Priority Order**:
+1. Receivables category bug (data accuracy)
+2. File import reliability (onboarding blocker)
+3. Chat latency (user satisfaction)
+4. Make chat more evident (adoption)
+5. Chat auto-scroll + input blocking UX
+6. Cursor reset bug + landing page links
+
+**Total Estimated Effort**: 16-24 hours (2-3 days)
+
+---
+
 #### **Dashboard Phase 2: UX/UI Design Strategy** (ADR-014 Priority)
 **Goal**: Define how to separate daily vs periodic metrics without overwhelming users
 
@@ -446,9 +507,36 @@ window.addEventListener('arnaldo-data-updated', () => {
 ### 🗂️ BACKLOG (Future Work)
 *Important but not immediate. Do not start unless specifically requested.*
 
+#### Financial Automation & Integrations
+
+**1. Open Finance Integration** (LONG-TERM FUTURE)
+- **Problem**: Manual entry of payments/receipts is time-consuming and error-prone
+- **Vision**: Automatic synchronization with bank accounts to mark paid/received items
+- **Solution**: Integrate with Open Finance API (Brazilian banking standard)
+- **Capabilities**:
+  - Automatic bank transaction fetching
+  - Smart matching with pending receivables/expenses
+  - Automatic status updates (pending → paid/received)
+  - Bank balance tracking and reconciliation
+  - Multi-bank support
+- **Technical Scope**:
+  - Open Finance API integration (authentication, consent flow)
+  - Transaction matching algorithm (fuzzy matching by amount, date, description)
+  - Reconciliation UI for manual review
+  - Security: encrypted credential storage, OAuth 2.0
+  - Real-time sync vs batch processing decision
+- **Prerequisites**:
+  - Mature user base with established payment patterns
+  - Business model validation (subscription tier?)
+  - Legal compliance review (LGPD, Open Finance regulations)
+  - Partnership with Open Finance provider
+- **Priority**: **LOW** (Future strategic initiative)
+- **Effort**: 6-8 weeks (full integration + testing)
+- **Added**: 2025-10-08 from user feedback
+
 #### AI & Automation Improvements
 
-**1. AI Agent Error Handling Standardization**
+**2. AI Agent Error Handling Standardization**
 - **Problem**: Inconsistent error messages when AI agents encounter errors, poor user experience
 - **Context**: Setup Assistant, Financial Query Agent, and future agents need unified error handling
 - **Solution**: Create standardized error handling patterns for all AI agents
