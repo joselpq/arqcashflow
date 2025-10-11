@@ -60,42 +60,81 @@ export async function POST(request: NextRequest) {
       // Generate a session ID for progress tracking
       const sessionId = `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
-      // Process files with progress callback
-      const result = await setupAssistantService.processMultipleFiles(
-        files,
-        (progress) => {
-          // Store progress for polling
-          progressStore.set(sessionId, {
-            ...progress,
-            timestamp: Date.now()
-          })
+      // Process files sequentially (simple approach for now)
+      let totalContractsCreated = 0
+      let totalReceivablesCreated = 0
+      let totalExpensesCreated = 0
+      let successfulFiles = 0
+      let failedFiles = 0
+      const allErrors: string[] = []
 
-          // Clean up old progress entries (older than 5 minutes)
-          const fiveMinutesAgo = Date.now() - 5 * 60 * 1000
-          for (const [key, value] of progressStore.entries()) {
-            if (value.timestamp < fiveMinutesAgo) {
-              progressStore.delete(key)
-            }
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+
+        // Update progress
+        progressStore.set(sessionId, {
+          currentFile: i + 1,
+          totalFiles: files.length,
+          currentFileName: file.name,
+          status: 'processing',
+          timestamp: Date.now()
+        })
+
+        try {
+          // Convert File to Buffer
+          const arrayBuffer = await file.arrayBuffer()
+          const fileBuffer = Buffer.from(arrayBuffer)
+
+          // Process single file
+          const result = await setupAssistantService.processFile(fileBuffer, file.name)
+
+          // ALWAYS aggregate entity counts (even with partial failures)
+          totalContractsCreated += result.contractsCreated
+          totalReceivablesCreated += result.receivablesCreated
+          totalExpensesCreated += result.expensesCreated
+
+          // Track success/failure based on SYSTEMATIC errors only
+          if (result.success) {
+            successfulFiles++
+          } else {
+            failedFiles++
           }
+
+          // Add any errors to the error list
+          if (result.errors.length > 0) {
+            allErrors.push(...result.errors.map(e => `${file.name}: ${e}`))
+          }
+        } catch (error) {
+          // This is a systematic error (couldn't process file at all)
+          failedFiles++
+          allErrors.push(`${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`)
         }
-      )
+      }
 
       // Clean up progress for this session
       progressStore.delete(sessionId)
 
       console.log('✅ [V2 Multi] Files processed successfully')
       console.log(`📊 [V2 Multi] Summary:`)
-      console.log(`  - Total files: ${result.totalFiles}`)
-      console.log(`  - Successful: ${result.successfulFiles}`)
-      console.log(`  - Failed: ${result.failedFiles}`)
-      console.log(`  - Contracts created: ${result.combinedSummary.totalContractsCreated}`)
-      console.log(`  - Receivables created: ${result.combinedSummary.totalReceivablesCreated}`)
-      console.log(`  - Expenses created: ${result.combinedSummary.totalExpensesCreated}`)
+      console.log(`  - Total files: ${files.length}`)
+      console.log(`  - Successful: ${successfulFiles}`)
+      console.log(`  - Failed: ${failedFiles}`)
+      console.log(`  - Contracts created: ${totalContractsCreated}`)
+      console.log(`  - Receivables created: ${totalReceivablesCreated}`)
+      console.log(`  - Expenses created: ${totalExpensesCreated}`)
 
       return {
-        success: true,
-        sessionId, // Can be used for progress polling if needed
-        ...result
+        success: failedFiles === 0,
+        sessionId,
+        totalFiles: files.length,
+        successfulFiles,
+        failedFiles,
+        combinedSummary: {
+          totalContractsCreated,
+          totalReceivablesCreated,
+          totalExpensesCreated
+        },
+        errors: allErrors
       }
 
     } catch (error) {

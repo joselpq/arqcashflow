@@ -41,6 +41,10 @@ export async function POST(request: NextRequest) {
 
       console.log('📁 [V2] Processing file with service layer:', file.name, 'Type:', file.type)
 
+      // Convert File to Buffer
+      const arrayBuffer = await file.arrayBuffer()
+      const fileBuffer = Buffer.from(arrayBuffer)
+
       // Create service instance with team context
       const setupAssistantService = new SetupAssistantService({
         ...context,
@@ -48,12 +52,20 @@ export async function POST(request: NextRequest) {
       })
 
       // Process file using service layer
-      const result = await setupAssistantService.processFile(file)
+      const result = await setupAssistantService.processFile(fileBuffer, file.name)
 
       console.log('✅ [V2] File processed successfully')
-      console.log(`📊 [V2] Created: ${result.summary.contractsCreated} contracts, ${result.summary.receivablesCreated} receivables, ${result.summary.expensesCreated} expenses`)
+      console.log(`📊 [V2] Created: ${result.contractsCreated} contracts, ${result.receivablesCreated} receivables, ${result.expensesCreated} expenses`)
 
-      return result
+      return {
+        success: result.success,
+        summary: {
+          contractsCreated: result.contractsCreated,
+          receivablesCreated: result.receivablesCreated,
+          expensesCreated: result.expensesCreated,
+          errors: result.errors
+        }
+      }
 
     } catch (error) {
       console.error('[V2] Setup Assistant error:', error)

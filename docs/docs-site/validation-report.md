@@ -1,15 +1,15 @@
 # Documentation Validation Report
 
-Generated on: 2025-10-08
+Generated on: 2025-10-11
 
 ## Summary
 
-- **Total files validated**: 82
+- **Total files validated**: 86
 - **Broken links**: 0
 - **Stale content**: 1
 - **Missing metadata**: 0
 - **Format inconsistencies**: 2
-- **Orphaned files**: 26
+- **Orphaned files**: 29
 
 ## Issues Found
 
@@ -22,7 +22,7 @@ Generated on: 2025-10-08
 
 - **File**: `optimization-opportunities.md`
   - **Last updated**: 2025-01-03
-  - **Days since update**: 278
+  - **Days since update**: 281
 
 
 ### 📋 Missing Metadata (0)
@@ -40,7 +40,7 @@ Generated on: 2025-10-08
   - **Issues**: Missing LLM Context section
 
 
-### 🔍 Orphaned Files (26)
+### 🔍 Orphaned Files (29)
 
 
 - `agents/contexts/validation-layer.md`
@@ -76,9 +76,6 @@ Generated on: 2025-10-08
 - `decisions/007-event-system-foundation.md`
 
 
-- `decisions/008-ai-agent-strategy.md`
-
-
 - `decisions/009-advanced-date-filtering.md`
 
 
@@ -92,6 +89,12 @@ Generated on: 2025-10-08
 
 
 - `decisions/014-dashboard-strategy-and-metrics.md`
+
+
+- `decisions/015-business-metrics-scalability-strategy.md`
+
+
+- `decisions/016-setup-assistant-simple-extraction-attempt.md`
 
 
 - `developer/architecture/decisions/adr-002-claude-ai-integration.md`
@@ -109,6 +112,9 @@ Generated on: 2025-10-08
 - `developer/testing/authenticated-api-testing-guide.md`
 
 
+- `features/global-chat.md`
+
+
 - `intro.md`
 
 
@@ -119,6 +125,9 @@ Generated on: 2025-10-08
 
 
 - `reference/api/auth-[...nextauth].md`
+
+
+- `reference/business-metrics.md`
 
 
 ## Recommendations

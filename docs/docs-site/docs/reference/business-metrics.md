@@ -227,7 +227,7 @@ console.log(`${statusEmoji[health.status]} ${health.message}`)
 **Business Logic** (in priority order):
 
 1. **CRITICAL**: Any overdue items exist
-   - Message: "{N} itens em atraso precisam de atenção"
+   - Message: "\{N\} itens em atraso precisam de atenção"
 
 2. **WARNING**: Negative profit this month
    - Message: "Despesas superiores à receita este mês"
@@ -347,8 +347,11 @@ const yearTrend = await metricsService.getMonthlyTrend(12)
 trend.forEach(month => {
   console.log(`${month.month}: R$ ${month.profit.toFixed(2)} profit`)
 })
+```
 
-// Use directly in chart libraries
+**Visualization Example**:
+```jsx
+// Use directly in chart libraries (Recharts)
 <LineChart data={trend}>
   <Line dataKey="revenue" stroke="#10b981" />
   <Line dataKey="expenses" stroke="#ef4444" />
@@ -652,10 +655,13 @@ testMetrics()
 
 ## Related Documentation
 
-- [Service Layer Guide](../developer/services/service-layer-guide.md) - Service architecture patterns
 - [Architecture Overview](../developer/architecture/overview.md) - System architecture
 - [Dashboard API](../reference/api/dashboard.md) - Dashboard API documentation
-- [Team Context Middleware](../developer/middleware/team-context.md) - Team isolation patterns
+
+<!-- TODO: Add links when these docs are created:
+- Service Layer Guide - Service architecture patterns
+- Team Context Middleware - Team isolation patterns
+-->
 
 ---
 

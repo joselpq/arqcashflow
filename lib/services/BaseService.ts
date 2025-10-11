@@ -294,7 +294,7 @@ export abstract class BaseService<TEntity, TCreateData, TUpdateData, TFilters ex
       throw new ServiceError(`Model ${this.entityName} not found`, 'MODEL_NOT_FOUND', 500)
     }
 
-    // Use transaction for atomicity
+    // Use transaction for atomicity with 15s timeout for large bulk operations
     await this.context.teamScopedPrisma.raw.$transaction(async (tx) => {
       const txModel = (tx as any)[this.entityName]
 
@@ -342,7 +342,7 @@ export abstract class BaseService<TEntity, TCreateData, TUpdateData, TFilters ex
 
         result.results.push(itemResult)
       }
-    })
+    }, { timeout: 15000 }) // 15 second timeout for large bulk operations
 
     result.success = result.failureCount === 0
     return result
@@ -371,7 +371,7 @@ export abstract class BaseService<TEntity, TCreateData, TUpdateData, TFilters ex
       throw new ServiceError(`Model ${this.entityName} not found`, 'MODEL_NOT_FOUND', 500)
     }
 
-    // Use transaction for atomicity
+    // Use transaction for atomicity with 15s timeout for large bulk operations
     await this.context.teamScopedPrisma.raw.$transaction(async (tx) => {
       const txModel = (tx as any)[this.entityName]
 
@@ -429,7 +429,7 @@ export abstract class BaseService<TEntity, TCreateData, TUpdateData, TFilters ex
 
         result.results.push(itemResult)
       }
-    })
+    }, { timeout: 15000 }) // 15 second timeout for large bulk operations
 
     result.success = result.failureCount === 0
     return result
@@ -458,7 +458,7 @@ export abstract class BaseService<TEntity, TCreateData, TUpdateData, TFilters ex
       throw new ServiceError(`Model ${this.entityName} not found`, 'MODEL_NOT_FOUND', 500)
     }
 
-    // Use transaction for atomicity
+    // Use transaction for atomicity with 15s timeout for large bulk operations
     await this.context.teamScopedPrisma.raw.$transaction(async (tx) => {
       const txModel = (tx as any)[this.entityName]
 
@@ -516,7 +516,7 @@ export abstract class BaseService<TEntity, TCreateData, TUpdateData, TFilters ex
 
         result.results.push(itemResult)
       }
-    })
+    }, { timeout: 15000 }) // 15 second timeout for large bulk operations
 
     result.success = result.failureCount === 0
     return result
