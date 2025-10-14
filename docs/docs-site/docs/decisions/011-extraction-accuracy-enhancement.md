@@ -781,7 +781,7 @@ vs
 - Semantic confusion eliminated (type detection 100% accurate)
 - Root cause solved: Implemented sub-batch splitting to work within Claude API's 8,192 output token hard limit
 - Large sheets (`>80` entities) now split into sub-batches of 60 entities each
-- Small sheets (`<80` entities) processed as single batches
+- Small sheets (under 80 entities) processed as single batches
 
 **Implementation Complete:**
 - ✅ `extractRowRangeAsCSV()` method for row-range extraction

@@ -27,7 +27,12 @@ export default function ExpenseForm({ expense, contracts, onSubmit, onCancel, lo
   })
 
   const [isRecurring, setIsRecurring] = useState(false)
-  const [recurringData, setRecurringData] = useState({
+  const [recurringData, setRecurringData] = useState<{
+    frequency: string
+    interval: number | ''
+    endDate: string
+    maxOccurrences: string
+  }>({
     frequency: 'monthly',
     interval: 1,
     endDate: '',
@@ -245,7 +250,7 @@ export default function ExpenseForm({ expense, contracts, onSubmit, onCancel, lo
                   const value = e.target.value
                   // Allow empty string for deletion, otherwise parse as number
                   if (value === '') {
-                    setRecurringData({ ...recurringData, interval: '' as any })
+                    setRecurringData({ ...recurringData, interval: '' })
                   } else {
                     const num = parseInt(value)
                     if (!isNaN(num) && num >= 1) {

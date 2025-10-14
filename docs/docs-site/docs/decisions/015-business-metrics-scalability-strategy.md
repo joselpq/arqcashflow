@@ -299,7 +299,7 @@ model Receivable {
 **Success Criteria**:
 - ✅ All methods accept custom date ranges
 - ✅ `getTimeSeries()` works with day/week/month/quarter/year grouping
-- ✅ Performance `<500ms` for 1000 entities
+- ✅ Performance under 500ms for 1000 entities
 - ✅ Zero regressions in existing dashboard
 
 ---
@@ -499,7 +499,7 @@ export default function MetricsPage() {
 - ✅ 3+ chart types working (line, pie, bar)
 - ✅ Interactive tooltips/legends
 - ✅ Responsive on mobile
-- ✅ Loading `<2s` on typical data
+- ✅ Loading under 2s on typical data
 
 ---
 
@@ -686,7 +686,7 @@ model DashboardConfig {
 - ✅ Drag-and-drop working smoothly
 - ✅ Layouts persist per user
 - ✅ Mobile-friendly (stacked layout on small screens)
-- ✅ Performance `<2s` load time
+- ✅ Performance under 2s load time
 
 ---
 
@@ -898,7 +898,7 @@ Examples:
 - ✅ Financial Query Agent uses metrics (not raw SQL)
 - ✅ Operations Agent warns about cash gaps
 - ✅ Business Insights Agent provides 3+ valuable recommendations/week
-- ✅ `<1s` response time for metric queries
+- ✅ Under 1s response time for metric queries
 
 ---
 
@@ -1101,9 +1101,9 @@ cron.schedule('5 * * * *', async () => {
 - Week 7-8: Documentation, runbooks for ops team
 
 **Success Criteria**:
-- ✅ Dashboard load `<500ms` (from analytics DB)
+- ✅ Dashboard load under 500ms (from analytics DB)
 - ✅ Supports 100,000+ entities per team
-- ✅ ETL completes in `<1 hour` nightly
+- ✅ ETL completes in under 1 hour nightly
 - ✅ 99.9% uptime for analytics queries
 
 ---
@@ -1190,13 +1190,13 @@ cron.schedule('5 * * * *', async () => {
 ### Phase 1: Scalable Metrics Refactor
 - ✅ All methods accept custom date ranges
 - ✅ `getTimeSeries()` supports 5 grouping intervals
-- ✅ Query performance `<500ms` for 1000 entities
+- ✅ Query performance under 500ms for 1000 entities
 - ✅ Zero regressions in dashboard
 
 ### Phase 2: Charts & Analytics
 - ✅ 3+ chart types implemented (line, pie, bar)
 - ✅ `/metricas` page with 5+ visualizations
-- ✅ Page load `<2s`
+- ✅ Page load under 2s
 - ✅ User engagement (30%+ users visit /metricas monthly)
 
 ### Phase 3: Customizable Dashboard
@@ -1209,12 +1209,12 @@ cron.schedule('5 * * * *', async () => {
 - ✅ Financial Query Agent uses metrics API
 - ✅ Operations Agent warns about cash gaps (5+ warnings/month)
 - ✅ Business Insights Agent generates recommendations
-- ✅ `<1s` metric query response time
+- ✅ Under 1s metric query response time
 
 ### Phase 5: ETL Pipeline
-- ✅ Dashboard load `<500ms` (from analytics DB)
+- ✅ Dashboard load under 500ms (from analytics DB)
 - ✅ Supports 100,000+ entities per team
-- ✅ ETL completes `<1 hour` nightly
+- ✅ ETL completes in under 1 hour nightly
 - ✅ 99.9% uptime for analytics
 
 ---

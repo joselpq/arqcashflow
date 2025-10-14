@@ -14,8 +14,8 @@ function ExpensesPageContent() {
   const pathname = usePathname()
   const editId = searchParams.get('edit')
 
-  const [expenses, setExpenses] = useState([])
-  const [contracts, setContracts] = useState([])
+  const [expenses, setExpenses] = useState<any[]>([])
+  const [contracts, setContracts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [editingExpense, setEditingExpense] = useState<any>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -33,7 +33,7 @@ function ExpensesPageContent() {
     sortOrder: (searchParams.get('sortOrder') as 'asc' | 'desc') || 'asc',
   })
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '')
-  const [filteredExpenses, setFilteredExpenses] = useState([])
+  const [filteredExpenses, setFilteredExpenses] = useState<any[]>([])
   const [activeQuickFilter, setActiveQuickFilter] = useState<string | null>(null)
   const [moreFiltersOpen, setMoreFiltersOpen] = useState(false)
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)

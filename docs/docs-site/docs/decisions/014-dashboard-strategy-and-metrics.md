@@ -416,7 +416,7 @@ Tablet (481-768px):
   ↓ (when expanded)
 [Status ▼] [Cliente ▼] [📅 Período ▼]
 
-Mobile (<480px):
+Mobile (under 480px):
 [🔍 Search_______________]
 [Filtros ▼] [× Limpar]
   ↓ (modal/drawer with filter options)

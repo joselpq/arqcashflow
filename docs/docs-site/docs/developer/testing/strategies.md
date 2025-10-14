@@ -270,7 +270,7 @@ curl -X POST http://localhost:3000/api/ai/create-expense \
 ### AI Document Processing
 ```bash
 # Test file size strategy selection
-1. Upload PDFs `<3MB` (should use JSON + base64 strategy)
+1. Upload PDFs under 3MB (should use JSON + base64 strategy)
 2. Upload PDFs 3-32MB (should use FormData strategy)
 3. Verify both strategies process correctly through Claude API
 4. Test mixed file sizes in single upload batch
@@ -288,7 +288,7 @@ curl -X POST http://localhost:3000/api/ai/create-expense \
 ```bash
 # Verify automatic strategy selection
 1. Check browser DevTools Network tab
-2. Files `<3MB` should show Content-Type: application/json
+2. Files under 3MB should show Content-Type: application/json
 3. Files ≥3MB should show Content-Type: multipart/form-data
 4. Both should successfully process through /api/ai/assistant endpoint
 ```

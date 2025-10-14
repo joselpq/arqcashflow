@@ -224,8 +224,8 @@ describe('trimEmptyRows', () => {
 ```
 
 **Integration Tests:**
-- 10-sheet Excel with 50 filled rows → verify `<10k` tokens
-- 20-sheet Excel with 50 filled rows → verify `<20k` tokens
+- 10-sheet Excel with 50 filled rows → verify under 10k tokens
+- 20-sheet Excel with 50 filled rows → verify under 20k tokens
 - 1-sheet Excel with 1000 filled rows → verify no trimming
 - Mixed: Some sheets full, some sparse → verify selective trimming
 
@@ -248,7 +248,7 @@ describe('trimEmptyRows', () => {
 **Alert thresholds:**
 - Token usage `>25k` after trimming → investigate for Phase 2
 - Failure rate `>1%` → review edge cases
-- Average reduction `<50%` → trimming not effective for user data patterns
+- Average reduction under 50% → trimming not effective for user data patterns
 
 ## References
 
@@ -476,7 +476,7 @@ Batch 3: [Acompanhamento de Obra, Previsão RT, Custos] → Not reached due to b
 
 4. **Option D: Request smaller batches from Claude**
    - Reduce OUTPUT_TOKEN_BUDGET from 6000 to 4000
-   - Creates more batches but each has fewer entities (`<50` items per array)
+   - Creates more batches but each has fewer entities (under 50 items per array)
    - Higher success rate for JSON formatting
 
 ### Decision Update

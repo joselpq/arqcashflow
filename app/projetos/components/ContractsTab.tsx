@@ -14,8 +14,8 @@ export default function ContractsTab() {
   const pathname = usePathname()
   const editId = searchParams.get('edit')
 
-  const [contracts, setContracts] = useState([])
-  const [filteredContracts, setFilteredContracts] = useState([])
+  const [contracts, setContracts] = useState<any[]>([])
+  const [filteredContracts, setFilteredContracts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [formLoading, setFormLoading] = useState(false)
   const [uniqueCategories, setUniqueCategories] = useState<string[]>([])
