@@ -13,8 +13,8 @@ function ReceivablesPageContent() {
   const pathname = usePathname()
   const editId = searchParams.get('edit')
 
-  const [receivables, setReceivables] = useState([])
-  const [contracts, setContracts] = useState([])
+  const [receivables, setReceivables] = useState<any[]>([])
+  const [contracts, setContracts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [editingReceivable, setEditingReceivable] = useState<any>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -30,7 +30,7 @@ function ReceivablesPageContent() {
     sortOrder: (searchParams.get('sortOrder') as 'asc' | 'desc') || 'asc',
   })
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '')
-  const [filteredReceivables, setFilteredReceivables] = useState([])
+  const [filteredReceivables, setFilteredReceivables] = useState<any[]>([])
   const [activeQuickFilter, setActiveQuickFilter] = useState<string | null>(null)
   const [moreFiltersOpen, setMoreFiltersOpen] = useState(false)
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
@@ -180,6 +180,7 @@ function ReceivablesPageContent() {
       filtered = filtered.filter((receivable: any) =>
         normalizeText(receivable.contract?.projectName || '').includes(query) ||
         normalizeText(receivable.contract?.clientName || '').includes(query) ||
+        normalizeText(receivable.clientName || '').includes(query) ||
         normalizeText(receivable.category || '').includes(query) ||
         normalizeText(receivable.description || '').includes(query)
       )
@@ -854,7 +855,7 @@ function ReceivablesPageContent() {
                     <td className="px-4 py-4">
                       <div>
                         <div className="font-semibold text-neutral-900">{receivable.contract?.projectName || 'Sem projeto'}</div>
-                        <div className="text-sm text-neutral-600">{receivable.contract?.clientName || '-'}</div>
+                        <div className="text-sm text-neutral-600">{receivable.contract?.clientName || receivable.clientName || '-'}</div>
                       </div>
                     </td>
                     <td className="px-4 py-4 text-right">

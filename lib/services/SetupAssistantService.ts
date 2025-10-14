@@ -118,7 +118,7 @@ export class SetupAssistantService extends BaseService<any, any, any, any> {
    * No-op implementation of abstract method
    * Business rules are validated by individual entity services
    */
-  async validateBusinessRules(data: any): Promise<void> {
+  async validateBusinessRules(_data: any): Promise<void> {
     // No validation needed - delegated to entity services
     return Promise.resolve()
   }
@@ -744,15 +744,22 @@ Retorne APENAS JSON válido com as entidades extraídas.`
         // If contractId is a string (project name), use it as clientName
         if (processed.contractId && typeof processed.contractId === 'string' && processed.contractId.trim()) {
           processed.clientName = processed.contractId.trim()
+          console.log(`🔍 [RECEIVABLE clientName INFERENCE] Set from contractId: "${processed.clientName}"`)
         }
         // Or use description if available
         else if (processed.description && processed.description.trim()) {
           processed.clientName = processed.description.trim()
+          console.log(`🔍 [RECEIVABLE clientName INFERENCE] Set from description: "${processed.clientName}"`)
         }
         // Or use a default
         else {
           processed.clientName = 'Cliente não especificado'
+          console.log(`🔍 [RECEIVABLE clientName INFERENCE] Set to default: "${processed.clientName}"`)
+          console.log(`   - contractId was: ${JSON.stringify(processed.contractId)} (type: ${typeof processed.contractId})`)
+          console.log(`   - description was: ${JSON.stringify(processed.description)}`)
         }
+      } else {
+        console.log(`🔍 [RECEIVABLE clientName INFERENCE] Already set by Claude: "${processed.clientName}"`)
       }
 
       return processed
@@ -817,6 +824,14 @@ Retorne APENAS JSON válido com as entidades extraídas.`
     console.log(`   Receivables: ${data.receivables.length} (filtered: ${filteredReceivables})`)
     console.log(`   Expenses: ${data.expenses.length} (filtered: ${filteredExpenses})`)
 
+    // Debug: Log first 3 receivables to check clientName
+    if (data.receivables.length > 0) {
+      console.log(`\n🔍 [POST-PROCESSING COMPLETE] Sample receivables (first 3):`)
+      data.receivables.slice(0, 3).forEach((r, idx) => {
+        console.log(`   ${idx + 1}. contractId: ${JSON.stringify(r.contractId)}, clientName: ${JSON.stringify(r.clientName)}, amount: ${r.amount}`)
+      })
+    }
+
     return data
   }
 
@@ -871,6 +886,12 @@ Retorne APENAS JSON válido com as entidades extraídas.`
         // Need to map contractId (projectName) to actual contract IDs
         const receivablesWithContractIds = await this.mapContractIds(data.receivables)
 
+        // Debug: Log what we're sending to bulkCreate
+        console.log(`\n🔍 [BEFORE BULK CREATE] Sample receivables being sent (first 3):`)
+        receivablesWithContractIds.slice(0, 3).forEach((r, idx) => {
+          console.log(`   ${idx + 1}. contractId: ${JSON.stringify(r.contractId)}, clientName: ${JSON.stringify(r.clientName)}, amount: ${r.amount}, description: ${JSON.stringify(r.description)}`)
+        })
+
         const receivableResult = await this.receivableService.bulkCreate(
           receivablesWithContractIds as any,
           { continueOnError: true }
@@ -882,6 +903,16 @@ Retorne APENAS JSON válido com as entidades extraídas.`
         console.log(`   ❌ Failed: ${receivableResult.failureCount}`)
         if (receivableResult.errors.length > 0) {
           console.log(`   ⚠️ First error: ${receivableResult.errors[0]}`)
+          // Check for clientName-related errors
+          const clientNameErrors = receivableResult.errors.filter(e =>
+            e.toLowerCase().includes('client') || e.toLowerCase().includes('clientname')
+          )
+          if (clientNameErrors.length > 0) {
+            console.log(`\n🚨 [CLIENT NAME ERRORS DETECTED] ${clientNameErrors.length} errors:`)
+            clientNameErrors.slice(0, 3).forEach(err => {
+              console.log(`   - ${err}`)
+            })
+          }
         }
       } catch (error) {
         // This is a systematic error (service layer failure, not validation)
@@ -933,7 +964,18 @@ Retorne APENAS JSON válido com as entidades extraídas.`
     // Get all contracts for this team
     const contracts = await this.contractService.findMany({})
 
-    return receivables.map(receivable => {
+    console.log(`\n🔍 [MAP CONTRACT IDS] Processing ${receivables.length} receivables...`)
+    console.log(`   Available contracts in DB: ${contracts.length}`)
+
+    // Debug: Log first 3 receivables BEFORE mapping
+    if (receivables.length > 0) {
+      console.log(`\n🔍 [BEFORE MAPPING] Sample receivables (first 3):`)
+      receivables.slice(0, 3).forEach((r, idx) => {
+        console.log(`   ${idx + 1}. contractId: ${JSON.stringify(r.contractId)}, clientName: ${JSON.stringify(r.clientName)}, amount: ${r.amount}`)
+      })
+    }
+
+    const result = receivables.map((receivable, index) => {
       if (receivable.contractId) {
         // Try to find contract by projectName
         const matchingContract = contracts.find(
@@ -941,18 +983,41 @@ Retorne APENAS JSON válido com as entidades extraídas.`
         )
 
         if (matchingContract) {
+          if (index < 3) {
+            console.log(`   ✅ Mapped receivable ${index + 1}: "${receivable.contractId}" → UUID ${matchingContract.id}`)
+          }
           return {
             ...receivable,
             contractId: matchingContract.id
           }
+        } else {
+          if (index < 3) {
+            console.log(`   ⚠️ No match for receivable ${index + 1}: "${receivable.contractId}" (standalone)`)
+          }
         }
       }
 
-      // If no match, set to null
-      return {
+      // If no match, set to null (standalone receivable)
+      const standalone = {
         ...receivable,
         contractId: null
       }
+
+      if (index < 3) {
+        console.log(`   🔍 Result for receivable ${index + 1}: contractId=null, clientName="${standalone.clientName}"`)
+      }
+
+      return standalone
     })
+
+    // Debug: Log first 3 receivables AFTER mapping
+    if (result.length > 0) {
+      console.log(`\n🔍 [AFTER MAPPING] Sample receivables (first 3):`)
+      result.slice(0, 3).forEach((r, idx) => {
+        console.log(`   ${idx + 1}. contractId: ${JSON.stringify(r.contractId)}, clientName: ${JSON.stringify(r.clientName)}, amount: ${r.amount}`)
+      })
+    }
+
+    return result
   }
 }
