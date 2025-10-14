@@ -333,11 +333,13 @@ export class SetupAssistantService extends BaseService<any, any, any, any> {
     const contentType = fileType === 'pdf' ? 'document' : 'image'
 
     // Full schema prompt with Brazilian architecture context
-    const prompt = `Você está analisando um documento financeiro de um escritório de arquitetura no Brasil.
+    const prompt = `Você está analisando um documento de um escritório de arquitetura no Brasil.
 
-Este documento pode estar em formato PDF, imagem, ou qualquer outro formato visual, pode se tratar por exemplo de um contrato, uma proposta, um recibo, etc.
-Preste atenção no tipo de documento, nas formas de pagamento quando houver, se são parcelados ou não, quais os valores de cada parcela, quando são os pagamentos - essas informações oferecem contexto valioso para extrair corretamente as entidades financeiras.
-Sua tarefa é extrair TODAS as entidades financeiras (contratos, recebíveis, despesas) encontradas neste documento.
+• Este documento pode estar em formato PDF, imagem, ou qualquer outro formato visual, pode se tratar por exemplo de um contrato, uma proposta, um recibo, etc.
+• Sua tarefa é extrair TODAS as entidades financeiras (contratos, recebíveis, despesas) encontradas neste documento.
+• Preste atenção no tipo e nome do documento pois fornecem indícios dos tipos de entidade financeira que você deve encontrar
+• Se encontrar formas de pagamento, preste atenção nas condições, quanto é à vista, quanto é parcelado, quais as datas de pagamento
+• Revise o documento por inteiro antes de extrair as entidades financeiras, para ter todo contexto necessário
 
 ═══════════════════════════════════════════════════════════════════
 CONTEXTO FINANCEIRO DE ESCRITÓRIOS DE ARQUITETURA NO BRASIL
@@ -480,6 +482,7 @@ COMECE A EXTRAÇÃO
       const message = await this.anthropic.messages.create({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 16000,
+        temperature: 0.3,  // Lower temperature for consistency while allowing some interpretation
         messages: [{
           role: 'user',
           content: [
