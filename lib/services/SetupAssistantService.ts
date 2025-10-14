@@ -91,6 +91,9 @@ export interface SheetData {
   csv: string
 }
 
+// File type definitions
+export type FileType = 'xlsx' | 'csv' | 'pdf' | 'image'
+
 /**
  * SetupAssistantService - Main service class
  */
@@ -124,37 +127,93 @@ export class SetupAssistantService extends BaseService<any, any, any, any> {
   }
 
   /**
-   * Main entry point: Process an xlsx file and extract all financial entities
-   * Uses two-phase approach: analysis + parallel sheet extraction
+   * Detect file type from filename extension and magic bytes
+   */
+  private detectFileType(filename: string, buffer: Buffer): FileType {
+    const ext = filename.toLowerCase().split('.').pop()
+
+    // Check file extension first
+    if (ext === 'xlsx' || ext === 'xls') return 'xlsx'
+    if (ext === 'csv') return 'csv'
+    if (ext === 'pdf') return 'pdf'
+    if (['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(ext || '')) return 'image'
+
+    // Fallback: Check magic bytes (file signatures)
+    if (buffer.length >= 2) {
+      // PDF: %PDF (0x25 0x50)
+      if (buffer[0] === 0x25 && buffer[1] === 0x50) return 'pdf'
+
+      // PNG: �PNG (0x89 0x50)
+      if (buffer[0] === 0x89 && buffer[1] === 0x50) return 'image'
+
+      // JPEG: �� (0xFF 0xD8)
+      if (buffer[0] === 0xFF && buffer[1] === 0xD8) return 'image'
+
+      // GIF: GI (0x47 0x49)
+      if (buffer[0] === 0x47 && buffer[1] === 0x49) return 'image'
+    }
+
+    throw new ServiceError(
+      'Unsupported file type. Please upload XLSX, CSV, PDF, or image files (PNG, JPG, GIF, WebP).',
+      'INVALID_FILE_TYPE',
+      400
+    )
+  }
+
+  /**
+   * Main entry point: Process a file and extract all financial entities
+   * Supports: XLSX, CSV, PDF, and images (PNG, JPG, GIF, WebP)
+   *
+   * Architecture:
+   * - XLSX/CSV: Two-phase parallel extraction (analysis + parallel sheets)
+   * - PDF/Images: Single-phase vision extraction (direct schema-based extraction)
    */
   async processFile(fileBuffer: Buffer, filename: string): Promise<ProcessingResult> {
     try {
+      // Step 1: Detect file type
+      const fileType = this.detectFileType(filename, fileBuffer)
       console.log('\n' + '='.repeat(80))
-      console.log('🚀 TWO-PHASE PARALLEL EXTRACTION')
+      console.log(`📁 File type detected: ${fileType.toUpperCase()}`)
       console.log('='.repeat(80))
 
-      // Step 1: Parse xlsx file
-      const workbook = this.parseXlsx(fileBuffer)
+      let extractedData: ExtractionResult
 
-      // Step 2: Extract sheet data
-      const sheetsData = this.extractSheetsData(workbook)
-      console.log(`📊 Found ${sheetsData.length} sheets with data`)
+      // Step 2: Route to appropriate extraction pipeline
+      if (fileType === 'xlsx' || fileType === 'csv') {
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // XLSX/CSV: Two-phase parallel extraction
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        console.log('🚀 TWO-PHASE PARALLEL EXTRACTION')
 
-      // PHASE 1: Analyze file structure
-      console.log('\n📋 PHASE 1: Analyzing file structure...')
-      const extractionPlan = await this.analyzeFileStructure(sheetsData, filename)
+        const workbook = this.parseXlsx(fileBuffer)
+        const sheetsData = this.extractSheetsData(workbook)
+        console.log(`📊 Found ${sheetsData.length} sheets with data`)
 
-      // PHASE 2: Extract all sheets in parallel
-      console.log('\n⚡ PHASE 2: Extracting sheets in parallel...')
-      const extractionResults = await this.extractSheetsInParallel(sheetsData, extractionPlan, filename)
+        // PHASE 1: Analyze file structure
+        console.log('\n📋 PHASE 1: Analyzing file structure...')
+        const extractionPlan = await this.analyzeFileStructure(sheetsData, filename)
 
-      // Aggregate results from all sheets
-      const aggregatedData = this.aggregateExtractionResults(extractionResults)
+        // PHASE 2: Extract all sheets in parallel
+        console.log('\n⚡ PHASE 2: Extracting sheets in parallel...')
+        const extractionResults = await this.extractSheetsInParallel(sheetsData, extractionPlan, filename)
 
-      // Post-process with inference
-      const processedData = this.postProcessWithInference(aggregatedData)
+        // Aggregate results from all sheets
+        extractedData = this.aggregateExtractionResults(extractionResults)
 
-      // Bulk create entities
+      } else if (fileType === 'pdf' || fileType === 'image') {
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // PDF/Images: Single-phase vision extraction
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        console.log('🔍 SINGLE-PHASE VISION EXTRACTION')
+        extractedData = await this.extractFromVisionDirect(fileBuffer, filename, fileType)
+
+      } else {
+        throw new ServiceError('Unsupported file type', 'INVALID_FILE_TYPE', 400)
+      }
+
+      // Common post-processing pipeline (both flows)
+      console.log('\n📦 Post-processing and creation...')
+      const processedData = this.postProcessWithInference(extractedData)
       const result = await this.bulkCreateEntities(processedData)
 
       return result
@@ -250,6 +309,397 @@ export class SetupAssistantService extends BaseService<any, any, any, any> {
     }
 
     return sheetsData
+  }
+
+  /**
+   * Single-phase vision extraction: Direct schema-based extraction from PDF/images
+   * This is the optimized flow that extracts entities in one Claude call.
+   *
+   * Used for: PDF and image files
+   * Benefits: 50% cheaper, 50% faster, preserves visual context, no information loss
+   */
+  private async extractFromVisionDirect(
+    fileBuffer: Buffer,
+    filename: string,
+    fileType: 'pdf' | 'image'
+  ): Promise<ExtractionResult> {
+    console.log(`🔍 Processing ${fileType.toUpperCase()} with single-phase vision extraction...`)
+
+    // Determine media type and content type for Anthropic API
+    const mediaType = fileType === 'pdf'
+      ? 'application/pdf'
+      : this.getImageMediaType(filename)
+
+    const contentType = fileType === 'pdf' ? 'document' : 'image'
+
+    // Full schema prompt with Brazilian architecture context
+    const prompt = `Você está analisando um documento financeiro de um escritório de arquitetura no Brasil.
+
+Este documento pode estar em formato PDF, imagem, ou qualquer outro formato visual, pode se tratar por exemplo de um contrato, uma proposta, um recibo, etc.
+Preste atenção no tipo de documento, nas formas de pagamento quando houver, se são parcelados ou não, quais os valores de cada parcela, quando são os pagamentos - essas informações oferecem contexto valioso para extrair corretamente as entidades financeiras.
+Sua tarefa é extrair TODAS as entidades financeiras (contratos, recebíveis, despesas) encontradas neste documento.
+
+═══════════════════════════════════════════════════════════════════
+CONTEXTO FINANCEIRO DE ESCRITÓRIOS DE ARQUITETURA NO BRASIL
+═══════════════════════════════════════════════════════════════════
+
+Arquitetos ou escritórios de arquitetura no Brasil ganham dinheiro majoritariamente de:
+• Projetos (geralmente pago em múltiplas parcelas por projeto)
+• Comissão de RT (responsabilidade técnica) na intermediação de venda/contratação de móveis ou demais fornecedores pelos seus clientes (geralmente múltiplas entradas por projeto, pagas por diversos fornecedores)
+• Acompanhamento de obra ou de projeto (geralmente também em parcelas)
+• Percentual de gestão ou comissão sobre o orçamento da obra
+
+Tipos de projetos comuns:
+• Residenciais: apartamentos, áreas comuns de prédios
+• Comerciais: lojas, bares, restaurantes
+• Corporativos: escritórios, sedes de empresas
+• Industriais (mais raro)
+
+Principais despesas:
+• Salários
+• Espaço: aluguel, energia, internet
+• Softwares de arquitetura (mensais ou anuais)
+• Marketing: branding, PR, instagram, ads
+• Impostos
+• Equipamentos: computador, mesa, celular, manutenções
+• Outros custos operacionais
+
+Use este contexto para identificar e classificar corretamente as entidades financeiras.
+
+═══════════════════════════════════════════════════════════════════
+SCHEMA DAS ENTIDADES
+═══════════════════════════════════════════════════════════════════
+
+📋 CONTRACT (Contratos/Projetos):
+{
+  "clientName": "string",        // OBRIGATÓRIO - nome do cliente
+  "projectName": "string",       // OBRIGATÓRIO - nome do projeto
+  "totalValue": number,          // OBRIGATÓRIO - valor total do contrato
+  "signedDate": "ISO-8601",      // OBRIGATÓRIO - data de assinatura
+  "status": "active" | "completed" | "cancelled",  // OBRIGATÓRIO - se não descobrir, use "active"
+  "description": "string" | null,    // OPCIONAL
+  "category": "string" | null,       // OPCIONAL
+  "notes": "string" | null           // OPCIONAL
+}
+
+REGRAS PARA CONTRACTS:
+• Se não encontrar clientName, use projectName como padrão
+• Se não encontrar projectName, use clientName como padrão
+• Se não conseguir descobrir status, defina como "active"
+• Se ambos clientName E projectName forem null, OU totalValue for null, NÃO extraia esta entidade
+
+💰 RECEIVABLE (Recebíveis):
+{
+  "contractId": "string" | null,     // OPCIONAL - nome do projeto associado (será mapeado depois)
+  "clientName": "string" | null,     // OPCIONAL - nome do cliente (importante para recebíveis standalone)
+  "expectedDate": "ISO-8601" | null, // OPCIONAL - data esperada de recebimento
+  "amount": number,                  // OBRIGATÓRIO - valor do recebível
+  "status": "pending" | "received" | "overdue" | null,  // OPCIONAL
+  "receivedDate": "ISO-8601" | null, // OPCIONAL - data real de recebimento
+  "receivedAmount": number | null,   // OPCIONAL - valor recebido
+  "description": "string" | null,    // OPCIONAL
+  "category": "string" | null        // OPCIONAL
+}
+
+REGRAS PARA RECEIVABLES:
+• Se encontrar referência a um projeto, coloque o nome do projeto em contractId
+• Se não tiver contractId, tente extrair clientName (muito importante!)
+• Se status for "received", preencha receivedDate e receivedAmount quando possível
+• Se amount for null ou ≤ 0, NÃO extraia esta entidade
+
+💳 EXPENSE (Despesas):
+{
+  "description": "string",           // OBRIGATÓRIO - descrição da despesa
+  "amount": number,                  // OBRIGATÓRIO - valor da despesa
+  "dueDate": "ISO-8601" | null,     // OPCIONAL - data de vencimento ou pagamento
+  "category": "string",              // OBRIGATÓRIO - categoria (veja lista abaixo)
+  "status": "pending" | "paid" | "overdue" | "cancelled" | null,  // OPCIONAL
+  "paidDate": "ISO-8601" | null,    // OPCIONAL - data de pagamento
+  "paidAmount": number | null,       // OPCIONAL - valor pago
+  "vendor": "string" | null,         // OPCIONAL - fornecedor
+  "invoiceNumber": "string" | null,  // OPCIONAL - número da nota
+  "contractId": "string" | null,     // OPCIONAL - projeto associado
+  "notes": "string" | null           // OPCIONAL
+}
+
+CATEGORIAS DE DESPESAS:
+• Alimentação
+• Transporte
+• Materiais
+• Serviços
+• Escritório
+• Marketing
+• Impostos
+• Salários
+• Outros
+
+REGRAS PARA EXPENSES:
+• Tente inferir a categoria com base na descrição
+• Se não conseguir inferir, use "Outros"
+• Se status for "paid", preencha paidDate e paidAmount quando possível
+• Se description for null OU amount for null ou ≤ 0, NÃO extraia esta entidade
+
+═══════════════════════════════════════════════════════════════════
+FORMATO DE RESPOSTA
+═══════════════════════════════════════════════════════════════════
+
+Retorne APENAS um objeto JSON válido neste formato:
+
+{
+  "contracts": [
+    { /* contract 1 */ },
+    { /* contract 2 */ },
+    ...
+  ],
+  "receivables": [
+    { /* receivable 1 */ },
+    { /* receivable 2 */ },
+    ...
+  ],
+  "expenses": [
+    { /* expense 1 */ },
+    { /* expense 2 */ },
+    ...
+  ]
+}
+
+IMPORTANTE:
+• Retorne apenas JSON válido, sem markdown, sem explicações
+• Arrays vazios são permitidos se não houver entidades daquele tipo
+• Extraia TODAS as entidades encontradas, não pare no meio
+• Use valores null para campos opcionais não encontrados
+• Formate datas no padrão ISO-8601 (ex: "2024-01-15T00:00:00.000Z")
+• Valores monetários devem ser números (sem símbolos de moeda)
+
+═══════════════════════════════════════════════════════════════════
+COMECE A EXTRAÇÃO
+═══════════════════════════════════════════════════════════════════`
+
+    try {
+      // Call Claude Vision API with full schema prompt
+      const message = await this.anthropic.messages.create({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 16000,
+        messages: [{
+          role: 'user',
+          content: [
+            {
+              type: contentType as 'document' | 'image',
+              source: {
+                type: 'base64',
+                media_type: mediaType as any,
+                data: fileBuffer.toString('base64')
+              }
+            },
+            {
+              type: 'text',
+              text: prompt
+            }
+          ]
+        }]
+      })
+
+      // Extract JSON from Claude's response
+      const responseText = message.content[0].type === 'text'
+        ? message.content[0].text
+        : ''
+
+      if (!responseText.trim()) {
+        throw new Error('Claude did not return any data from the file')
+      }
+
+      // Try to extract JSON from the response
+      const jsonMatch = responseText.match(/\{[\s\S]*\}/)
+      if (!jsonMatch) {
+        throw new Error('Claude did not return valid JSON')
+      }
+
+      let extractedData: ExtractionResult
+
+      // Try 3-layer parsing strategy (same as sheet extraction)
+      try {
+        // Layer 1: Direct parse
+        extractedData = JSON.parse(jsonMatch[0]) as ExtractionResult
+        console.log('✅ JSON parsed directly (Layer 1)')
+      } catch (directError) {
+        console.log('⚠️ Direct JSON parse failed, trying repair (Layer 2)...')
+        try {
+          // Layer 2: Repair and parse
+          const repairedJSON = this.repairJSON(jsonMatch[0])
+          extractedData = JSON.parse(repairedJSON) as ExtractionResult
+          console.log('✅ JSON parsed after repair (Layer 2)')
+        } catch (repairError) {
+          console.log('⚠️ Repaired JSON parse failed, trying incremental (Layer 3)...')
+          // Layer 3: Incremental extraction
+          extractedData = this.parseJSONIncremental(jsonMatch[0])
+          console.log('✅ JSON parsed incrementally (Layer 3)')
+        }
+      }
+
+      // Log extraction results
+      console.log('\n' + '='.repeat(80))
+      console.log('🔍 VISION EXTRACTION RESULTS')
+      console.log('='.repeat(80))
+      console.log(`📊 Contracts extracted: ${extractedData.contracts.length}`)
+      console.log(`📊 Receivables extracted: ${extractedData.receivables.length}`)
+      console.log(`📊 Expenses extracted: ${extractedData.expenses.length}`)
+      console.log(`📊 TOTAL: ${extractedData.contracts.length + extractedData.receivables.length + extractedData.expenses.length}`)
+
+      return extractedData
+
+    } catch (error) {
+      throw new ServiceError(
+        `Failed to extract data from ${fileType}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        'VISION_EXTRACTION_ERROR',
+        500
+      )
+    }
+  }
+
+  /**
+   * DEPRECATED: Old two-phase vision flow (kept for reference)
+   * Extract sheet data from PDF or image files using Claude Vision API
+   * Supports native PDF processing and image formats (PNG, JPG, GIF, WebP)
+   *
+   * NOTE: This method is no longer used. PDF/images now use extractFromVisionDirect()
+   * for better performance and accuracy.
+   */
+  private async extractFromVision(
+    fileBuffer: Buffer,
+    filename: string,
+    fileType: 'pdf' | 'image'
+  ): Promise<SheetData[]> {
+    console.log(`🔍 Processing ${fileType.toUpperCase()} with Claude Vision API...`)
+
+    // Determine media type and content type for Anthropic API
+    const mediaType = fileType === 'pdf'
+      ? 'application/pdf'
+      : this.getImageMediaType(filename)
+
+    const contentType = fileType === 'pdf' ? 'document' : 'image'
+
+    try {
+      // Call Claude Vision/Document API
+      const message = await this.anthropic.messages.create({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 16000,
+        messages: [{
+          role: 'user',
+          content: [
+            {
+              type: contentType as 'document' | 'image',
+              source: {
+                type: 'base64',
+                media_type: mediaType as any,
+                data: fileBuffer.toString('base64')
+              }
+            },
+            {
+              type: 'text',
+              text: `Analise este arquivo (${filename}) de um escritório de arquitetura no Brasil.
+
+CONTEXTO FINANCEIRO DE ESCRITÓRIOS DE ARQUITETURA:
+Arquitetos ou escritórios de arquitetura no Brasil ganham dinheiro majoritariamente de projetos (geralmente pago em múltiplas parcelas por projeto), comissão de RT (responsabilidade técnica) na intermediação de venda/contratação de móveis ou demais fornecedores pelos seus clientes (geralmente múltiplas entradas por projeto, pagas por diversos fornecedores), acompanhamento de obra ou de projeto (geralmente também em parcelas) ou até um % de gestão ou comissão sobre o orçamento da obra. Os projetos podem ser residenciais (ex: apartamentos, áreas comuns de prédios), comerciais (ex: lojas, bares, restaurantes), corporativos (ex: escritórios, sedes de empresas), industriais (mais raro). As principais despesas geralmente são com salários, espaço (ex: aluguel, energia, internet), softwares de arquitetura (geralmente pagos mensalmente ou anualmente), marketing (ex: branding, PR, instagram, ads), impostos, equipamentos (mais pontuais, como computador, mesa, celular, manutenções), entre outros menores.
+
+Por favor, extraia TODAS as tabelas financeiras que encontrar e retorne no formato CSV.
+
+IMPORTANTE:
+1. Se houver múltiplas tabelas/planilhas, separe-as com "--- SHEET: [nome descritivo] ---"
+2. Mantenha cabeçalhos originais das tabelas
+3. Extraia TODAS as linhas (não pule nenhuma!)
+4. Preserve números, datas e valores monetários exatamente como aparecem
+5. Cada tabela deve ser uma planilha separada
+6. Use nomes descritivos para identificar cada tabela (ex: "Contratos", "Recebíveis", "Despesas")
+
+Retorne apenas o conteúdo CSV com os delimitadores de planilha, nada mais.`
+            }
+          ]
+        }]
+      })
+
+      // Parse Claude's response
+      const responseText = message.content[0].type === 'text'
+        ? message.content[0].text
+        : ''
+
+      if (!responseText.trim()) {
+        throw new Error('Claude did not return any data from the file')
+      }
+
+      // Parse the CSV response into SheetData format
+      const sheetsData = this.parseVisionResponseToSheets(responseText, filename)
+
+      console.log(`✅ Vision extraction complete: ${sheetsData.length} table(s) found`)
+      return sheetsData
+
+    } catch (error) {
+      throw new ServiceError(
+        `Failed to extract data from ${fileType}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        'VISION_EXTRACTION_ERROR',
+        500
+      )
+    }
+  }
+
+  /**
+   * Helper: Get image MIME type based on file extension
+   */
+  private getImageMediaType(filename: string): string {
+    const ext = filename.toLowerCase().split('.').pop()
+    const mediaTypes: Record<string, string> = {
+      'png': 'image/png',
+      'jpg': 'image/jpeg',
+      'jpeg': 'image/jpeg',
+      'gif': 'image/gif',
+      'webp': 'image/webp'
+    }
+    return mediaTypes[ext || 'png'] || 'image/png'
+  }
+
+  /**
+   * Helper: Parse Vision API CSV response into SheetData format
+   */
+  private parseVisionResponseToSheets(visionResponse: string, filename: string): SheetData[] {
+    const sheets: SheetData[] = []
+
+    // Split by sheet delimiter: "--- SHEET: [name] ---"
+    const sheetBlocks = visionResponse.split(/---\s*SHEET:\s*(.+?)\s*---/i)
+
+    if (sheetBlocks.length > 1) {
+      // Multiple sheets found
+      for (let i = 1; i < sheetBlocks.length; i += 2) {
+        const sheetName = sheetBlocks[i]?.trim() || `Sheet ${Math.floor(i/2) + 1}`
+        const csvContent = sheetBlocks[i + 1]?.trim()
+
+        if (csvContent) {
+          sheets.push({
+            name: sheetName,
+            csv: csvContent
+          })
+        }
+      }
+    } else {
+      // Single sheet (no delimiters found)
+      const csvContent = visionResponse.trim()
+      if (csvContent) {
+        sheets.push({
+          name: filename.replace(/\.(pdf|png|jpg|jpeg|gif|webp)$/i, ''),
+          csv: csvContent
+        })
+      }
+    }
+
+    if (sheets.length === 0) {
+      throw new Error('No tables found in the file. Please ensure the file contains financial data tables.')
+    }
+
+    console.log(`📊 Extracted ${sheets.length} sheet(s) from vision response:`)
+    sheets.forEach(s => {
+      const lineCount = s.csv.split('\n').length
+      console.log(`   - ${s.name}: ${lineCount} lines`)
+    })
+
+    return sheets
   }
 
   /**
