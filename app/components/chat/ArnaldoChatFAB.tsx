@@ -23,19 +23,20 @@ export default function ArnaldoChatFAB({ onClick, hasUnread = false }: ArnaldoCh
       aria-label="Abrir chat com Arnaldo"
       title="Chat com Arnaldo (Cmd/Ctrl + /)"
     >
-      {/* Chat Icon */}
+      {/* AI Sparkle Icon - Gemini style with 3 sparkles */}
       <svg
         className="w-6 h-6"
-        fill="none"
-        stroke="currentColor"
+        fill="currentColor"
         viewBox="0 0 24 24"
       >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-        />
+        {/* Main sparkle - center */}
+        <path d="M12 2 L14 10 L15.5 12 L14 14 L12 22 L10 14 L8.5 12 L10 10 Z M2 12 L10 10 L12 8.5 L14 10 L22 12 L14 14 L12 15.5 L10 14 Z" />
+
+        {/* Small sparkle - top right (30% size) */}
+        <path d="M18.5 3.5 L19.1 5.5 L19.65 6.5 L19.1 7.5 L18.5 9.5 L17.9 7.5 L17.35 6.5 L17.9 5.5 Z M15.5 6.5 L17.5 5.9 L18.5 5.35 L19.5 5.9 L21.5 6.5 L19.5 7.1 L18.5 7.65 L17.5 7.1 Z" />
+
+        {/* Small sparkle - bottom left (30% size) */}
+        <path d="M5.5 14.5 L6.1 16.5 L6.65 17.5 L6.1 18.5 L5.5 20.5 L4.9 18.5 L4.35 17.5 L4.9 16.5 Z M2.5 17.5 L4.5 16.9 L5.5 16.35 L6.5 16.9 L8.5 17.5 L6.5 18.1 L5.5 18.65 L4.5 18.1 Z" />
       </svg>
 
       {/* Unread Indicator */}
