@@ -107,6 +107,7 @@ export async function POST(request: NextRequest) {
         } catch (error) {
           // This is a systematic error (couldn't process file at all)
           failedFiles++
+          console.error(`❌ [V2 Multi] Error processing ${file.name}:`, error)
           allErrors.push(`${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`)
         }
       }

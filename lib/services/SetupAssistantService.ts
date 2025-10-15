@@ -338,7 +338,9 @@ export class SetupAssistantService extends BaseService<any, any, any, any> {
 • Este documento pode estar em formato PDF, imagem, ou qualquer outro formato visual, pode se tratar por exemplo de um contrato, uma proposta, um recibo, etc.
 • Sua tarefa é extrair TODAS as entidades financeiras (contratos, recebíveis, despesas) encontradas neste documento.
 • Preste atenção no tipo e nome do documento pois fornecem indícios dos tipos de entidade financeira que você deve encontrar
-• Se encontrar formas de pagamento, preste atenção nas condições, quanto é à vista, quanto é parcelado, quais as datas de pagamento
+• Se encontrar formas de pagamento (recebíveis ou despesas), preste atenção nas condições de pagamento: quanto é à vista, quanto é parcelado, quais as datas de pagamento
+   • É comum encontrar propostas com valores diferentes entre parcelas, que podem ser explícitos ou implícitos
+   • Calcule quanto deve ser pago à vista, quantas parcelas são e qual o valor e data específico de cada parcela, evitando erros de interpretação por assumir algo incorretamente
 • Revise o documento por inteiro antes de extrair as entidades financeiras, para ter todo contexto necessário
 
 ═══════════════════════════════════════════════════════════════════
@@ -478,11 +480,15 @@ COMECE A EXTRAÇÃO
 ═══════════════════════════════════════════════════════════════════`
 
     try {
-      // Call Claude Vision API with full schema prompt
+      // Call Claude Vision API with full schema prompt and extended thinking
       const message = await this.anthropic.messages.create({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 16000,
-        temperature: 0.3,  // Lower temperature for consistency while allowing some interpretation
+        temperature: 1,  // Required when thinking is enabled
+        thinking: {
+          type: 'enabled',
+          budget_tokens: 10000  // Allow extensive reasoning for complex calculations
+        },
         messages: [{
           role: 'user',
           content: [
@@ -502,10 +508,20 @@ COMECE A EXTRAÇÃO
         }]
       })
 
-      // Extract JSON from Claude's response
-      const responseText = message.content[0].type === 'text'
-        ? message.content[0].text
-        : ''
+      // Extract JSON from Claude's response (skip thinking blocks, get text content)
+      let responseText = ''
+      for (const block of message.content) {
+        if (block.type === 'text') {
+          responseText = block.text
+          break
+        }
+      }
+
+      // Log if thinking was used
+      const thinkingBlocks = message.content.filter(b => b.type === 'thinking')
+      if (thinkingBlocks.length > 0) {
+        console.log(`💭 Claude used ${thinkingBlocks.length} thinking block(s) for reasoning`)
+      }
 
       if (!responseText.trim()) {
         throw new Error('Claude did not return any data from the file')
@@ -680,11 +696,29 @@ Retorne APENAS o JSON, nada mais.`
     try {
       const message = await this.anthropic.messages.create({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 4000,
+        max_tokens: 10000,  // Must be greater than budget_tokens
+        temperature: 1,  // Required when thinking is enabled
+        thinking: {
+          type: 'enabled',
+          budget_tokens: 5000  // Allow reasoning for structure analysis
+        },
         messages: [{ role: 'user', content: prompt }]
       })
 
-      const responseText = message.content[0].type === 'text' ? message.content[0].text : ''
+      // Extract JSON from Claude's response (skip thinking blocks, get text content)
+      let responseText = ''
+      for (const block of message.content) {
+        if (block.type === 'text') {
+          responseText = block.text
+          break
+        }
+      }
+
+      // Log if thinking was used
+      const thinkingBlocks = message.content.filter(b => b.type === 'thinking')
+      if (thinkingBlocks.length > 0) {
+        console.log(`💭 Claude used ${thinkingBlocks.length} thinking block(s) for file analysis`)
+      }
       const jsonMatch = responseText.match(/\{[\s\S]*\}/)
       if (!jsonMatch) throw new Error('No JSON in analysis response')
 
@@ -870,6 +904,11 @@ Retorne APENAS JSON válido com as entidades extraídas.`
       const message = await this.anthropic.messages.create({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 16000,
+        temperature: 1,  // Required when thinking is enabled
+        thinking: {
+          type: 'enabled',
+          budget_tokens: 10000  // Allow reasoning for complex data patterns
+        },
         messages: [
           {
             role: 'user',
@@ -878,10 +917,20 @@ Retorne APENAS JSON válido com as entidades extraídas.`
         ]
       })
 
-      // Extract JSON from Claude's response
-      const responseText = message.content[0].type === 'text'
-        ? message.content[0].text
-        : ''
+      // Extract JSON from Claude's response (skip thinking blocks, get text content)
+      let responseText = ''
+      for (const block of message.content) {
+        if (block.type === 'text') {
+          responseText = block.text
+          break
+        }
+      }
+
+      // Log if thinking was used
+      const thinkingBlocks = message.content.filter(b => b.type === 'thinking')
+      if (thinkingBlocks.length > 0) {
+        console.log(`💭 Claude used ${thinkingBlocks.length} thinking block(s) for sheet "${sheetData.name}"`)
+      }
 
       // Try to extract JSON from the response
       const jsonMatch = responseText.match(/\{[\s\S]*\}/)

@@ -774,7 +774,28 @@ window.addEventListener('arnaldo-data-updated', () => {
 
 #### AI & Automation Improvements
 
-**2. AI Agent Error Handling Standardization**
+**2. Setup Assistant Optimization: Single-Phase XLSX Extraction** (NEW - 2025-10-15)
+- **Problem**: Current XLSX processing uses two-phase approach (analysis + parallel extraction) which requires multiple API calls
+- **Context**: Extended thinking now enables Claude to handle complex reasoning in a single call
+- **Opportunity**: Simplify to single-phase extraction like PDF/image processing (which works excellently)
+- **Benefits**:
+  - Faster processing (1 API call instead of 2+)
+  - Lower cost (fewer API calls)
+  - Simpler architecture (less code to maintain)
+  - More consistent with PDF flow
+- **Technical Scope**:
+  - Review if extended thinking can handle sheet analysis + extraction in one call
+  - Test with complex multi-sheet files (teste_TH2.xlsx with 492 entities)
+  - Compare accuracy: current two-phase vs potential single-phase
+  - Update SetupAssistantService if single-phase proves viable
+  - Keep two-phase as fallback for edge cases if needed
+- **Prerequisites**: Extended thinking implementation complete ✅ (2025-10-15)
+- **Priority**: **MEDIUM** (Performance optimization, not blocking)
+- **Effort**: 4-6 hours (exploration + testing + implementation)
+- **Related**: Extended thinking feature, PDF single-phase success pattern
+- **Added**: 2025-10-15 after extended thinking implementation
+
+**3. AI Agent Error Handling Standardization**
 - **Problem**: Inconsistent error messages when AI agents encounter errors, poor user experience
 - **Context**: Setup Assistant, Financial Query Agent, and future agents need unified error handling
 - **Solution**: Create standardized error handling patterns for all AI agents
