@@ -18,3 +18,8 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Auto-generated reports (available as GitHub Actions artifacts)
+validation-report.md
+code-validation-report.md
+CHANGELOG.md
