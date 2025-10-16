@@ -5,7 +5,6 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import LandingPage from './components/LandingPage'
 import Link from 'next/link'
-import ExportButtons from './components/ExportButtons'
 import { formatDateShort } from '@/lib/date-utils'
 import Modal from './components/Modal'
 import ReceivableForm from './components/forms/ReceivableForm'
@@ -656,32 +655,6 @@ export default function Dashboard() {
             <p className="text-sm text-neutral-500">Evolução do fluxo de caixa</p>
           </div>
           <SimpleChart data={data.monthlyTrend} />
-        </div>
-
-        {/* Quick Actions */}
-        <div className="bg-neutral-50 border border-neutral-200 rounded-lg p-6">
-          <div className="mb-6">
-            <h2 className="text-lg font-medium text-neutral-900 mb-1">Ações Rápidas</h2>
-            <p className="text-sm text-neutral-500">Acesse funcionalidades principais</p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Link href="/projetos?tab=contratos" className="group bg-white p-4 rounded-lg border border-neutral-200 hover:border-neutral-300 transition-colors">
-              <h3 className="font-medium text-neutral-900 mb-1">Novo Contrato</h3>
-              <p className="text-sm text-neutral-500">Adicionar projeto</p>
-            </Link>
-            <Link href="/projetos?tab=recebiveis" className="group bg-white p-4 rounded-lg border border-neutral-200 hover:border-neutral-300 transition-colors">
-              <h3 className="font-medium text-neutral-900 mb-1">Marcar Recebimento</h3>
-              <p className="text-sm text-neutral-500">Registrar pagamento</p>
-            </Link>
-            <Link href="/projetos?tab=despesas" className="group bg-white p-4 rounded-lg border border-neutral-200 hover:border-neutral-300 transition-colors">
-              <h3 className="font-medium text-neutral-900 mb-1">Nova Despesa</h3>
-              <p className="text-sm text-neutral-500">Adicionar custo</p>
-            </Link>
-            <div className="bg-white p-4 rounded-lg border border-neutral-200">
-              <h3 className="font-medium text-neutral-900 mb-2">Exportar Dados</h3>
-              <ExportButtons />
-            </div>
-          </div>
         </div>
       </div>
 
