@@ -6,6 +6,7 @@ import { formatDateFull as formatDateForDisplay } from '@/lib/utils/date'
 import Modal from '../../components/Modal'
 import ContractForm from '../../components/forms/ContractForm'
 import ContractDeletionModal from '../../components/ContractDeletionModal'
+import ContractDetailsModal from '../../components/ContractDetailsModal'
 import { AdvancedFilterModal } from '../../components/AdvancedFilterModal'
 
 export default function ContractsTab() {
@@ -25,6 +26,8 @@ export default function ContractsTab() {
   const [statusDropdownOpen, setStatusDropdownOpen] = useState<string | null>(null)
   const [deletionModalOpen, setDeletionModalOpen] = useState(false)
   const [contractToDelete, setContractToDelete] = useState<any>(null)
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false)
+  const [selectedContract, setSelectedContract] = useState<any>(null)
 
   // Initialize filters from URL params
   const [filters, setFilters] = useState({
@@ -325,6 +328,16 @@ export default function ContractsTab() {
   function closeDeletionModal() {
     setDeletionModalOpen(false)
     setContractToDelete(null)
+  }
+
+  function openDetailsModal(contract: any) {
+    setSelectedContract(contract)
+    setDetailsModalOpen(true)
+  }
+
+  function closeDetailsModal() {
+    setDetailsModalOpen(false)
+    setSelectedContract(null)
   }
 
   async function updateContractStatus(contractId: string, newStatus: string) {
@@ -824,7 +837,12 @@ export default function ContractsTab() {
                     <tr key={contract.id} className="group hover:bg-neutral-50 transition-colors">
                       <td className="px-4 py-4">
                         <div>
-                          <div className="font-semibold text-neutral-900">{contract.projectName}</div>
+                          <button
+                            onClick={() => openDetailsModal(contract)}
+                            className="font-semibold text-neutral-900 hover:text-blue-600 hover:underline cursor-pointer text-left transition-colors"
+                          >
+                            {contract.projectName}
+                          </button>
                           <div className="text-sm text-neutral-600">{contract.clientName}</div>
                         </div>
                       </td>
@@ -969,6 +987,15 @@ export default function ContractsTab() {
           setIsAiFiltered(true)
         }}
       />
+
+      {/* Contract Details Modal */}
+      {selectedContract && (
+        <ContractDetailsModal
+          isOpen={detailsModalOpen}
+          onClose={closeDetailsModal}
+          contract={selectedContract}
+        />
+      )}
     </div>
   )
 }

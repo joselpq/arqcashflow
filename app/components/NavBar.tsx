@@ -47,10 +47,10 @@ export default function NavBar() {
 
   const navItems = [
     { href: "/", label: "Dashboard" },
-    { href: "/projetos", label: `📋 ${terminology.projects}` },
-    { href: "/recebiveis", label: `💰 ${terminology.receivables}` },
-    { href: "/despesas", label: `💸 ${terminology.expenses}` },
-    { href: "/ai-chat", label: "🤖 Assistente IA" }
+    { href: "/projetos", label: terminology.projects },
+    { href: "/recebiveis", label: terminology.receivables },
+    { href: "/despesas", label: terminology.expenses },
+    { href: "/ai-chat", label: "Assistente IA" }
   ];
 
   return (

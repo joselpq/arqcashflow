@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import MultiFileSetupAssistant from '../components/setup-assistant/MultiFileSetupAssistant'
 
 interface Message {
@@ -25,14 +26,27 @@ interface FileData {
 }
 
 export default function EnhancedAIChatPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
   const [message, setMessage] = useState('')
   const [messages, setMessages] = useState<Message[]>([]) // Display messages (user-facing)
   const [fullHistory, setFullHistory] = useState<ConversationMessage[]>([]) // Full conversation (with internal messages)
   const [loading, setLoading] = useState(false)
-  const [activeTab, setActiveTab] = useState<'arnaldo' | 'setup'>('arnaldo')
+  const [activeTab, setActiveTab] = useState<'arnaldo' | 'setup'>(() => {
+    // Initialize from URL params, default to 'arnaldo'
+    const tab = searchParams.get('tab')
+    return tab === 'setup' ? 'setup' : 'arnaldo'
+  })
   const fileInputRef = useRef<HTMLInputElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  // Update URL when tab changes
+  const handleTabChange = (tab: 'arnaldo' | 'setup') => {
+    setActiveTab(tab)
+    router.push(`/ai-chat?tab=${tab}`, { scroll: false })
+  }
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -155,24 +169,24 @@ export default function EnhancedAIChatPage() {
         <div className="mb-6 border-b border-neutral-300">
           <nav className="flex space-x-8">
             <button
-              onClick={() => setActiveTab('arnaldo')}
+              onClick={() => handleTabChange('arnaldo')}
               className={`py-3 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'arnaldo'
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300'
               }`}
             >
-              🤖 Arnaldo AI
+              Arnaldo AI
             </button>
             <button
-              onClick={() => setActiveTab('setup')}
+              onClick={() => handleTabChange('setup')}
               className={`py-3 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'setup'
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300'
               }`}
             >
-              📊 Configuração Rápida
+              Importação de Dados
             </button>
           </nav>
         </div>
