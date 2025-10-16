@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { formatDateForInput } from '@/lib/date-utils'
+import { formatDateForInput } from '@/lib/utils/date'
 
 export interface DateRange {
   startDate: string

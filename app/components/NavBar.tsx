@@ -4,7 +4,7 @@ import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
-import { terminology } from "@/lib/terminology";
+import { terminology } from "@/lib/utils/terminology";
 
 export default function NavBar() {
   const { data: session } = useSession();

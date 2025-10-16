@@ -14,7 +14,7 @@
 
 import { User, Team } from '@prisma/client'
 import { TeamScopedPrismaClient } from '@/lib/middleware/team-context'
-import { createAuditContextFromAPI, auditCreate, auditUpdate, auditDelete, safeAudit } from '@/lib/audit-middleware'
+import { createAuditContextFromAPI, auditCreate, auditUpdate, auditDelete, safeAudit } from '@/lib/utils/audit'
 import { NextRequest } from 'next/server'
 
 export interface ServiceContext {

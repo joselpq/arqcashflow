@@ -15,7 +15,7 @@
 
 import { Contract, Receivable } from '@prisma/client'
 import { BaseService, ServiceContext, ServiceError, ValidationUtils } from './BaseService'
-import { createDateForStorage } from '@/lib/date-utils'
+import { createDateForStorage } from '@/lib/utils/date'
 import { z } from 'zod'
 import { DeleteOptions, DeletionInfo } from '@/lib/validation'
 

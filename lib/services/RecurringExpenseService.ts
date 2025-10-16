@@ -16,8 +16,8 @@
 import { RecurringExpense, Contract, User, Expense } from '@prisma/client'
 import { BaseService, ServiceContext, ServiceError, ValidationUtils } from './BaseService'
 import { RecurringExpenseSchemas, BusinessRuleValidation } from '@/lib/validation/financial'
-import { createDateForStorage } from '@/lib/date-utils'
-import { auditCreate, auditUpdate, auditDelete } from '@/lib/audit-middleware'
+import { createDateForStorage } from '@/lib/utils/date'
+import { auditCreate, auditUpdate, auditDelete } from '@/lib/utils/audit'
 import { z } from 'zod'
 import { addMonths, addWeeks, addYears, isBefore, isAfter, startOfDay, endOfDay } from 'date-fns'
 

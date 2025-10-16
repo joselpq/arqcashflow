@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { formatDateForInput, getTodayDateString } from '@/lib/date-utils'
+import { formatDateForInput, getTodayDateString } from '@/lib/utils/date'
 
 interface ContractFormProps {
   contract?: any

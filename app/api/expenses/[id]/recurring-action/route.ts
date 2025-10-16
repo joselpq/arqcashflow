@@ -15,7 +15,7 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { withTeamContext } from '@/lib/middleware/team-context'
-import { createAuditContextFromAPI, auditUpdate, auditDelete, safeAudit } from '@/lib/audit-middleware'
+import { createAuditContextFromAPI, auditUpdate, auditDelete, safeAudit } from '@/lib/utils/audit'
 import { prisma } from '@/lib/prisma'
 
 const RecurringActionSchema = z.object({

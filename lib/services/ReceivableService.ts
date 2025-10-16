@@ -14,7 +14,7 @@
 
 import { Receivable, Contract } from '@prisma/client'
 import { BaseService, ServiceContext, ServiceError, ValidationUtils } from './BaseService'
-import { createDateForStorage, getReceivableActualStatus } from '@/lib/date-utils'
+import { createDateForStorage, getReceivableActualStatus } from '@/lib/utils/date'
 import { z } from 'zod'
 
 // Type definitions

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
-import { formatDateFull as formatDateForDisplay } from '@/lib/date-utils'
+import { formatDateFull as formatDateForDisplay } from '@/lib/utils/date'
 import Modal from '../../components/Modal'
 import ContractForm from '../../components/forms/ContractForm'
 import ContractDeletionModal from '../../components/ContractDeletionModal'

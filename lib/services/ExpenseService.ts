@@ -22,7 +22,7 @@
 
 import { Expense, Contract, RecurringExpense } from '@prisma/client'
 import { BaseService, ServiceContext, ServiceError, ValidationUtils } from './BaseService'
-import { createDateForStorage, getExpenseActualStatus } from '@/lib/date-utils'
+import { createDateForStorage, getExpenseActualStatus } from '@/lib/utils/date'
 import { z } from 'zod'
 
 // Type definitions

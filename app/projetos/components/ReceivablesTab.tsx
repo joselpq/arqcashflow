@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { formatDateFull as formatDateForDisplay, getTodayDateString } from '@/lib/date-utils'
+import { formatDateFull as formatDateForDisplay, getTodayDateString } from '@/lib/utils/date'
 import Modal from '../../components/Modal'
 import ReceivableForm from '../../components/forms/ReceivableForm'
 

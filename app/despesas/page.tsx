@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
-import { formatDateForInput, formatDateFull as formatDateForDisplay } from '@/lib/date-utils'
+import { formatDateForInput, formatDateFull as formatDateForDisplay } from '@/lib/utils/date'
 import Modal from '../components/Modal'
 import ExpenseForm from '../components/forms/ExpenseForm'
 import RecurringExpenseActionModal from '../components/RecurringExpenseActionModal'

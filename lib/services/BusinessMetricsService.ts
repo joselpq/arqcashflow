@@ -18,7 +18,7 @@
  */
 
 import { ServiceContext, ServiceError } from './BaseService'
-import { isDateBefore, isDateInRange } from '@/lib/date-utils'
+import { isDateBefore, isDateInRange } from '@/lib/utils/date'
 
 // ===== TYPE DEFINITIONS =====
 
