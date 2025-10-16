@@ -19,19 +19,12 @@
 import { ContractService } from './ContractService'
 import { ServiceContext } from './BaseService'
 import { withTeamContext } from '@/lib/middleware/team-context'
-import { NextRequest } from 'next/server'
 
 // Test configuration
 const TEST_USER_1 = {
   id: 'cmfvsa8v00002t0im966k7o90',
   teamId: 'cmfvsa8tt0000t0imqr96svt4',
   email: 'test@example.com'
-}
-
-const TEST_USER_2 = {
-  id: 'cmfvsa8v00003t0im966k7o91',
-  teamId: 'cmfvsa8tt0001t0imqr96svt5',
-  email: 'test2@example.com'
 }
 
 interface ValidationResult {
