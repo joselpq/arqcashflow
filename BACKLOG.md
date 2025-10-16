@@ -1,7 +1,7 @@
 # ArqCashflow Development Backlog
 
 **Purpose**: Central source of truth for project priorities and development status
-**Last Updated**: 2025-10-14 (Setup Assistant Production Validation Complete - XLSX/CSV Working, PDF Analysis)
+**Last Updated**: 2025-10-15 (Fixed: Floating chat now only visible to authenticated users)
 **Update Frequency**: Every LLM session MUST update this document when completing tasks or discovering new requirements
 
 ## 🚨 CRITICAL INSTRUCTIONS FOR LLM AGENTS
@@ -378,6 +378,55 @@ When you complete a new epic-level task:
 3. This keeps BACKLOG.md concise while preserving historical record in DONE.md
 
 **Note**: Task-level completions stay within their parent epics - only move completed EPICS to DONE.md.
+
+---
+
+#### **Fix: Floating Chat Appearing on Landing Page** ✅ COMPLETE (2025-10-15)
+**Impact**: Security and UX fix - chat now only visible to authenticated users
+**Time Spent**: ~15 minutes (investigation + fix + testing)
+**Status**: Production-ready, proper authentication gating
+
+**Problem**:
+- Floating chat with AI (Arnaldo) was appearing on public landing page
+- GlobalChat component rendered globally in `app/layout.tsx` without authentication check
+- Chat should only be accessible in logged-in area
+
+**Root Cause**:
+- `GlobalChat` component in `app/layout.tsx:46` had no authentication logic
+- Rendered unconditionally for all routes, including public landing page
+
+**Solution**:
+- Added `useSession()` hook from next-auth to GlobalChat component
+- Return `null` when user is not authenticated or session is loading
+- Chat FAB and panel only render for authenticated users
+
+**Implementation**:
+- Added authentication check: `if (status === 'loading' || !session) return null`
+- Follows same pattern as main dashboard (`app/page.tsx`)
+- Zero impact on existing functionality for logged-in users
+
+**Technical Implementation**:
+```typescript
+// Added to GlobalChat.tsx
+const { data: session, status } = useSession()
+
+// Only render chat when user is authenticated
+if (status === 'loading' || !session) {
+  return null
+}
+```
+
+**Strategic Value**:
+- Proper security boundary for authenticated features
+- Cleaner public landing page experience
+- Consistent with application authentication patterns
+
+**Files Modified**:
+- `app/components/chat/GlobalChat.tsx` (added authentication check)
+
+**Build Status**: ✅ Compiled successfully (4.3s, zero errors)
+
+**Completed**: 2025-10-15
 
 ---
 
