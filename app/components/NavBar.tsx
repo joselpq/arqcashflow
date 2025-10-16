@@ -12,6 +12,11 @@ export default function NavBar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navRef = useRef<HTMLElement>(null);
 
+  const handleLogout = async () => {
+    await signOut({ redirect: false });
+    window.location.href = '/';
+  };
+
   // Close mobile menu when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -94,7 +99,7 @@ export default function NavBar() {
                 {session.user?.email}
               </span>
               <button
-                onClick={() => signOut()}
+                onClick={handleLogout}
                 className="text-sm text-neutral-500 hover:text-neutral-700 transition-colors"
               >
                 Sair
@@ -150,7 +155,7 @@ export default function NavBar() {
                   {session.user?.email}
                 </div>
                 <button
-                  onClick={() => signOut()}
+                  onClick={handleLogout}
                   className="w-full text-left text-sm text-neutral-600 hover:text-neutral-900 py-2"
                 >
                   Sair

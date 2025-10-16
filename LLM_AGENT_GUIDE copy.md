@@ -1,0 +1,611 @@
+---
+title: "LLM Agent Guide: ArqCashflow Project"
+type: "guide"
+audience: ["agent", "developer"]
+contexts: ["automation", "ci-cd", "documentation", "health-monitoring", "code-validation", "search", "service-layer", "api-migration", "auto-generation", "phase3-migration", "receivables-api", "expenses-api", "recurring-expenses-api", "recurring-expenses-service", "bulk-operations-fix", "teamscoped-prisma", "crud-testing", "precision-validation", "unified-validation", "schema-consolidation", "event-system", "event-driven-architecture", "recurring-expense-series", "full-series-generation", "audit-logging", "mdx-compilation", "defensive-programming", "setup-assistant-v2", "phase1-complete", "phase2-multi-file", "multi-file-processing", "sequential-batch-processing", "onboarding-multi-file", "excel-multi-sheet", "unified-service-architecture", "claude-api-rate-limiting", "contract-deletion-ux", "validation-bug-fixes", "auto-numbering", "receivables-handling", "user-choice-deletion", "token-optimization", "excel-processing", "empty-row-trimming"]
+complexity: "intermediate"
+last_updated: "2025-09-29"
+version: "2.5"
+agent_roles: ["documentation-maintainer", "automation-specialist", "health-monitor", "service-migration-specialist", "api-developer", "validation-architect", "event-architect", "contract-ux-specialist"]
+related:
+  - docs/docs-site/docs/agents/llm-agent-guide.md
+  - docs/docs-site/docs/decisions/004-no-regrets-architecture-improvements.md
+  - docs/docs-site/docs/decisions/007-event-system-foundation.md
+  - DOCUMENTATION_STRATEGY_PROPOSAL.md
+  - docs/docs-site/scripts/README.md
+dependencies: ["github-actions", "nodejs", "npm", "typescript", "docusaurus-search-local"]
+---
+
+# LLM Agent Guide: ArqCashflow Project
+
+**Quick Context**: ArqCashflow is a financial management system for architects built with Next.js, TypeScript, and Claude AI, optimized for LLM-agent collaborative development.
+
+## ⚠️ CRITICAL: Current Documentation State (September 24, 2025)
+
+**Documentation Implementation**: 99% Complete
+- ✅ Phase 1 (Foundation): 100% - Complete including search functionality
+- ✅ Phase 2 (Content Migration): 100% - All content migrated
+- ✅ Phase 3 (LLM Context): 100% - All agent docs created
+- ✅ Phase 4 (Automation): 95% - All major automation features active
+
+**Key Facts:**
+- 64 documentation files with 100% health score
+- Local search functionality active (2.8MB search index)
+- API and schema generation working
+- All advanced CI/CD features active (weekly checks, PR comments, issue creation)
+- See `/DOCUMENTATION_STRATEGY_PROPOSAL.md` for complete status
+
+## Context for LLM Agents
+
+**Scope**: Complete documentation automation framework with health monitoring, PR automation, and code validation for ArqCashflow financial management system
+**Prerequisites**: Understanding of GitHub Actions, Node.js, TypeScript, documentation workflows, and CI/CD automation
+**Key Patterns**:
+- Health verification protocol before starting work (100% health score currently)
+- Multi-job workflow structure (build→deploy→validate→comment)
+- Code example validation with smart skipping of documentation snippets
+- Weekly automated health checks with issue creation for scores < 80%
+- PR comment automation with both documentation and code validation results
+
+## 🎯 For LLM Agents: How to Use This Documentation Efficiently
+
+> **📚 For Comprehensive Patterns & Examples**: See [`/docs/docs-site/docs/agents/llm-agent-guide.md`](docs/docs-site/docs/agents/llm-agent-guide.md) for detailed methodologies, pattern libraries, and educational content.
+>
+> **🔧 This Document**: Provides current operational status, health protocols, and immediate context for project work.
+
+### Priority Reading Order (Limited Context Optimization)
+
+#### 1. **Immediate Context (Read First - 2 docs)**
+Start with these for any task:
+```
+1. DOCUMENTATION_STRATEGY_PROPOSAL.md - Understand the documentation system
+2. docs/docs-site/docs/index.md - Navigation hub and project overview
+```
+
+#### 2. **Task-Specific Context**
+Based on your assigned task, read ONLY the relevant section:
+
+**For Bug Investigation/Fixes:**
+```
+- DEVELOPMENT.md → "Lessons Learned" section (precision bug case study)
+- docs/docs-site/docs/developer/architecture/overview.md
+- Relevant API route file (e.g., app/api/contracts/route.ts)
+```
+
+**For Feature Development:**
+```
+- docs/docs-site/docs/developer/setup.md
+- docs/docs-site/docs/developer/architecture/overview.md
+- lib/validation/README.md (for validation schemas)
+- Look for similar existing features in codebase
+```
+
+**For UI/UX Changes:**
+```
+- DESIGN_PRINCIPLES.md (or future: docs/design/principles.md)
+- app/components/forms/* (examine existing patterns)
+- lib/styles/* (design system utilities)
+```
+
+**For Documentation Tasks:**
+```
+- docs/docs-site/docs/meta/templates/document-template.md
+- docs/docs-site/docs/meta/templates/adr-template.md
+- docs/README.md (documentation structure guide)
+```
+
+**For Event System Foundation (✅ COMPLETE - VALIDATION REFINEMENT PHASE):**
+```
+- lib/events/ (complete event system implementation)
+- lib/events/README.md (comprehensive LLM agent guide)
+- docs/decisions/007-event-system-foundation.md (implementation status)
+- docs/decisions/004-no-regrets-architecture-improvements.md (strategic context + lessons learned)
+- lib/services/ (service layer integration with events)
+- lib/validation/ (schemas - need context-aware flexibility for events)
+```
+
+**For Validation/Schema Work:**
+```
+- lib/validation/README.md (unified validation layer guide)
+- lib/validation/index.ts (main validation exports)
+- agents/contexts/validation-layer.md (agent-specific validation patterns)
+- docs/decisions/004-no-regrets-architecture-improvements.md
+```
+
+**⚠️ CRITICAL VALIDATION REMINDER:**
+Before creating ANY validation schemas:
+1. Search `lib/validation/` directory first
+2. Check `grep -r "BaseFieldSchemas\|EnumSchemas" lib/validation/`
+3. Only create new schemas if truly novel functionality needed
+
+**For Business Metrics / Dashboard Work:**
+```
+- docs/docs-site/docs/reference/business-metrics.md (complete metrics reference - READ THIS FIRST)
+- lib/services/BusinessMetricsService.ts (service implementation)
+- app/api/dashboard/route.ts (example usage)
+```
+
+**⚠️ CRITICAL BUSINESS METRICS REMINDER:**
+Before implementing new metrics calculations:
+1. Check `lib/services/BusinessMetricsService.ts` for existing methods
+2. Review `docs/docs-site/docs/reference/business-metrics.md` for Phase 3 planned metrics
+3. Add new metrics to the service rather than calculating inline
+4. Always use Promise.all for parallel execution when fetching multiple metrics
+
+### Efficient Navigation Strategy
+
+#### Pattern 1: Metadata-First Reading
+Every document has YAML frontmatter. Check these fields first:
+- `audience`: Is this for you? (agent/developer/user)
+- `contexts`: What domains does this cover?
+- `complexity`: Do you need prerequisites?
+- `related`: What else connects to this?
+
+#### Pattern 2: Context Sections for Agents
+Look for "Context for LLM Agents" sections in docs:
+```markdown
+## Context for LLM Agents
+**Scope**: [What this covers]
+**Prerequisites**: [What you need to know first]
+**Key Patterns**: [Reusable approaches]
+```
+
+#### Pattern 3: Use Grep/Search First
+Instead of reading entire files:
+```bash
+# Search for specific patterns
+grep -r "precision bug" docs/
+grep -r "contract.*create" app/api/
+grep -r "TODO\|FIXME" app/
+
+# Find similar implementations
+grep -r "useForm\|handleSubmit" app/components/
+```
+
+## 📚 Documentation Access Methods
+
+### For Users
+- **Web Access**: `http://localhost:3002/docs` (when running locally)
+- **Production**: Will be at GitHub Pages URL
+- **Start Point**: `/docs/user/getting-started`
+
+### For Developers
+- **Local Files**: Read markdown directly in `docs/docs-site/docs/`
+- **IDE Integration**: Most IDEs render markdown with navigation
+- **Start Point**: `/docs/developer/setup`
+
+### For LLM Agents
+- **Direct File Access**: Use Read tool on specific files
+- **Metadata Extraction**: Parse YAML frontmatter for context
+- **Pattern Matching**: Use the templates for consistent output
+
+## 🗺️ Project Structure Summary
+
+```
+arqcashflow/
+├── app/                    # Next.js app directory
+│   ├── api/               # API routes (contracts, receivables, expenses)
+│   ├── components/        # React components (forms, tables, charts)
+│   └── (pages)           # Page components
+├── lib/                   # Utilities and helpers
+│   ├── auth.ts           # Authentication logic
+│   ├── db.ts            # Database utilities
+│   ├── services/        # Service layer (business logic)
+│   ├── validation/      # Unified validation schemas
+│   └── utils/           # Date, currency, validation utilities
+├── prisma/               # Database schema and migrations
+├── scripts/              # Admin utilities (user deletion, cleanup)
+├── docs/                 # Documentation system
+│   └── docs-site/       # Docusaurus application
+└── [backup docs]        # Original docs (README, DEVELOPMENT, etc.)
+```
+
+## 🔑 Key Concepts to Understand
+
+### 1. **Team-Based Isolation**
+All data is filtered by `teamId`. Every API call includes team context.
+
+### 2. **The Precision Bug Pattern**
+Users scrolling over number inputs accidentally changed values. Solution: `onWheel={(e) => e.currentTarget.blur()}`
+
+### 3. **AI Integration**
+Claude API processes documents, natural language queries, and assists with data entry.
+
+### 4. **Unified Validation Layer**
+All validation schemas are centralized in `lib/validation/`. Use existing schemas instead of creating new ones.
+
+### 5. **Documentation-First Development**
+Write/update docs before implementing features. LLM agents should follow templates.
+
+### 6. **Strategic Development Priorities** 🎯
+Current development follows a phased approach:
+- **Phase 1 (✅ COMPLETE)**: Event System Foundation (`lib/events/`) - Implementation complete, validation refinement needed
+- **Phase 2 (CURRENT)**: Context-Aware Validation Flexibility
+- **Phase 3 (NEXT)**: Platform Product Improvements
+- **Phase 4 (FUTURE)**: Advanced Features
+
+**Priority Rule**: Complete current phase before starting next phase unless explicitly directed otherwise.
+
+**Current Learning**: Unified validation layer works well for database operations but needs flexibility for events and testing contexts.
+
+## 🛡️ Architecture Guardrails (Check Before Coding)
+
+**STOP** - Before writing any code, verify:
+
+### Mandatory Architecture Compliance Check
+- [ ] **Current Phase**: Am I working on Phase 1 (Event System Foundation)?
+  - Focus: `lib/events/` implementation and event-driven patterns
+  - Check: Strategic roadmap in architecture improvements document
+- [ ] **Validation**: Does `lib/validation/` have what I need?
+  - Search: `grep -r "BaseFieldSchemas\|EnumSchemas" lib/validation/`
+  - Check: `lib/validation/README.md` for available schemas
+- [ ] **Services**: Is there a service layer for this business logic?
+  - Look in: `lib/services/` for existing patterns
+  - Check: Similar business operations already implemented
+- [ ] **Events**: Should this trigger or listen to events?
+  - Future: Will integrate with `lib/events/` system
+  - Pattern: Consider event-driven architecture implications
+- [ ] **Middleware**: Am I using team context middleware properly?
+  - Required: `withTeamContext` for all authenticated operations
+  - Pattern: Import from `@/lib/middleware/team-context`
+- [ ] **Patterns**: Have I checked for similar existing implementations?
+  - Search: Existing API routes, components, or services
+  - Follow: Established patterns rather than creating new approaches
+
+### 🚨 Critical Rules
+1. **NEVER create inline Zod schemas** when `lib/validation/` equivalents exist
+2. **ALWAYS use service layer** for business logic, not API routes directly
+3. **REQUIRED team context** for all authenticated operations
+4. **FOLLOW existing patterns** - check similar implementations first
+
+**If you answer "no" to any checklist items, STOP and read the relevant documentation first.**
+
+### 🎯 Quick Architecture Discovery Commands
+Use these commands to quickly check compliance:
+
+```bash
+# Check for existing validation schemas
+find lib/validation -name "*.ts" | head -10
+
+# Search for similar field validation
+grep -r "BaseFieldSchemas\." lib/validation/
+
+# Find existing service patterns
+ls lib/services/
+
+# Check API route patterns
+find app/api -name "route.ts" | head -5
+```
+
+## 📋 Common Agent Tasks & Required Context
+
+### Task: "Fix a bug in contracts"
+```
+Read Order:
+1. app/api/contracts/route.ts
+2. app/components/forms/ContractForm.tsx
+3. DEVELOPMENT.md → "Lessons Learned"
+```
+
+### Task: "Add new feature to expenses"
+
+**🛡️ ARCHITECTURE COMPLIANCE CHECK FIRST:**
+- [ ] Validation: Check `lib/validation/financial.ts` for expense schemas
+- [ ] Services: Review `lib/services/ExpenseService.ts` for business logic patterns
+- [ ] Middleware: Ensure `withTeamContext` usage for team isolation
+- [ ] Patterns: Find similar expense features already implemented
+
+```
+Read Order:
+1. lib/validation/financial.ts (expense validation schemas)
+2. lib/services/ExpenseService.ts (business logic patterns)
+3. app/api/expenses/route.ts (understand current implementation)
+4. app/components/forms/ExpenseForm.tsx (UI pattern)
+5. prisma/schema.prisma (database structure)
+```
+
+### Task: "Improve documentation"
+```
+Read Order:
+1. DOCUMENTATION_STRATEGY_PROPOSAL.md
+2. docs/docs-site/docs/meta/templates/*
+3. Target document to improve
+```
+
+### Task: "Update UI component"
+```
+Read Order:
+1. DESIGN_PRINCIPLES.md
+2. Target component file
+3. Similar components for pattern consistency
+```
+
+## 🚀 Quick Commands for Agents
+
+### Development
+```bash
+# Start development
+npm run dev
+
+# Database operations
+npx prisma studio         # View database
+npx prisma migrate dev     # Run migrations
+
+# Testing (CRITICAL: ALWAYS use port 3010 for testing)
+PORT=3010 npm run dev      # Start test server
+npm run build             # Test production build
+npm run lint              # Check code quality
+
+# Testing Protocol Commands
+lsof -ti:3010 | xargs kill -9 2>/dev/null  # Clear port 3010 before testing
+```
+
+### 🧪 **CRITICAL: Testing Protocol**
+
+**MANDATORY TESTING RULES:**
+1. **ALWAYS** use port 3010 for testing (never 3000, never 3001)
+2. **ALWAYS** clear port 3010 before starting tests: `lsof -ti:3010 | xargs kill -9`
+3. **ALWAYS** start test server with: `PORT=3010 npm run dev`
+4. **ALWAYS** use `http://localhost:3010` in test scripts
+5. **NEVER** use default port 3000 for testing (reserved for production dev)
+
+**Testing Sequence:**
+```bash
+# 1. Clear port
+lsof -ti:3010 | xargs kill -9 2>/dev/null
+
+# 2. Start test server
+PORT=3010 npm run dev
+
+# 3. Run tests (in another terminal)
+npx tsx test-crud-operations.ts
+```
+
+### Documentation
+```bash
+# Documentation development
+cd docs/docs-site && npm start
+
+# Build documentation
+cd docs/docs-site && npm run build
+```
+
+### Admin Scripts
+```bash
+# List all users in database
+npx tsx scripts/list-users.ts
+
+# Delete test user and their team (pre-launch cleanup)
+npx tsx scripts/delete-test-user.ts <email>
+npx tsx scripts/delete-test-user.ts teste5@teste.com.br  # Example
+
+# See scripts/README.md for full documentation
+```
+
+## ⚠️ Critical Rules for Agents
+
+1. **NEVER modify existing documentation files** in root directory (keep as backup)
+2. **NEVER change application code** when working on documentation
+3. **ALWAYS use templates** when creating new documentation
+4. **ALWAYS preserve frontmatter** when editing docs
+5. **ALWAYS test builds** before committing
+
+## 📝 Effective Context Template for New Agents
+
+When briefing a new LLM agent about ArqCashflow, use this template:
+
+```
+You're working on ArqCashflow, a Next.js financial management system for architects.
+
+IMMEDIATE CONTEXT:
+- Read: LLM_AGENT_GUIDE.md (this file)
+- Technology: Next.js 15, TypeScript, Prisma, PostgreSQL, Claude AI
+- Key Pattern: Team-based data isolation (all queries filter by teamId)
+
+YOUR TASK: [Specific task description]
+
+RELEVANT FILES:
+- [List 2-3 most relevant files for the task]
+
+CONSTRAINTS:
+- Don't modify files outside your task scope
+- Follow existing patterns in similar components
+- Update documentation if you change functionality
+
+SUCCESS CRITERIA:
+- [Specific measurable outcomes]
+```
+
+## 📚 Documentation Maintenance Protocol
+
+### Before Making Changes
+1. **Read Current State**: Check `/DOCUMENTATION_STRATEGY_PROPOSAL.md` Implementation History section
+2. **Run Validation**: `cd docs/docs-site/scripts && npm run docs:validate`
+3. **Check Build**: `cd docs/docs-site && npm run build`
+
+### When Working on Documentation
+```bash
+# Standard maintenance workflow
+cd docs/docs-site/scripts
+
+# 1. Validate current state
+npm run docs:validate
+
+# 2. If API/schema changed, regenerate
+npm run docs:generate
+
+# 3. Test build locally
+cd .. && npm run build
+
+# 4. Update last_updated fields
+# 5. Ensure "Context for LLM Agents" sections exist
+```
+
+### Common Issues & Solutions
+
+**MDX Build Errors**
+- Problem: Curly braces `{}` in tables and special characters `<`, `>` followed by numbers
+- Solution: Wrap JSON examples and comparison operators in backticks
+- Examples:
+  - `{key: "value"}` instead of {key: "value"}
+  - `<15` instead of <15
+  - `>100` instead of >100
+  - `≥3MB` instead of ≥3MB (when followed by potential tag-like patterns)
+
+**Broken Links**
+- Problem: Incorrect relative paths
+- Solution: Links must be relative from current file location
+
+**Missing LLM Context**
+- Problem: File lacks "Context for LLM Agents" section
+- Solution: Add after main heading with Scope, Prerequisites, Key Patterns
+
+## 🩺 Documentation Health Verification Protocol
+
+**CRITICAL**: Every new LLM agent must verify documentation health before starting work.
+
+### Quick Health Check Sequence
+
+**1. Check Current Health Status**
+```bash
+cd docs/docs-site/scripts
+node validate-docs.js
+```
+Expected Output: `Health score: 100% 🟢`
+
+**2. Verify Recent GitHub Actions**
+```bash
+# Check recent workflow runs
+gh run list --repo joselpq/arqcashflow --limit 5
+
+# Look for any failed runs or health alerts
+gh run list --repo joselpq/arqcashflow --status=failure
+```
+
+**3. Check for Documentation Issues**
+```bash
+# Look for automated health alert issues
+gh issue list --repo joselpq/arqcashflow --label="documentation,maintenance,automated"
+```
+
+**4. One-Liner Quick Check**
+```bash
+cd docs/docs-site/scripts && node validate-docs.js && gh issue list --repo joselpq/arqcashflow --label="documentation" --state=open || echo "No critical documentation issues found"
+```
+
+### Health Score Interpretation
+
+- **100%**: ✅ Perfect - proceed with confidence
+- **85-99%**: ⚠️ Minor issues - check validation report
+- **70-84%**: 🔶 Moderate issues - fix before major changes
+- **<70%**: 🔴 Critical issues - address immediately
+
+### Issue Response Protocol
+
+**If you find health alerts or issues:**
+1. **Read validation report** from GitHub Actions artifacts
+2. **Fix broken links first** (highest priority)
+3. **Update stale content** (check dates > 90 days old)
+4. **Fix missing metadata** (YAML frontmatter)
+5. **Re-run validation** to confirm fixes
+6. **Close automated issue** once resolved
+
+### Weekly Health Reports Location
+
+- **GitHub Actions**: https://github.com/joselpq/arqcashflow/actions
+- **Weekly runs**: "Weekly Documentation Health Check" (every Sunday 2 AM UTC)
+- **Artifacts**: Download "weekly-docs-health-report" (90-day retention)
+- **Issues**: Auto-created if health score < 80%
+
+---
+
+### Next Priority Tasks (for incoming agents)
+
+1. **Service Layer Migration** - ✅ **ALL PHASES COMPLETE**
+   - ✅ Phase 1: Service layer extraction and validation (DEPLOYED)
+   - ✅ Phase 2: Contract API migration to service layer (DEPLOYED)
+   - ✅ Phase 3: Receivables & Expenses API migration (DEPLOYED)
+   - ✅ Phase 4: Bulk operations and advanced features (DEPLOYED)
+   - ✅ Phase 5: Recurring Expenses complete migration (DEPLOYED 2025-01-09)
+   - ✅ API Route Simplification: 45-65% reduction achieved
+   - ✅ Full CRUD testing validated (2025-09-25)
+   - ✅ RecurringExpenseService with bulk operations fix (2025-01-09)
+
+5. **Setup Assistant V2 (AI Agent Strategy)** - 🚀 **PHASE 2 READY (2025-09-27)**
+   - ✅ **Phase 1 Complete**: Service layer integration with audit logging
+   - ✅ **100% Functionality Preserved**: All baseline tests pass (4c,4r,7e | 37c | 1c,5r)
+   - ✅ **Deployed Successfully**: Both UI endpoints working (/onboarding and AI chat)
+   - ✅ **Architecture Foundation**: Ready for enhanced features
+
+   - 🚀 **Phase 2 Strategy Finalized**: Enhanced UX & Multi-File Processing
+     - **Week 1**: Multi-file upload with sequential processing
+     - **Week 2**: Enhanced data quality and user experience
+     - **Week 3**: Selected nice-to-have features (user review, duplicates)
+     - **Philosophy**: Start simple, iterate incrementally, prioritize reliability
+
+   - 📋 **Phase 2 Core Features**:
+     - Sequential multi-file processing (reliable, simple)
+     - Basic progress tracking ("Processing file X of Y")
+     - Smart retry for recoverable failures
+     - Enhanced receivable titles and error messages
+     - Add files after batch completion
+
+   - 📋 **Future Enhancements (Backlog)**:
+     - Hybrid batch processing for performance
+     - Real-time WebSocket progress updates
+     - User review before creation
+     - Cross-file duplicate detection
+     - Interactive clarification framework
+
+   - 📁 **Key Files**: `SetupAssistantService.ts`, `/api/ai/setup-assistant-v2/route.ts`
+   - 📋 **Documentation**: `PHASE2-IMPLEMENTATION-GUIDE.md` with complete strategy
+
+2. **Documentation System - Complete** (Phase 4: ✅ 100% Complete)
+   - ✅ Weekly health checks with automated issue creation (DONE)
+   - ✅ PR comment automation with validation summaries (DONE)
+   - ✅ Multi-job workflow structure (build→deploy→validate→comment) (DONE)
+   - ✅ Code example validation with syntax checking (DONE)
+   - ✅ Code-driven auto-generation (API docs, schema docs, changelog) (DONE)
+
+3. **Architecture Improvements - Complete/In Progress**
+   - ✅ Google Sheets Consolidation (3 files → 1, save 66% code) (DONE)
+   - ✅ Unified Validation Layer (create lib/validation structure) (DONE)
+   - ✅ Event System Foundation (prepare for AI automation) (DONE - validation refinement needed)
+
+4. **Contract Deletion & Validation UX** - ✅ **COMPLETE (2025-09-29)**
+   - ✅ **Validation Bug Fixed**: Contract editing now works (excluded current contract from duplicate checks)
+   - ✅ **Enhanced Deletion Flow**: User choice for receivables handling with `DeleteOptions` interface
+   - ✅ **Auto-numbering Feature**: Prevents duplicates with "Project (2)", "Project (3)" pattern
+   - ✅ **New API Endpoints**:
+     - `GET /api/contracts/[id]/deletion-info` - Returns receivables impact
+     - `DELETE /api/contracts/[id]?mode=contract-only|contract-and-receivables` - Enhanced deletion
+     - `POST /api/contracts/auto-number` - Generate unique project names
+
+   - 🎯 **UX Achievement**: No more false validation errors, full user control over deletion process
+   - 📁 **Key Files**: `lib/services/ContractService.ts`, contract API routes
+   - 📋 **Frontend Ready**: Backend complete, ready for modal implementation
+
+5. **Optional Future Enhancements**
+   - Upgrade to Algolia DocSearch (if external indexing desired)
+   - Add component documentation extraction
+   - Service layer performance monitoring and analytics
+
+## Context for LLM Agents - Contract Deletion UX
+
+**Scope**: Complete contract deletion and validation UX implementation with user choice handling
+**Prerequisites**: Understanding of service layer architecture, team-scoped operations, TypeScript interfaces
+**Key Patterns**:
+- User-choice deletion with `DeleteOptions` interface (`'contract-only'` | `'contract-and-receivables'`)
+- Deletion impact analysis with `DeletionInfo` interface showing receivables count and details
+- Auto-numbering pattern for duplicate prevention using `generateUniqueProjectName()`
+- Validation bug fix pattern: exclude current entity from duplicate checks using entity ID
+- API design pattern: query parameters for operation modes (`?mode=contract-only`)
+
+**Implementation Notes**:
+- Validation now distinguishes between create (strict) and update (relaxed) operations
+- Delete operations provide two modes: unlink receivables or delete everything
+- Auto-numbering applies automatically on creation to prevent duplicate issues
+- All operations maintain team-scoped isolation and audit logging
+
+---
+
+*This guide provides the minimum context needed for any LLM agent to effectively work on ArqCashflow. Always check `/DOCUMENTATION_STRATEGY_PROPOSAL.md` for the single source of truth on implementation status.*
