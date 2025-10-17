@@ -1,7 +1,7 @@
 # ArqCashflow Development Backlog
 
 **Purpose**: Central source of truth for project priorities and development status
-**Last Updated**: 2025-10-17 (Added: AI Filter static table bug to backlog)
+**Last Updated**: 2025-10-17 (Added: Chat-First Onboarding Redesign to DOING, moved recent completions to DONE.md, created ADR-017)
 **Update Frequency**: Every LLM session MUST update this document when completing tasks or discovering new requirements
 
 ## 🚨 CRITICAL INSTRUCTIONS FOR LLM AGENTS
@@ -83,7 +83,124 @@ Examples:
 ### 🔄 DOING (Currently In Progress)
 *Work actively being implemented RIGHT NOW.*
 
-*No active work in progress - ready for next task!*
+---
+
+#### **Chat-First Onboarding Redesign** 🚀 STARTED (2025-10-17)
+**Goal**: Transform onboarding into an AI-first conversational experience that educates users and creates clear mental model of persistent chat availability
+**Status**: ADR-017 documented, implementation starting
+**Estimated Time**: 15-20 days (phased implementation)
+
+**Strategic Vision**:
+- Introduce Arnaldo (AI assistant) as primary interaction method from day 1
+- Optimize for users with existing spreadsheets (80%+ of new users)
+- Educational onboarding that teaches platform capabilities while collecting data
+- Visual transition animation showing chat persistence (onboarding → floating chat)
+
+**Architecture Overview**:
+```
+Registration → Auto-login → Profile Collection (chat) → File Upload (chat loop)
+→ Education (streaming messages) → Transition Animation → Dashboard Reveal
+```
+
+**Implementation Phases**:
+
+**Phase 1: Registration & Auto-Login** (1-2 days) ⏱️ PENDING
+- [ ] Update registration API for auto-login after successful registration
+- [ ] Add redirect to `/onboarding` instead of `/login`
+- [ ] Handle edge cases (duplicate emails, validation errors)
+- [ ] Ensure session persists across redirect
+- **Files**: `app/api/auth/register/route.ts`, `app/register/page.tsx`
+
+**Phase 2: Profile Collection Chat Interface** (3-4 days) ⏱️ PENDING
+- [ ] Create OnboardingChatContainer component
+- [ ] Build ProfileChatStep with conversational flow
+- [ ] Implement ChipButtons component for guided responses
+- [ ] Create UserProfile database model
+- [ ] Build API endpoint `/api/user-profile` for saving data
+- [ ] Three questions: Business type, size tier, revenue range
+- **Files**:
+  - New: `app/onboarding/page.tsx`, `app/components/onboarding/OnboardingChatContainer.tsx`
+  - New: `app/components/onboarding/ProfileChatStep.tsx`, `app/components/onboarding/ChipButtons.tsx`
+  - New: `app/api/user-profile/route.ts`
+  - Schema: `prisma/schema.prisma` (add UserProfile model)
+
+**Phase 3: File Upload Chat Flow** (4-5 days) ⏱️ PENDING
+- [ ] Create FileUploadChatStep component
+- [ ] Integrate SetupAssistant multi-file API
+- [ ] Add processing messages rotation ("Analisando estrutura...", "Extraindo contratos...")
+- [ ] Implement multi-file loop ("Tem outros arquivos?")
+- [ ] Show entity count results after each file
+- [ ] Handle "skip file upload" path
+- **Files**:
+  - New: `app/components/onboarding/FileUploadChatStep.tsx`
+  - New: `app/components/onboarding/FileUploadZone.tsx`
+  - Modify: `app/api/ai/setup-assistant-v2/multi/route.ts` (ensure compatibility)
+
+**Phase 4: Education Phase** (2-3 days) ⏱️ PENDING
+- [ ] Create StreamingMessage component (letter-by-letter animation)
+- [ ] Build EducationPhase coordinator
+- [ ] Implement auto-advance logic (3s delay or button click)
+- [ ] Message 1: "Se precisar de mim para criar ou editar..." [Ok]
+- [ ] Message 2: "Ah, e pode contar comigo para responder perguntas..." [Continuar]
+- **Files**:
+  - New: `app/components/onboarding/StreamingMessage.tsx`
+  - New: `app/components/onboarding/EducationPhase.tsx`
+
+**Phase 5: Transition Animation** (3-4 days) ⏱️ PENDING
+- [ ] Build useOnboardingTransition hook with animation states
+- [ ] Implement CSS animations (shrink → move → morph)
+- [ ] Coordinate with GlobalChat component
+- [ ] Dashboard fade-in behind morphing chat
+- [ ] Test on multiple devices/browsers
+- [ ] Implement fallback for reduced motion preferences
+- **Files**:
+  - New: `app/components/onboarding/OnboardingTransition.tsx`
+  - Modify: `app/page.tsx` (handle transition entry state)
+  - Modify: `app/components/chat/GlobalChat.tsx` (coordinate with transition)
+
+**Phase 6: Polish & Testing** (2-3 days) ⏱️ PENDING
+- [ ] E2E tests with Cypress (happy path, skip files, multiple files)
+- [ ] Unit tests for components
+- [ ] Accessibility audit (keyboard nav, screen readers, ARIA)
+- [ ] Performance optimization (preload dashboard, GPU acceleration)
+- [ ] Error handling (file upload failures, network errors)
+- [ ] Mobile testing (animations, touch interactions)
+- **Files**:
+  - New: `cypress/e2e/onboarding-flow.cy.ts`
+  - New: Unit tests for each component
+
+**Success Criteria**:
+- ✅ Onboarding completion rate ≥ 85% (vs 70% baseline)
+- ✅ Time to first data import < 3 minutes
+- ✅ Chat usage in first 7 days ≥ 60% of users
+- ✅ Multi-file upload adoption ≥ 30% of users
+- ✅ Animation FPS ≥ 30 on mobile
+- ✅ User feedback sentiment ≥ 80% positive
+
+**Key Features**:
+- **Chat-first from start**: Meet Arnaldo in first 10 seconds
+- **Chip button navigation**: Guided flow, no open-ended confusion
+- **Multi-file loop**: Upload multiple spreadsheets in one session
+- **Streaming education**: Human-like messages that teach capabilities
+- **Visual continuity**: Animation shows chat is always available
+- **Mobile responsive**: Works perfectly on all devices
+
+**Rollout Strategy**:
+- Week 1: Feature flag `ENABLE_NEW_ONBOARDING`, internal testing
+- Week 2-3: Beta users (50% split), A/B testing
+- Week 4-5: Gradual rollout (25% → 50% → 75% → 100%)
+- Keep old flow as fallback for 30 days
+
+**Documentation**:
+- ✅ ADR-017 created: `/docs/docs-site/docs/decisions/017-chat-first-onboarding-redesign.md`
+- ⏱️ Update LLM_AGENT_GUIDE.md after implementation
+- ⏱️ Update user documentation with new onboarding flow
+
+**Related ADRs**:
+- ADR-016: Setup Assistant Two-Phase Extraction (file upload backend)
+- ADR-008: AI Agent Strategy (AI-first product vision)
+
+**Branch**: `feature/onboarding-improvements`
 
 ---
 
@@ -444,97 +561,6 @@ When you complete a new epic-level task:
 3. This keeps BACKLOG.md concise while preserving historical record in DONE.md
 
 **Note**: Task-level completions stay within their parent epics - only move completed EPICS to DONE.md.
-
----
-
-#### **Fix: Floating Chat Appearing on Landing Page** ✅ COMPLETE (2025-10-15)
-**Impact**: Security and UX fix - chat now only visible to authenticated users
-**Time Spent**: ~15 minutes (investigation + fix + testing)
-**Status**: Production-ready, proper authentication gating
-
-**Problem**:
-- Floating chat with AI (Arnaldo) was appearing on public landing page
-- GlobalChat component rendered globally in `app/layout.tsx` without authentication check
-- Chat should only be accessible in logged-in area
-
-**Root Cause**:
-- `GlobalChat` component in `app/layout.tsx:46` had no authentication logic
-- Rendered unconditionally for all routes, including public landing page
-
-**Solution**:
-- Added `useSession()` hook from next-auth to GlobalChat component
-- Return `null` when user is not authenticated or session is loading
-- Chat FAB and panel only render for authenticated users
-
-**Implementation**:
-- Added authentication check: `if (status === 'loading' || !session) return null`
-- Follows same pattern as main dashboard (`app/page.tsx`)
-- Zero impact on existing functionality for logged-in users
-
-**Technical Implementation**:
-```typescript
-// Added to GlobalChat.tsx
-const { data: session, status } = useSession()
-
-// Only render chat when user is authenticated
-if (status === 'loading' || !session) {
-  return null
-}
-```
-
-**Strategic Value**:
-- Proper security boundary for authenticated features
-- Cleaner public landing page experience
-- Consistent with application authentication patterns
-
-**Files Modified**:
-- `app/components/chat/GlobalChat.tsx` (added authentication check)
-
-**Build Status**: ✅ Compiled successfully (4.3s, zero errors)
-
-**Completed**: 2025-10-15
-
----
-
-#### **Change Floating Chat Icon to AI Sparkles Symbol** ✅ COMPLETE (2025-10-15)
-**Impact**: Better visual communication of AI-powered assistant
-**Time Spent**: ~1 hour (research + iterations + implementation)
-**Status**: Production-ready, using mainstream AI iconography
-
-**Implementation Highlights**:
-- ✅ **Gemini-Style Sparkle**: Four-pointed diamond-arm sparkle (mainstream standard)
-- ✅ **3-Sparkle Composition**: 1 large center + 2 small (30% size) for visual interest
-- ✅ **Symmetric Design**: All arms bulge equally in middle, taper at ends
-- ✅ **Research-Driven**: Based on Google Gemini icon analysis (industry leader)
-- ✅ **Build Successful**: Zero errors, fully functional
-
-**Design Evolution**:
-1. Started with sharp-pointed star (too thin)
-2. Tried thick rounded plus (opposite direction)
-3. Analyzed actual Gemini icon from saved image
-4. Implemented diamond-arm sparkle with proper bulge
-5. Made fully symmetric
-6. Added 2 smaller sparkles for composition
-
-**Technical Implementation**:
-- Diamond-shaped arms that bulge wide in middle
-- SVG paths with proper geometry
-- Maintains gradient blue-purple button background
-- Positioned strategically (top-right and bottom-left small sparkles)
-
-**Strategic Value**:
-- Aligns with mainstream AI iconography (Google, Gemini standard)
-- "Sparkles = AI" is recognized pattern across industry
-- Better communicates AI capability than generic chat bubble
-- Professional, modern aesthetic
-
-**Files Modified**:
-- `app/components/chat/ArnaldoChatFAB.tsx` (icon SVG replacement)
-- `gemini_star.png` (reference image used for design)
-
-**Build Status**: ✅ Compiled successfully (5.0s, zero errors)
-
-**Completed**: 2025-10-15
 
 ---
 

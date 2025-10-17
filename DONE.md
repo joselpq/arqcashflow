@@ -9,6 +9,97 @@
 ## ✅ DONE (Historical Completed Epics)
 *Newest first, for reference.*
 
+### **Fix: Floating Chat Appearing on Landing Page** ✅ COMPLETE (2025-10-15)
+**Impact**: Security and UX fix - chat now only visible to authenticated users
+**Time Spent**: ~15 minutes (investigation + fix + testing)
+**Status**: Production-ready, proper authentication gating
+
+**Problem**:
+- Floating chat with AI (Arnaldo) was appearing on public landing page
+- GlobalChat component rendered globally in `app/layout.tsx` without authentication check
+- Chat should only be accessible in logged-in area
+
+**Root Cause**:
+- `GlobalChat` component in `app/layout.tsx:46` had no authentication logic
+- Rendered unconditionally for all routes, including public landing page
+
+**Solution**:
+- Added `useSession()` hook from next-auth to GlobalChat component
+- Return `null` when user is not authenticated or session is loading
+- Chat FAB and panel only render for authenticated users
+
+**Implementation**:
+- Added authentication check: `if (status === 'loading' || !session) return null`
+- Follows same pattern as main dashboard (`app/page.tsx`)
+- Zero impact on existing functionality for logged-in users
+
+**Technical Implementation**:
+```typescript
+// Added to GlobalChat.tsx
+const { data: session, status } = useSession()
+
+// Only render chat when user is authenticated
+if (status === 'loading' || !session) {
+  return null
+}
+```
+
+**Strategic Value**:
+- Proper security boundary for authenticated features
+- Cleaner public landing page experience
+- Consistent with application authentication patterns
+
+**Files Modified**:
+- `app/components/chat/GlobalChat.tsx` (added authentication check)
+
+**Build Status**: ✅ Compiled successfully (4.3s, zero errors)
+
+**Completed**: 2025-10-15
+
+---
+
+### **Change Floating Chat Icon to AI Sparkles Symbol** ✅ COMPLETE (2025-10-15)
+**Impact**: Better visual communication of AI-powered assistant
+**Time Spent**: ~1 hour (research + iterations + implementation)
+**Status**: Production-ready, using mainstream AI iconography
+
+**Implementation Highlights**:
+- ✅ **Gemini-Style Sparkle**: Four-pointed diamond-arm sparkle (mainstream standard)
+- ✅ **3-Sparkle Composition**: 1 large center + 2 small (30% size) for visual interest
+- ✅ **Symmetric Design**: All arms bulge equally in middle, taper at ends
+- ✅ **Research-Driven**: Based on Google Gemini icon analysis (industry leader)
+- ✅ **Build Successful**: Zero errors, fully functional
+
+**Design Evolution**:
+1. Started with sharp-pointed star (too thin)
+2. Tried thick rounded plus (opposite direction)
+3. Analyzed actual Gemini icon from saved image
+4. Implemented diamond-arm sparkle with proper bulge
+5. Made fully symmetric
+6. Added 2 smaller sparkles for composition
+
+**Technical Implementation**:
+- Diamond-shaped arms that bulge wide in middle
+- SVG paths with proper geometry
+- Maintains gradient blue-purple button background
+- Positioned strategically (top-right and bottom-left small sparkles)
+
+**Strategic Value**:
+- Aligns with mainstream AI iconography (Google, Gemini standard)
+- "Sparkles = AI" is recognized pattern across industry
+- Better communicates AI capability than generic chat bubble
+- Professional, modern aesthetic
+
+**Files Modified**:
+- `app/components/chat/ArnaldoChatFAB.tsx` (icon SVG replacement)
+- `gemini_star.png` (reference image used for design)
+
+**Build Status**: ✅ Compiled successfully (5.0s, zero errors)
+
+**Completed**: 2025-10-15
+
+---
+
 ### **2E. AI Natural Language Filtering** ✅ COMPLETE (2025-10-08)
 **Impact**: 10x faster filtering for power users, supports complex boolean queries without UI complexity
 **Time Spent**: ~10 hours (within 8-12h estimate)
