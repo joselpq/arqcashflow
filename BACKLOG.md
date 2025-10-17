@@ -1,7 +1,7 @@
 # ArqCashflow Development Backlog
 
 **Purpose**: Central source of truth for project priorities and development status
-**Last Updated**: 2025-10-16 (Complete: Chat File Upload with Direct Route to SetupAssistant)
+**Last Updated**: 2025-10-17 (Added: AI Filter static table bug to backlog)
 **Update Frequency**: Every LLM session MUST update this document when completing tasks or discovering new requirements
 
 ## 🚨 CRITICAL INSTRUCTIONS FOR LLM AGENTS
@@ -1207,6 +1207,23 @@ window.addEventListener('arnaldo-data-updated', () => {
 - **Priority**: **LOW** (Nice to have, depends on user patterns)
 - **Files**: Duplicate detection algorithms, UI for resolution
 - **Added**: 2025-09-27 from Phase 2 planning
+
+#### 6. **AI Filter Results Not Responding to Additional Filters/Sorting**
+- **Problem**: AI-filtered table results are static and don't respond to additional UI filters or sorting
+- **Context**: When users apply AI filter (e.g., "filter only standalone receivables"), the resulting table doesn't respond to:
+  - Sorting by value/date/other columns
+  - Additional filters (e.g., filtering for overdue items)
+  - Any other table controls
+- **Current Behavior**: AI query creates a static snapshot of filtered data
+- **Expected Behavior**: AI-filtered results should remain interactive with all table controls
+- **Impact**: Users cannot combine AI filtering with manual sorting/filtering, limiting flexibility
+- **Solution Options**:
+  - Store AI filter criteria and apply alongside UI filters
+  - Convert AI query results to client-side filterable data
+  - Implement server-side filter combination logic
+- **Priority**: **MEDIUM** (UX limitation affecting workflow efficiency)
+- **Files**: AI filter components, table filtering logic, receivables/expenses/contracts pages
+- **Added**: 2025-10-17 from user feedback
 
 #### Architecture & Performance
 
