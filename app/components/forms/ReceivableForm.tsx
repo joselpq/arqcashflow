@@ -168,7 +168,7 @@ export default function ReceivableForm({ receivable, contracts, onSubmit, onCanc
               if (e.target.checked) {
                 setFormData({ ...formData, contractId: '' })
               } else {
-                setFormData({ ...formData, clientName: '', description: '' })
+                setFormData({ ...formData, clientName: '' })
               }
             }}
             className="rounded border-neutral-300 text-blue-600 focus:ring-blue-500 scale-90"
@@ -214,21 +214,21 @@ export default function ReceivableForm({ receivable, contracts, onSubmit, onCanc
         />
       </div>
 
-      {/* Description field for standalone receivables - positioned above Category */}
-      {isStandalone && (
-        <div>
-          <label className="block mb-2 font-medium text-neutral-900">Descrição *</label>
-          <input
-            type="text"
-            required
-            className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
-            value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            placeholder="Ex: Venda de laptop, Reembolso de impostos, Restituição..."
-            disabled={loading}
-          />
-        </div>
-      )}
+      {/* Description field - required for standalone, optional for contract receivables */}
+      <div>
+        <label className="block mb-2 font-medium text-neutral-900">
+          Descrição{isStandalone ? ' *' : ''}
+        </label>
+        <input
+          type="text"
+          required={isStandalone}
+          className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500"
+          value={formData.description}
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          placeholder={isStandalone ? "Ex: Venda de laptop, Reembolso de impostos, Restituição..." : "Adicione detalhes sobre este recebível (opcional)"}
+          disabled={loading}
+        />
+      </div>
 
       <div>
         <label className="block mb-2 font-medium text-neutral-900">Categoria</label>
