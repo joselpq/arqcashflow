@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { signIn, useSession } from "next-auth/react";
 import Link from "next/link";
 
 export default function RegisterPage() {
@@ -12,6 +13,14 @@ export default function RegisterPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { data: session, status } = useSession();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (status === "authenticated") {
+      router.push("/");
+    }
+  }, [status, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,7 +56,20 @@ export default function RegisterPage() {
       if (!response.ok) {
         setError(data.error || "Falha no registro");
       } else {
-        router.push("/login?registered=true");
+        // Auto-login the user after successful registration
+        const signInResult = await signIn("credentials", {
+          email,
+          password,
+          redirect: false
+        });
+
+        if (signInResult?.error) {
+          // Registration succeeded but login failed - redirect to login page
+          router.push("/login?registered=true");
+        } else {
+          // Both registration and login succeeded - redirect to onboarding
+          router.push("/onboarding");
+        }
       }
     } catch (error) {
       setError("Ocorreu um erro. Tente novamente.");
