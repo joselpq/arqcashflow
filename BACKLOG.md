@@ -102,77 +102,97 @@ Registration → Auto-login → Profile Collection (chat) → File Upload (chat 
 → Education (streaming messages) → Transition Animation → Dashboard Reveal
 ```
 
-**Implementation Phases**:
+**Implementation Phases** (Incremental Approach):
 
-**Phase 1: Registration & Auto-Login** (1-2 days) ⏱️ PENDING
-- [ ] Update registration API for auto-login after successful registration
-- [ ] Add redirect to `/onboarding` instead of `/login`
+**Phase 1: Registration Auto-Login to Existing Onboarding** (1 day) ⏱️ PENDING
+- [ ] Update registration API to create session after successful signup
+- [ ] Redirect to existing `/onboarding` (unchanged) instead of `/login`
 - [ ] Handle edge cases (duplicate emails, validation errors)
-- [ ] Ensure session persists across redirect
+- [ ] Test: Register → Already logged in → See existing onboarding welcome screen
 - **Files**: `app/api/auth/register/route.ts`, `app/register/page.tsx`
+- **Goal**: Seamless entry, no changes to onboarding yet
 
-**Phase 2: Profile Collection Chat Interface** (3-4 days) ⏱️ PENDING
-- [ ] Create OnboardingChatContainer component
-- [ ] Build ProfileChatStep with conversational flow
-- [ ] Implement ChipButtons component for guided responses
-- [ ] Create UserProfile database model
-- [ ] Build API endpoint `/api/user-profile` for saving data
-- [ ] Three questions: Business type, size tier, revenue range
+**Phase 2: Convert Step 2 (Setup Screen) to Chat Interface** (2-3 days) ⏱️ PENDING
+- [ ] Create `OnboardingChatContainer` - wraps chat UI
+- [ ] Create `ChipButtons` component - reusable guided response buttons
+- [ ] Replace Step 2 form with first chat question: "Você é profissional individual ou tem uma empresa?"
+  - Chip options: [Profissional Individual] [Pequena Empresa]
+- [ ] Store answer and show next question: "Qual o porte?" (1-5, 6-20, 20+)
+- [ ] Store answer and show next question: "Faturamento mensal?" (0-50k, 50k-200k, 200k+)
+- [ ] Create `UserProfile` model in database
+- [ ] API endpoint: `/api/user-profile` to save responses
+- [ ] After 3 questions → proceed to file upload screen (existing)
 - **Files**:
-  - New: `app/onboarding/page.tsx`, `app/components/onboarding/OnboardingChatContainer.tsx`
-  - New: `app/components/onboarding/ProfileChatStep.tsx`, `app/components/onboarding/ChipButtons.tsx`
+  - Modify: `app/onboarding/page.tsx` (replace Step 2 with chat)
+  - New: `app/components/onboarding/OnboardingChatContainer.tsx`
+  - New: `app/components/onboarding/ChipButtons.tsx`
   - New: `app/api/user-profile/route.ts`
-  - Schema: `prisma/schema.prisma` (add UserProfile model)
+  - Schema: `prisma/schema.prisma` (add UserProfile)
+- **Goal**: Chat interface for profile questions, existing flow intact
 
-**Phase 3: File Upload Chat Flow** (4-5 days) ⏱️ PENDING
-- [ ] Create FileUploadChatStep component
-- [ ] Integrate SetupAssistant multi-file API
-- [ ] Add processing messages rotation ("Analisando estrutura...", "Extraindo contratos...")
-- [ ] Implement multi-file loop ("Tem outros arquivos?")
-- [ ] Show entity count results after each file
-- [ ] Handle "skip file upload" path
+**Phase 3: Integrate File Upload in Chat Interface** (2-3 days) ⏱️ PENDING
+- [ ] After profile questions, show message: "Controla seus projetos em alguma planilha?"
+  - Chip options: [Sim] [Não]
+- [ ] If "Sim": Show existing "Arraste múltiplos arquivos..." upload zone in chat
+- [ ] Reuse existing `MultiFileSetupAssistant` component (drop zone, processing)
+- [ ] After upload completes, show results in chat: "Encontrei X contratos, Y recebíveis..."
+- [ ] Ask: "Tem outros arquivos para importar?"
+  - Chip options: [Sim, tenho mais] [Não, estou pronto(a)]
+- [ ] If "Sim": Show upload zone again (loop)
+- [ ] If "Não" OR user clicked skip: Proceed to education phase
 - **Files**:
-  - New: `app/components/onboarding/FileUploadChatStep.tsx`
-  - New: `app/components/onboarding/FileUploadZone.tsx`
-  - Modify: `app/api/ai/setup-assistant-v2/multi/route.ts` (ensure compatibility)
+  - Modify: `app/onboarding/page.tsx` (integrate upload in chat flow)
+  - Reuse: `app/components/setup-assistant/MultiFileSetupAssistant.tsx`
+  - New: Wrapper to show upload zone in chat context
+- **Goal**: File upload feels like conversation, reuses existing components
 
-**Phase 4: Education Phase** (2-3 days) ⏱️ PENDING
-- [ ] Create StreamingMessage component (letter-by-letter animation)
-- [ ] Build EducationPhase coordinator
-- [ ] Implement auto-advance logic (3s delay or button click)
-- [ ] Message 1: "Se precisar de mim para criar ou editar..." [Ok]
-- [ ] Message 2: "Ah, e pode contar comigo para responder perguntas..." [Continuar]
+**Phase 4: Education Messages** (1-2 days) ⏱️ PENDING
+- [ ] Create `StreamingMessage` component - letter-by-letter animation
+- [ ] After file upload (or skip), show streaming message:
+  - "Se precisar de mim para criar ou editar contratos, recebíveis ou despesas, estarei logo aqui."
+  - Auto-advance after 3s OR button click [Ok]
+- [ ] Show second streaming message:
+  - "Ah, e pode contar comigo para responder perguntas sobre seus projetos ou finanças"
+  - Wait for button click [Continuar]
+- [ ] After [Continuar] → proceed to transition
 - **Files**:
   - New: `app/components/onboarding/StreamingMessage.tsx`
-  - New: `app/components/onboarding/EducationPhase.tsx`
+  - Modify: `app/onboarding/page.tsx` (add education step)
+- **Goal**: Teach platform capabilities before dashboard
 
-**Phase 5: Transition Animation** (3-4 days) ⏱️ PENDING
-- [ ] Build useOnboardingTransition hook with animation states
-- [ ] Implement CSS animations (shrink → move → morph)
-- [ ] Coordinate with GlobalChat component
-- [ ] Dashboard fade-in behind morphing chat
-- [ ] Test on multiple devices/browsers
-- [ ] Implement fallback for reduced motion preferences
+**Phase 5: Chat Morphing & Transition Animation** (3-4 days) ⏱️ PENDING
+- [ ] Create `useOnboardingTransition` hook - manages animation states
+- [ ] CSS animations:
+  - Shrink chat (500ms)
+  - Move to bottom-right (700ms)
+  - Morph into floating FAB (300ms)
+- [ ] Dashboard fades in during animation
+- [ ] Coordinate with `GlobalChat` to show floating chat is same as onboarding
+- [ ] Test on mobile and desktop
+- [ ] Fallback for reduced motion preferences
 - **Files**:
   - New: `app/components/onboarding/OnboardingTransition.tsx`
-  - Modify: `app/page.tsx` (handle transition entry state)
-  - Modify: `app/components/chat/GlobalChat.tsx` (coordinate with transition)
+  - Modify: `app/onboarding/page.tsx` (trigger transition)
+  - Modify: `app/page.tsx` (handle entry state)
+  - Modify: `app/components/chat/GlobalChat.tsx` (coordinate states)
+- **Goal**: Visual continuity showing chat persistence
 
 **Phase 6: Polish & Testing** (2-3 days) ⏱️ PENDING
-- [ ] E2E tests with Cypress (happy path, skip files, multiple files)
-- [ ] Unit tests for components
-- [ ] Accessibility audit (keyboard nav, screen readers, ARIA)
-- [ ] Performance optimization (preload dashboard, GPU acceleration)
-- [ ] Error handling (file upload failures, network errors)
-- [ ] Mobile testing (animations, touch interactions)
+- [ ] E2E tests: happy path, skip files, multiple files, errors
+- [ ] Unit tests for new components (ChipButtons, StreamingMessage, etc.)
+- [ ] Accessibility audit (keyboard, screen readers, ARIA)
+- [ ] Performance optimization (GPU acceleration, preload dashboard)
+- [ ] Mobile testing (touch, animations, small screens)
+- [ ] Error handling (upload failures, network issues)
 - **Files**:
   - New: `cypress/e2e/onboarding-flow.cy.ts`
-  - New: Unit tests for each component
+  - New: Unit tests for components
+- **Goal**: Production-ready quality
 
 **Success Criteria**:
 - ✅ Onboarding completion rate ≥ 85% (vs 70% baseline)
-- ✅ Time to first data import < 3 minutes
-- ✅ Chat usage in first 7 days ≥ 60% of users
+- ✅ Total onboarding time < 3 minutes from start to finish
+- ✅ Chat usage in first month ≥ 60% of users
 - ✅ Multi-file upload adoption ≥ 30% of users
 - ✅ Animation FPS ≥ 30 on mobile
 - ✅ User feedback sentiment ≥ 80% positive

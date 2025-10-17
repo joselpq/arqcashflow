@@ -214,42 +214,51 @@ dependencies: ["setup-assistant-v2", "global-chat", "claude-api", "streaming-mes
 
 ## Implementation
 
-### Phase 1: Registration & Auto-Login (1-2 days)
+### Phase 1: Registration Auto-Login to Existing Onboarding (1 day)
 
-**Scope**: Ensure seamless flow from registration to onboarding.
+**Scope**: Seamless entry to existing onboarding flow (no changes to onboarding yet).
+
+**Incremental Strategy**: Connect registration to existing onboarding first, then enhance onboarding incrementally.
 
 **Changes Needed:**
-1. Update registration API response to return session token
+1. Update registration API to create session after successful signup
 2. Auto-login after registration success
-3. Redirect to `/onboarding` instead of `/login`
+3. Redirect to existing `/onboarding` (unchanged) instead of `/login`
 4. Handle edge cases (email already exists, validation errors)
 
 **Files to Modify:**
 - `app/api/auth/register/route.ts` - Add auto-login logic
 - `app/register/page.tsx` - Handle redirect to onboarding
-- `app/auth/[...nextauth]/route.ts` - Verify session handling
 
 **Acceptance Criteria:**
 - ✅ User registers → automatically logged in
-- ✅ Redirects to `/onboarding` chat interface
+- ✅ Redirects to existing `/onboarding` welcome screen
 - ✅ Session persists across redirect
 - ✅ Error handling for duplicate emails
+- ✅ Existing onboarding flow unchanged (validates incremental approach)
 
 ---
 
-### Phase 2: Profile Collection Chat Interface (3-4 days)
+### Phase 2: Convert Step 2 (Setup Screen) to Chat Interface (2-3 days)
 
-**Scope**: Replace form-based profile collection with conversational flow.
+**Scope**: Replace Step 2 profile form with chat interface using chip buttons.
+
+**Incremental Strategy**: Transform only Step 2 of existing onboarding, keep rest of flow intact.
 
 **UI Components to Create:**
 ```typescript
-// OnboardingChatContainer.tsx - Main wrapper
-interface OnboardingChatProps {
-  step: 'profile' | 'file-upload' | 'education' | 'transition'
-  onStepComplete: (data: any) => void
+// OnboardingChatContainer.tsx - Main chat wrapper
+interface OnboardingChatContainerProps {
+  children: React.ReactNode
 }
 
-// ProfileChatStep.tsx - Profile collection
+// ChipButtons.tsx - Reusable guided response buttons
+interface ChipButtonsProps {
+  options: Array<{ label: string; value: string }>
+  onSelect: (value: string) => void
+}
+
+// ProfileQuestion interface
 interface ProfileQuestion {
   question: string
   field: 'businessType' | 'businessSize' | 'revenueRange'
@@ -312,27 +321,31 @@ model UserProfile {
 }
 ```
 
-**Files to Create:**
-- `app/onboarding/page.tsx` - Main onboarding coordinator
-- `app/components/onboarding/OnboardingChatContainer.tsx` - Chat wrapper
-- `app/components/onboarding/ProfileChatStep.tsx` - Profile questions
-- `app/components/onboarding/ChipButtons.tsx` - Reusable chip button component
-- `app/components/onboarding/StreamingMessage.tsx` - Letter-by-letter animation
-- `app/api/user-profile/route.ts` - Save profile data
-- `prisma/migrations/xxx_add_user_profile.sql` - Database migration
+**Files to Modify/Create:**
+- **Modify**: `app/onboarding/page.tsx` - Replace Step 2 with chat interface
+- **New**: `app/components/onboarding/OnboardingChatContainer.tsx` - Chat wrapper
+- **New**: `app/components/onboarding/ChipButtons.tsx` - Reusable chip button component
+- **New**: `app/api/user-profile/route.ts` - Save profile data
+- **Schema**: `prisma/schema.prisma` - Add UserProfile model
+- **New**: `prisma/migrations/xxx_add_user_profile.sql` - Database migration
 
 **Acceptance Criteria:**
-- ✅ Arnaldo introduces himself with friendly greeting
+- ✅ Step 1 (Welcome) unchanged - shows existing welcome screen
+- ✅ Step 2 replaced with chat interface
+- ✅ Arnaldo introduces himself: "Olá! Sou Arnaldo, seu assistente financeiro 👋"
 - ✅ Three questions asked in sequence with chip button responses
 - ✅ User selections saved to database
+- ✅ After questions → proceeds to existing file upload screen (Step 3)
 - ✅ Smooth transitions between questions
 - ✅ Responsive design (mobile + desktop)
 
 ---
 
-### Phase 3: File Upload Chat Flow (4-5 days)
+### Phase 3: Integrate File Upload in Chat Interface (2-3 days)
 
-**Scope**: Integrate SetupAssistant into conversational flow with multi-file support.
+**Scope**: Bring file upload into chat conversation, reuse existing components.
+
+**Incremental Strategy**: Reuse existing `MultiFileSetupAssistant` drop zone, integrate into chat flow.
 
 **UI Flow:**
 ```typescript
@@ -349,29 +362,30 @@ interface UploadResults {
 }
 ```
 
-**Conversation Flow:**
+**Conversation Flow (Reuses Existing Components):**
 ```
+[After profile questions in chat]
+
 Arnaldo: "Controla seus projetos, recebíveis e despesas em alguma planilha?"
 User: [Sim] [Não]
 
 IF Sim:
-  Arnaldo: "Ótimo! Pode enviar o arquivo aqui."
-  → Show file upload zone
-  → User uploads file
-  → Processing spinner with messages
-  → Arnaldo: "Encontrei 37 contratos, 120 recebíveis e 45 despesas! 🎉"
+  → Show existing "Arraste múltiplos arquivos..." upload zone in chat
+  → User uploads file(s) using existing MultiFileSetupAssistant
+  → Processing with existing rotating messages
+  → Results shown in chat: "Encontrei 37 contratos, 120 recebíveis e 45 despesas!"
+
   Arnaldo: "Tem outros arquivos para importar?"
   User: [Sim, tenho mais] [Não, estou pronto(a)]
 
   IF "Sim, tenho mais":
-    → Loop back to file upload
+    → Show upload zone again (loop)
 
   IF "Não, estou pronto(a)":
     → Continue to education phase
 
-IF Não:
-  Arnaldo: "Sem problemas! Você pode adicionar seus dados conversando comigo."
-  → Continue to education phase
+IF Não (from first question):
+  → Continue to education phase (skip upload)
 ```
 
 **Processing Messages (Rotating):**
@@ -386,24 +400,26 @@ const processingMessages = [
 ```
 
 **Files to Modify:**
-- `app/components/onboarding/FileUploadChatStep.tsx` - New component
-- `app/components/onboarding/FileUploadZone.tsx` - Drag-drop area
-- `app/api/ai/setup-assistant-v2/multi/route.ts` - Ensure compatibility
-- `lib/services/SetupAssistantService.ts` - Verify progress tracking
+- **Modify**: `app/onboarding/page.tsx` - Integrate upload into chat flow
+- **Reuse**: `app/components/setup-assistant/MultiFileSetupAssistant.tsx` - Existing drop zone
+- **New**: Minimal wrapper to show upload zone in chat context (if needed)
 
 **Acceptance Criteria:**
 - ✅ Clear question about spreadsheet management
-- ✅ File upload zone appears only when user says "Sim"
-- ✅ Processing shows friendly rotating messages
-- ✅ Success message shows entity counts
-- ✅ Multi-file loop works correctly
-- ✅ Can skip file upload entirely
+- ✅ Reuses existing "Arraste múltiplos arquivos..." upload component
+- ✅ File upload zone appears in chat only when user says "Sim"
+- ✅ Processing shows existing rotating messages
+- ✅ Success message shows entity counts in chat
+- ✅ Multi-file loop works: "Tem outros arquivos?" → [Sim] loops, [Não] continues
+- ✅ Can skip file upload entirely by clicking [Não] on first question
 
 ---
 
-### Phase 4: Education Phase (2-3 days)
+### Phase 4: Education Messages (1-2 days)
 
 **Scope**: Streaming messages that teach users about platform capabilities.
+
+**Incremental Strategy**: Add education step after file upload completes or is skipped.
 
 **Streaming Message Implementation:**
 ```typescript
@@ -799,8 +815,8 @@ const useOnboardingTransition = () => {
 
 **Quantitative Metrics:**
 - ✅ Onboarding completion rate ≥ 85% (vs. 70% baseline)
-- ✅ Time to first data import < 3 minutes (vs. 5 minutes)
-- ✅ Chat usage in first 7 days ≥ 60% of users (vs. 40%)
+- ✅ Total onboarding time < 3 minutes from start to finish
+- ✅ Chat usage in first month ≥ 60% of users
 - ✅ Multi-file upload adoption ≥ 30% of users
 - ✅ Animation completion rate ≥ 95% (no crashes/freezes)
 
