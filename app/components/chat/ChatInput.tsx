@@ -112,8 +112,35 @@ export default function ChatInput({ onSend, disabled = false }: ChatInputProps) 
     }
   }
 
+  const exampleQueries = [
+    "Quanto faturei em setembro?",
+    "Recebi 500 reais do projeto João",
+    "Salário Pedro R$5k todo dia 5"
+  ]
+
+  const handleExampleClick = (example: string) => {
+    setMessage(example)
+    textareaRef.current?.focus()
+  }
+
   return (
     <div className="p-4 border-t border-neutral-200 bg-white">
+      {/* Example queries - shown when no messages */}
+      {!selectedFile && (
+        <div className="mb-3 flex flex-wrap gap-2 justify-center">
+          {exampleQueries.map((example, index) => (
+            <button
+              key={index}
+              onClick={() => handleExampleClick(example)}
+              disabled={disabled || isSending}
+              className="text-xs bg-neutral-50 hover:bg-neutral-100 text-neutral-700 px-3 py-1.5 rounded-full border border-neutral-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {example}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* File preview */}
       {selectedFile && (
         <div className="mb-3 flex items-center gap-2 p-2 bg-blue-50 border border-blue-200 rounded-lg">

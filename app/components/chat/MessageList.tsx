@@ -29,24 +29,13 @@ export default function MessageList({ messages, loading = false }: MessageListPr
 
   if (messages.length === 0 && !loading) {
     return (
-      <div className="flex-1 flex items-center p-6">
-        <div className="w-full">
-          <p className="text-neutral-800 font-medium mb-3">
+      <div className="flex-1 flex items-center justify-center px-6 py-8">
+        <div className="w-full text-center">
+          <p className="text-neutral-800 font-medium mb-2 text-base">
             Olá, sou Arnaldo, seu assistente financeiro 👋
           </p>
-          <p className="text-sm text-neutral-600 mb-4">
-            Posso responder perguntas sobre as suas finanças, adicionar novos projetos, despesas e recebíveis, ou atualizar e deletá-los, basta pedir!
-          </p>
-          <p className="text-xs text-neutral-500">
-            <span className="font-medium">Alguns exemplos:</span>
-            <br />
-            • "Quanto faturei em setembro?"
-            <br />
-            • "recebi 500 reais do projeto João e Maria"
-            <br />
-            • "salário Pedro R$5k todo dia 5"
-            <br />
-            • "aumentar o salário do Pedro para 5500 a partir de Janeiro"
+          <p className="text-sm text-neutral-600 leading-relaxed">
+            Compartilhe comigo todo novo projeto/contrato. Me conte suas despesas e recebíveis, através de mensagem ou planilhas/documentos. Assim posso organizar suas finanças e responder suas dúvidas!
           </p>
         </div>
       </div>
