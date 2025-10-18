@@ -9,6 +9,152 @@
 ## ✅ DONE (Historical Completed Epics)
 *Newest first, for reference.*
 
+### **Chat File Upload: Direct Route to SetupAssistant** ✅ COMPLETE (2025-10-16)
+**Impact**: Users can now upload files via chat with 100% consistency with Assistente IA tab
+**Time Spent**: ~2.5 hours (3 implementation tasks, endpoint standardization, build validation)
+**Status**: Production-ready, zero TypeScript errors, endpoint consistency ensured
+
+**Implementation Highlights**:
+- ✅ **File Upload UI**: File picker button with validation (.xlsx, .csv, .pdf, images up to 10MB)
+- ✅ **File Preview**: Visual preview showing filename, size, with remove option
+- ✅ **Smart Routing**: Conditional routing in ChatContext (file → SetupAssistant, text → OperationsAgent)
+- ✅ **Progress Indication**: "Processing file..." message with entity count results
+- ✅ **Error Handling**: User-friendly error messages with supported file types
+- ✅ **Live Refresh**: `arnaldo-data-updated` event triggers entity page updates
+- ✅ **Endpoint Consistency**: Both chat and Assistente IA tab use same `/api/ai/setup-assistant-v2/multi` endpoint
+
+**Files Modified**:
+- `app/components/chat/ChatInput.tsx` (file upload UI + validation)
+- `app/contexts/ChatContext.tsx` (smart routing logic)
+
+**Consistency Fix** (2025-10-16):
+- Initially used `/api/ai/setup-assistant-v2` (single file)
+- User reported 1 expense difference between chat and Assistente IA tab
+- Root cause: Different endpoints (single vs multi) with Claude's non-deterministic behavior
+- **Solution**: Standardized both to use `/api/ai/setup-assistant-v2/multi` endpoint
+- Result: 100% consistent processing logic and results
+
+---
+
+### **PDF & Image Support via Claude Vision API** ✅ COMPLETE (2025-10-14)
+**Impact**: Expanded file format support from XLSX/CSV to include PDFs and images
+**Time Spent**: ~4 hours (research + implementation + testing)
+**Status**: Production-ready, fully integrated with existing two-phase extraction pipeline
+
+**Implementation Highlights**:
+- ✅ **Native PDF Support**: Claude Vision API processes PDFs directly (no conversion needed!)
+- ✅ **Multi-Format Images**: PNG, JPG, GIF, WebP support
+- ✅ **Unified Architecture**: Same Vision API code path for both PDFs and images
+- ✅ **File Type Detection**: Magic byte detection + extension validation
+- ✅ **Existing Pipeline Reuse**: Vision-extracted CSV feeds into proven two-phase extraction
+- ✅ **Brazilian Architecture Context**: Maintains Portuguese prompts and business domain knowledge
+
+**Technical Implementation**:
+1. `detectFileType()` - Extension + magic byte validation (lines 132-161)
+2. `extractFromVision()` - Unified PDF/image processor (lines 310-385)
+3. `parseVisionResponseToSheets()` - CSV parsing with multi-table support (lines 405-446)
+4. Routing logic in `processFile()` (lines 174-190)
+
+**Files Modified**:
+- `lib/services/SetupAssistantService.ts` (+150 lines, 3 new methods)
+- `app/api/ai/setup-assistant-v2/route.ts` (updated docs to reflect new capabilities)
+
+**Related**: ADR-016 v3.1 (Production-validated)
+
+---
+
+### **Setup Assistant Production Refinements** ✅ COMPLETE (2025-10-11)
+**Impact**: Production-ready system with 100% extraction, robust error handling, Brazilian architecture domain knowledge
+**Time Spent**: ~6 hours across 7 refinements
+**Status**: System is production-ready with real-world testing validation
+
+**Refinements Implemented**:
+1. **Post-Processing Entity Filters** - Invalid entity filtering before bulk creation
+2. **Success Criteria Redesign** - Only fail on systematic errors (not validation issues)
+3. **API Route Aggregation Fix** - Always show entity counts (even with partial failures)
+4. **Portuguese Prompts** - Full translation for better context understanding
+5. **Architecture Business Context** - Brazilian architecture firm domain knowledge
+6. **Expense Category Inference** - Infer "Outros" instead of discarding
+7. **ClientName Inference Timing Fix** - Extract before contractId mapping
+
+**Files Modified**:
+- `lib/services/SetupAssistantService.ts` (7 refinements integrated)
+- `app/api/ai/setup-assistant-v2/multi/route.ts` (aggregation fix)
+- `docs/docs-site/docs/decisions/016-setup-assistant-simple-extraction-attempt.md` (updated to v3.0)
+
+**Related**: ADR-016 v3.0 (Production Ready status)
+
+---
+
+### **Low-Hanging Fruits: Quick UX Wins** ✅ COMPLETE (2025-10-09)
+**Goal**: Complete 5 quick fixes to improve UX with minimal effort
+**Total Time**: ~3 hours (under estimated 5-7 hours)
+**Impact**: Significant UX improvements across chat, landing page, and data accuracy
+
+**Tasks Completed**:
+- ✅ **Chat Auto-Scroll** - Messages auto-scroll to bottom using requestAnimationFrame
+- ✅ **Receivables Tab Category Bug** - Fixed data creation layer, receivables no longer inherit contract category
+- ✅ **Chat Cursor Reset Bug** - Replaced single-line input with auto-expanding textarea, maintained cursor position
+- ✅ **Landing Page Broken Links** - Fixed 3 broken navigation elements (scrolling, email links)
+- ✅ **Allow Typing While Processing** - Input field stays enabled, only send button disabled
+
+**Files Modified**:
+- `app/components/chat/MessageList.tsx` (auto-scroll)
+- `lib/services/SetupAssistantService.ts:2264` (category bug fix)
+- `app/components/chat/ChatInput.tsx` (cursor fix)
+- `app/ai-chat/enhanced-page.tsx` (cursor fix for Assistente IA)
+- `app/components/LandingPage.tsx` (broken links)
+
+---
+
+### **BusinessMetricsService: Dashboard Infrastructure (Phase 2)** ✅ COMPLETE (2025-10-08)
+**Goal**: Build reusable metrics calculation layer as foundation for dashboard
+**Status**: Phases 1 & 2 complete, Phase 3 (new advanced metrics) planned for future
+
+**Phase 1 Results** (Extract Existing Metrics):
+- ✅ `BusinessMetricsService` created (382 lines)
+- ✅ Unit tests created (397 lines, 15+ test cases)
+- ✅ Methods: `getMonthMetrics()`, `getPendingAmounts()`, `getOverdueAnalysis()`
+
+**Phase 2 Results** (Complete Extraction):
+- ✅ `BusinessMetricsService` updated (431 lines total)
+- ✅ Methods: `getCashFlowHealth()`, `getUpcomingItems()`, `getMonthlyTrend()`
+- ✅ Unit tests expanded (728 lines, 27+ test cases)
+- ✅ Dashboard API refactored (218 → 70 lines, 68% reduction)
+- ✅ Zero regressions - dashboard works identically
+
+**Phase 3** (Future): New advanced metrics - cash flow forecast, receivables aging, project profitability, expense breakdown
+
+**Related**: ADR-014 Phase 3
+
+---
+
+### **Global "Chat with Arnaldo" Integration** ✅ COMPLETE (2025-10-08)
+**Impact**: Instant access to AI assistant from any page, live data synchronization, improved user workflow
+**Time Spent**: ~4 hours (Phases 1 & 2, skipped Phase 3 context-aware features)
+**Status**: Fully functional with live refresh across all entity pages
+
+**Features Implemented**:
+- ✅ **Floating Action Button (FAB)**: Bottom-right gradient button, accessible from all pages
+- ✅ **Chat Panel**: 400px drawer (desktop), full-width (mobile) with slide-in animation
+- ✅ **Keyboard Shortcut**: Cmd/Ctrl + / to open chat
+- ✅ **Conversation History**: Maintains fullHistory + displayHistory for context preservation
+- ✅ **Live Data Refresh**: Auto-updates entity pages when chat creates/modifies data
+- ✅ **Mobile Responsive**: Full-width drawer with backdrop on mobile
+
+**Files Created**:
+- `app/contexts/ChatContext.tsx` (state management)
+- `app/components/chat/GlobalChat.tsx` (wrapper with keyboard shortcut)
+- `app/components/chat/ArnaldoChatFAB.tsx` (floating button)
+- `app/components/chat/ChatPanel.tsx` (main drawer)
+- `app/components/chat/ChatHeader.tsx`, `MessageList.tsx`, `ChatInput.tsx`
+
+**Files Modified**:
+- `app/layout.tsx` (added ChatProvider + GlobalChat)
+- Entity pages: `/expenses`, `/receivables`, `/contracts`, `/projetos` (live refresh listeners)
+
+---
+
 ### **Fix: Floating Chat Appearing on Landing Page** ✅ COMPLETE (2025-10-15)
 **Impact**: Security and UX fix - chat now only visible to authenticated users
 **Time Spent**: ~15 minutes (investigation + fix + testing)

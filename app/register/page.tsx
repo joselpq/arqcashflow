@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
 import Link from "next/link";
@@ -14,10 +14,11 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { data: session, status } = useSession();
+  const isAutoLoggingIn = useRef(false);
 
-  // Redirect if already logged in
+  // Redirect if already logged in (but not during auto-login after registration)
   useEffect(() => {
-    if (status === "authenticated") {
+    if (status === "authenticated" && !isAutoLoggingIn.current) {
       router.push("/");
     }
   }, [status, router]);
@@ -56,6 +57,9 @@ export default function RegisterPage() {
       if (!response.ok) {
         setError(data.error || "Falha no registro");
       } else {
+        // Set flag to prevent useEffect redirect during auto-login
+        isAutoLoggingIn.current = true;
+
         // Auto-login the user after successful registration
         const signInResult = await signIn("credentials", {
           email,
@@ -65,10 +69,12 @@ export default function RegisterPage() {
 
         if (signInResult?.error) {
           // Registration succeeded but login failed - redirect to login page
+          isAutoLoggingIn.current = false;
           router.push("/login?registered=true");
         } else {
           // Both registration and login succeeded - redirect to onboarding
           router.push("/onboarding");
+          // Note: We keep isAutoLoggingIn.current = true to prevent redirect until /onboarding loads
         }
       }
     } catch (error) {
@@ -77,6 +83,11 @@ export default function RegisterPage() {
       setLoading(false);
     }
   };
+
+  // If already authenticated (e.g., back button), don't render form while redirecting
+  if (status === "authenticated" && !isAutoLoggingIn.current) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-neutral-50 py-4 px-6 sm:py-8 md:py-12">
