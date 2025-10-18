@@ -5,16 +5,20 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import OnboardingFileUpload from "../components/onboarding/OnboardingFileUpload";
+import OnboardingChatContainer from "../components/onboarding/OnboardingChatContainer";
+import ChipButtons from "../components/onboarding/ChipButtons";
 
-type UserType = "individual" | "company";
+type UserType = "individual" | "small_business";
 
 interface ProfileData {
   type: UserType;
-  companyName?: string;
-  companyActivity?: string;
   employeeCount?: string;
   revenueTier?: string;
-  profession?: string;
+}
+
+interface ChatMessage {
+  role: 'assistant' | 'user';
+  content: string;
 }
 
 interface OnboardingResults {
@@ -46,23 +50,96 @@ export default function OnboardingPage() {
     message: ""
   });
 
-  const handleProfileSubmit = async () => {
+  // Chat-based onboarding state
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
+    { role: 'assistant', content: 'Olá! Sou Arnaldo, seu assistente financeiro 👋' },
+    { role: 'assistant', content: 'Vamos começar configurando seu perfil. Você é profissional individual ou tem uma empresa?' }
+  ]);
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+
+  const handleChatResponse = async (value: string) => {
+    // First question: Business type
+    if (currentQuestion === 0) {
+      const responseLabel = value === 'individual' ? 'Profissional Individual' : 'Pequena Empresa';
+      setChatMessages(prev => [...prev, { role: 'user', content: responseLabel }]);
+      setProfileData({ ...profileData, type: value as UserType });
+
+      // Ask next question
+      setChatMessages(prev => [...prev, { role: 'assistant', content: 'Quantas pessoas trabalham no negócio?' }]);
+      setCurrentQuestion(1);
+    }
+    // Second question: Employee count
+    else if (currentQuestion === 1) {
+      const employeeCountOptions = [
+        { label: '1 pessoa (só eu)', value: '1' },
+        { label: '2-5 pessoas', value: '2-5' },
+        { label: '6-10 pessoas', value: '6-10' },
+        { label: '11-20 pessoas', value: '11-20' },
+        { label: '20+ pessoas', value: '20+' }
+      ];
+      const selectedOption = employeeCountOptions.find(opt => opt.value === value);
+      setChatMessages(prev => [...prev, { role: 'user', content: selectedOption?.label || value }]);
+      setProfileData(prev => ({ ...prev, employeeCount: value }));
+
+      // Ask next question
+      setChatMessages(prev => [...prev, { role: 'assistant', content: 'Qual é aproximadamente seu faturamento mensal? Tudo bem se não tiver certeza' }]);
+      setCurrentQuestion(2);
+    }
+    // Third question: Revenue tier
+    else if (currentQuestion === 2) {
+      const revenueOptions = [
+        { label: 'Até R$ 10 mil', value: '0-10k' },
+        { label: 'R$ 10 mil a R$ 50 mil', value: '10k-50k' },
+        { label: 'R$ 50 mil a R$ 100 mil', value: '50k-100k' },
+        { label: 'Acima de R$ 100 mil', value: '100k+' }
+      ];
+      const selectedOption = revenueOptions.find(opt => opt.value === value);
+      setChatMessages(prev => [...prev, { role: 'user', content: selectedOption?.label || value }]);
+      setProfileData(prev => ({ ...prev, revenueTier: value }));
+
+      // Ask spreadsheet question
+      setChatMessages(prev => [...prev, { role: 'assistant', content: 'Você tem alguma planilha onde controla seus projetos, recebíveis e despesas?' }]);
+      setCurrentQuestion(3);
+    }
+    // Fourth question: Has spreadsheet
+    else if (currentQuestion === 3) {
+      const responseLabel = value === 'yes' ? 'Sim' : 'Não';
+      setChatMessages(prev => [...prev, { role: 'user', content: responseLabel }]);
+
+      // Show completion message
+      setChatMessages(prev => [...prev, { role: 'assistant', content: 'Perfeito! Vamos continuar.' }]);
+      setCurrentQuestion(4);
+
+      // Save profile and move to next step
+      await handleProfileSubmit();
+    }
+  };
+
+  const handleProfileSubmit = async (finalRevenueTier?: string) => {
     setLoading(true);
     setError("");
 
     try {
+      // Prepare data with final revenue tier if provided
+      const dataToSubmit = finalRevenueTier
+        ? { ...profileData, revenueTier: finalRevenueTier }
+        : profileData;
+
       const response = await fetch("/api/onboarding/profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(profileData),
+        body: JSON.stringify(dataToSubmit),
       });
 
       if (!response.ok) throw new Error("Failed to save profile");
 
-      setCurrentStep(2);
+      // Small delay for user to read completion message
+      setTimeout(() => {
+        setCurrentStep(2);
+        setLoading(false);
+      }, 1500);
     } catch (err) {
       setError("Erro ao salvar perfil. Tente novamente.");
-    } finally {
       setLoading(false);
     }
   };
@@ -133,177 +210,92 @@ export default function OnboardingPage() {
           </div>
         </div>
 
-        {/* Step 1: Profile Setup */}
+        {/* Step 1: Chat-Based Profile Setup */}
         {currentStep === 1 && (
-          <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 lg:p-10 border border-neutral-200">
-            <div className="text-center mb-8 sm:mb-10">
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-neutral-900 mb-3 sm:mb-4">
-                Bem-vindo ao ArqCashflow! 🎉
-              </h2>
-              <p className="text-base sm:text-lg lg:text-xl text-neutral-600 max-w-4xl mx-auto px-4">
-                Vamos personalizar sua experiência em menos de 2 minutos
-              </p>
-            </div>
-
-            <div className="space-y-6 sm:space-y-8">
-              <div>
-                <label className="block text-sm sm:text-base font-medium text-neutral-700 mb-4">
-                  Você está usando como:
-                </label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                  <button
-                    onClick={() => setProfileData({ ...profileData, type: "individual" })}
-                    className={`p-4 sm:p-6 rounded-lg border-2 transition-all text-center ${
-                      profileData.type === "individual"
-                        ? "border-blue-600 bg-blue-50"
-                        : "border-neutral-200 hover:border-neutral-300"
-                    }`}
-                  >
-                    <div className="text-3xl sm:text-4xl mb-3">👤</div>
-                    <div className="font-medium text-neutral-900 text-base sm:text-lg mb-1">Profissional Liberal</div>
-                    <div className="text-sm sm:text-base text-neutral-500">Autônomo, freelancer</div>
-                  </button>
-                  <button
-                    onClick={() => setProfileData({ ...profileData, type: "company" })}
-                    className={`p-4 sm:p-6 rounded-lg border-2 transition-all text-center ${
-                      profileData.type === "company"
-                        ? "border-blue-600 bg-blue-50"
-                        : "border-neutral-200 hover:border-neutral-300"
-                    }`}
-                  >
-                    <div className="text-3xl sm:text-4xl mb-3">🏢</div>
-                    <div className="font-medium text-neutral-900 text-base sm:text-lg mb-1">Empresa</div>
-                    <div className="text-sm sm:text-base text-neutral-500">Pessoa jurídica</div>
-                  </button>
-                </div>
-              </div>
-
-              {profileData.type === "individual" && (
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">
-                    Qual sua profissão?
-                  </label>
-                  <select
-                    value={profileData.profession || ""}
-                    onChange={(e) => setProfileData({ ...profileData, profession: e.target.value })}
-                    className="w-full px-4 py-3 border border-neutral-400 rounded-lg text-neutral-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="">Selecione...</option>
-                    <option value="architect">Arquiteto(a)</option>
-                    <option value="engineer">Engenheiro(a)</option>
-                    <option value="lawyer">Advogado(a)</option>
-                    <option value="doctor">Médico(a)</option>
-                    <option value="dentist">Dentista</option>
-                    <option value="designer">Designer</option>
-                    <option value="consultant">Consultor(a)</option>
-                    <option value="developer">Desenvolvedor(a)</option>
-                    <option value="other">Outro</option>
-                  </select>
-                </div>
-              )}
-
-              {profileData.type === "company" && (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-2">
-                      Nome da empresa
-                    </label>
-                    <input
-                      type="text"
-                      value={profileData.companyName || ""}
-                      onChange={(e) => setProfileData({ ...profileData, companyName: e.target.value })}
-                      className="w-full px-4 py-3 border border-neutral-400 rounded-lg text-neutral-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Ex: Studio Arquitetura Ltda"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-2">
-                      Qual o ramo da sua empresa?
-                    </label>
-                    <select
-                      value={profileData.companyActivity || ""}
-                      onChange={(e) => setProfileData({ ...profileData, companyActivity: e.target.value })}
-                      className="w-full px-4 py-3 border border-neutral-400 rounded-lg text-neutral-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="">Selecione...</option>
-                      <option value="architecture">Arquitetura e Urbanismo</option>
-                      <option value="engineering">Engenharia</option>
-                      <option value="construction">Construção Civil</option>
-                      <option value="interior-design">Design de Interiores</option>
-                      <option value="landscaping">Paisagismo</option>
-                      <option value="consulting">Consultoria</option>
-                      <option value="legal">Serviços Jurídicos</option>
-                      <option value="healthcare">Saúde e Medicina</option>
-                      <option value="technology">Tecnologia</option>
-                      <option value="marketing">Marketing e Publicidade</option>
-                      <option value="accounting">Contabilidade</option>
-                      <option value="education">Educação</option>
-                      <option value="real-estate">Imobiliário</option>
-                      <option value="retail">Comércio</option>
-                      <option value="services">Prestação de Serviços</option>
-                      <option value="other">Outro</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-2">
-                      Quantos funcionários?
-                    </label>
-                    <select
-                      value={profileData.employeeCount || ""}
-                      onChange={(e) => setProfileData({ ...profileData, employeeCount: e.target.value })}
-                      className="w-full px-4 py-3 border border-neutral-400 rounded-lg text-neutral-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="">Selecione...</option>
-                      <option value="1">Apenas eu</option>
-                      <option value="2-5">2 a 5</option>
-                      <option value="6-10">6 a 10</option>
-                      <option value="11-20">11 a 20</option>
-                      <option value="20+">Mais de 20</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-2">
-                      Faturamento anual estimado
-                    </label>
-                    <select
-                      value={profileData.revenueTier || ""}
-                      onChange={(e) => setProfileData({ ...profileData, revenueTier: e.target.value })}
-                      className="w-full px-4 py-3 border border-neutral-400 rounded-lg text-neutral-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="">Selecione...</option>
-                      <option value="0-100k">Até R$ 100 mil</option>
-                      <option value="100k-500k">R$ 100 mil a R$ 500 mil</option>
-                      <option value="500k-1M">R$ 500 mil a R$ 1 milhão</option>
-                      <option value="1M+">Acima de R$ 1 milhão</option>
-                    </select>
-                  </div>
-                </>
-              )}
-
-              {error && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-sm">
-                  {error}
-                </div>
-              )}
-
-              <div className="flex space-x-4">
-                <button
-                  onClick={handleProfileSubmit}
-                  disabled={loading}
-                  className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50"
+          <OnboardingChatContainer>
+            {/* Render chat messages */}
+            {chatMessages.map((msg, index) => (
+              <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div
+                  className={`max-w-[80%] p-4 rounded-2xl ${
+                    msg.role === 'user'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-neutral-100 text-neutral-900'
+                  }`}
                 >
-                  {loading ? "Salvando..." : "Continuar"}
-                </button>
+                  <p className="text-base leading-relaxed">{msg.content}</p>
+                </div>
               </div>
-            </div>
-          </div>
+            ))}
+
+            {/* Show chip buttons for current question */}
+            {currentQuestion === 0 && (
+              <ChipButtons
+                options={[
+                  { label: 'Profissional Individual', value: 'individual' },
+                  { label: 'Pequena Empresa', value: 'small_business' }
+                ]}
+                onSelect={handleChatResponse}
+                disabled={loading}
+              />
+            )}
+
+            {currentQuestion === 1 && (
+              <ChipButtons
+                options={[
+                  { label: '1 pessoa (só eu)', value: '1' },
+                  { label: '2-5 pessoas', value: '2-5' },
+                  { label: '6-10 pessoas', value: '6-10' },
+                  { label: '11-20 pessoas', value: '11-20' },
+                  { label: '20+ pessoas', value: '20+' }
+                ]}
+                onSelect={handleChatResponse}
+                disabled={loading}
+              />
+            )}
+
+            {currentQuestion === 2 && (
+              <ChipButtons
+                options={[
+                  { label: 'Até R$ 10 mil', value: '0-10k' },
+                  { label: 'R$ 10 mil a R$ 50 mil', value: '10k-50k' },
+                  { label: 'R$ 50 mil a R$ 100 mil', value: '50k-100k' },
+                  { label: 'Acima de R$ 100 mil', value: '100k+' }
+                ]}
+                onSelect={handleChatResponse}
+                disabled={loading}
+              />
+            )}
+
+            {currentQuestion === 3 && (
+              <ChipButtons
+                options={[
+                  { label: 'Sim', value: 'yes' },
+                  { label: 'Não', value: 'no' }
+                ]}
+                onSelect={handleChatResponse}
+                disabled={loading}
+              />
+            )}
+
+            {/* Show loading state */}
+            {loading && currentQuestion === 4 && (
+              <div className="flex justify-center mt-6">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              </div>
+            )}
+
+            {/* Show error if any */}
+            {error && (
+              <div className="mt-6 bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-sm">
+                {error}
+              </div>
+            )}
+          </OnboardingChatContainer>
         )}
 
         {/* Step 2: Data Import */}
-        {currentStep === 2 && !importResults && (
+        {currentStep === 2 &&  !importResults && (
           <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 lg:p-10 border border-neutral-200">
             <div className="text-center mb-8 sm:mb-10">
               <div className="text-5xl sm:text-6xl mb-4">📂</div>
@@ -339,7 +331,7 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* Step 3: Import Results */}
+        {/* Step 3: Import Results - keep existing */}
         {currentStep === 2 && importResults && (
           <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 lg:p-10 border border-neutral-200">
             <div className="text-center mb-8">

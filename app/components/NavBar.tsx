@@ -38,13 +38,13 @@ export default function NavBar() {
     setIsMobileMenuOpen(false);
   }, [pathname]);
 
-  // Don't show navigation for landing page, login, register, or onboarding pages
-  if (!session && (pathname === "/" || pathname === "/login" || pathname === "/register")) {
+  // Don't show navigation on public/auth pages (regardless of session state)
+  if (pathname === "/login" || pathname === "/register" || pathname === "/onboarding") {
     return null;
   }
 
-  // Don't show navigation during onboarding
-  if (pathname === "/onboarding") {
+  // Don't show navigation on landing page when not authenticated
+  if (!session && pathname === "/") {
     return null;
   }
 

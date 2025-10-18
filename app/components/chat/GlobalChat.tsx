@@ -2,12 +2,14 @@
 
 import { useEffect } from 'react'
 import { useSession } from 'next-auth/react'
+import { usePathname } from 'next/navigation'
 import { useChat } from '../../contexts/ChatContext'
 import ArnaldoChatFAB from './ArnaldoChatFAB'
 import ChatPanel from './ChatPanel'
 
 export default function GlobalChat() {
   const { data: session, status } = useSession()
+  const pathname = usePathname()
   const { isOpen, isExpanded, messages, loading, openChat, closeChat, toggleExpanded, sendMessage } = useChat()
 
   // Keyboard shortcut: Cmd/Ctrl + /
@@ -25,6 +27,11 @@ export default function GlobalChat() {
 
   // Only render chat when user is authenticated
   if (status === 'loading' || !session) {
+    return null
+  }
+
+  // Hide chat during onboarding
+  if (pathname === '/onboarding') {
     return null
   }
 

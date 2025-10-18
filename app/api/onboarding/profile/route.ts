@@ -27,10 +27,11 @@ export async function POST(request: NextRequest) {
       where: { id: user.teamId },
       data: {
         type: profileData.type,
-        companyName: profileData.companyName || null,
-        companyActivity: profileData.companyActivity || null,
         employeeCount: profileData.employeeCount || null,
         revenueTier: profileData.revenueTier || null,
+        // Optional fields from old form (for backward compatibility)
+        companyName: profileData.companyName || null,
+        companyActivity: profileData.companyActivity || null,
         profession: profileData.profession || null,
       }
     });
