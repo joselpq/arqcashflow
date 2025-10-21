@@ -100,10 +100,17 @@ This backlog **DOES NOT** replace other documentation:
 - [ ] **Back/undo functionality**: Allow users to go back and change answers in chat
 - [ ] **Integrated file upload UI**: Make file upload look more chat-native (like floating chat) with better visual integration
 
-**Phase 4: Education Messages** ⏱️ PENDING (1-2 days)
-- [ ] Create `StreamingMessage` component (letter-by-letter)
-- [ ] Show AI capabilities messages
-- [ ] Auto-advance or manual button
+**Phase 4: Education Messages** ✅ COMPLETE (2025-10-21)
+- [x] Create `StreamingMessage` component (letter-by-letter typing)
+- [x] Create `EducationPhase` component (message sequence manager)
+- [x] Show AI capabilities messages with streaming effect
+- [x] Auto-advance (3s) on first message, manual click on second
+- [x] Blinking cursor animation during typing
+- **Files**: `StreamingMessage.tsx`, `EducationPhase.tsx`, `app/onboarding/page.tsx`
+- **Messages**:
+  1. "Se precisar de mim para criar ou editar contratos..." (auto-advance 3s)
+  2. "Ah, e pode contar comigo para responder perguntas..." (wait for click)
+- **Result**: Engaging user education with typewriter effect
 
 **Phase 5: Transition Animation** ⏱️ PENDING (3-4 days)
 - [ ] CSS animations: shrink → move → morph to FAB

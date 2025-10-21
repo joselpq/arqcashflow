@@ -8,6 +8,7 @@ import OnboardingFileUpload from "../components/onboarding/OnboardingFileUpload"
 import OnboardingChatContainer from "../components/onboarding/OnboardingChatContainer";
 import ChipButtons from "../components/onboarding/ChipButtons";
 import ChatFileUpload from "../components/onboarding/ChatFileUpload";
+import EducationPhase from "../components/onboarding/EducationPhase";
 
 type UserType = "individual" | "small_business";
 
@@ -60,6 +61,7 @@ export default function OnboardingPage() {
   const [showFileUpload, setShowFileUpload] = useState(false);
   const [hasSpreadsheet, setHasSpreadsheet] = useState<boolean | null>(null);
   const [totalUploaded, setTotalUploaded] = useState({ contracts: 0, receivables: 0, expenses: 0 });
+  const [showEducation, setShowEducation] = useState(false);
 
   const handleChatResponse = async (value: string) => {
     // First question: Business type
@@ -120,14 +122,14 @@ export default function OnboardingPage() {
         setShowFileUpload(true);
         setCurrentQuestion(4);
       } else {
-        // User doesn't have spreadsheet - complete onboarding
+        // User doesn't have spreadsheet - show education phase
         setHasSpreadsheet(false);
-        setChatMessages(prev => [...prev, { role: 'assistant', content: 'Sem problema! Você pode adicionar seus dados manualmente depois. Vamos começar!' }]);
+        setChatMessages(prev => [...prev, { role: 'assistant', content: 'Sem problema! Você pode adicionar seus dados manualmente depois.' }]);
         setCurrentQuestion(5);
-        // Complete onboarding after a brief delay
+        // Show education phase after a brief delay
         setTimeout(() => {
-          handleCompleteOnboarding();
-        }, 2000);
+          setShowEducation(true);
+        }, 1500);
       }
     }
     // Fifth question: More files?
@@ -140,12 +142,12 @@ export default function OnboardingPage() {
         setChatMessages(prev => [...prev, { role: 'assistant', content: 'Perfeito! Envie mais arquivos abaixo:' }]);
         setShowFileUpload(true);
       } else {
-        // Complete onboarding
-        setChatMessages(prev => [...prev, { role: 'assistant', content: 'Excelente! Vamos começar a usar o ArqCashflow! 🚀' }]);
+        // Show education phase
+        setChatMessages(prev => [...prev, { role: 'assistant', content: 'Excelente!' }]);
         setCurrentQuestion(5);
         setTimeout(() => {
-          handleCompleteOnboarding();
-        }, 1500);
+          setShowEducation(true);
+        }, 1000);
       }
     }
   };
@@ -375,6 +377,11 @@ export default function OnboardingPage() {
                 </div>
               </div>
             ))}
+
+            {/* Show education phase */}
+            {showEducation && (
+              <EducationPhase onComplete={handleCompleteOnboarding} />
+            )}
           </OnboardingChatContainer>
         )}
 
