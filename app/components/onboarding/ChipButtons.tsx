@@ -13,7 +13,7 @@ interface ChipButtonsProps {
 
 export default function ChipButtons({ options, onSelect, disabled = false }: ChipButtonsProps) {
   return (
-    <div className="flex flex-wrap gap-2 justify-center mt-4">
+    <div className="flex flex-wrap gap-2 justify-center">
       {options.map((option) => (
         <button
           key={option.value}

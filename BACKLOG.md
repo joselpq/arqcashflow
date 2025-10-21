@@ -74,20 +74,31 @@ This backlog **DOES NOT** replace other documentation:
 - [x] Prevent authenticated users from accessing registration
 - **Result**: Seamless entry, zero flash on registration flow
 
-**Phase 2: Chat Interface for Profile Questions** ⏱️ NEXT (2-3 days)
-- [ ] Create `OnboardingChatContainer` component
-- [ ] Create `ChipButtons` component for guided responses
-- [ ] Replace Step 2 form with chat: "Você é profissional individual ou tem uma empresa?"
-- [ ] Store answers: business type → size → revenue
-- [ ] Create `UserProfile` model in database
-- [ ] API endpoint: `/api/user-profile`
-- **Files**: `app/onboarding/page.tsx`, new components, `prisma/schema.prisma`
+**Phase 2: Chat Interface for Profile Questions** ✅ COMPLETE (2025-10-21)
+- [x] Create `OnboardingChatContainer` component with auto-scroll
+- [x] Create `ChipButtons` component for guided responses
+- [x] Replace Step 2 form with 4-question chat flow
+- [x] Store answers: business type → employee count → revenue → has spreadsheet
+- [x] Uses existing database fields (employeeCount, revenueTier)
+- [x] Fixed chip button positioning (stay at bottom)
+- **Files**: `app/onboarding/page.tsx`, `OnboardingChatContainer.tsx`, `ChipButtons.tsx`
+- **Result**: Conversational profile collection with excellent UX
 
-**Phase 3: File Upload in Chat** ⏱️ PENDING (2-3 days)
-- [ ] After profile questions, ask: "Controla seus projetos em alguma planilha?"
-- [ ] Reuse `MultiFileSetupAssistant` component in chat
-- [ ] Multi-file loop: "Tem outros arquivos para importar?"
-- [ ] Proceed to education phase
+**Phase 3: File Upload in Chat** ✅ COMPLETE (2025-10-21)
+- [x] After profile questions, ask: "Tem alguma planilha onde controla seus projetos?"
+- [x] Created `ChatFileUpload` component (simplified for chat)
+- [x] Multi-file loop: "Tem outros arquivos para importar?"
+- [x] Shows results as chat messages
+- [x] Fun loading messages (coffee, water, stretching)
+- [x] Uses existing SetupAssistant API endpoint
+- **Files**: `app/onboarding/page.tsx`, `ChatFileUpload.tsx`
+- **Result**: Seamless file upload within chat conversation
+
+**Phase 2 & 3: Known Improvements (Future)** 📝
+- [ ] **Animated loading text**: Rotate through multiple phrases every few seconds instead of static message
+- [ ] **Missing business type question**: Add question about type of business/profession (arquitetura, engenharia, etc.)
+- [ ] **Back/undo functionality**: Allow users to go back and change answers in chat
+- [ ] **Integrated file upload UI**: Make file upload look more chat-native (like floating chat) with better visual integration
 
 **Phase 4: Education Messages** ⏱️ PENDING (1-2 days)
 - [ ] Create `StreamingMessage` component (letter-by-letter)

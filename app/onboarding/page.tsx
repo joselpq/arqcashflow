@@ -7,6 +7,7 @@ import Link from "next/link";
 import OnboardingFileUpload from "../components/onboarding/OnboardingFileUpload";
 import OnboardingChatContainer from "../components/onboarding/OnboardingChatContainer";
 import ChipButtons from "../components/onboarding/ChipButtons";
+import ChatFileUpload from "../components/onboarding/ChatFileUpload";
 
 type UserType = "individual" | "small_business";
 
@@ -56,6 +57,9 @@ export default function OnboardingPage() {
     { role: 'assistant', content: 'Vamos começar configurando seu perfil. Você é profissional individual ou tem uma empresa?' }
   ]);
   const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [showFileUpload, setShowFileUpload] = useState(false);
+  const [hasSpreadsheet, setHasSpreadsheet] = useState<boolean | null>(null);
+  const [totalUploaded, setTotalUploaded] = useState({ contracts: 0, receivables: 0, expenses: 0 });
 
   const handleChatResponse = async (value: string) => {
     // First question: Business type
@@ -106,12 +110,43 @@ export default function OnboardingPage() {
       const responseLabel = value === 'yes' ? 'Sim' : 'Não';
       setChatMessages(prev => [...prev, { role: 'user', content: responseLabel }]);
 
-      // Show completion message
-      setChatMessages(prev => [...prev, { role: 'assistant', content: 'Perfeito! Vamos continuar.' }]);
-      setCurrentQuestion(4);
-
-      // Save profile and move to next step
+      // Save profile first
       await handleProfileSubmit();
+
+      if (value === 'yes') {
+        // User has spreadsheet - show upload
+        setHasSpreadsheet(true);
+        setChatMessages(prev => [...prev, { role: 'assistant', content: 'Ótimo! Envie seus arquivos abaixo (planilhas, PDFs ou imagens):' }]);
+        setShowFileUpload(true);
+        setCurrentQuestion(4);
+      } else {
+        // User doesn't have spreadsheet - complete onboarding
+        setHasSpreadsheet(false);
+        setChatMessages(prev => [...prev, { role: 'assistant', content: 'Sem problema! Você pode adicionar seus dados manualmente depois. Vamos começar!' }]);
+        setCurrentQuestion(5);
+        // Complete onboarding after a brief delay
+        setTimeout(() => {
+          handleCompleteOnboarding();
+        }, 2000);
+      }
+    }
+    // Fifth question: More files?
+    else if (currentQuestion === 4) {
+      const responseLabel = value === 'yes' ? 'Sim, tenho mais' : 'Não, estou pronto(a)';
+      setChatMessages(prev => [...prev, { role: 'user', content: responseLabel }]);
+
+      if (value === 'yes') {
+        // Show upload again
+        setChatMessages(prev => [...prev, { role: 'assistant', content: 'Perfeito! Envie mais arquivos abaixo:' }]);
+        setShowFileUpload(true);
+      } else {
+        // Complete onboarding
+        setChatMessages(prev => [...prev, { role: 'assistant', content: 'Excelente! Vamos começar a usar o ArqCashflow! 🚀' }]);
+        setCurrentQuestion(5);
+        setTimeout(() => {
+          handleCompleteOnboarding();
+        }, 1500);
+      }
     }
   };
 
@@ -133,15 +168,40 @@ export default function OnboardingPage() {
 
       if (!response.ok) throw new Error("Failed to save profile");
 
-      // Small delay for user to read completion message
-      setTimeout(() => {
-        setCurrentStep(2);
-        setLoading(false);
-      }, 1500);
+      setLoading(false);
     } catch (err) {
       setError("Erro ao salvar perfil. Tente novamente.");
       setLoading(false);
     }
+  };
+
+  const handleFileUploadStart = () => {
+    // Show loading message
+    const loadingMessages = [
+      'Analisando seus arquivos... Isso pode levar alguns minutos, aproveite para pegar um café! ☕',
+      'Processando seus dados... Que tal alongar as pernas enquanto eu trabalho? 🚶',
+      'Organizando tudo para você... Hora de tomar aquela água! 💧',
+      'Lendo seus arquivos... Aproveite para respirar fundo! 🧘'
+    ];
+    const randomMessage = loadingMessages[Math.floor(Math.random() * loadingMessages.length)];
+    setChatMessages(prev => [...prev, { role: 'assistant', content: randomMessage }]);
+  };
+
+  const handleFileUploadComplete = (results: { totalContracts: number; totalReceivables: number; totalExpenses: number; totalErrors: number; success: boolean }) => {
+    // Update cumulative totals
+    setTotalUploaded(prev => ({
+      contracts: prev.contracts + results.totalContracts,
+      receivables: prev.receivables + results.totalReceivables,
+      expenses: prev.expenses + results.totalExpenses
+    }));
+
+    // Show results as chat message
+    const summary = `Pronto! Encontrei ${results.totalContracts} contrato${results.totalContracts !== 1 ? 's' : ''}, ${results.totalReceivables} recebíve${results.totalReceivables !== 1 ? 'is' : 'l'} e ${results.totalExpenses} despesa${results.totalExpenses !== 1 ? 's' : ''}.`;
+    setChatMessages(prev => [...prev, { role: 'assistant', content: summary }]);
+
+    // Ask if user wants to upload more
+    setChatMessages(prev => [...prev, { role: 'assistant', content: 'Tem outros arquivos para importar?' }]);
+    setShowFileUpload(false);
   };
 
   const handleImportComplete = async (results: OnboardingResults) => {
@@ -212,7 +272,95 @@ export default function OnboardingPage() {
 
         {/* Step 1: Chat-Based Profile Setup */}
         {currentStep === 1 && (
-          <OnboardingChatContainer>
+          <OnboardingChatContainer
+            actions={
+              <>
+                {/* Show chip buttons for current question */}
+                {currentQuestion === 0 && (
+                  <ChipButtons
+                    options={[
+                      { label: 'Profissional Individual', value: 'individual' },
+                      { label: 'Pequena Empresa', value: 'small_business' }
+                    ]}
+                    onSelect={handleChatResponse}
+                    disabled={loading}
+                  />
+                )}
+
+                {currentQuestion === 1 && (
+                  <ChipButtons
+                    options={[
+                      { label: '1 pessoa (só eu)', value: '1' },
+                      { label: '2-5 pessoas', value: '2-5' },
+                      { label: '6-10 pessoas', value: '6-10' },
+                      { label: '11-20 pessoas', value: '11-20' },
+                      { label: '20+ pessoas', value: '20+' }
+                    ]}
+                    onSelect={handleChatResponse}
+                    disabled={loading}
+                  />
+                )}
+
+                {currentQuestion === 2 && (
+                  <ChipButtons
+                    options={[
+                      { label: 'Até R$ 10 mil', value: '0-10k' },
+                      { label: 'R$ 10 mil a R$ 50 mil', value: '10k-50k' },
+                      { label: 'R$ 50 mil a R$ 100 mil', value: '50k-100k' },
+                      { label: 'Acima de R$ 100 mil', value: '100k+' }
+                    ]}
+                    onSelect={handleChatResponse}
+                    disabled={loading}
+                  />
+                )}
+
+                {currentQuestion === 3 && (
+                  <ChipButtons
+                    options={[
+                      { label: 'Sim', value: 'yes' },
+                      { label: 'Não', value: 'no' }
+                    ]}
+                    onSelect={handleChatResponse}
+                    disabled={loading}
+                  />
+                )}
+
+                {/* Show file upload when user has spreadsheet */}
+                {currentQuestion === 4 && showFileUpload && (
+                  <ChatFileUpload
+                    onUploadStart={handleFileUploadStart}
+                    onUploadComplete={handleFileUploadComplete}
+                  />
+                )}
+
+                {/* Show "more files?" buttons after upload */}
+                {currentQuestion === 4 && !showFileUpload && (
+                  <ChipButtons
+                    options={[
+                      { label: 'Sim, tenho mais', value: 'yes' },
+                      { label: 'Não, estou pronto(a)', value: 'no' }
+                    ]}
+                    onSelect={handleChatResponse}
+                    disabled={loading}
+                  />
+                )}
+
+                {/* Show loading state */}
+                {loading && currentQuestion === 5 && (
+                  <div className="flex justify-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                  </div>
+                )}
+
+                {/* Show error if any */}
+                {error && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-sm">
+                    {error}
+                  </div>
+                )}
+              </>
+            }
+          >
             {/* Render chat messages */}
             {chatMessages.map((msg, index) => (
               <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -227,70 +375,6 @@ export default function OnboardingPage() {
                 </div>
               </div>
             ))}
-
-            {/* Show chip buttons for current question */}
-            {currentQuestion === 0 && (
-              <ChipButtons
-                options={[
-                  { label: 'Profissional Individual', value: 'individual' },
-                  { label: 'Pequena Empresa', value: 'small_business' }
-                ]}
-                onSelect={handleChatResponse}
-                disabled={loading}
-              />
-            )}
-
-            {currentQuestion === 1 && (
-              <ChipButtons
-                options={[
-                  { label: '1 pessoa (só eu)', value: '1' },
-                  { label: '2-5 pessoas', value: '2-5' },
-                  { label: '6-10 pessoas', value: '6-10' },
-                  { label: '11-20 pessoas', value: '11-20' },
-                  { label: '20+ pessoas', value: '20+' }
-                ]}
-                onSelect={handleChatResponse}
-                disabled={loading}
-              />
-            )}
-
-            {currentQuestion === 2 && (
-              <ChipButtons
-                options={[
-                  { label: 'Até R$ 10 mil', value: '0-10k' },
-                  { label: 'R$ 10 mil a R$ 50 mil', value: '10k-50k' },
-                  { label: 'R$ 50 mil a R$ 100 mil', value: '50k-100k' },
-                  { label: 'Acima de R$ 100 mil', value: '100k+' }
-                ]}
-                onSelect={handleChatResponse}
-                disabled={loading}
-              />
-            )}
-
-            {currentQuestion === 3 && (
-              <ChipButtons
-                options={[
-                  { label: 'Sim', value: 'yes' },
-                  { label: 'Não', value: 'no' }
-                ]}
-                onSelect={handleChatResponse}
-                disabled={loading}
-              />
-            )}
-
-            {/* Show loading state */}
-            {loading && currentQuestion === 4 && (
-              <div className="flex justify-center mt-6">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              </div>
-            )}
-
-            {/* Show error if any */}
-            {error && (
-              <div className="mt-6 bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-sm">
-                {error}
-              </div>
-            )}
           </OnboardingChatContainer>
         )}
 
