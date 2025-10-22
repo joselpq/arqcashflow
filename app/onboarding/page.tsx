@@ -10,6 +10,7 @@ import ChipButtons from "../components/onboarding/ChipButtons";
 import ChatFileUpload from "../components/onboarding/ChatFileUpload";
 import EducationPhase from "../components/onboarding/EducationPhase";
 import StreamingMessage from "../components/onboarding/StreamingMessage";
+import { useOnboardingTransition } from "../hooks/useOnboardingTransition";
 
 type UserType = "individual" | "small_business";
 
@@ -38,6 +39,7 @@ interface OnboardingResults {
 export default function OnboardingPage() {
   const { data: session } = useSession();
   const router = useRouter();
+  const { state: transitionState, startTransition } = useOnboardingTransition();
 
   const [currentStep, setCurrentStep] = useState(1);
   const [profileData, setProfileData] = useState<ProfileData>({
@@ -308,15 +310,14 @@ export default function OnboardingPage() {
   };
 
   const handleCompleteOnboarding = async () => {
-    setLoading(true);
     try {
       // Mark onboarding as complete
       await fetch("/api/onboarding/complete", { method: "POST" });
-      router.push("/");
+
+      // Start the transition animation
+      await startTransition();
     } catch (err) {
       setError("Erro ao finalizar onboarding. Tente novamente.");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -361,6 +362,7 @@ export default function OnboardingPage() {
         {/* Step 1: Chat-Based Profile Setup */}
         {currentStep === 1 && (
           <OnboardingChatContainer
+            transitionPhase={transitionState.phase}
             actions={
               <>
                 {/* Back button - show when on questions 1-4 */}

@@ -212,12 +212,32 @@ export default function Dashboard() {
   const [error, setError] = useState<string | null>(null)
   const [retryAttempt, setRetryAttempt] = useState(0)
 
+  // Onboarding transition state
+  const [isFromOnboarding, setIsFromOnboarding] = useState(false)
+
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [modalType, setModalType] = useState<'receivable' | 'expense' | null>(null)
   const [editingEntity, setEditingEntity] = useState<any>(null)
   const [formLoading, setFormLoading] = useState(false)
   const [contracts, setContracts] = useState([])
+
+  // Check if coming from onboarding (for fade-in transition)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const fromOnboarding = sessionStorage.getItem('onboarding-completed')
+      if (fromOnboarding) {
+        setIsFromOnboarding(true)
+        // Clear the flag
+        sessionStorage.removeItem('onboarding-completed')
+
+        // Trigger fade-in by setting to false after a brief moment
+        setTimeout(() => {
+          setIsFromOnboarding(false)
+        }, 50)
+      }
+    }
+  }, [])
 
   // Fetch contracts for forms
   useEffect(() => {
@@ -449,7 +469,7 @@ export default function Dashboard() {
                      data.metrics.thisMonthProfit < 0 ? 'down' : 'neutral'
 
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <div className={`min-h-screen bg-neutral-50 transition-opacity duration-700 ${isFromOnboarding ? 'opacity-0' : 'opacity-100'}`}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-12">
           <div>

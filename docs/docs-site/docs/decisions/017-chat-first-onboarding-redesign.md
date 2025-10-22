@@ -5,7 +5,7 @@ audience: ["developer", "agent", "designer"]
 contexts: ["onboarding", "ux", "chat-interface", "user-experience", "ai-assistant", "setup-assistant"]
 complexity: "advanced"
 last_updated: "2025-10-22"
-version: "1.1"
+version: "1.2"
 status: "in-progress"
 decision_date: "2025-10-17"
 agent_roles: ["ux-developer", "onboarding-specialist", "chat-interface-developer"]
@@ -39,11 +39,11 @@ dependencies: ["setup-assistant-v2", "global-chat", "claude-api", "streaming-mes
 
 ## Status
 
-**Status**: In Progress (Phases 1-4 Complete, Phase 5-6 Pending)
+**Status**: In Progress (Phases 1-5 Complete, Phase 6 Pending)
 **Date**: 2025-10-17
 **Decision Makers**: Product Team, Development Team
 **Context**: Current onboarding is functional but doesn't showcase AI-first platform nature. Users with existing spreadsheets need faster, more intuitive onboarding.
-**Progress Update (2025-10-22)**: Phases 1-4 successfully implemented with enhanced UX improvements including profession question, rotating loading messages with streaming, chat-native file upload, and polished education phase.
+**Progress Update (2025-10-22)**: Phases 1-5 successfully implemented with enhanced UX improvements including profession question, back/undo navigation, rotating loading messages with streaming, chat-native file upload, polished education phase, and smooth morphing transition animation to dashboard with GlobalChat FAB.
 
 ---
 
@@ -928,12 +928,12 @@ const useOnboardingTransition = () => {
   - [x] Update message texts per feedback
   - [x] Test message timing and UX
 
-- [ ] **Phase 5: Transition Animation** (3-4 days)
-  - [ ] Build useOnboardingTransition hook
-  - [ ] Implement CSS animations
-  - [ ] Coordinate with GlobalChat
-  - [ ] Test on multiple devices/browsers
-  - [ ] Implement fallback for reduced motion
+- [x] **Phase 5: Transition Animation** ✅ COMPLETE (2025-10-22)
+  - [x] Build useOnboardingTransition hook with state machine
+  - [x] Implement CSS keyframe animations (shrink → move → morph)
+  - [x] Coordinate with GlobalChat (automatic via pathname check)
+  - [x] SessionStorage coordination for dashboard fade-in
+  - [x] Implement fallback for reduced motion (prefers-reduced-motion)
 
 - [ ] **Phase 6: Polish & Testing** (2-3 days)
   - [ ] E2E tests with Cypress
@@ -942,20 +942,23 @@ const useOnboardingTransition = () => {
   - [ ] Performance optimization
   - [ ] Beta user testing
 
-**Completion Date**: Phases 1-4 complete (2025-10-22), Phases 5-6 pending
+**Completion Date**: Phases 1-5 complete (2025-10-22), Phase 6 pending
 
 ---
 
 **Last Updated**: 2025-10-22
-**Version**: 1.1
-**Status**: In Progress - Phases 1-4 Complete (8 of 15-20 estimated days)
+**Version**: 1.2
+**Status**: In Progress - Phases 1-5 Complete (10 of 15-20 estimated days)
 
 **Implementation Summary:**
-- ✅ Phase 1-4 delivered with enhanced UX improvements
+- ✅ Phase 1-5 delivered with complete onboarding redesign
 - ✅ Added profession question (6 business types)
+- ✅ Implemented back/undo navigation with pre-selection
 - ✅ Implemented rotating loading messages with streaming (7 messages)
 - ✅ Redesigned file upload to chat-native UI (57% space reduction)
 - ✅ Polished education phase with perfect timing and animations
-- ⏱️ Phase 5 (Transition Animation) and Phase 6 (Polish & Testing) pending
+- ✅ Smooth transition animation (1.5s morphing to FAB with dashboard fade-in)
+- ✅ Accessibility: reduced-motion fallback, keyboard navigation
+- ⏱️ Phase 6 (Polish & Testing) pending
 
 *This ADR documents the comprehensive redesign of user onboarding to create an AI-first, educational, and engaging first-time user experience that showcases platform capabilities and creates clear mental models for ongoing usage.*

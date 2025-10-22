@@ -57,7 +57,7 @@ This backlog **DOES NOT** replace other documentation:
 
 ### **Chat-First Onboarding Redesign** 🚀 IN PROGRESS (Started 2025-10-17)
 **Goal**: Transform onboarding into AI-first conversational experience
-**Status**: Phases 1-4 complete, Phase 5 pending
+**Status**: Phases 1-5 complete (10 of 15-20 estimated days), Phase 6 pending
 **Related**: ADR-017 Chat-First Onboarding Redesign
 **Estimated Time**: 15-20 days (phased)
 
@@ -119,10 +119,15 @@ This backlog **DOES NOT** replace other documentation:
   2. "Ah, e também pode contar comigo para responder perguntas sobre seus projetos e finanças, como o lucro de um mês específico, receita média por projeto etc. Estarei logo ali!" (1s delay → "Continuar" button)
 - **Result**: Polished, engaging user education with perfect timing and smooth UX
 
-**Phase 5: Transition Animation** ⏱️ PENDING (3-4 days)
-- [ ] CSS animations: shrink → move → morph to FAB
-- [ ] Dashboard fades in during animation
-- [ ] Mobile + desktop testing
+**Phase 5: Transition Animation** ✅ COMPLETE (2025-10-22)
+- [x] Create `useOnboardingTransition` hook with state machine
+- [x] Implement CSS keyframe animations (shrink 500ms → move 700ms → morph 300ms)
+- [x] Dashboard fade-in transition (700ms opacity animation)
+- [x] SessionStorage coordination between onboarding and dashboard
+- [x] Reduced-motion accessibility fallback
+- [x] GlobalChat automatic handoff (already hides on onboarding)
+- **Files**: `useOnboardingTransition.ts`, `OnboardingChatContainer.tsx`, `page.tsx` (dashboard), `onboarding/page.tsx`
+- **Result**: Smooth 1.5s morphing animation showing chat persistence
 
 **Phase 6: Polish & Testing** ⏱️ PENDING (2-3 days)
 - [ ] E2E tests, unit tests
