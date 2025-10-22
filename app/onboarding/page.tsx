@@ -68,6 +68,16 @@ export default function OnboardingPage() {
   const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
   const loadingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  const handleGoBack = () => {
+    if (currentQuestion <= 0) return;
+
+    // Remove last 2 messages (user's answer + next question)
+    setChatMessages(prev => prev.slice(0, -2));
+
+    // Go back to previous question
+    setCurrentQuestion(prev => prev - 1);
+  };
+
   const handleChatResponse = async (value: string) => {
     // First question: Business type
     if (currentQuestion === 0) {
@@ -353,6 +363,20 @@ export default function OnboardingPage() {
           <OnboardingChatContainer
             actions={
               <>
+                {/* Back button - show when on questions 1-4 */}
+                {currentQuestion >= 1 && currentQuestion <= 4 && (
+                  <div className="mb-3 text-center">
+                    <button
+                      onClick={handleGoBack}
+                      disabled={loading}
+                      className="text-sm text-neutral-600 hover:text-neutral-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors inline-flex items-center gap-1"
+                    >
+                      <span>←</span>
+                      <span>Voltar</span>
+                    </button>
+                  </div>
+                )}
+
                 {/* Show chip buttons for current question */}
                 {currentQuestion === 0 && (
                   <ChipButtons
@@ -362,6 +386,7 @@ export default function OnboardingPage() {
                     ]}
                     onSelect={handleChatResponse}
                     disabled={loading}
+                    selectedValue={profileData.type}
                   />
                 )}
 
@@ -377,6 +402,7 @@ export default function OnboardingPage() {
                     ]}
                     onSelect={handleChatResponse}
                     disabled={loading}
+                    selectedValue={profileData.profession}
                   />
                 )}
 
@@ -391,6 +417,7 @@ export default function OnboardingPage() {
                     ]}
                     onSelect={handleChatResponse}
                     disabled={loading}
+                    selectedValue={profileData.employeeCount}
                   />
                 )}
 
@@ -404,6 +431,7 @@ export default function OnboardingPage() {
                     ]}
                     onSelect={handleChatResponse}
                     disabled={loading}
+                    selectedValue={profileData.revenueTier}
                   />
                 )}
 
@@ -415,6 +443,7 @@ export default function OnboardingPage() {
                     ]}
                     onSelect={handleChatResponse}
                     disabled={loading}
+                    selectedValue={hasSpreadsheet === true ? 'yes' : hasSpreadsheet === false ? 'no' : undefined}
                   />
                 )}
 

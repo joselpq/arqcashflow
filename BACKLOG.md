@@ -74,15 +74,17 @@ This backlog **DOES NOT** replace other documentation:
 - [x] Prevent authenticated users from accessing registration
 - **Result**: Seamless entry, zero flash on registration flow
 
-**Phase 2: Chat Interface for Profile Questions** ✅ COMPLETE (2025-10-21)
+**Phase 2: Chat Interface for Profile Questions** ✅ COMPLETE (2025-10-22)
 - [x] Create `OnboardingChatContainer` component with auto-scroll
 - [x] Create `ChipButtons` component for guided responses
-- [x] Replace Step 2 form with 4-question chat flow
-- [x] Store answers: business type → employee count → revenue → has spreadsheet
-- [x] Uses existing database fields (employeeCount, revenueTier)
+- [x] Enhanced `ChipButtons` with `selectedValue` prop for pre-selection
+- [x] Replace Step 2 form with 5-question chat flow (business type → profession → employee count → revenue → has spreadsheet)
+- [x] Implement back/undo navigation (← Voltar button on questions 1-4)
+- [x] Store answers: business type → profession → employee count → revenue → has spreadsheet
+- [x] Uses existing database fields (employeeCount, revenueTier, profession)
 - [x] Fixed chip button positioning (stay at bottom)
 - **Files**: `app/onboarding/page.tsx`, `OnboardingChatContainer.tsx`, `ChipButtons.tsx`
-- **Result**: Conversational profile collection with excellent UX
+- **Result**: Conversational profile collection with excellent UX and back navigation
 
 **Phase 3: File Upload in Chat** ✅ COMPLETE (2025-10-21)
 - [x] After profile questions, ask: "Tem alguma planilha onde controla seus projetos?"
@@ -98,7 +100,7 @@ This backlog **DOES NOT** replace other documentation:
 - [x] **Animated loading text**: Rotate through 7 phrases every 4 seconds with streaming effect
 - [x] **Missing business type question**: Added profession question (6 options: Arquitetura, Engenharia Civil, Design de Interiores, Paisagismo, Urbanismo, Outros)
 - [x] **Integrated file upload UI**: Complete chat-native redesign with collapsible file list, auto-scroll, compact design (~57% space reduction)
-- [ ] **Back/undo functionality**: Allow users to go back and change answers in chat (OPTIONAL - Future enhancement)
+- [x] **Back/undo functionality**: Users can go back to previous questions (1-4) and change answers with pre-selected values highlighted (2025-10-22)
 
 **Phase 4: Education Messages** ✅ COMPLETE (2025-10-22)
 - [x] Create `StreamingMessage` component (letter-by-letter typing)
