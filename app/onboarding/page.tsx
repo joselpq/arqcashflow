@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -9,11 +9,13 @@ import OnboardingChatContainer from "../components/onboarding/OnboardingChatCont
 import ChipButtons from "../components/onboarding/ChipButtons";
 import ChatFileUpload from "../components/onboarding/ChatFileUpload";
 import EducationPhase from "../components/onboarding/EducationPhase";
+import StreamingMessage from "../components/onboarding/StreamingMessage";
 
 type UserType = "individual" | "small_business";
 
 interface ProfileData {
   type: UserType;
+  profession?: string;
   employeeCount?: string;
   revenueTier?: string;
 }
@@ -21,6 +23,7 @@ interface ProfileData {
 interface ChatMessage {
   role: 'assistant' | 'user';
   content: string;
+  isStreaming?: boolean;
 }
 
 interface OnboardingResults {
@@ -62,6 +65,8 @@ export default function OnboardingPage() {
   const [hasSpreadsheet, setHasSpreadsheet] = useState<boolean | null>(null);
   const [totalUploaded, setTotalUploaded] = useState({ contracts: 0, receivables: 0, expenses: 0 });
   const [showEducation, setShowEducation] = useState(false);
+  const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
+  const loadingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleChatResponse = async (value: string) => {
     // First question: Business type
@@ -70,12 +75,30 @@ export default function OnboardingPage() {
       setChatMessages(prev => [...prev, { role: 'user', content: responseLabel }]);
       setProfileData({ ...profileData, type: value as UserType });
 
-      // Ask next question
-      setChatMessages(prev => [...prev, { role: 'assistant', content: 'Quantas pessoas trabalham no negócio?' }]);
+      // Ask next question: Business profession
+      setChatMessages(prev => [...prev, { role: 'assistant', content: 'Qual é sua área de atuação?' }]);
       setCurrentQuestion(1);
     }
-    // Second question: Employee count
+    // Second question: Business profession/field
     else if (currentQuestion === 1) {
+      const professionOptions = [
+        { label: 'Arquitetura', value: 'arquitetura' },
+        { label: 'Engenharia Civil', value: 'engenharia-civil' },
+        { label: 'Design de Interiores', value: 'design-interiores' },
+        { label: 'Paisagismo', value: 'paisagismo' },
+        { label: 'Urbanismo', value: 'urbanismo' },
+        { label: 'Outros', value: 'outros' }
+      ];
+      const selectedOption = professionOptions.find(opt => opt.value === value);
+      setChatMessages(prev => [...prev, { role: 'user', content: selectedOption?.label || value }]);
+      setProfileData(prev => ({ ...prev, profession: value }));
+
+      // Ask next question: Employee count
+      setChatMessages(prev => [...prev, { role: 'assistant', content: 'Quantas pessoas trabalham no negócio?' }]);
+      setCurrentQuestion(2);
+    }
+    // Third question: Employee count
+    else if (currentQuestion === 2) {
       const employeeCountOptions = [
         { label: '1 pessoa (só eu)', value: '1' },
         { label: '2-5 pessoas', value: '2-5' },
@@ -89,10 +112,10 @@ export default function OnboardingPage() {
 
       // Ask next question
       setChatMessages(prev => [...prev, { role: 'assistant', content: 'Qual é aproximadamente seu faturamento mensal? Tudo bem se não tiver certeza' }]);
-      setCurrentQuestion(2);
+      setCurrentQuestion(3);
     }
-    // Third question: Revenue tier
-    else if (currentQuestion === 2) {
+    // Fourth question: Revenue tier
+    else if (currentQuestion === 3) {
       const revenueOptions = [
         { label: 'Até R$ 10 mil', value: '0-10k' },
         { label: 'R$ 10 mil a R$ 50 mil', value: '10k-50k' },
@@ -105,10 +128,10 @@ export default function OnboardingPage() {
 
       // Ask spreadsheet question
       setChatMessages(prev => [...prev, { role: 'assistant', content: 'Você tem alguma planilha onde controla seus projetos, recebíveis e despesas?' }]);
-      setCurrentQuestion(3);
+      setCurrentQuestion(4);
     }
-    // Fourth question: Has spreadsheet
-    else if (currentQuestion === 3) {
+    // Fifth question: Has spreadsheet
+    else if (currentQuestion === 4) {
       const responseLabel = value === 'yes' ? 'Sim' : 'Não';
       setChatMessages(prev => [...prev, { role: 'user', content: responseLabel }]);
 
@@ -120,20 +143,20 @@ export default function OnboardingPage() {
         setHasSpreadsheet(true);
         setChatMessages(prev => [...prev, { role: 'assistant', content: 'Ótimo! Envie seus arquivos abaixo (planilhas, PDFs ou imagens):' }]);
         setShowFileUpload(true);
-        setCurrentQuestion(4);
+        setCurrentQuestion(5);
       } else {
         // User doesn't have spreadsheet - show education phase
         setHasSpreadsheet(false);
         setChatMessages(prev => [...prev, { role: 'assistant', content: 'Sem problema! Você pode adicionar seus dados manualmente depois.' }]);
-        setCurrentQuestion(5);
+        setCurrentQuestion(6);
         // Show education phase after a brief delay
         setTimeout(() => {
           setShowEducation(true);
         }, 1500);
       }
     }
-    // Fifth question: More files?
-    else if (currentQuestion === 4) {
+    // Sixth question: More files?
+    else if (currentQuestion === 5) {
       const responseLabel = value === 'yes' ? 'Sim, tenho mais' : 'Não, estou pronto(a)';
       setChatMessages(prev => [...prev, { role: 'user', content: responseLabel }]);
 
@@ -144,7 +167,7 @@ export default function OnboardingPage() {
       } else {
         // Show education phase
         setChatMessages(prev => [...prev, { role: 'assistant', content: 'Excelente!' }]);
-        setCurrentQuestion(5);
+        setCurrentQuestion(6);
         setTimeout(() => {
           setShowEducation(true);
         }, 1000);
@@ -177,19 +200,59 @@ export default function OnboardingPage() {
     }
   };
 
+  const loadingMessages = [
+    'Analisando a estrutura dos seus arquivos... ☕',
+    'Identificando contratos e projetos... 📋',
+    'Extraindo recebíveis... 💰',
+    'Processando despesas... 📊',
+    'Organizando tudo para você... 🗂️',
+    'Validando os dados... ✅',
+    'Quase lá! Finalizando... 🎯'
+  ];
+
   const handleFileUploadStart = () => {
-    // Show loading message
-    const loadingMessages = [
-      'Analisando seus arquivos... Isso pode levar alguns minutos, aproveite para pegar um café! ☕',
-      'Processando seus dados... Que tal alongar as pernas enquanto eu trabalho? 🚶',
-      'Organizando tudo para você... Hora de tomar aquela água! 💧',
-      'Lendo seus arquivos... Aproveite para respirar fundo! 🧘'
-    ];
-    const randomMessage = loadingMessages[Math.floor(Math.random() * loadingMessages.length)];
-    setChatMessages(prev => [...prev, { role: 'assistant', content: randomMessage }]);
+    // Keep file upload visible (it will hide its drop zone internally)
+    // Start with first message (streaming)
+    setLoadingMessageIndex(0);
+    setChatMessages(prev => [...prev, { role: 'assistant', content: loadingMessages[0], isStreaming: true }]);
+
+    // Rotate through messages every 4 seconds
+    let currentIndex = 0;
+    loadingIntervalRef.current = setInterval(() => {
+      currentIndex = (currentIndex + 1) % loadingMessages.length;
+      setLoadingMessageIndex(currentIndex);
+
+      // Update the last message with new content (will trigger streaming restart)
+      setChatMessages(prev => {
+        const newMessages = [...prev];
+        // Find the last assistant message (loading message)
+        for (let i = newMessages.length - 1; i >= 0; i--) {
+          if (newMessages[i].role === 'assistant' && newMessages[i].isStreaming) {
+            newMessages[i] = { role: 'assistant', content: loadingMessages[currentIndex], isStreaming: true };
+            break;
+          }
+        }
+        return newMessages;
+      });
+    }, 4000); // Change message every 4 seconds
   };
 
+  // Cleanup interval when component unmounts or upload completes
+  useEffect(() => {
+    return () => {
+      if (loadingIntervalRef.current) {
+        clearInterval(loadingIntervalRef.current);
+      }
+    };
+  }, []);
+
   const handleFileUploadComplete = (results: { totalContracts: number; totalReceivables: number; totalExpenses: number; totalErrors: number; success: boolean }) => {
+    // Clear loading message rotation
+    if (loadingIntervalRef.current) {
+      clearInterval(loadingIntervalRef.current);
+      loadingIntervalRef.current = null;
+    }
+
     // Update cumulative totals
     setTotalUploaded(prev => ({
       contracts: prev.contracts + results.totalContracts,
@@ -197,12 +260,25 @@ export default function OnboardingPage() {
       expenses: prev.expenses + results.totalExpenses
     }));
 
-    // Show results as chat message
+    // Replace loading message with success summary
     const summary = `Pronto! Encontrei ${results.totalContracts} contrato${results.totalContracts !== 1 ? 's' : ''}, ${results.totalReceivables} recebíve${results.totalReceivables !== 1 ? 'is' : 'l'} e ${results.totalExpenses} despesa${results.totalExpenses !== 1 ? 's' : ''}.`;
-    setChatMessages(prev => [...prev, { role: 'assistant', content: summary }]);
+
+    setChatMessages(prev => {
+      const newMessages = [...prev];
+      // Replace the loading message with the summary (no longer streaming)
+      for (let i = newMessages.length - 1; i >= 0; i--) {
+        if (newMessages[i].role === 'assistant' && newMessages[i].isStreaming) {
+          newMessages[i] = { role: 'assistant', content: summary, isStreaming: false };
+          break;
+        }
+      }
+      return newMessages;
+    });
 
     // Ask if user wants to upload more
     setChatMessages(prev => [...prev, { role: 'assistant', content: 'Tem outros arquivos para importar?' }]);
+
+    // Hide file upload to show chip buttons
     setShowFileUpload(false);
   };
 
@@ -292,6 +368,21 @@ export default function OnboardingPage() {
                 {currentQuestion === 1 && (
                   <ChipButtons
                     options={[
+                      { label: 'Arquitetura', value: 'arquitetura' },
+                      { label: 'Engenharia Civil', value: 'engenharia-civil' },
+                      { label: 'Design de Interiores', value: 'design-interiores' },
+                      { label: 'Paisagismo', value: 'paisagismo' },
+                      { label: 'Urbanismo', value: 'urbanismo' },
+                      { label: 'Outros', value: 'outros' }
+                    ]}
+                    onSelect={handleChatResponse}
+                    disabled={loading}
+                  />
+                )}
+
+                {currentQuestion === 2 && (
+                  <ChipButtons
+                    options={[
                       { label: '1 pessoa (só eu)', value: '1' },
                       { label: '2-5 pessoas', value: '2-5' },
                       { label: '6-10 pessoas', value: '6-10' },
@@ -303,7 +394,7 @@ export default function OnboardingPage() {
                   />
                 )}
 
-                {currentQuestion === 2 && (
+                {currentQuestion === 3 && (
                   <ChipButtons
                     options={[
                       { label: 'Até R$ 10 mil', value: '0-10k' },
@@ -316,7 +407,7 @@ export default function OnboardingPage() {
                   />
                 )}
 
-                {currentQuestion === 3 && (
+                {currentQuestion === 4 && (
                   <ChipButtons
                     options={[
                       { label: 'Sim', value: 'yes' },
@@ -327,16 +418,9 @@ export default function OnboardingPage() {
                   />
                 )}
 
-                {/* Show file upload when user has spreadsheet */}
-                {currentQuestion === 4 && showFileUpload && (
-                  <ChatFileUpload
-                    onUploadStart={handleFileUploadStart}
-                    onUploadComplete={handleFileUploadComplete}
-                  />
-                )}
 
                 {/* Show "more files?" buttons after upload */}
-                {currentQuestion === 4 && !showFileUpload && (
+                {currentQuestion === 5 && !showFileUpload && (
                   <ChipButtons
                     options={[
                       { label: 'Sim, tenho mais', value: 'yes' },
@@ -348,7 +432,7 @@ export default function OnboardingPage() {
                 )}
 
                 {/* Show loading state */}
-                {loading && currentQuestion === 5 && (
+                {loading && currentQuestion === 6 && (
                   <div className="flex justify-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                   </div>
@@ -365,18 +449,38 @@ export default function OnboardingPage() {
           >
             {/* Render chat messages */}
             {chatMessages.map((msg, index) => (
-              <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div
-                  className={`max-w-[80%] p-4 rounded-2xl ${
-                    msg.role === 'user'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-neutral-100 text-neutral-900'
-                  }`}
-                >
-                  <p className="text-base leading-relaxed">{msg.content}</p>
+              msg.isStreaming ? (
+                // Use StreamingMessage for loading messages
+                <StreamingMessage
+                  key={`${index}-${msg.content}`} // Include content in key to restart on content change
+                  content={msg.content}
+                  speed={2}
+                  interval={30}
+                  keepCursorAfterComplete={true} // Keep cursor blinking to show "thinking"
+                />
+              ) : (
+                // Regular static message
+                <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  <div
+                    className={`max-w-[80%] p-4 rounded-2xl ${
+                      msg.role === 'user'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-neutral-100 text-neutral-900'
+                    }`}
+                  >
+                    <p className="text-base leading-relaxed">{msg.content}</p>
+                  </div>
                 </div>
-              </div>
+              )
             ))}
+
+            {/* Show file upload when user has spreadsheet */}
+            {currentQuestion === 5 && showFileUpload && (
+              <ChatFileUpload
+                onUploadStart={handleFileUploadStart}
+                onUploadComplete={handleFileUploadComplete}
+              />
+            )}
 
             {/* Show education phase */}
             {showEducation && (

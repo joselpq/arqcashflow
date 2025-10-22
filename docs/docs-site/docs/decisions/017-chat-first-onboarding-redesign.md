@@ -4,9 +4,9 @@ type: "decision"
 audience: ["developer", "agent", "designer"]
 contexts: ["onboarding", "ux", "chat-interface", "user-experience", "ai-assistant", "setup-assistant"]
 complexity: "advanced"
-last_updated: "2025-10-17"
-version: "1.0"
-status: "proposed"
+last_updated: "2025-10-22"
+version: "1.1"
+status: "in-progress"
 decision_date: "2025-10-17"
 agent_roles: ["ux-developer", "onboarding-specialist", "chat-interface-developer"]
 related:
@@ -39,10 +39,11 @@ dependencies: ["setup-assistant-v2", "global-chat", "claude-api", "streaming-mes
 
 ## Status
 
-**Status**: Proposed
+**Status**: In Progress (Phases 1-4 Complete, Phase 5-6 Pending)
 **Date**: 2025-10-17
 **Decision Makers**: Product Team, Development Team
 **Context**: Current onboarding is functional but doesn't showcase AI-first platform nature. Users with existing spreadsheets need faster, more intuitive onboarding.
+**Progress Update (2025-10-22)**: Phases 1-4 successfully implemented with enhanced UX improvements including profession question, rotating loading messages with streaming, chat-native file upload, and polished education phase.
 
 ---
 
@@ -889,32 +890,43 @@ const useOnboardingTransition = () => {
 
 **Status Tracking:**
 
-- [ ] **Phase 1: Registration & Auto-Login** (1-2 days)
-  - [ ] Update registration API for auto-login
-  - [ ] Add redirect to `/onboarding`
-  - [ ] Test edge cases
-  - [ ] Deploy to staging
+- [x] **Phase 1: Registration & Auto-Login** ✅ COMPLETE (2025-10-17)
+  - [x] Update registration API for auto-login
+  - [x] Add redirect to `/onboarding`
+  - [x] Test edge cases
+  - [x] Fix NavBar flash on auth pages
+  - [x] Prevent authenticated users from accessing registration
 
-- [ ] **Phase 2: Profile Collection Chat** (3-4 days)
-  - [ ] Create OnboardingChatContainer
-  - [ ] Build ProfileChatStep component
-  - [ ] Implement ChipButtons component
-  - [ ] Create UserProfile database model
-  - [ ] Build API endpoint for profile saving
-  - [ ] Test on mobile and desktop
+- [x] **Phase 2: Profile Collection Chat** ✅ COMPLETE (2025-10-21)
+  - [x] Create OnboardingChatContainer
+  - [x] Build ProfileChatStep component
+  - [x] Implement ChipButtons component
+  - [x] Add profession question (6 options)
+  - [x] Store answers in profile data
+  - [x] Test on mobile and desktop
+  - [x] Fix chip button positioning (bottom fixed)
 
-- [ ] **Phase 3: File Upload Chat Flow** (4-5 days)
-  - [ ] Build FileUploadChatStep component
-  - [ ] Integrate SetupAssistant multi-file API
-  - [ ] Add processing messages rotation
-  - [ ] Implement multi-file loop logic
-  - [ ] Test with various file types and sizes
+- [x] **Phase 3: File Upload Chat Flow** ✅ COMPLETE (2025-10-22)
+  - [x] Build ChatFileUpload component
+  - [x] Integrate SetupAssistant multi-file API
+  - [x] Add rotating loading messages (7 messages, 4s interval)
+  - [x] Implement streaming effect on loading messages
+  - [x] Implement multi-file loop logic
+  - [x] Redesign to chat-native UI (compact, collapsible)
+  - [x] Add auto-scroll on file selection
+  - [x] Test with various file types and sizes
 
-- [ ] **Phase 4: Education Phase** (2-3 days)
-  - [ ] Create StreamingMessage component
-  - [ ] Build EducationPhase coordinator
-  - [ ] Implement auto-advance logic
-  - [ ] Test message timing and UX
+- [x] **Phase 4: Education Phase** ✅ COMPLETE (2025-10-22)
+  - [x] Create StreamingMessage component
+  - [x] Create TypingIndicator component
+  - [x] Build EducationPhase coordinator
+  - [x] Fix streaming double-write bug (useRef pattern)
+  - [x] Fix runtime errors with guard clauses
+  - [x] Optimize timing (2s typing → 1s delay → button)
+  - [x] Implement custom blinking cursor animation
+  - [x] Add auto-scroll during streaming
+  - [x] Update message texts per feedback
+  - [x] Test message timing and UX
 
 - [ ] **Phase 5: Transition Animation** (3-4 days)
   - [ ] Build useOnboardingTransition hook
@@ -930,12 +942,20 @@ const useOnboardingTransition = () => {
   - [ ] Performance optimization
   - [ ] Beta user testing
 
-**Completion Date**: TBD (estimated 15-20 days from start)
+**Completion Date**: Phases 1-4 complete (2025-10-22), Phases 5-6 pending
 
 ---
 
-**Last Updated**: 2025-10-17
-**Version**: 1.0
-**Status**: Proposed - Awaiting implementation start
+**Last Updated**: 2025-10-22
+**Version**: 1.1
+**Status**: In Progress - Phases 1-4 Complete (8 of 15-20 estimated days)
+
+**Implementation Summary:**
+- ✅ Phase 1-4 delivered with enhanced UX improvements
+- ✅ Added profession question (6 business types)
+- ✅ Implemented rotating loading messages with streaming (7 messages)
+- ✅ Redesigned file upload to chat-native UI (57% space reduction)
+- ✅ Polished education phase with perfect timing and animations
+- ⏱️ Phase 5 (Transition Animation) and Phase 6 (Polish & Testing) pending
 
 *This ADR documents the comprehensive redesign of user onboarding to create an AI-first, educational, and engaging first-time user experience that showcases platform capabilities and creates clear mental models for ongoing usage.*

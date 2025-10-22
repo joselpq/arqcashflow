@@ -1,11 +1,12 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { DocumentIcon, XMarkIcon } from '@heroicons/react/24/outline'
+import { DocumentIcon, XMarkIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline'
 
 interface ChatFileUploadProps {
   onUploadComplete: (results: UploadResults) => void
   onUploadStart: () => void
+  onFilesSelected?: () => void
 }
 
 interface UploadResults {
@@ -16,11 +17,13 @@ interface UploadResults {
   success: boolean
 }
 
-export default function ChatFileUpload({ onUploadComplete, onUploadStart }: ChatFileUploadProps) {
+export default function ChatFileUpload({ onUploadComplete, onUploadStart, onFilesSelected }: ChatFileUploadProps) {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
   const [dragActive, setDragActive] = useState(false)
+  const [showFileList, setShowFileList] = useState(true)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const fileBlockRef = useRef<HTMLDivElement>(null)
 
   const validateFile = (file: File): boolean => {
     const fileName = file.name.toLowerCase()
@@ -57,6 +60,17 @@ export default function ChatFileUpload({ onUploadComplete, onUploadStart }: Chat
 
     if (validFiles.length > 0) {
       setSelectedFiles(prev => [...prev, ...validFiles])
+
+      // Auto-scroll to show the file block after files are selected
+      setTimeout(() => {
+        if (fileBlockRef.current) {
+          const scrollContainer = fileBlockRef.current.closest('.overflow-y-auto')
+          if (scrollContainer) {
+            scrollContainer.scrollTop = scrollContainer.scrollHeight
+          }
+        }
+        onFilesSelected?.()
+      }, 100)
     }
   }
 
@@ -136,90 +150,118 @@ export default function ChatFileUpload({ onUploadComplete, onUploadStart }: Chat
   }
 
   return (
-    <div className="space-y-4">
-      {/* Drop zone */}
-      <div
-        className={`border-2 border-dashed rounded-xl p-6 text-center transition-colors ${
-          dragActive
-            ? 'border-blue-500 bg-blue-50'
-            : 'border-neutral-300 bg-neutral-50'
-        }`}
-        onDragEnter={handleDrag}
-        onDragLeave={handleDrag}
-        onDragOver={handleDrag}
-        onDrop={handleDrop}
-      >
-        <DocumentIcon className="w-12 h-12 mx-auto text-neutral-400 mb-3" />
-        <p className="text-sm text-neutral-700 mb-2">
-          Arraste arquivos aqui ou
-        </p>
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          disabled={isProcessing}
-          className="text-sm text-blue-600 hover:text-blue-700 font-medium underline disabled:opacity-50"
-        >
-          selecione do seu computador
-        </button>
-        <p className="text-xs text-neutral-500 mt-2">
-          Planilhas, PDFs ou imagens (máx: 32MB)
-        </p>
-        <input
-          ref={fileInputRef}
-          type="file"
-          multiple
-          accept=".xlsx,.xls,.csv,.pdf,image/*"
-          onChange={(e) => handleFileSelect(e.target.files)}
-          className="hidden"
-        />
-      </div>
+    <div ref={fileBlockRef} className="flex justify-start mb-4">
+      <div className="max-w-[80%] space-y-2">
+        {/* Drop zone - hide when processing */}
+        {!isProcessing && (
+          <div
+            className={`rounded-2xl p-4 transition-all ${
+              dragActive
+                ? 'bg-blue-50 border-2 border-blue-300'
+                : 'bg-neutral-100 border-2 border-neutral-200'
+            }`}
+            onDragEnter={handleDrag}
+            onDragLeave={handleDrag}
+            onDragOver={handleDrag}
+            onDrop={handleDrop}
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">📎</span>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-neutral-700">
+                  Arraste arquivos ou{' '}
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isProcessing}
+                    className="text-blue-600 hover:text-blue-700 hover:underline disabled:opacity-50"
+                  >
+                    clique aqui
+                  </button>
+                </p>
+                <p className="text-xs text-neutral-500 mt-0.5">
+                  Excel, PDF, imagens • máx 32MB
+                </p>
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept=".xlsx,.xls,.csv,.pdf,image/*"
+                onChange={(e) => handleFileSelect(e.target.files)}
+                className="hidden"
+              />
+            </div>
+          </div>
+        )}
 
-      {/* Selected files */}
-      {selectedFiles.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-xs font-medium text-neutral-600">
-            Arquivos selecionados ({selectedFiles.length}):
-          </p>
-          {selectedFiles.map((file, index) => (
-            <div
-              key={index}
-              className="flex items-center justify-between bg-white border border-neutral-200 rounded-lg p-2"
+        {/* Selected files - compact with collapsible list */}
+        {selectedFiles.length > 0 && (
+          <div className="bg-neutral-50 rounded-2xl p-3 space-y-2">
+            {/* Header with file count and toggle */}
+            <button
+              onClick={() => setShowFileList(!showFileList)}
+              className="w-full flex items-center justify-between text-left group"
             >
-              <div className="flex items-center space-x-2 flex-1 min-w-0">
-                <DocumentIcon className="w-4 h-4 text-neutral-400 flex-shrink-0" />
-                <span className="text-sm text-neutral-700 truncate">{file.name}</span>
-                <span className="text-xs text-neutral-500 flex-shrink-0">
-                  {(file.size / 1024 / 1024).toFixed(2)} MB
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold text-neutral-900">
+                  {selectedFiles.length} arquivo{selectedFiles.length > 1 ? 's' : ''}
+                </span>
+                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                  {(selectedFiles.reduce((sum, f) => sum + f.size, 0) / 1024 / 1024).toFixed(1)} MB
                 </span>
               </div>
-              <button
-                onClick={() => removeFile(index)}
-                disabled={isProcessing}
-                className="ml-2 text-neutral-400 hover:text-red-500 disabled:opacity-50"
-              >
-                <XMarkIcon className="w-4 h-4" />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
+              {showFileList ? (
+                <ChevronUpIcon className="w-4 h-4 text-neutral-500 group-hover:text-neutral-700" />
+              ) : (
+                <ChevronDownIcon className="w-4 h-4 text-neutral-500 group-hover:text-neutral-700" />
+              )}
+            </button>
 
-      {/* Upload button */}
-      {selectedFiles.length > 0 && (
-        <button
-          onClick={handleUpload}
-          disabled={isProcessing}
-          className="w-full bg-blue-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          {isProcessing ? (
-            <span className="flex items-center justify-center gap-2">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-              Processando...
-            </span>
-          ) : (
-            `Processar ${selectedFiles.length} arquivo${selectedFiles.length > 1 ? 's' : ''}`
-          )}
-        </button>
-      )}
+            {/* Collapsible file list */}
+            {showFileList && (
+              <div className="space-y-1 max-h-40 overflow-y-auto">
+                {selectedFiles.map((file, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between bg-white rounded-lg px-2 py-1.5 group hover:bg-neutral-50 transition-colors"
+                  >
+                    <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                      <span className="text-sm">📄</span>
+                      <span className="text-xs text-neutral-900 truncate font-medium">
+                        {file.name}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => removeFile(index)}
+                      disabled={isProcessing}
+                      className="ml-2 text-neutral-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all disabled:opacity-30"
+                      aria-label="Remover"
+                    >
+                      <XMarkIcon className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Upload button - compact */}
+            <button
+              onClick={handleUpload}
+              disabled={isProcessing}
+              className="w-full bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-all shadow-sm hover:shadow"
+            >
+              {isProcessing ? (
+                <span className="flex items-center justify-center gap-2">
+                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                  <span className="text-xs">Enviando...</span>
+                </span>
+              ) : (
+                `✨ Processar`
+              )}
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

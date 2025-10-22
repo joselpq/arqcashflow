@@ -25,14 +25,14 @@ export default function OnboardingChatContainer({ children, actions }: Onboardin
       {/* Chat Messages Container with auto-scroll */}
       <div
         ref={messagesContainerRef}
-        className="space-y-6 flex-1 overflow-y-auto pr-2"
+        className="space-y-6 flex-1 overflow-y-auto pr-2 pb-6"
       >
         {children}
       </div>
 
-      {/* Fixed actions area at bottom */}
+      {/* Fixed actions area at bottom with more padding */}
       {actions && (
-        <div className="pt-4 border-t border-neutral-100">
+        <div className="pt-6 mt-4 border-t border-neutral-100">
           {actions}
         </div>
       )}

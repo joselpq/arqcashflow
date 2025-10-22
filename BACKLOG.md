@@ -1,7 +1,7 @@
 # ArqCashflow Development Backlog
 
 **Purpose**: Central source of truth for project priorities and development status
-**Last Updated**: 2025-10-17 (Cleaned up: removed strategies, simplified structure)
+**Last Updated**: 2025-10-22 (Phase 4 complete with all UX improvements)
 **Update Frequency**: Every LLM session MUST update this document when completing tasks
 
 ## 🚨 CRITICAL INSTRUCTIONS FOR LLM AGENTS
@@ -57,7 +57,7 @@ This backlog **DOES NOT** replace other documentation:
 
 ### **Chat-First Onboarding Redesign** 🚀 IN PROGRESS (Started 2025-10-17)
 **Goal**: Transform onboarding into AI-first conversational experience
-**Status**: Phase 1 complete, Phase 2 starting
+**Status**: Phases 1-4 complete, Phase 5 pending
 **Related**: ADR-017 Chat-First Onboarding Redesign
 **Estimated Time**: 15-20 days (phased)
 
@@ -94,23 +94,28 @@ This backlog **DOES NOT** replace other documentation:
 - **Files**: `app/onboarding/page.tsx`, `ChatFileUpload.tsx`
 - **Result**: Seamless file upload within chat conversation
 
-**Phase 2 & 3: Known Improvements (Future)** 📝
-- [ ] **Animated loading text**: Rotate through multiple phrases every few seconds instead of static message
-- [ ] **Missing business type question**: Add question about type of business/profession (arquitetura, engenharia, etc.)
-- [ ] **Back/undo functionality**: Allow users to go back and change answers in chat
-- [ ] **Integrated file upload UI**: Make file upload look more chat-native (like floating chat) with better visual integration
+**Phase 2 & 3: Completed Improvements** ✅
+- [x] **Animated loading text**: Rotate through 7 phrases every 4 seconds with streaming effect
+- [x] **Missing business type question**: Added profession question (6 options: Arquitetura, Engenharia Civil, Design de Interiores, Paisagismo, Urbanismo, Outros)
+- [x] **Integrated file upload UI**: Complete chat-native redesign with collapsible file list, auto-scroll, compact design (~57% space reduction)
+- [ ] **Back/undo functionality**: Allow users to go back and change answers in chat (OPTIONAL - Future enhancement)
 
-**Phase 4: Education Messages** ✅ COMPLETE (2025-10-21)
+**Phase 4: Education Messages** ✅ COMPLETE (2025-10-22)
 - [x] Create `StreamingMessage` component (letter-by-letter typing)
 - [x] Create `EducationPhase` component (message sequence manager)
+- [x] Create `TypingIndicator` component (animated dots)
 - [x] Show AI capabilities messages with streaming effect
-- [x] Auto-advance (3s) on first message, manual click on second
-- [x] Blinking cursor animation during typing
-- **Files**: `StreamingMessage.tsx`, `EducationPhase.tsx`, `app/onboarding/page.tsx`
+- [x] Fixed streaming double-write bug (useRef pattern)
+- [x] Fixed runtime error with guard clauses
+- [x] Optimized timing: 2s typing indicator → 1s delay → button
+- [x] Custom blinking cursor animation (step-end infinite)
+- [x] Auto-scroll during streaming and transitions
+- [x] Updated message texts per user feedback
+- **Files**: `StreamingMessage.tsx`, `EducationPhase.tsx`, `TypingIndicator.tsx`, `app/onboarding/page.tsx`
 - **Messages**:
-  1. "Se precisar de mim para criar ou editar contratos..." (auto-advance 3s)
-  2. "Ah, e pode contar comigo para responder perguntas..." (wait for click)
-- **Result**: Engaging user education with typewriter effect
+  1. "Se precisar de mim para criar ou editar contratos, recebíveis ou despesas, é só me mandar uma mensagem." (2s typing indicator)
+  2. "Ah, e também pode contar comigo para responder perguntas sobre seus projetos e finanças, como o lucro de um mês específico, receita média por projeto etc. Estarei logo ali!" (1s delay → "Continuar" button)
+- **Result**: Polished, engaging user education with perfect timing and smooth UX
 
 **Phase 5: Transition Animation** ⏱️ PENDING (3-4 days)
 - [ ] CSS animations: shrink → move → morph to FAB
@@ -359,5 +364,5 @@ This backlog **DOES NOT** replace other documentation:
 
 ---
 
-**Last Updated**: 2025-10-17
+**Last Updated**: 2025-10-22
 **Status**: DOING (1 active), TO DO (7 items), BACKLOG (20+ items), DONE (1 recent)
