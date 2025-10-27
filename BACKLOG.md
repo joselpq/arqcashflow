@@ -199,6 +199,22 @@ This backlog **DOES NOT** replace other documentation:
 
 ---
 
+### **Dashboard "Resolver" Modals Simplification** (3-4 hours) (HIGH PRIORITY - First Interaction)
+
+**Problem**: "Resolver" button modals may be one of the first user interactions with the platform after onboarding
+**Current State**: Modals might be too complex or overwhelming for new users
+**Goals**:
+- Review all "Resolver" button modals on Dashboard page
+- Simplify forms and reduce cognitive load
+- Ensure clear, friendly copy for first-time users
+- Streamline workflows (fewer steps/clicks)
+- Consider progressive disclosure patterns
+
+**Impact**: Critical for first impression and user confidence with the platform
+**Location**: `app/page.tsx` (Dashboard), related modal components
+
+---
+
 ### **Landing Page Redesign** (8-12 hours)
 
 **Current Issues**:
@@ -409,4 +425,4 @@ This backlog **DOES NOT** replace other documentation:
 ---
 
 **Last Updated**: 2025-10-27
-**Status**: DOING (1 active - Phase 6 pending), TO DO (7 items), BACKLOG (20+ items), DONE (1 recent)
+**Status**: DOING (1 active - Phase 6 pending), TO DO (8 items), BACKLOG (20+ items), DONE (1 recent)
