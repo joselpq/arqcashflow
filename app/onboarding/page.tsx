@@ -65,6 +65,8 @@ export default function OnboardingPage() {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [showFileUpload, setShowFileUpload] = useState(false);
   const [hasSpreadsheet, setHasSpreadsheet] = useState<boolean | null>(null);
+  const [hasContracts, setHasContracts] = useState<boolean | null>(null);
+  const [uploadType, setUploadType] = useState<'spreadsheet' | 'contract' | null>(null);
   const [totalUploaded, setTotalUploaded] = useState({ contracts: 0, receivables: 0, expenses: 0 });
   const [showEducation, setShowEducation] = useState(false);
   const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
@@ -72,6 +74,42 @@ export default function OnboardingPage() {
 
   const handleGoBack = () => {
     if (currentQuestion <= 0) return;
+
+    // Special handling for question 5 (file upload - spreadsheets)
+    if (currentQuestion === 5 && uploadType === 'spreadsheet') {
+      // Remove last 2 messages (user's "Sim" answer + upload prompt)
+      setChatMessages(prev => prev.slice(0, -2));
+      // Hide file upload
+      setShowFileUpload(false);
+      setHasSpreadsheet(null);
+      setUploadType(null);
+      // Go back to question 4
+      setCurrentQuestion(4);
+      return;
+    }
+
+    // Special handling for question 6 (file upload - contracts)
+    if (currentQuestion === 6 && uploadType === 'contract') {
+      // Remove last 2 messages (user's "Sim" answer + upload prompt)
+      setChatMessages(prev => prev.slice(0, -2));
+      // Hide file upload
+      setShowFileUpload(false);
+      setHasContracts(null);
+      setUploadType(null);
+      // Go back to question 5 (has contracts question)
+      setCurrentQuestion(5);
+      return;
+    }
+
+    // Special handling for question 5 (has contracts question)
+    if (currentQuestion === 5 && hasSpreadsheet === false) {
+      // Remove last 2 messages (user's "Não" answer + contracts question)
+      setChatMessages(prev => prev.slice(0, -2));
+      setHasSpreadsheet(null);
+      // Go back to question 4
+      setCurrentQuestion(4);
+      return;
+    }
 
     // Remove last 2 messages (user's answer + next question)
     setChatMessages(prev => prev.slice(0, -2));
@@ -139,7 +177,7 @@ export default function OnboardingPage() {
       setProfileData(prev => ({ ...prev, revenueTier: value }));
 
       // Ask spreadsheet question
-      setChatMessages(prev => [...prev, { role: 'assistant', content: 'Você tem alguma planilha onde controla seus projetos, recebíveis e despesas?' }]);
+      setChatMessages(prev => [...prev, { role: 'assistant', content: 'Você tem alguma planilha onde controla seus projetos, recebíveis e/ou despesas?' }]);
       setCurrentQuestion(4);
     }
     // Fifth question: Has spreadsheet
@@ -153,33 +191,71 @@ export default function OnboardingPage() {
       if (value === 'yes') {
         // User has spreadsheet - show upload
         setHasSpreadsheet(true);
-        setChatMessages(prev => [...prev, { role: 'assistant', content: 'Ótimo! Envie seus arquivos abaixo (planilhas, PDFs ou imagens):' }]);
+        setUploadType('spreadsheet');
+        setChatMessages(prev => [...prev, { role: 'assistant', content: 'Ótimo! Envie sua(s) planilha(s) abaixo:' }]);
         setShowFileUpload(true);
         setCurrentQuestion(5);
       } else {
-        // User doesn't have spreadsheet - show education phase
+        // User doesn't have spreadsheet - ask about contracts
         setHasSpreadsheet(false);
-        setChatMessages(prev => [...prev, { role: 'assistant', content: 'Sem problema! Você pode adicionar seus dados manualmente depois.' }]);
+        setChatMessages(prev => [...prev, { role: 'assistant', content: 'Você tem contratos ou propostas dos seus projetos? Assim podemos extrair e cadastrar os valores e datas de todos os recebíveis' }]);
+        setCurrentQuestion(5);
+      }
+    }
+    // Sixth question (conditional): Has contracts (only if no spreadsheet)
+    else if (currentQuestion === 5 && hasSpreadsheet === false) {
+      const responseLabel = value === 'yes' ? 'Sim' : 'Não';
+      setChatMessages(prev => [...prev, { role: 'user', content: responseLabel }]);
+
+      if (value === 'yes') {
+        // User has contracts - show upload
+        setHasContracts(true);
+        setUploadType('contract');
+        setChatMessages(prev => [...prev, { role: 'assistant', content: 'Ótimo! Envie seu(s) contrato(s) abaixo:' }]);
+        setShowFileUpload(true);
         setCurrentQuestion(6);
+      } else {
+        // User doesn't have contracts either - show education phase
+        setHasContracts(false);
+        setChatMessages(prev => [...prev, { role: 'assistant', content: 'Sem problema! Você pode adicionar seus dados manualmente depois.' }]);
+        setCurrentQuestion(7);
         // Show education phase after a brief delay
         setTimeout(() => {
           setShowEducation(true);
         }, 1500);
       }
     }
-    // Sixth question: More files?
-    else if (currentQuestion === 5) {
+    // More files question for spreadsheets (question 5)
+    else if (currentQuestion === 5 && uploadType === 'spreadsheet') {
       const responseLabel = value === 'yes' ? 'Sim, tenho mais' : 'Não, estou pronto(a)';
       setChatMessages(prev => [...prev, { role: 'user', content: responseLabel }]);
 
       if (value === 'yes') {
         // Show upload again
-        setChatMessages(prev => [...prev, { role: 'assistant', content: 'Perfeito! Envie mais arquivos abaixo:' }]);
+        setChatMessages(prev => [...prev, { role: 'assistant', content: 'Perfeito! Envie mais planilhas abaixo:' }]);
         setShowFileUpload(true);
       } else {
         // Show education phase
         setChatMessages(prev => [...prev, { role: 'assistant', content: 'Excelente!' }]);
-        setCurrentQuestion(6);
+        setCurrentQuestion(7);
+        setTimeout(() => {
+          setShowEducation(true);
+        }, 1000);
+      }
+    }
+    // More files question for contracts (question 6)
+    else if (currentQuestion === 6 && uploadType === 'contract') {
+      const responseLabel = value === 'yes' ? 'Sim, tenho mais' : 'Não, estou pronto(a)';
+      setChatMessages(prev => [...prev, { role: 'user', content: responseLabel }]);
+
+      if (value === 'yes') {
+        // Show upload again
+        setChatMessages(prev => [...prev, { role: 'assistant', content: 'Perfeito! Envie mais contratos abaixo:' }]);
+        setShowFileUpload(true);
+      } else {
+        // Show education phase
+        setChatMessages(prev => [...prev, { role: 'assistant', content: 'Excelente!' }]);
+        setCurrentQuestion(7);
         setTimeout(() => {
           setShowEducation(true);
         }, 1000);
@@ -214,11 +290,17 @@ export default function OnboardingPage() {
 
   const loadingMessages = [
     'Analisando a estrutura dos seus arquivos... ☕',
+    'Tomando um cafézinho enquanto processamos... ☕',
     'Identificando contratos e projetos... 📋',
+    'Conversando com a Inteligência Artificial... 🤖',
     'Extraindo recebíveis... 💰',
+    'Fazendo mágica com seus dados... ✨',
     'Processando despesas... 📊',
     'Organizando tudo para você... 🗂️',
+    'Preparando tudo com carinho... 💙',
     'Validando os dados... ✅',
+    'Deixando tudo nos trinques... 🎨',
+    'Conferindo os últimos detalhes... 🔍',
     'Quase lá! Finalizando... 🎯'
   ];
 
@@ -365,8 +447,8 @@ export default function OnboardingPage() {
             transitionPhase={transitionState.phase}
             actions={
               <>
-                {/* Back button - show when on questions 1-4 */}
-                {currentQuestion >= 1 && currentQuestion <= 4 && (
+                {/* Back button - show when on questions 1-6 (including file uploads) */}
+                {currentQuestion >= 1 && currentQuestion <= 6 && (
                   <div className="mb-3 text-center">
                     <button
                       onClick={handleGoBack}
@@ -449,9 +531,33 @@ export default function OnboardingPage() {
                   />
                 )}
 
+                {/* Contracts question (only shown if user doesn't have spreadsheets) */}
+                {currentQuestion === 5 && hasSpreadsheet === false && !showFileUpload && (
+                  <ChipButtons
+                    options={[
+                      { label: 'Sim', value: 'yes' },
+                      { label: 'Não', value: 'no' }
+                    ]}
+                    onSelect={handleChatResponse}
+                    disabled={loading}
+                    selectedValue={hasContracts === true ? 'yes' : hasContracts === false ? 'no' : undefined}
+                  />
+                )}
 
-                {/* Show "more files?" buttons after upload */}
-                {currentQuestion === 5 && !showFileUpload && (
+                {/* Show "more files?" buttons after spreadsheet upload */}
+                {currentQuestion === 5 && uploadType === 'spreadsheet' && !showFileUpload && (
+                  <ChipButtons
+                    options={[
+                      { label: 'Sim, tenho mais', value: 'yes' },
+                      { label: 'Não, estou pronto(a)', value: 'no' }
+                    ]}
+                    onSelect={handleChatResponse}
+                    disabled={loading}
+                  />
+                )}
+
+                {/* Show "more files?" buttons after contract upload */}
+                {currentQuestion === 6 && uploadType === 'contract' && !showFileUpload && (
                   <ChipButtons
                     options={[
                       { label: 'Sim, tenho mais', value: 'yes' },
@@ -463,7 +569,7 @@ export default function OnboardingPage() {
                 )}
 
                 {/* Show loading state */}
-                {loading && currentQuestion === 6 && (
+                {loading && currentQuestion === 7 && (
                   <div className="flex justify-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                   </div>
@@ -505,8 +611,16 @@ export default function OnboardingPage() {
               )
             ))}
 
-            {/* Show file upload when user has spreadsheet */}
-            {currentQuestion === 5 && showFileUpload && (
+            {/* Show file upload for spreadsheets (question 5) */}
+            {currentQuestion === 5 && uploadType === 'spreadsheet' && showFileUpload && (
+              <ChatFileUpload
+                onUploadStart={handleFileUploadStart}
+                onUploadComplete={handleFileUploadComplete}
+              />
+            )}
+
+            {/* Show file upload for contracts (question 6) */}
+            {currentQuestion === 6 && uploadType === 'contract' && showFileUpload && (
               <ChatFileUpload
                 onUploadStart={handleFileUploadStart}
                 onUploadComplete={handleFileUploadComplete}
