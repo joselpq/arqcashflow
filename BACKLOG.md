@@ -178,6 +178,60 @@ This backlog **DOES NOT** replace other documentation:
 
 ---
 
+### **Expense Registration Reinforcement (Hybrid Approach)** 🚀 READY TO START
+**Goal**: Guide users who uploaded contracts (but no spreadsheet) to add expenses for accurate metrics
+**Status**: Design approved, ready for implementation
+**Estimated Time**: 6-8 hours
+
+**Context**: Users who upload contracts but not spreadsheets will have receivables but no expenses, leading to inflated profit metrics and incomplete cash flow visibility.
+
+**Approach: Hybrid (Dashboard Alert + AI Chat)** ⭐⭐
+
+**Implementation Plan**:
+- [ ] **Phase 1: Dashboard Banner** (2 hours)
+  - Add prominent banner on dashboard when no expenses exist
+  - Message: "💡 Adicione despesas para ver lucros precisos"
+  - CTA buttons: [Adicionar agora] [Dismiss]
+  - Persist until user adds ≥1 expense OR dismisses explicitly
+  - Location: `app/page.tsx` (top of metrics section)
+
+- [ ] **Phase 2: AI Proactive Chat** (3-4 hours)
+  - After dashboard loads (10-second delay), Arnaldo sends message:
+    - "Ei! Vi que você cadastrou [X] contratos com R$ [Y] em recebíveis."
+    - "Que tal adicionar suas principais despesas agora?"
+    - "Assim você vê quanto realmente vai lucrar! 💰"
+  - Chip buttons: [Sim, me ajuda!] [Depois]
+  - Location: GlobalChat auto-message on dashboard first load
+
+- [ ] **Phase 3: Conversational Expense Creation** (2 hours)
+  - If user clicks "Sim, me ajuda!":
+    - Arnaldo: "Me diz uma despesa principal (ex: aluguel, internet, salário)"
+    - User types → AI extracts and creates expense
+    - Arnaldo: "Adicionada! Tem outra? [Sim] [Pronto]"
+    - Loop until user says "Pronto"
+  - Uses existing chat expense creation flow
+
+**Trade-offs Analysis**:
+- ✅ Preserves onboarding completion (no extension)
+- ✅ AI-first philosophy alignment
+- ✅ Contextual and non-blocking
+- ✅ Multi-touchpoint (visual + conversational)
+- ✅ User autonomy (can dismiss/delay)
+- 🎯 **Expected adoption**: ~65% of contract-only users
+
+**Success Criteria**:
+- ≥60% of contract-only users add ≥1 expense within 7 days
+- Banner dismissed/resolved by ≥80% of users
+- Chat message engagement rate ≥50%
+
+**Files to Modify**:
+- `app/page.tsx` (Dashboard - banner logic)
+- `app/components/chat/GlobalChat.tsx` (auto-message trigger)
+- New: `app/components/dashboard/ExpenseMissingBanner.tsx`
+- Util: Logic to detect "has receivables but no expenses" state
+
+---
+
 ## 📋 TO DO (Immediate Priorities)
 
 ### **User Feedback Improvements - Performance** (HIGH PRIORITY)
@@ -425,4 +479,4 @@ This backlog **DOES NOT** replace other documentation:
 ---
 
 **Last Updated**: 2025-10-27
-**Status**: DOING (1 active - Phase 6 pending), TO DO (8 items), BACKLOG (20+ items), DONE (1 recent)
+**Status**: DOING (2 active - Onboarding Phase 6 pending + Expense Registration ready), TO DO (8 items), BACKLOG (20+ items), DONE (1 recent)
