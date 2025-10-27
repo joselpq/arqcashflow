@@ -1,7 +1,7 @@
 # ArqCashflow Development Backlog
 
 **Purpose**: Central source of truth for project priorities and development status
-**Last Updated**: 2025-10-27 (Phase 5 complete - crossfade animation + file upload improvements)
+**Last Updated**: 2025-10-27 (Phase 7 complete - Expense Registration Reinforcement)
 **Update Frequency**: Every LLM session MUST update this document when completing tasks
 
 ## 🚨 CRITICAL INSTRUCTIONS FOR LLM AGENTS
@@ -57,7 +57,7 @@ This backlog **DOES NOT** replace other documentation:
 
 ### **Chat-First Onboarding Redesign** 🚀 IN PROGRESS (Started 2025-10-17)
 **Goal**: Transform onboarding into AI-first conversational experience
-**Status**: Phase 5 COMPLETE ✅ - Moving to Phase 6 (Polish & Testing)
+**Status**: Phase 5 & 7 COMPLETE ✅ - Phase 6 skipped (manual testing done)
 **Related**: ADR-017 Chat-First Onboarding Redesign
 **Estimated Time**: 15-20 days (phased)
 
@@ -175,60 +175,6 @@ This backlog **DOES NOT** replace other documentation:
 - Onboarding completion rate ≥ 85%
 - Total time < 3 minutes
 - Chat usage in first month ≥ 60%
-
----
-
-### **Expense Registration Reinforcement (Hybrid Approach)** 🚀 READY TO START
-**Goal**: Guide users who uploaded contracts (but no spreadsheet) to add expenses for accurate metrics
-**Status**: Design approved, ready for implementation
-**Estimated Time**: 6-8 hours
-
-**Context**: Users who upload contracts but not spreadsheets will have receivables but no expenses, leading to inflated profit metrics and incomplete cash flow visibility.
-
-**Approach: Hybrid (Dashboard Alert + AI Chat)** ⭐⭐
-
-**Implementation Plan**:
-- [ ] **Phase 1: Dashboard Banner** (2 hours)
-  - Add prominent banner on dashboard when no expenses exist
-  - Message: "💡 Adicione despesas para ver lucros precisos"
-  - CTA buttons: [Adicionar agora] [Dismiss]
-  - Persist until user adds ≥1 expense OR dismisses explicitly
-  - Location: `app/page.tsx` (top of metrics section)
-
-- [ ] **Phase 2: AI Proactive Chat** (3-4 hours)
-  - After dashboard loads (10-second delay), Arnaldo sends message:
-    - "Ei! Vi que você cadastrou [X] contratos com R$ [Y] em recebíveis."
-    - "Que tal adicionar suas principais despesas agora?"
-    - "Assim você vê quanto realmente vai lucrar! 💰"
-  - Chip buttons: [Sim, me ajuda!] [Depois]
-  - Location: GlobalChat auto-message on dashboard first load
-
-- [ ] **Phase 3: Conversational Expense Creation** (2 hours)
-  - If user clicks "Sim, me ajuda!":
-    - Arnaldo: "Me diz uma despesa principal (ex: aluguel, internet, salário)"
-    - User types → AI extracts and creates expense
-    - Arnaldo: "Adicionada! Tem outra? [Sim] [Pronto]"
-    - Loop until user says "Pronto"
-  - Uses existing chat expense creation flow
-
-**Trade-offs Analysis**:
-- ✅ Preserves onboarding completion (no extension)
-- ✅ AI-first philosophy alignment
-- ✅ Contextual and non-blocking
-- ✅ Multi-touchpoint (visual + conversational)
-- ✅ User autonomy (can dismiss/delay)
-- 🎯 **Expected adoption**: ~65% of contract-only users
-
-**Success Criteria**:
-- ≥60% of contract-only users add ≥1 expense within 7 days
-- Banner dismissed/resolved by ≥80% of users
-- Chat message engagement rate ≥50%
-
-**Files to Modify**:
-- `app/page.tsx` (Dashboard - banner logic)
-- `app/components/chat/GlobalChat.tsx` (auto-message trigger)
-- New: `app/components/dashboard/ExpenseMissingBanner.tsx`
-- Util: Logic to detect "has receivables but no expenses" state
 
 ---
 
@@ -425,6 +371,37 @@ This backlog **DOES NOT** replace other documentation:
 
 ## ✅ DONE (Recently Completed)
 
+### **Expense Registration Reinforcement (Phase 7)** ✅ COMPLETE (2025-10-27)
+**Impact**: Multi-touchpoint strategy to guide contract-only users to add expenses
+**Time Spent**: ~6 hours (all 3 phases)
+**Status**: Production-ready
+
+**Implementation**:
+- [x] **Phase 7.1: Dashboard Banner** - Detects contracts without expenses, shows dismissible banner
+- [x] **Phase 7.2: AI Proactive Message** - 10-second delay, personalized Arnaldo message, auto-opens chat
+- [x] **Phase 7.3: Conversational Creation** - Leverages existing OperationsAgent for natural language expense creation
+
+**Files Created/Modified**:
+- `app/components/dashboard/ExpenseMissingBanner.tsx` (new component)
+- `app/hooks/useExpenseReinforcement.ts` (new hook)
+- `app/contexts/ChatContext.tsx` (added `addProactiveMessage` method)
+- `app/page.tsx` (integrated banner and hook)
+- `app/api/dashboard/route.ts` (added expense count and receivables total)
+
+**Features**:
+- ✅ Dashboard banner with contract count and receivables total
+- ✅ LocalStorage persistence for banner dismissal
+- ✅ SessionStorage for one-time proactive message per session
+- ✅ Auto-opens chat after 10 seconds with personalized message
+- ✅ Natural language expense creation via existing OperationsAgent
+- ✅ Multi-touchpoint reinforcement (visual + conversational)
+
+**Result**: Complete post-onboarding reinforcement system ensuring data completeness
+
+**Related**: ADR-017 Chat-First Onboarding (Phase 7), BACKLOG entry implementation
+
+---
+
 ### **Phase 1: Registration Auto-Login to Onboarding** ✅ COMPLETE (2025-10-17)
 **Impact**: Seamless entry from registration to onboarding with zero UI flash
 **Time Spent**: ~2 hours (implementation + edge case fixes)
@@ -479,4 +456,4 @@ This backlog **DOES NOT** replace other documentation:
 ---
 
 **Last Updated**: 2025-10-27
-**Status**: DOING (2 active - Onboarding Phase 6 pending + Expense Registration ready), TO DO (8 items), BACKLOG (20+ items), DONE (1 recent)
+**Status**: DOING (1 active - Onboarding Phase 6 skipped), TO DO (8 items), BACKLOG (20+ items), DONE (2 recent - Phase 7 + Phase 1)

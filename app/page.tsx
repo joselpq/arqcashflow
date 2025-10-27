@@ -9,6 +9,8 @@ import { formatDateShort } from '@/lib/utils/date'
 import Modal from './components/Modal'
 import ReceivableForm from './components/forms/ReceivableForm'
 import ExpenseForm from './components/forms/ExpenseForm'
+import ExpenseMissingBanner from './components/dashboard/ExpenseMissingBanner'
+import { useExpenseReinforcement } from './hooks/useExpenseReinforcement'
 
 interface DashboardData {
   metrics: {
@@ -22,6 +24,8 @@ interface DashboardData {
     totalContracts: number
     overdueReceivablesAmount: number
     overdueExpensesAmount: number
+    totalExpenses: number
+    totalReceivablesAmount: number
   }
   cashFlowHealth: {
     status: 'good' | 'warning' | 'critical'
@@ -222,6 +226,20 @@ export default function Dashboard() {
   const [formLoading, setFormLoading] = useState(false)
   const [contracts, setContracts] = useState([])
 
+  // Banner state
+  const [showExpenseBanner, setShowExpenseBanner] = useState(false)
+
+  // Expense reinforcement hook (AI proactive message)
+  useExpenseReinforcement(
+    data
+      ? {
+          contractCount: data.metrics.totalContracts,
+          receivablesTotal: data.metrics.totalReceivablesAmount,
+          expenseCount: data.metrics.totalExpenses
+        }
+      : null
+  )
+
   // Check if coming from onboarding (for fade-in transition)
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -257,6 +275,18 @@ export default function Dashboard() {
       console.error('Failed to fetch contracts:', error)
     }
   }
+
+  // Check if banner should be shown based on data
+  useEffect(() => {
+    if (data && typeof window !== 'undefined') {
+      const dismissed = localStorage.getItem('expense-banner-dismissed')
+      const shouldShow =
+        data.metrics.totalContracts > 0 &&
+        data.metrics.totalExpenses === 0 &&
+        !dismissed
+      setShowExpenseBanner(shouldShow)
+    }
+  }, [data])
 
   useEffect(() => {
     // Only fetch dashboard data if user is authenticated
@@ -394,6 +424,18 @@ export default function Dashboard() {
     }
   }
 
+  // Banner handlers
+  function handleAddExpense() {
+    openModal('expense')
+  }
+
+  function handleDismissBanner() {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('expense-banner-dismissed', 'true')
+    }
+    setShowExpenseBanner(false)
+  }
+
   // Show loading state while checking authentication
   if (status === "loading") {
     return (
@@ -489,6 +531,16 @@ export default function Dashboard() {
             message={data.cashFlowHealth.message}
           />
         </div>
+
+        {/* Expense Missing Banner */}
+        {showExpenseBanner && (
+          <ExpenseMissingBanner
+            contractCount={data.metrics.totalContracts}
+            receivablesTotal={data.metrics.totalReceivablesAmount}
+            onAddExpense={handleAddExpense}
+            onDismiss={handleDismissBanner}
+          />
+        )}
 
         {/* Key Metrics Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
