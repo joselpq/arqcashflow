@@ -25,9 +25,10 @@ export default function OnboardingChatContainer({ children, actions, transitionP
   // Build transition classes
   const isTransitioning = transitionPhase !== 'idle'
   const transitionClasses = isTransitioning ? `transition-${transitionPhase}` : ''
+  const fadeOutClass = transitionPhase === 'fading' ? 'fade-out' : ''
 
   return (
-    <div className={`chat-container ${transitionClasses}`}>
+    <div className={`chat-container ${transitionClasses} ${fadeOutClass}`}>
       <div className="chat-content">
         {/* Chat Messages Container with auto-scroll */}
         <div
@@ -79,7 +80,6 @@ export default function OnboardingChatContainer({ children, actions, transitionP
           display: flex;
           flex-direction: column;
           min-height: 0;
-          transition: opacity 0.4s ease-out, filter 0.4s ease-out;
           overflow: hidden;
         }
 
@@ -103,7 +103,7 @@ export default function OnboardingChatContainer({ children, actions, transitionP
           pointer-events: none;
         }
 
-        /* Shrinking: blur content, shrink to circle, show FAB */
+        /* Phase 1: Shrink to FAB in center */
         @keyframes shrink-to-fab {
           0% {
             width: 90%;
@@ -124,77 +124,53 @@ export default function OnboardingChatContainer({ children, actions, transitionP
         }
 
         .transition-shrinking {
-          animation: shrink-to-fab 600ms ease-out forwards;
+          animation: shrink-to-fab 1200ms ease-out forwards;
         }
 
         .transition-shrinking .chat-content {
           opacity: 0;
           filter: blur(8px);
+          transition: opacity 0.8s ease-out, filter 0.8s ease-out;
         }
 
         .transition-shrinking .fab-icon {
           opacity: 1;
         }
 
-        /* Moving: FAB moves to corner */
-        @keyframes move-to-corner {
-          0% {
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-          }
-          100% {
-            top: auto;
-            left: auto;
-            bottom: 24px;
-            right: 24px;
-            transform: translate(0, 0);
-          }
-        }
-
-        .transition-moving {
-          position: fixed;
+        /* Phase 2: Fade out in place (crossfade) */
+        .transition-fading {
+          /* Stay as FAB in center */
           width: 56px;
+          max-width: 56px;
           height: 56px;
           border-radius: 50%;
           padding: 0;
           background: linear-gradient(to right, rgb(59, 130, 246), rgb(147, 51, 234));
-          animation: move-to-corner 400ms ease-in-out forwards;
+          opacity: 1;
+          transition: opacity 1600ms ease-out;
         }
 
-        .transition-moving .chat-content {
+        .transition-fading.fade-out {
           opacity: 0;
         }
 
-        .transition-moving .fab-icon {
-          opacity: 1;
-        }
-
-        /* Morphing state (same as moving, maintained for compatibility) */
-        .transition-morphing {
-          position: fixed;
-          bottom: 24px;
-          right: 24px;
-          width: 56px;
-          height: 56px;
-          border-radius: 50%;
-          padding: 0;
-          background: linear-gradient(to right, rgb(59, 130, 246), rgb(147, 51, 234));
-          transform: translate(0, 0);
-        }
-
-        .transition-morphing .chat-content {
+        .transition-fading .chat-content {
           opacity: 0;
         }
 
-        .transition-morphing .fab-icon {
+        .transition-fading .fab-icon {
           opacity: 1;
+        }
+
+        /* Phase 3: Complete - hidden */
+        .transition-complete {
+          opacity: 0;
+          pointer-events: none;
         }
 
         @media (prefers-reduced-motion: reduce) {
           .transition-shrinking,
-          .transition-moving,
-          .transition-morphing {
+          .transition-fading {
             animation: none;
             transition: none;
           }

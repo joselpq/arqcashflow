@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 
-export type TransitionPhase = 'idle' | 'shrinking' | 'moving' | 'morphing' | 'complete'
+export type TransitionPhase = 'idle' | 'shrinking' | 'fading' | 'complete'
 
 interface TransitionState {
   phase: TransitionPhase
@@ -31,29 +31,36 @@ export function useOnboardingTransition() {
     // Prefetch dashboard page to load it in background
     router.prefetch('/')
 
-    // Phase 1: Shrink to FAB (600ms)
+    // Phase 1: Shrink to FAB in center (1200ms - DOUBLED)
     // - Content blurs out
     // - Container shrinks to 56px circle
     // - FAB icon appears
-    setState({ phase: 'shrinking', progress: 0 })
+    setState({ phase: 'shrinking', progress: 30 })
+    await new Promise(resolve => setTimeout(resolve, 1200))
+
+    // Pause: Hold FAB in center (600ms - DOUBLED)
+    // - User sees the FAB clearly before handoff
+    // - Emphasizes the transition moment
     await new Promise(resolve => setTimeout(resolve, 600))
 
-    // Phase 2: Move to corner (400ms)
-    // - FAB circle moves to bottom-right
-    setState({ phase: 'moving', progress: 50 })
+    // Phase 2: Crossfade (1600ms - DOUBLED)
+    // - Onboarding FAB fades out in center
+    // - Destination FAB fades in at bottom-right (on onboarding page)
+    setState({ phase: 'fading', progress: 70 })
+
+    await new Promise(resolve => setTimeout(resolve, 1600))
+
+    // Pause: Hold both FABs visible (400ms)
+    // - Center FAB is now invisible
+    // - Corner FAB is fully visible
+    // - User sees the final state before transition
     await new Promise(resolve => setTimeout(resolve, 400))
-
-    // Phase 3: Quick morph (100ms) - visual polish
-    setState({ phase: 'morphing', progress: 90 })
-    await new Promise(resolve => setTimeout(resolve, 100))
-
-    // Complete - redirect to dashboard
-    setState({ phase: 'complete', progress: 100 })
 
     // Set flag for dashboard fade-in
     sessionStorage.setItem('onboarding-completed', 'true')
 
-    // Redirect (dashboard page is already prefetched)
+    // Complete and redirect
+    setState({ phase: 'complete', progress: 100 })
     router.push('/')
   }, [router])
 

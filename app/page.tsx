@@ -412,9 +412,10 @@ export default function Dashboard() {
   }
 
   // Show loading state while fetching dashboard data
+  // Hide loading spinner when coming from onboarding to prevent flash
   if (loading) {
     return (
-      <div className="min-h-screen p-8">
+      <div className={`min-h-screen p-8 transition-opacity duration-500 ${isFromOnboarding ? 'opacity-0' : 'opacity-100'}`}>
         <div className="max-w-7xl mx-auto">
           <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
           <div className="text-center py-20">
