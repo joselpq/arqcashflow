@@ -469,7 +469,7 @@ export default function Dashboard() {
                      data.metrics.thisMonthProfit < 0 ? 'down' : 'neutral'
 
   return (
-    <div className={`min-h-screen bg-neutral-50 transition-opacity duration-700 ${isFromOnboarding ? 'opacity-0' : 'opacity-100'}`}>
+    <div className={`min-h-screen bg-neutral-50 transition-opacity duration-500 ease-out ${isFromOnboarding ? 'opacity-0' : 'opacity-100'}`}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-12">
           <div>

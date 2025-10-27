@@ -28,26 +28,32 @@ export function useOnboardingTransition() {
       return
     }
 
-    // Phase 1: Shrink (500ms)
+    // Prefetch dashboard page to load it in background
+    router.prefetch('/')
+
+    // Phase 1: Shrink to FAB (600ms)
+    // - Content blurs out
+    // - Container shrinks to 56px circle
+    // - FAB icon appears
     setState({ phase: 'shrinking', progress: 0 })
-    await new Promise(resolve => setTimeout(resolve, 500))
+    await new Promise(resolve => setTimeout(resolve, 600))
 
-    // Phase 2: Move to corner (700ms)
-    setState({ phase: 'moving', progress: 33 })
-    await new Promise(resolve => setTimeout(resolve, 700))
+    // Phase 2: Move to corner (400ms)
+    // - FAB circle moves to bottom-right
+    setState({ phase: 'moving', progress: 50 })
+    await new Promise(resolve => setTimeout(resolve, 400))
 
-    // Phase 3: Morph to FAB (300ms)
-    setState({ phase: 'morphing', progress: 66 })
-    await new Promise(resolve => setTimeout(resolve, 300))
+    // Phase 3: Quick morph (100ms) - visual polish
+    setState({ phase: 'morphing', progress: 90 })
+    await new Promise(resolve => setTimeout(resolve, 100))
 
     // Complete - redirect to dashboard
     setState({ phase: 'complete', progress: 100 })
 
-    // Set flag for dashboard to know we're coming from onboarding
+    // Set flag for dashboard fade-in
     sessionStorage.setItem('onboarding-completed', 'true')
 
-    // Small delay before redirect to ensure animation completes
-    await new Promise(resolve => setTimeout(resolve, 100))
+    // Redirect (dashboard page is already prefetched)
     router.push('/')
   }, [router])
 

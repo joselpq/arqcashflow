@@ -340,8 +340,8 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-neutral-50 to-blue-50 flex items-center justify-center p-4 sm:p-6 lg:p-8">
-      <div className="max-w-4xl w-full">
+    <div className="min-h-screen bg-gradient-to-br from-neutral-50 to-blue-50 p-4 sm:p-6 lg:p-8">
+      <div className="relative w-full h-full min-h-screen">
         {/* Progress Indicator */}
         <div className="mb-8">
           <div className="flex items-center justify-center mb-4">

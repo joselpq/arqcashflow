@@ -57,9 +57,24 @@ This backlog **DOES NOT** replace other documentation:
 
 ### **Chat-First Onboarding Redesign** 🚀 IN PROGRESS (Started 2025-10-17)
 **Goal**: Transform onboarding into AI-first conversational experience
-**Status**: Phases 1-5 complete (10 of 15-20 estimated days), Phase 6 pending
+**Status**: Phase 5 - Fixing transition animation UX (revised 2025-10-22)
 **Related**: ADR-017 Chat-First Onboarding Redesign
 **Estimated Time**: 15-20 days (phased)
+
+**Current Work - Phase 5 Animation Redesign (SIMPLE APPROACH):**
+- [x] Identified buggy animation issues:
+  - Chat not centered
+  - Dashboard flash on onboarding load
+  - Loading screen after transition
+- [x] Rolled back complex approach
+- [x] Implemented SIMPLE solution:
+  - ✅ Fixed centering: Container position absolute with top/left 50%
+  - ✅ Clean animation: Blur & shrink in center (600ms) → Move to corner (400ms)
+  - ✅ FAB icon appears during shrinking
+  - ✅ router.prefetch('/') for fast dashboard load
+  - ✅ Simple dashboard fade-in (no complex blur effects)
+- [x] Total animation time: ~1.1 seconds (600ms + 400ms + 100ms)
+- [ ] Test and verify smooth experience
 
 **Strategic Vision**:
 - Introduce Arnaldo (AI assistant) as primary interaction from day 1
