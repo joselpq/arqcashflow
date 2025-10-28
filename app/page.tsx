@@ -11,6 +11,9 @@ import ReceivableForm from './components/forms/ReceivableForm'
 import ExpenseForm from './components/forms/ExpenseForm'
 import ExpenseMissingBanner from './components/dashboard/ExpenseMissingBanner'
 import { useExpenseReinforcement } from './hooks/useExpenseReinforcement'
+import QuickResolveModal from './components/modals/QuickResolveModal'
+import QuickReceiveForm from './components/modals/QuickReceiveForm'
+import QuickPostponeForm from './components/modals/QuickPostponeForm'
 
 interface DashboardData {
   metrics: {
@@ -226,6 +229,9 @@ export default function Dashboard() {
   const [formLoading, setFormLoading] = useState(false)
   const [contracts, setContracts] = useState([])
 
+  // Quick resolve modal state
+  const [quickResolveStep, setQuickResolveStep] = useState<'action' | 'receive' | 'postpone' | 'full-form' | null>(null)
+
   // Banner state
   const [showExpenseBanner, setShowExpenseBanner] = useState(false)
 
@@ -362,12 +368,19 @@ export default function Dashboard() {
     setModalType(type)
     setEditingEntity(entity)
     setIsModalOpen(true)
+    // Start with action selection for overdue items
+    setQuickResolveStep('action')
   }
 
   function closeModal() {
     setIsModalOpen(false)
     setModalType(null)
     setEditingEntity(null)
+    setQuickResolveStep(null)
+  }
+
+  function openFullForm() {
+    setQuickResolveStep('full-form')
   }
 
   async function handleReceivableSubmit(receivableData: any) {
@@ -427,6 +440,7 @@ export default function Dashboard() {
   // Banner handlers
   function handleAddExpense() {
     openModal('expense')
+    setQuickResolveStep('full-form') // Go directly to full form for new items
   }
 
   function handleDismissBanner() {
@@ -434,6 +448,87 @@ export default function Dashboard() {
       localStorage.setItem('expense-banner-dismissed', 'true')
     }
     setShowExpenseBanner(false)
+  }
+
+  // Quick resolve handlers
+  async function handleQuickReceive(data: { receivedDate: string; receivedAmount: number }) {
+    setFormLoading(true)
+    try {
+      const updateData = modalType === 'receivable'
+        ? {
+            status: 'received',
+            receivedDate: data.receivedDate,
+            receivedAmount: data.receivedAmount
+          }
+        : {
+            status: 'paid',
+            paidDate: data.receivedDate,
+            paidAmount: data.receivedAmount
+          }
+
+      const url = modalType === 'receivable'
+        ? `/api/receivables/${editingEntity.id}`
+        : `/api/expenses/${editingEntity.id}`
+
+      console.log('Submitting quick receive:', { url, updateData })
+
+      const res = await fetch(url, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updateData)
+      })
+
+      if (res.ok) {
+        console.log('Quick receive successful')
+        closeModal()
+        window.location.reload()
+      } else {
+        const errorData = await res.json()
+        console.error('Quick receive failed:', errorData)
+        alert(`Erro ao salvar: ${errorData.error || 'Erro desconhecido'}`)
+      }
+    } catch (error) {
+      console.error('Error:', error)
+      alert('Erro ao salvar')
+    } finally {
+      setFormLoading(false)
+    }
+  }
+
+  async function handleQuickPostpone(newDueDate: string) {
+    setFormLoading(true)
+    try {
+      const updateData = modalType === 'receivable'
+        ? { expectedDate: newDueDate }
+        : { dueDate: newDueDate }
+
+      const url = modalType === 'receivable'
+        ? `/api/receivables/${editingEntity.id}`
+        : `/api/expenses/${editingEntity.id}`
+
+      console.log('Submitting quick postpone:', { url, updateData })
+
+      const res = await fetch(url, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updateData)
+      })
+
+      if (res.ok) {
+        console.log('Quick postpone successful')
+        closeModal()
+        window.location.reload()
+      } else {
+        const errorData = await res.json()
+        console.error('Quick postpone failed:', errorData)
+        alert(`Erro ao salvar: ${errorData.error || 'Erro desconhecido'}`)
+      }
+    } catch (error) {
+      console.error('Error:', error)
+      alert('Erro ao salvar')
+    } finally {
+      setFormLoading(false)
+    }
   }
 
   // Show loading state while checking authentication
@@ -731,8 +826,57 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Modals */}
-      {modalType === 'receivable' && (
+      {/* Quick Resolve Modals */}
+      {isModalOpen && editingEntity && quickResolveStep === 'action' && (
+        <QuickResolveModal
+          isOpen={true}
+          onClose={closeModal}
+          entityType={modalType!}
+          entity={{
+            id: editingEntity.id,
+            description: editingEntity.description || `${editingEntity.clientName} - ${editingEntity.projectName}`,
+            amount: editingEntity.amount,
+            dueDate: modalType === 'receivable' ? editingEntity.expectedDate : editingEntity.dueDate,
+            client: editingEntity.clientName,
+            project: editingEntity.projectName,
+            vendor: editingEntity.vendor
+          }}
+          onMarkAsReceived={() => setQuickResolveStep('receive')}
+          onPostpone={() => setQuickResolveStep('postpone')}
+          onEditFull={openFullForm}
+        />
+      )}
+
+      {isModalOpen && editingEntity && quickResolveStep === 'receive' && (
+        <QuickReceiveForm
+          isOpen={true}
+          onClose={closeModal}
+          onBack={() => setQuickResolveStep('action')}
+          entityType={modalType!}
+          entity={{
+            id: editingEntity.id,
+            amount: editingEntity.amount,
+            dueDate: modalType === 'receivable' ? editingEntity.expectedDate : editingEntity.dueDate
+          }}
+          onSubmit={handleQuickReceive}
+          loading={formLoading}
+        />
+      )}
+
+      {isModalOpen && editingEntity && quickResolveStep === 'postpone' && (
+        <QuickPostponeForm
+          isOpen={true}
+          onClose={closeModal}
+          onBack={() => setQuickResolveStep('action')}
+          entityType={modalType!}
+          currentDueDate={modalType === 'receivable' ? editingEntity.expectedDate : editingEntity.dueDate}
+          onSubmit={handleQuickPostpone}
+          loading={formLoading}
+        />
+      )}
+
+      {/* Full Form Modals (fallback for "editar detalhes" and new items) */}
+      {modalType === 'receivable' && quickResolveStep === 'full-form' && (
         <Modal
           isOpen={isModalOpen}
           onClose={closeModal}
@@ -749,7 +893,7 @@ export default function Dashboard() {
         </Modal>
       )}
 
-      {modalType === 'expense' && (
+      {modalType === 'expense' && quickResolveStep === 'full-form' && (
         <Modal
           isOpen={isModalOpen}
           onClose={closeModal}

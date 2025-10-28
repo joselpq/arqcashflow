@@ -138,13 +138,17 @@ export class ReceivableService extends BaseService<
       }
     }
 
-    // Business rule: For standalone receivables, client name is required
-    if (!('contractId' in data && data.contractId) && !('clientName' in data && data.clientName)) {
-      throw new ServiceError(
-        'Client name is required for standalone receivables',
-        'CLIENT_NAME_REQUIRED',
-        400
-      )
+    // Business rule: For standalone receivables (contractId explicitly null/empty), client name is required
+    // Only validate if contractId is being set (not for partial updates that don't touch contractId)
+    if ('contractId' in data) {
+      const isStandalone = !data.contractId || data.contractId.trim() === ''
+      if (isStandalone && !('clientName' in data && data.clientName)) {
+        throw new ServiceError(
+          'Client name is required for standalone receivables',
+          'CLIENT_NAME_REQUIRED',
+          400
+        )
+      }
     }
 
     // Business rule: Received date cannot be before expected date
