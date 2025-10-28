@@ -182,20 +182,18 @@ This backlog **DOES NOT** replace other documentation:
 
 ### **User Feedback Improvements - Performance** (HIGH PRIORITY)
 
-#### **File Import Performance & Reliability** (6-8 hours)
-- **Problem**: Import slow and failing with multiple files
-- **Scope**: Debug logs, error handling, performance profiling
+#### **File Import & Upload Speed Optimization** (6-8 hours)
+- **Problem**: Import and upload are slow (2-3 minutes for files)
+- **Status**: Reliability ✅ FIXED, Speed ❌ NEEDS WORK
+- **Scope**: Performance profiling, Claude API optimization, parallel processing
 - **Priority**: HIGH (affects onboarding experience)
+- **Goal**: Reduce processing time by 40-50% (2-3 min → 1-1.5 min)
 
 #### **Chat with Arnaldo Latency** (4-6 hours)
-- **Problem**: User perceives lag
-- **Goal**: Sub-second response start
-- **Needs**: Claude API latency profiling, streaming optimization
-
-#### **Make Chat with Arnaldo More Evident** (2-3 hours)
-- **Problem**: FAB not prominent enough
-- **Ideas**: Onboarding tooltips, empty state CTAs
-- **Goal**: Users discover chat as primary interaction method
+- **Problem**: User perceives lag in chat responses
+- **Goal**: Sub-second response start with streaming
+- **Needs**: Claude API latency profiling, streaming optimization, caching strategies
+- **Priority**: MEDIUM (chat works but could be snappier)
 
 ---
 
@@ -219,22 +217,6 @@ This backlog **DOES NOT** replace other documentation:
 **Location**: `app/components/LandingPage.tsx`
 
 ---
-
-### **Setup Assistant Production Enhancements**
-
-#### **Improve File Upload Loading Experience** (3-4 hours)
-- **Current**: Generic loading spinner during 2-3 minute processing
-- **Goal**: Phase-specific progress ("Analyzing file structure...", "Extracting contracts...")
-- **Add**: Funny/engaging Brazilian Portuguese messages
-- **Show**: Entity count as discovered: "Found 37 contracts, 120 receivables so far..."
-- **Location**: `app/components/onboarding/OnboardingFileUpload.tsx`, `app/components/ai/MultiFileSetupAssistant.tsx`
-
-#### **PDF Processing Implementation** (1-2 days) - OPTIONAL
-- **Status**: `pdf-parse` installed but NOT integrated
-- **Current**: PDFs fail with "Invalid Excel file"
-- **Options**: Claude Vision (85-95% accuracy, 1-2 days) OR text-based (60-75%, 4-6 hours)
-- **Priority**: MEDIUM (based on user demand)
-- **Location**: `SetupAssistantService.ts`
 
 ---
 
@@ -356,6 +338,35 @@ This backlog **DOES NOT** replace other documentation:
 ---
 
 ## ✅ DONE (Recently Completed)
+
+### **Chat Visibility & Onboarding Integration** ✅ COMPLETE (2025-10-27)
+**Impact**: Chat now prominently featured throughout user journey
+**Result**: Onboarding redesign made Arnaldo the primary interaction method
+
+**Improvements:**
+- ✅ Chat-first onboarding (Phases 1-5)
+- ✅ File upload integrated into chat conversation
+- ✅ GlobalChat FAB appears immediately after onboarding transition
+- ✅ Expense reinforcement via AI proactive messaging
+- ✅ Users now discover chat naturally as part of core flow
+
+**Related**: ADR-017, Onboarding redesign PR #5
+
+---
+
+### **File Import Reliability & PDF Processing** ✅ COMPLETE (2025-10-27)
+**Impact**: Robust file handling across all formats
+**Result**: PDF processing working, import reliability at production quality
+
+**Improvements:**
+- ✅ PDF processing implemented and working
+- ✅ Excel/spreadsheet import reliability fixed
+- ✅ Error handling improved
+- ✅ Multi-file upload stability achieved
+
+**Status**: Reliability complete, speed optimization remains in TO DO
+
+---
 
 ### **Dashboard "Resolver" Modals Redesign** ✅ COMPLETE (2025-10-27)
 **Impact**: Transformed first-touch experience from overwhelming to delightful
