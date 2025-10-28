@@ -4,9 +4,9 @@ type: "decision"
 audience: ["developer", "agent", "designer"]
 contexts: ["onboarding", "ux", "chat-interface", "user-experience", "ai-assistant", "setup-assistant"]
 complexity: "advanced"
-last_updated: "2025-10-17"
-version: "1.0"
-status: "proposed"
+last_updated: "2025-10-27"
+version: "1.3"
+status: "in-progress"
 decision_date: "2025-10-17"
 agent_roles: ["ux-developer", "onboarding-specialist", "chat-interface-developer"]
 related:
@@ -39,10 +39,11 @@ dependencies: ["setup-assistant-v2", "global-chat", "claude-api", "streaming-mes
 
 ## Status
 
-**Status**: Proposed
+**Status**: In Progress (Phases 1-5 Complete, Phase 6 Pending)
 **Date**: 2025-10-17
 **Decision Makers**: Product Team, Development Team
 **Context**: Current onboarding is functional but doesn't showcase AI-first platform nature. Users with existing spreadsheets need faster, more intuitive onboarding.
+**Progress Update (2025-10-22)**: Phases 1-5 successfully implemented with enhanced UX improvements including profession question, back/undo navigation, rotating loading messages with streaming, chat-native file upload, polished education phase, and smooth morphing transition animation to dashboard with GlobalChat FAB.
 
 ---
 
@@ -158,6 +159,19 @@ dependencies: ["setup-assistant-v2", "global-chat", "claude-api", "streaming-mes
 │ - Dashboard fades in behind/around the morphing chat       │
 │ - Final state: Dashboard visible + floating chat ready     │
 │ - User clearly sees "Ah! The chat is always here!"         │
+└─────────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│ PHASE 7: Post-Onboarding Reinforcement (Contract Users)   │
+│ - IF user uploaded contracts but NO spreadsheet:           │
+│   → Dashboard shows banner: "💡 Adicione despesas para     │
+│     ver lucros precisos" [Adicionar agora] [Dismiss]       │
+│   → After 10s, Arnaldo sends proactive message:            │
+│     "Ei! Vi que você cadastrou [X] contratos..."           │
+│     "Que tal adicionar suas principais despesas agora?"    │
+│     [Sim, me ajuda!] [Depois]                              │
+│   → IF "Sim": Conversational expense creation via chat     │
+│ - Reinforces AI-first interaction and ensures complete data│
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -613,7 +627,7 @@ const useOnboardingTransition = () => {
 
 ### Phase 6: Polish & Testing (2-3 days)
 
-**Scope**: Refinements, error handling, edge cases, and user testing.
+**Scope**: Refinements, error handling, edge cases, and user testing for Phases 1-5.
 
 **Testing Scenarios:**
 1. Happy path: Complete onboarding with file upload
@@ -651,6 +665,196 @@ const useOnboardingTransition = () => {
 - ✅ Animations smooth on mobile and desktop
 - ✅ Accessibility compliance (keyboard + screen readers)
 - ✅ Performance metrics acceptable (transition < 2 seconds total)
+
+---
+
+### Phase 7: Post-Onboarding Expense Reinforcement (1-2 days)
+
+**Scope**: Guide users who uploaded contracts (but no spreadsheet) to add expenses for accurate metrics.
+
+**Context**: Users who upload contracts but not spreadsheets will have receivables but no expenses, leading to inflated profit metrics and incomplete cash flow visibility. This phase ensures data completeness through multi-touchpoint reinforcement.
+
+**Strategy**: Hybrid approach combining dashboard visual cue + AI proactive chat message.
+
+**Implementation Details:**
+
+```typescript
+// Detect users needing expense reinforcement
+interface ExpenseReinforcement Status {
+  needsReinforcement: boolean
+  hasContracts: boolean
+  hasReceivables: boolean
+  hasExpenses: boolean
+  contractCount: number
+  receivablesTotal: number
+}
+
+const checkExpenseReinforcement = async (): Promise<ExpenseReinforcementStatus> => {
+  const [contracts, receivables, expenses] = await Promise.all([
+    prisma.contract.count({ where: { teamId } }),
+    prisma.receivable.aggregate({ where: { teamId }, _sum: { amount: true } }),
+    prisma.expense.count({ where: { teamId } })
+  ])
+
+  return {
+    needsReinforcement: contracts > 0 && expenses === 0,
+    hasContracts: contracts > 0,
+    hasReceivables: receivables._count > 0,
+    hasExpenses: expenses > 0,
+    contractCount: contracts,
+    receivablesTotal: receivables._sum.amount || 0
+  }
+}
+```
+
+**Phase 7.1: Dashboard Banner (2 hours)**
+
+```typescript
+// ExpenseMissingBanner.tsx
+interface ExpenseMissingBannerProps {
+  contractCount: number
+  receivablesTotal: number
+  onAddExpense: () => void
+  onDismiss: () => void
+}
+
+const ExpenseMissingBanner: React.FC<ExpenseMissingBannerProps> = ({
+  contractCount,
+  receivablesTotal,
+  onAddExpense,
+  onDismiss
+}) => {
+  return (
+    <div className="bg-amber-50 border-l-4 border-amber-500 p-4 mb-6">
+      <div className="flex items-start justify-between">
+        <div className="flex items-start gap-3">
+          <span className="text-2xl">💡</span>
+          <div>
+            <h3 className="font-semibold text-amber-900">
+              Adicione despesas para ver lucros precisos
+            </h3>
+            <p className="text-sm text-amber-700 mt-1">
+              Você cadastrou {contractCount} contrato(s), mas ainda não tem despesas registradas.
+              Seus números podem estar superestimados.
+            </p>
+            <div className="flex gap-2 mt-3">
+              <button
+                onClick={onAddExpense}
+                className="bg-amber-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-amber-700"
+              >
+                Adicionar agora
+              </button>
+              <button
+                onClick={onDismiss}
+                className="text-amber-700 px-4 py-2 text-sm hover:underline"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+```
+
+**Phase 7.2: AI Proactive Chat Message (3-4 hours)**
+
+```typescript
+// In GlobalChat.tsx or dedicated hook
+const useExpenseReinforcement = () => {
+  const [hasShownMessage, setHasShownMessage] = useState(false)
+
+  useEffect(() => {
+    const checkAndSendMessage = async () => {
+      // Only check on dashboard, once per session
+      if (pathname !== '/' || hasShownMessage) return
+
+      const status = await checkExpenseReinforcement()
+      if (!status.needsReinforcement) return
+
+      // Wait 10 seconds after dashboard loads
+      setTimeout(() => {
+        const message = {
+          role: 'assistant',
+          content: `Ei! Vi que você cadastrou ${status.contractCount} contratos com R$ ${formatCurrency(status.receivablesTotal)} em recebíveis.\n\nQue tal adicionar suas principais despesas agora? Assim você vê quanto realmente vai lucrar! 💰`,
+          chipOptions: [
+            { label: 'Sim, me ajuda!', value: 'add-expenses' },
+            { label: 'Depois', value: 'later' }
+          ]
+        }
+
+        addMessageToChat(message)
+        setHasShownMessage(true)
+        sessionStorage.setItem('expense-reinforcement-shown', 'true')
+      }, 10000)
+    }
+
+    checkAndSendMessage()
+  }, [pathname, hasShownMessage])
+}
+```
+
+**Phase 7.3: Conversational Expense Creation (2 hours)**
+
+```typescript
+// When user clicks "Sim, me ajuda!"
+const handleExpenseCreationFlow = async () => {
+  // Message 1: Ask for expense
+  addMessage({
+    role: 'assistant',
+    content: 'Me diz uma despesa principal (ex: aluguel, internet, salário do funcionário)'
+  })
+
+  // User types: "Aluguel R$ 3000"
+  // AI extracts and creates expense
+
+  const expense = await createExpenseFromNaturalLanguage(userInput)
+
+  // Message 2: Confirmation + loop
+  addMessage({
+    role: 'assistant',
+    content: `Adicionada! Despesa: ${expense.description} - R$ ${expense.amount}\n\nTem outra?`,
+    chipOptions: [
+      { label: 'Sim', value: 'add-another' },
+      { label: 'Pronto', value: 'done' }
+    ]
+  })
+
+  // Loop until user says "Pronto"
+}
+```
+
+**Files to Create/Modify:**
+- **New**: `app/components/dashboard/ExpenseMissingBanner.tsx`
+- **Modify**: `app/page.tsx` - Add banner logic and state
+- **Modify**: `app/components/chat/GlobalChat.tsx` - Add auto-message trigger
+- **New**: `app/hooks/useExpenseReinforcement.ts` - Centralize logic
+- **Modify**: Expense creation flow to support conversational input
+
+**Acceptance Criteria:**
+- ✅ Banner shows only for users with contracts but no expenses
+- ✅ Banner dismissible and doesn't show again after dismissal
+- ✅ AI message appears 10 seconds after dashboard loads (one time)
+- ✅ Clicking "Sim, me ajuda!" opens chat with guided flow
+- ✅ Conversational expense creation works via natural language
+- ✅ "Tem outra?" loop allows multiple expense additions
+- ✅ Banner disappears after first expense is added
+- ✅ State persisted across sessions (don't show again)
+
+**Success Metrics:**
+- ≥60% of contract-only users add ≥1 expense within 7 days
+- Banner dismissed/resolved by ≥80% of users
+- Chat message engagement rate ≥50%
+- Average expenses added per engagement: 2-3
+
+**Strategic Rationale:**
+- Preserves onboarding completion rate (doesn't extend onboarding)
+- Reinforces AI-first philosophy (Arnaldo as helpful guide)
+- Non-blocking and user-controlled (can dismiss/delay)
+- Multi-touchpoint ensures visibility without being pushy
+- Addresses data completeness for accurate financial metrics
 
 ---
 
@@ -708,7 +912,7 @@ const useOnboardingTransition = () => {
 
 ## Timeline
 
-**Total Estimated Time: 15-20 days**
+**Total Estimated Time: 16-22 days**
 
 | Phase | Tasks | Duration | Owner |
 |-------|-------|----------|-------|
@@ -718,6 +922,7 @@ const useOnboardingTransition = () => {
 | Phase 4 | Education Phase | 2-3 days | Frontend Team |
 | Phase 5 | Transition Animation | 3-4 days | Frontend Team |
 | Phase 6 | Polish & Testing | 2-3 days | Full Team |
+| Phase 7 | Expense Reinforcement | 1-2 days | Full Stack |
 
 **Key Milestones:**
 - Day 5: Profile collection working
@@ -889,39 +1094,50 @@ const useOnboardingTransition = () => {
 
 **Status Tracking:**
 
-- [ ] **Phase 1: Registration & Auto-Login** (1-2 days)
-  - [ ] Update registration API for auto-login
-  - [ ] Add redirect to `/onboarding`
-  - [ ] Test edge cases
-  - [ ] Deploy to staging
+- [x] **Phase 1: Registration & Auto-Login** ✅ COMPLETE (2025-10-17)
+  - [x] Update registration API for auto-login
+  - [x] Add redirect to `/onboarding`
+  - [x] Test edge cases
+  - [x] Fix NavBar flash on auth pages
+  - [x] Prevent authenticated users from accessing registration
 
-- [ ] **Phase 2: Profile Collection Chat** (3-4 days)
-  - [ ] Create OnboardingChatContainer
-  - [ ] Build ProfileChatStep component
-  - [ ] Implement ChipButtons component
-  - [ ] Create UserProfile database model
-  - [ ] Build API endpoint for profile saving
-  - [ ] Test on mobile and desktop
+- [x] **Phase 2: Profile Collection Chat** ✅ COMPLETE (2025-10-21)
+  - [x] Create OnboardingChatContainer
+  - [x] Build ProfileChatStep component
+  - [x] Implement ChipButtons component
+  - [x] Add profession question (6 options)
+  - [x] Store answers in profile data
+  - [x] Test on mobile and desktop
+  - [x] Fix chip button positioning (bottom fixed)
 
-- [ ] **Phase 3: File Upload Chat Flow** (4-5 days)
-  - [ ] Build FileUploadChatStep component
-  - [ ] Integrate SetupAssistant multi-file API
-  - [ ] Add processing messages rotation
-  - [ ] Implement multi-file loop logic
-  - [ ] Test with various file types and sizes
+- [x] **Phase 3: File Upload Chat Flow** ✅ COMPLETE (2025-10-22)
+  - [x] Build ChatFileUpload component
+  - [x] Integrate SetupAssistant multi-file API
+  - [x] Add rotating loading messages (7 messages, 4s interval)
+  - [x] Implement streaming effect on loading messages
+  - [x] Implement multi-file loop logic
+  - [x] Redesign to chat-native UI (compact, collapsible)
+  - [x] Add auto-scroll on file selection
+  - [x] Test with various file types and sizes
 
-- [ ] **Phase 4: Education Phase** (2-3 days)
-  - [ ] Create StreamingMessage component
-  - [ ] Build EducationPhase coordinator
-  - [ ] Implement auto-advance logic
-  - [ ] Test message timing and UX
+- [x] **Phase 4: Education Phase** ✅ COMPLETE (2025-10-22)
+  - [x] Create StreamingMessage component
+  - [x] Create TypingIndicator component
+  - [x] Build EducationPhase coordinator
+  - [x] Fix streaming double-write bug (useRef pattern)
+  - [x] Fix runtime errors with guard clauses
+  - [x] Optimize timing (2s typing → 1s delay → button)
+  - [x] Implement custom blinking cursor animation
+  - [x] Add auto-scroll during streaming
+  - [x] Update message texts per feedback
+  - [x] Test message timing and UX
 
-- [ ] **Phase 5: Transition Animation** (3-4 days)
-  - [ ] Build useOnboardingTransition hook
-  - [ ] Implement CSS animations
-  - [ ] Coordinate with GlobalChat
-  - [ ] Test on multiple devices/browsers
-  - [ ] Implement fallback for reduced motion
+- [x] **Phase 5: Transition Animation** ✅ COMPLETE (2025-10-22)
+  - [x] Build useOnboardingTransition hook with state machine
+  - [x] Implement CSS keyframe animations (shrink → move → morph)
+  - [x] Coordinate with GlobalChat (automatic via pathname check)
+  - [x] SessionStorage coordination for dashboard fade-in
+  - [x] Implement fallback for reduced motion (prefers-reduced-motion)
 
 - [ ] **Phase 6: Polish & Testing** (2-3 days)
   - [ ] E2E tests with Cypress
@@ -930,12 +1146,37 @@ const useOnboardingTransition = () => {
   - [ ] Performance optimization
   - [ ] Beta user testing
 
-**Completion Date**: TBD (estimated 15-20 days from start)
+- [ ] **Phase 7: Expense Reinforcement** (1-2 days) - Added 2025-10-27
+  - [ ] Create ExpenseMissingBanner component
+  - [ ] Add banner logic to dashboard
+  - [ ] Implement useExpenseReinforcement hook
+  - [ ] Add AI proactive message trigger
+  - [ ] Build conversational expense creation flow
+  - [ ] Test multi-touchpoint coordination
+  - [ ] Validate state persistence across sessions
+
+**Completion Date**: Phases 1-5 complete (2025-10-27), Phases 6-7 pending
 
 ---
 
-**Last Updated**: 2025-10-17
-**Version**: 1.0
-**Status**: Proposed - Awaiting implementation start
+**Last Updated**: 2025-10-27
+**Version**: 1.3
+**Status**: In Progress - Phases 1-5 Complete (11 of 16-22 estimated days)
 
-*This ADR documents the comprehensive redesign of user onboarding to create an AI-first, educational, and engaging first-time user experience that showcases platform capabilities and creates clear mental models for ongoing usage.*
+**Implementation Summary:**
+- ✅ Phase 1-5 delivered with complete onboarding redesign
+- ✅ Added profession question (6 business types)
+- ✅ Implemented back/undo navigation with pre-selection
+- ✅ Expanded loading messages from 7 → 13 phrases (52s cycle)
+- ✅ Added contract upload flow for users without spreadsheets
+- ✅ Redesigned file upload to chat-native UI (57% space reduction)
+- ✅ Polished education phase with perfect timing and animations
+- ✅ Smooth crossfade transition animation (3.8s total, currently doubled for analysis)
+- ✅ Accessibility: reduced-motion fallback, keyboard navigation
+- ⏱️ Phase 6 (Polish & Testing) pending
+- ⏱️ Phase 7 (Expense Reinforcement) pending - strategy approved
+
+**Phase 7 Addition (2025-10-27):**
+Added post-onboarding expense reinforcement strategy for users who upload contracts but no spreadsheet. Hybrid approach combines dashboard banner + AI proactive chat to guide users toward adding expenses for accurate financial metrics. Preserves onboarding completion rate while ensuring data completeness and reinforcing AI-first philosophy.
+
+*This ADR documents the comprehensive redesign of user onboarding to create an AI-first, educational, and engaging first-time user experience that showcases platform capabilities, creates clear mental models for ongoing usage, and ensures complete financial data collection through intelligent post-onboarding reinforcement.*

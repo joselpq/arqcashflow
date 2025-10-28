@@ -20,6 +20,7 @@ interface ChatContextType {
   toggleExpanded: () => void
   sendMessage: (message: string, file?: File) => Promise<void>
   clearHistory: () => void
+  addProactiveMessage: (content: string) => void
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined)
@@ -39,6 +40,16 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const clearHistory = useCallback(() => {
     setMessages([])
     setFullHistory([])
+  }, [])
+
+  const addProactiveMessage = useCallback((content: string) => {
+    const proactiveMessage: Message = {
+      role: 'assistant',
+      content,
+      timestamp: new Date()
+    }
+    setMessages(prev => [...prev, proactiveMessage])
+    setFullHistory(prev => [...prev, { role: 'assistant', content }])
   }, [])
 
   const sendMessage = useCallback(async (messageContent: string, file?: File) => {
@@ -188,7 +199,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         toggleChat,
         toggleExpanded,
         sendMessage,
-        clearHistory
+        clearHistory,
+        addProactiveMessage
       }}
     >
       {children}

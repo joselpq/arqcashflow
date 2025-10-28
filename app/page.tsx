@@ -9,6 +9,11 @@ import { formatDateShort } from '@/lib/utils/date'
 import Modal from './components/Modal'
 import ReceivableForm from './components/forms/ReceivableForm'
 import ExpenseForm from './components/forms/ExpenseForm'
+import ExpenseMissingBanner from './components/dashboard/ExpenseMissingBanner'
+import { useExpenseReinforcement } from './hooks/useExpenseReinforcement'
+import QuickResolveModal from './components/modals/QuickResolveModal'
+import QuickReceiveForm from './components/modals/QuickReceiveForm'
+import QuickPostponeForm from './components/modals/QuickPostponeForm'
 
 interface DashboardData {
   metrics: {
@@ -22,6 +27,8 @@ interface DashboardData {
     totalContracts: number
     overdueReceivablesAmount: number
     overdueExpensesAmount: number
+    totalExpenses: number
+    totalReceivablesAmount: number
   }
   cashFlowHealth: {
     status: 'good' | 'warning' | 'critical'
@@ -212,12 +219,49 @@ export default function Dashboard() {
   const [error, setError] = useState<string | null>(null)
   const [retryAttempt, setRetryAttempt] = useState(0)
 
+  // Onboarding transition state
+  const [isFromOnboarding, setIsFromOnboarding] = useState(false)
+
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [modalType, setModalType] = useState<'receivable' | 'expense' | null>(null)
   const [editingEntity, setEditingEntity] = useState<any>(null)
   const [formLoading, setFormLoading] = useState(false)
   const [contracts, setContracts] = useState([])
+
+  // Quick resolve modal state
+  const [quickResolveStep, setQuickResolveStep] = useState<'action' | 'receive' | 'postpone' | 'full-form' | null>(null)
+
+  // Banner state
+  const [showExpenseBanner, setShowExpenseBanner] = useState(false)
+
+  // Expense reinforcement hook (AI proactive message)
+  useExpenseReinforcement(
+    data
+      ? {
+          contractCount: data.metrics.totalContracts,
+          receivablesTotal: data.metrics.totalReceivablesAmount,
+          expenseCount: data.metrics.totalExpenses
+        }
+      : null
+  )
+
+  // Check if coming from onboarding (for fade-in transition)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const fromOnboarding = sessionStorage.getItem('onboarding-completed')
+      if (fromOnboarding) {
+        setIsFromOnboarding(true)
+        // Clear the flag
+        sessionStorage.removeItem('onboarding-completed')
+
+        // Trigger fade-in by setting to false after a brief moment
+        setTimeout(() => {
+          setIsFromOnboarding(false)
+        }, 50)
+      }
+    }
+  }, [])
 
   // Fetch contracts for forms
   useEffect(() => {
@@ -237,6 +281,18 @@ export default function Dashboard() {
       console.error('Failed to fetch contracts:', error)
     }
   }
+
+  // Check if banner should be shown based on data
+  useEffect(() => {
+    if (data && typeof window !== 'undefined') {
+      const dismissed = localStorage.getItem('expense-banner-dismissed')
+      const shouldShow =
+        data.metrics.totalContracts > 0 &&
+        data.metrics.totalExpenses === 0 &&
+        !dismissed
+      setShowExpenseBanner(shouldShow)
+    }
+  }, [data])
 
   useEffect(() => {
     // Only fetch dashboard data if user is authenticated
@@ -312,12 +368,19 @@ export default function Dashboard() {
     setModalType(type)
     setEditingEntity(entity)
     setIsModalOpen(true)
+    // Start with action selection for overdue items
+    setQuickResolveStep('action')
   }
 
   function closeModal() {
     setIsModalOpen(false)
     setModalType(null)
     setEditingEntity(null)
+    setQuickResolveStep(null)
+  }
+
+  function openFullForm() {
+    setQuickResolveStep('full-form')
   }
 
   async function handleReceivableSubmit(receivableData: any) {
@@ -374,6 +437,100 @@ export default function Dashboard() {
     }
   }
 
+  // Banner handlers
+  function handleAddExpense() {
+    openModal('expense')
+    setQuickResolveStep('full-form') // Go directly to full form for new items
+  }
+
+  function handleDismissBanner() {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('expense-banner-dismissed', 'true')
+    }
+    setShowExpenseBanner(false)
+  }
+
+  // Quick resolve handlers
+  async function handleQuickReceive(data: { receivedDate: string; receivedAmount: number }) {
+    setFormLoading(true)
+    try {
+      const updateData = modalType === 'receivable'
+        ? {
+            status: 'received',
+            receivedDate: data.receivedDate,
+            receivedAmount: data.receivedAmount
+          }
+        : {
+            status: 'paid',
+            paidDate: data.receivedDate,
+            paidAmount: data.receivedAmount
+          }
+
+      const url = modalType === 'receivable'
+        ? `/api/receivables/${editingEntity.id}`
+        : `/api/expenses/${editingEntity.id}`
+
+      console.log('Submitting quick receive:', { url, updateData })
+
+      const res = await fetch(url, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updateData)
+      })
+
+      if (res.ok) {
+        console.log('Quick receive successful')
+        closeModal()
+        window.location.reload()
+      } else {
+        const errorData = await res.json()
+        console.error('Quick receive failed:', errorData)
+        alert(`Erro ao salvar: ${errorData.error || 'Erro desconhecido'}`)
+      }
+    } catch (error) {
+      console.error('Error:', error)
+      alert('Erro ao salvar')
+    } finally {
+      setFormLoading(false)
+    }
+  }
+
+  async function handleQuickPostpone(newDueDate: string) {
+    setFormLoading(true)
+    try {
+      const updateData = modalType === 'receivable'
+        ? { expectedDate: newDueDate }
+        : { dueDate: newDueDate }
+
+      const url = modalType === 'receivable'
+        ? `/api/receivables/${editingEntity.id}`
+        : `/api/expenses/${editingEntity.id}`
+
+      console.log('Submitting quick postpone:', { url, updateData })
+
+      const res = await fetch(url, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updateData)
+      })
+
+      if (res.ok) {
+        console.log('Quick postpone successful')
+        closeModal()
+        window.location.reload()
+      } else {
+        const errorData = await res.json()
+        console.error('Quick postpone failed:', errorData)
+        alert(`Erro ao salvar: ${errorData.error || 'Erro desconhecido'}`)
+      }
+    } catch (error) {
+      console.error('Error:', error)
+      alert('Erro ao salvar')
+    } finally {
+      setFormLoading(false)
+    }
+  }
+
   // Show loading state while checking authentication
   if (status === "loading") {
     return (
@@ -392,9 +549,10 @@ export default function Dashboard() {
   }
 
   // Show loading state while fetching dashboard data
+  // Hide loading spinner when coming from onboarding to prevent flash
   if (loading) {
     return (
-      <div className="min-h-screen p-8">
+      <div className={`min-h-screen p-8 transition-opacity duration-500 ${isFromOnboarding ? 'opacity-0' : 'opacity-100'}`}>
         <div className="max-w-7xl mx-auto">
           <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
           <div className="text-center py-20">
@@ -449,7 +607,7 @@ export default function Dashboard() {
                      data.metrics.thisMonthProfit < 0 ? 'down' : 'neutral'
 
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <div className={`min-h-screen bg-neutral-50 transition-opacity duration-500 ease-out ${isFromOnboarding ? 'opacity-0' : 'opacity-100'}`}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-12">
           <div>
@@ -468,6 +626,16 @@ export default function Dashboard() {
             message={data.cashFlowHealth.message}
           />
         </div>
+
+        {/* Expense Missing Banner */}
+        {showExpenseBanner && (
+          <ExpenseMissingBanner
+            contractCount={data.metrics.totalContracts}
+            receivablesTotal={data.metrics.totalReceivablesAmount}
+            onAddExpense={handleAddExpense}
+            onDismiss={handleDismissBanner}
+          />
+        )}
 
         {/* Key Metrics Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -658,8 +826,57 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Modals */}
-      {modalType === 'receivable' && (
+      {/* Quick Resolve Modals */}
+      {isModalOpen && editingEntity && quickResolveStep === 'action' && (
+        <QuickResolveModal
+          isOpen={true}
+          onClose={closeModal}
+          entityType={modalType!}
+          entity={{
+            id: editingEntity.id,
+            description: editingEntity.description || `${editingEntity.clientName} - ${editingEntity.projectName}`,
+            amount: editingEntity.amount,
+            dueDate: modalType === 'receivable' ? editingEntity.expectedDate : editingEntity.dueDate,
+            client: editingEntity.clientName,
+            project: editingEntity.projectName,
+            vendor: editingEntity.vendor
+          }}
+          onMarkAsReceived={() => setQuickResolveStep('receive')}
+          onPostpone={() => setQuickResolveStep('postpone')}
+          onEditFull={openFullForm}
+        />
+      )}
+
+      {isModalOpen && editingEntity && quickResolveStep === 'receive' && (
+        <QuickReceiveForm
+          isOpen={true}
+          onClose={closeModal}
+          onBack={() => setQuickResolveStep('action')}
+          entityType={modalType!}
+          entity={{
+            id: editingEntity.id,
+            amount: editingEntity.amount,
+            dueDate: modalType === 'receivable' ? editingEntity.expectedDate : editingEntity.dueDate
+          }}
+          onSubmit={handleQuickReceive}
+          loading={formLoading}
+        />
+      )}
+
+      {isModalOpen && editingEntity && quickResolveStep === 'postpone' && (
+        <QuickPostponeForm
+          isOpen={true}
+          onClose={closeModal}
+          onBack={() => setQuickResolveStep('action')}
+          entityType={modalType!}
+          currentDueDate={modalType === 'receivable' ? editingEntity.expectedDate : editingEntity.dueDate}
+          onSubmit={handleQuickPostpone}
+          loading={formLoading}
+        />
+      )}
+
+      {/* Full Form Modals (fallback for "editar detalhes" and new items) */}
+      {modalType === 'receivable' && quickResolveStep === 'full-form' && (
         <Modal
           isOpen={isModalOpen}
           onClose={closeModal}
@@ -676,7 +893,7 @@ export default function Dashboard() {
         </Modal>
       )}
 
-      {modalType === 'expense' && (
+      {modalType === 'expense' && quickResolveStep === 'full-form' && (
         <Modal
           isOpen={isModalOpen}
           onClose={closeModal}

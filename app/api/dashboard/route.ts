@@ -23,6 +23,17 @@ export async function GET(request: NextRequest) {
         metricsService.getMonthlyTrend(6)
       ])
 
+    // Get counts for expense reinforcement banner
+    const [expenseCount, allReceivables] = await Promise.all([
+      context.teamScopedPrisma.expense.count(),
+      context.teamScopedPrisma.receivable.findMany({
+        select: { amount: true }
+      })
+    ])
+
+    // Calculate total receivables amount manually
+    const totalReceivablesAmount = allReceivables.reduce((sum, r) => sum + r.amount, 0)
+
     console.log('✅ Dashboard API: All metrics fetched successfully')
 
     // Build dashboard response using service results
@@ -38,7 +49,9 @@ export async function GET(request: NextRequest) {
         activeContracts: monthMetrics.activeContracts,
         totalContracts: monthMetrics.totalContracts,
         overdueReceivablesAmount: overdueAnalysis.overdueReceivablesAmount,
-        overdueExpensesAmount: overdueAnalysis.overdueExpensesAmount
+        overdueExpensesAmount: overdueAnalysis.overdueExpensesAmount,
+        totalExpenses: expenseCount,
+        totalReceivablesAmount: totalReceivablesAmount
       },
 
       // Health status

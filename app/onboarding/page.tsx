@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -8,11 +8,15 @@ import OnboardingFileUpload from "../components/onboarding/OnboardingFileUpload"
 import OnboardingChatContainer from "../components/onboarding/OnboardingChatContainer";
 import ChipButtons from "../components/onboarding/ChipButtons";
 import ChatFileUpload from "../components/onboarding/ChatFileUpload";
+import EducationPhase from "../components/onboarding/EducationPhase";
+import StreamingMessage from "../components/onboarding/StreamingMessage";
+import { useOnboardingTransition } from "../hooks/useOnboardingTransition";
 
 type UserType = "individual" | "small_business";
 
 interface ProfileData {
   type: UserType;
+  profession?: string;
   employeeCount?: string;
   revenueTier?: string;
 }
@@ -20,6 +24,7 @@ interface ProfileData {
 interface ChatMessage {
   role: 'assistant' | 'user';
   content: string;
+  isStreaming?: boolean;
 }
 
 interface OnboardingResults {
@@ -34,6 +39,7 @@ interface OnboardingResults {
 export default function OnboardingPage() {
   const { data: session } = useSession();
   const router = useRouter();
+  const { state: transitionState, startTransition } = useOnboardingTransition();
 
   const [currentStep, setCurrentStep] = useState(1);
   const [profileData, setProfileData] = useState<ProfileData>({
@@ -59,7 +65,58 @@ export default function OnboardingPage() {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [showFileUpload, setShowFileUpload] = useState(false);
   const [hasSpreadsheet, setHasSpreadsheet] = useState<boolean | null>(null);
+  const [hasContracts, setHasContracts] = useState<boolean | null>(null);
+  const [uploadType, setUploadType] = useState<'spreadsheet' | 'contract' | null>(null);
   const [totalUploaded, setTotalUploaded] = useState({ contracts: 0, receivables: 0, expenses: 0 });
+  const [showEducation, setShowEducation] = useState(false);
+  const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
+  const loadingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleGoBack = () => {
+    if (currentQuestion <= 0) return;
+
+    // Special handling for question 5 (file upload - spreadsheets)
+    if (currentQuestion === 5 && uploadType === 'spreadsheet') {
+      // Remove last 2 messages (user's "Sim" answer + upload prompt)
+      setChatMessages(prev => prev.slice(0, -2));
+      // Hide file upload
+      setShowFileUpload(false);
+      setHasSpreadsheet(null);
+      setUploadType(null);
+      // Go back to question 4
+      setCurrentQuestion(4);
+      return;
+    }
+
+    // Special handling for question 6 (file upload - contracts)
+    if (currentQuestion === 6 && uploadType === 'contract') {
+      // Remove last 2 messages (user's "Sim" answer + upload prompt)
+      setChatMessages(prev => prev.slice(0, -2));
+      // Hide file upload
+      setShowFileUpload(false);
+      setHasContracts(null);
+      setUploadType(null);
+      // Go back to question 5 (has contracts question)
+      setCurrentQuestion(5);
+      return;
+    }
+
+    // Special handling for question 5 (has contracts question)
+    if (currentQuestion === 5 && hasSpreadsheet === false) {
+      // Remove last 2 messages (user's "Não" answer + contracts question)
+      setChatMessages(prev => prev.slice(0, -2));
+      setHasSpreadsheet(null);
+      // Go back to question 4
+      setCurrentQuestion(4);
+      return;
+    }
+
+    // Remove last 2 messages (user's answer + next question)
+    setChatMessages(prev => prev.slice(0, -2));
+
+    // Go back to previous question
+    setCurrentQuestion(prev => prev - 1);
+  };
 
   const handleChatResponse = async (value: string) => {
     // First question: Business type
@@ -68,12 +125,30 @@ export default function OnboardingPage() {
       setChatMessages(prev => [...prev, { role: 'user', content: responseLabel }]);
       setProfileData({ ...profileData, type: value as UserType });
 
-      // Ask next question
-      setChatMessages(prev => [...prev, { role: 'assistant', content: 'Quantas pessoas trabalham no negócio?' }]);
+      // Ask next question: Business profession
+      setChatMessages(prev => [...prev, { role: 'assistant', content: 'Qual é sua área de atuação?' }]);
       setCurrentQuestion(1);
     }
-    // Second question: Employee count
+    // Second question: Business profession/field
     else if (currentQuestion === 1) {
+      const professionOptions = [
+        { label: 'Arquitetura', value: 'arquitetura' },
+        { label: 'Engenharia Civil', value: 'engenharia-civil' },
+        { label: 'Design de Interiores', value: 'design-interiores' },
+        { label: 'Paisagismo', value: 'paisagismo' },
+        { label: 'Urbanismo', value: 'urbanismo' },
+        { label: 'Outros', value: 'outros' }
+      ];
+      const selectedOption = professionOptions.find(opt => opt.value === value);
+      setChatMessages(prev => [...prev, { role: 'user', content: selectedOption?.label || value }]);
+      setProfileData(prev => ({ ...prev, profession: value }));
+
+      // Ask next question: Employee count
+      setChatMessages(prev => [...prev, { role: 'assistant', content: 'Quantas pessoas trabalham no negócio?' }]);
+      setCurrentQuestion(2);
+    }
+    // Third question: Employee count
+    else if (currentQuestion === 2) {
       const employeeCountOptions = [
         { label: '1 pessoa (só eu)', value: '1' },
         { label: '2-5 pessoas', value: '2-5' },
@@ -87,10 +162,10 @@ export default function OnboardingPage() {
 
       // Ask next question
       setChatMessages(prev => [...prev, { role: 'assistant', content: 'Qual é aproximadamente seu faturamento mensal? Tudo bem se não tiver certeza' }]);
-      setCurrentQuestion(2);
+      setCurrentQuestion(3);
     }
-    // Third question: Revenue tier
-    else if (currentQuestion === 2) {
+    // Fourth question: Revenue tier
+    else if (currentQuestion === 3) {
       const revenueOptions = [
         { label: 'Até R$ 10 mil', value: '0-10k' },
         { label: 'R$ 10 mil a R$ 50 mil', value: '10k-50k' },
@@ -102,11 +177,11 @@ export default function OnboardingPage() {
       setProfileData(prev => ({ ...prev, revenueTier: value }));
 
       // Ask spreadsheet question
-      setChatMessages(prev => [...prev, { role: 'assistant', content: 'Você tem alguma planilha onde controla seus projetos, recebíveis e despesas?' }]);
-      setCurrentQuestion(3);
+      setChatMessages(prev => [...prev, { role: 'assistant', content: 'Você tem alguma planilha onde controla seus projetos, recebíveis e/ou despesas?' }]);
+      setCurrentQuestion(4);
     }
-    // Fourth question: Has spreadsheet
-    else if (currentQuestion === 3) {
+    // Fifth question: Has spreadsheet
+    else if (currentQuestion === 4) {
       const responseLabel = value === 'yes' ? 'Sim' : 'Não';
       setChatMessages(prev => [...prev, { role: 'user', content: responseLabel }]);
 
@@ -116,36 +191,74 @@ export default function OnboardingPage() {
       if (value === 'yes') {
         // User has spreadsheet - show upload
         setHasSpreadsheet(true);
-        setChatMessages(prev => [...prev, { role: 'assistant', content: 'Ótimo! Envie seus arquivos abaixo (planilhas, PDFs ou imagens):' }]);
+        setUploadType('spreadsheet');
+        setChatMessages(prev => [...prev, { role: 'assistant', content: 'Ótimo! Envie sua(s) planilha(s) abaixo:' }]);
         setShowFileUpload(true);
-        setCurrentQuestion(4);
-      } else {
-        // User doesn't have spreadsheet - complete onboarding
-        setHasSpreadsheet(false);
-        setChatMessages(prev => [...prev, { role: 'assistant', content: 'Sem problema! Você pode adicionar seus dados manualmente depois. Vamos começar!' }]);
         setCurrentQuestion(5);
-        // Complete onboarding after a brief delay
-        setTimeout(() => {
-          handleCompleteOnboarding();
-        }, 2000);
+      } else {
+        // User doesn't have spreadsheet - ask about contracts
+        setHasSpreadsheet(false);
+        setChatMessages(prev => [...prev, { role: 'assistant', content: 'Você tem contratos ou propostas dos seus projetos? Assim podemos extrair e cadastrar os valores e datas de todos os recebíveis' }]);
+        setCurrentQuestion(5);
       }
     }
-    // Fifth question: More files?
-    else if (currentQuestion === 4) {
+    // Sixth question (conditional): Has contracts (only if no spreadsheet)
+    else if (currentQuestion === 5 && hasSpreadsheet === false) {
+      const responseLabel = value === 'yes' ? 'Sim' : 'Não';
+      setChatMessages(prev => [...prev, { role: 'user', content: responseLabel }]);
+
+      if (value === 'yes') {
+        // User has contracts - show upload
+        setHasContracts(true);
+        setUploadType('contract');
+        setChatMessages(prev => [...prev, { role: 'assistant', content: 'Ótimo! Envie seu(s) contrato(s) abaixo:' }]);
+        setShowFileUpload(true);
+        setCurrentQuestion(6);
+      } else {
+        // User doesn't have contracts either - show education phase
+        setHasContracts(false);
+        setChatMessages(prev => [...prev, { role: 'assistant', content: 'Sem problema! Você pode adicionar seus dados manualmente depois.' }]);
+        setCurrentQuestion(7);
+        // Show education phase after a brief delay
+        setTimeout(() => {
+          setShowEducation(true);
+        }, 1500);
+      }
+    }
+    // More files question for spreadsheets (question 5)
+    else if (currentQuestion === 5 && uploadType === 'spreadsheet') {
       const responseLabel = value === 'yes' ? 'Sim, tenho mais' : 'Não, estou pronto(a)';
       setChatMessages(prev => [...prev, { role: 'user', content: responseLabel }]);
 
       if (value === 'yes') {
         // Show upload again
-        setChatMessages(prev => [...prev, { role: 'assistant', content: 'Perfeito! Envie mais arquivos abaixo:' }]);
+        setChatMessages(prev => [...prev, { role: 'assistant', content: 'Perfeito! Envie mais planilhas abaixo:' }]);
         setShowFileUpload(true);
       } else {
-        // Complete onboarding
-        setChatMessages(prev => [...prev, { role: 'assistant', content: 'Excelente! Vamos começar a usar o ArqCashflow! 🚀' }]);
-        setCurrentQuestion(5);
+        // Show education phase
+        setChatMessages(prev => [...prev, { role: 'assistant', content: 'Excelente!' }]);
+        setCurrentQuestion(7);
         setTimeout(() => {
-          handleCompleteOnboarding();
-        }, 1500);
+          setShowEducation(true);
+        }, 1000);
+      }
+    }
+    // More files question for contracts (question 6)
+    else if (currentQuestion === 6 && uploadType === 'contract') {
+      const responseLabel = value === 'yes' ? 'Sim, tenho mais' : 'Não, estou pronto(a)';
+      setChatMessages(prev => [...prev, { role: 'user', content: responseLabel }]);
+
+      if (value === 'yes') {
+        // Show upload again
+        setChatMessages(prev => [...prev, { role: 'assistant', content: 'Perfeito! Envie mais contratos abaixo:' }]);
+        setShowFileUpload(true);
+      } else {
+        // Show education phase
+        setChatMessages(prev => [...prev, { role: 'assistant', content: 'Excelente!' }]);
+        setCurrentQuestion(7);
+        setTimeout(() => {
+          setShowEducation(true);
+        }, 1000);
       }
     }
   };
@@ -175,19 +288,65 @@ export default function OnboardingPage() {
     }
   };
 
+  const loadingMessages = [
+    'Analisando a estrutura dos seus arquivos... ☕',
+    'Tomando um cafézinho enquanto processamos... ☕',
+    'Identificando contratos e projetos... 📋',
+    'Conversando com a Inteligência Artificial... 🤖',
+    'Extraindo recebíveis... 💰',
+    'Fazendo mágica com seus dados... ✨',
+    'Processando despesas... 📊',
+    'Organizando tudo para você... 🗂️',
+    'Preparando tudo com carinho... 💙',
+    'Validando os dados... ✅',
+    'Deixando tudo nos trinques... 🎨',
+    'Conferindo os últimos detalhes... 🔍',
+    'Quase lá! Finalizando... 🎯'
+  ];
+
   const handleFileUploadStart = () => {
-    // Show loading message
-    const loadingMessages = [
-      'Analisando seus arquivos... Isso pode levar alguns minutos, aproveite para pegar um café! ☕',
-      'Processando seus dados... Que tal alongar as pernas enquanto eu trabalho? 🚶',
-      'Organizando tudo para você... Hora de tomar aquela água! 💧',
-      'Lendo seus arquivos... Aproveite para respirar fundo! 🧘'
-    ];
-    const randomMessage = loadingMessages[Math.floor(Math.random() * loadingMessages.length)];
-    setChatMessages(prev => [...prev, { role: 'assistant', content: randomMessage }]);
+    // Keep file upload visible (it will hide its drop zone internally)
+    // Start with first message (streaming)
+    setLoadingMessageIndex(0);
+    setChatMessages(prev => [...prev, { role: 'assistant', content: loadingMessages[0], isStreaming: true }]);
+
+    // Rotate through messages every 4 seconds
+    let currentIndex = 0;
+    loadingIntervalRef.current = setInterval(() => {
+      currentIndex = (currentIndex + 1) % loadingMessages.length;
+      setLoadingMessageIndex(currentIndex);
+
+      // Update the last message with new content (will trigger streaming restart)
+      setChatMessages(prev => {
+        const newMessages = [...prev];
+        // Find the last assistant message (loading message)
+        for (let i = newMessages.length - 1; i >= 0; i--) {
+          if (newMessages[i].role === 'assistant' && newMessages[i].isStreaming) {
+            newMessages[i] = { role: 'assistant', content: loadingMessages[currentIndex], isStreaming: true };
+            break;
+          }
+        }
+        return newMessages;
+      });
+    }, 4000); // Change message every 4 seconds
   };
 
+  // Cleanup interval when component unmounts or upload completes
+  useEffect(() => {
+    return () => {
+      if (loadingIntervalRef.current) {
+        clearInterval(loadingIntervalRef.current);
+      }
+    };
+  }, []);
+
   const handleFileUploadComplete = (results: { totalContracts: number; totalReceivables: number; totalExpenses: number; totalErrors: number; success: boolean }) => {
+    // Clear loading message rotation
+    if (loadingIntervalRef.current) {
+      clearInterval(loadingIntervalRef.current);
+      loadingIntervalRef.current = null;
+    }
+
     // Update cumulative totals
     setTotalUploaded(prev => ({
       contracts: prev.contracts + results.totalContracts,
@@ -195,12 +354,25 @@ export default function OnboardingPage() {
       expenses: prev.expenses + results.totalExpenses
     }));
 
-    // Show results as chat message
+    // Replace loading message with success summary
     const summary = `Pronto! Encontrei ${results.totalContracts} contrato${results.totalContracts !== 1 ? 's' : ''}, ${results.totalReceivables} recebíve${results.totalReceivables !== 1 ? 'is' : 'l'} e ${results.totalExpenses} despesa${results.totalExpenses !== 1 ? 's' : ''}.`;
-    setChatMessages(prev => [...prev, { role: 'assistant', content: summary }]);
+
+    setChatMessages(prev => {
+      const newMessages = [...prev];
+      // Replace the loading message with the summary (no longer streaming)
+      for (let i = newMessages.length - 1; i >= 0; i--) {
+        if (newMessages[i].role === 'assistant' && newMessages[i].isStreaming) {
+          newMessages[i] = { role: 'assistant', content: summary, isStreaming: false };
+          break;
+        }
+      }
+      return newMessages;
+    });
 
     // Ask if user wants to upload more
     setChatMessages(prev => [...prev, { role: 'assistant', content: 'Tem outros arquivos para importar?' }]);
+
+    // Hide file upload to show chip buttons
     setShowFileUpload(false);
   };
 
@@ -220,15 +392,14 @@ export default function OnboardingPage() {
   };
 
   const handleCompleteOnboarding = async () => {
-    setLoading(true);
     try {
       // Mark onboarding as complete
       await fetch("/api/onboarding/complete", { method: "POST" });
-      router.push("/");
+
+      // Start the transition animation
+      await startTransition();
     } catch (err) {
       setError("Erro ao finalizar onboarding. Tente novamente.");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -251,8 +422,8 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-neutral-50 to-blue-50 flex items-center justify-center p-4 sm:p-6 lg:p-8">
-      <div className="max-w-4xl w-full">
+    <div className="min-h-screen bg-gradient-to-br from-neutral-50 to-blue-50 p-4 sm:p-6 lg:p-8">
+      <div className="relative w-full h-full min-h-screen">
         {/* Progress Indicator */}
         <div className="mb-8">
           <div className="flex items-center justify-center mb-4">
@@ -273,8 +444,23 @@ export default function OnboardingPage() {
         {/* Step 1: Chat-Based Profile Setup */}
         {currentStep === 1 && (
           <OnboardingChatContainer
+            transitionPhase={transitionState.phase}
             actions={
               <>
+                {/* Back button - show when on questions 1-6 (including file uploads) */}
+                {currentQuestion >= 1 && currentQuestion <= 6 && (
+                  <div className="mb-3 text-center">
+                    <button
+                      onClick={handleGoBack}
+                      disabled={loading}
+                      className="text-sm text-neutral-600 hover:text-neutral-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors inline-flex items-center gap-1"
+                    >
+                      <span>←</span>
+                      <span>Voltar</span>
+                    </button>
+                  </div>
+                )}
+
                 {/* Show chip buttons for current question */}
                 {currentQuestion === 0 && (
                   <ChipButtons
@@ -284,10 +470,27 @@ export default function OnboardingPage() {
                     ]}
                     onSelect={handleChatResponse}
                     disabled={loading}
+                    selectedValue={profileData.type}
                   />
                 )}
 
                 {currentQuestion === 1 && (
+                  <ChipButtons
+                    options={[
+                      { label: 'Arquitetura', value: 'arquitetura' },
+                      { label: 'Engenharia Civil', value: 'engenharia-civil' },
+                      { label: 'Design de Interiores', value: 'design-interiores' },
+                      { label: 'Paisagismo', value: 'paisagismo' },
+                      { label: 'Urbanismo', value: 'urbanismo' },
+                      { label: 'Outros', value: 'outros' }
+                    ]}
+                    onSelect={handleChatResponse}
+                    disabled={loading}
+                    selectedValue={profileData.profession}
+                  />
+                )}
+
+                {currentQuestion === 2 && (
                   <ChipButtons
                     options={[
                       { label: '1 pessoa (só eu)', value: '1' },
@@ -298,10 +501,11 @@ export default function OnboardingPage() {
                     ]}
                     onSelect={handleChatResponse}
                     disabled={loading}
+                    selectedValue={profileData.employeeCount}
                   />
                 )}
 
-                {currentQuestion === 2 && (
+                {currentQuestion === 3 && (
                   <ChipButtons
                     options={[
                       { label: 'Até R$ 10 mil', value: '0-10k' },
@@ -311,10 +515,11 @@ export default function OnboardingPage() {
                     ]}
                     onSelect={handleChatResponse}
                     disabled={loading}
+                    selectedValue={profileData.revenueTier}
                   />
                 )}
 
-                {currentQuestion === 3 && (
+                {currentQuestion === 4 && (
                   <ChipButtons
                     options={[
                       { label: 'Sim', value: 'yes' },
@@ -322,19 +527,37 @@ export default function OnboardingPage() {
                     ]}
                     onSelect={handleChatResponse}
                     disabled={loading}
+                    selectedValue={hasSpreadsheet === true ? 'yes' : hasSpreadsheet === false ? 'no' : undefined}
                   />
                 )}
 
-                {/* Show file upload when user has spreadsheet */}
-                {currentQuestion === 4 && showFileUpload && (
-                  <ChatFileUpload
-                    onUploadStart={handleFileUploadStart}
-                    onUploadComplete={handleFileUploadComplete}
+                {/* Contracts question (only shown if user doesn't have spreadsheets) */}
+                {currentQuestion === 5 && hasSpreadsheet === false && !showFileUpload && (
+                  <ChipButtons
+                    options={[
+                      { label: 'Sim', value: 'yes' },
+                      { label: 'Não', value: 'no' }
+                    ]}
+                    onSelect={handleChatResponse}
+                    disabled={loading}
+                    selectedValue={hasContracts === true ? 'yes' : hasContracts === false ? 'no' : undefined}
                   />
                 )}
 
-                {/* Show "more files?" buttons after upload */}
-                {currentQuestion === 4 && !showFileUpload && (
+                {/* Show "more files?" buttons after spreadsheet upload */}
+                {currentQuestion === 5 && uploadType === 'spreadsheet' && !showFileUpload && (
+                  <ChipButtons
+                    options={[
+                      { label: 'Sim, tenho mais', value: 'yes' },
+                      { label: 'Não, estou pronto(a)', value: 'no' }
+                    ]}
+                    onSelect={handleChatResponse}
+                    disabled={loading}
+                  />
+                )}
+
+                {/* Show "more files?" buttons after contract upload */}
+                {currentQuestion === 6 && uploadType === 'contract' && !showFileUpload && (
                   <ChipButtons
                     options={[
                       { label: 'Sim, tenho mais', value: 'yes' },
@@ -346,7 +569,7 @@ export default function OnboardingPage() {
                 )}
 
                 {/* Show loading state */}
-                {loading && currentQuestion === 5 && (
+                {loading && currentQuestion === 7 && (
                   <div className="flex justify-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                   </div>
@@ -363,18 +586,51 @@ export default function OnboardingPage() {
           >
             {/* Render chat messages */}
             {chatMessages.map((msg, index) => (
-              <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div
-                  className={`max-w-[80%] p-4 rounded-2xl ${
-                    msg.role === 'user'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-neutral-100 text-neutral-900'
-                  }`}
-                >
-                  <p className="text-base leading-relaxed">{msg.content}</p>
+              msg.isStreaming ? (
+                // Use StreamingMessage for loading messages
+                <StreamingMessage
+                  key={`${index}-${msg.content}`} // Include content in key to restart on content change
+                  content={msg.content}
+                  speed={2}
+                  interval={30}
+                  keepCursorAfterComplete={true} // Keep cursor blinking to show "thinking"
+                />
+              ) : (
+                // Regular static message
+                <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  <div
+                    className={`max-w-[80%] p-4 rounded-2xl ${
+                      msg.role === 'user'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-neutral-100 text-neutral-900'
+                    }`}
+                  >
+                    <p className="text-base leading-relaxed">{msg.content}</p>
+                  </div>
                 </div>
-              </div>
+              )
             ))}
+
+            {/* Show file upload for spreadsheets (question 5) */}
+            {currentQuestion === 5 && uploadType === 'spreadsheet' && showFileUpload && (
+              <ChatFileUpload
+                onUploadStart={handleFileUploadStart}
+                onUploadComplete={handleFileUploadComplete}
+              />
+            )}
+
+            {/* Show file upload for contracts (question 6) */}
+            {currentQuestion === 6 && uploadType === 'contract' && showFileUpload && (
+              <ChatFileUpload
+                onUploadStart={handleFileUploadStart}
+                onUploadComplete={handleFileUploadComplete}
+              />
+            )}
+
+            {/* Show education phase */}
+            {showEducation && (
+              <EducationPhase onComplete={handleCompleteOnboarding} />
+            )}
           </OnboardingChatContainer>
         )}
 
@@ -523,6 +779,24 @@ export default function OnboardingPage() {
                 </button>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Destination FAB - fades in during crossfade on onboarding page */}
+        {(transitionState.phase === 'shrinking' || transitionState.phase === 'fading' || transitionState.phase === 'complete') && (
+          <div
+            className="fixed bottom-6 right-6 z-30 w-14 h-14 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg flex items-center justify-center pointer-events-none"
+            style={{
+              opacity: transitionState.phase === 'fading' || transitionState.phase === 'complete' ? 1 : 0,
+              transition: 'opacity 1600ms ease-out'
+            }}
+          >
+            {/* AI Sparkle Icon - same as GlobalChat FAB */}
+            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2 L14 10 L15.5 12 L14 14 L12 22 L10 14 L8.5 12 L10 10 Z M2 12 L10 10 L12 8.5 L14 10 L22 12 L14 14 L12 15.5 L10 14 Z" />
+              <path d="M18.5 3.5 L19.1 5.5 L19.65 6.5 L19.1 7.5 L18.5 9.5 L17.9 7.5 L17.35 6.5 L17.9 5.5 Z M15.5 6.5 L17.5 5.9 L18.5 5.35 L19.5 5.9 L21.5 6.5 L19.5 7.1 L18.5 7.65 L17.5 7.1 Z" />
+              <path d="M5.5 14.5 L6.1 16.5 L6.65 17.5 L6.1 18.5 L5.5 20.5 L4.9 18.5 L4.35 17.5 L4.9 16.5 Z M2.5 17.5 L4.5 16.9 L5.5 16.35 L6.5 16.9 L8.5 17.5 L6.5 18.1 L5.5 18.65 L4.5 18.1 Z" />
+            </svg>
           </div>
         )}
       </div>
