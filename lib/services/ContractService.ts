@@ -17,7 +17,7 @@ import { Contract, Receivable } from '@prisma/client'
 import { BaseService, ServiceContext, ServiceError, ValidationUtils } from './BaseService'
 import { createDateForStorage } from '@/lib/utils/date'
 import { z } from 'zod'
-import { DeleteOptions, DeletionInfo } from '@/lib/validation'
+import { DeleteOptions, DeletionInfo, ContractSchemas } from '@/lib/validation'
 
 // Type definitions
 export interface ContractWithReceivables extends Contract {
@@ -37,8 +37,8 @@ export interface ContractCreateData {
   clientName: string
   projectName: string
   description?: string
-  totalValue: number
-  signedDate: string
+  totalValue?: number  // Optional for professions like medicina
+  signedDate?: string  // Optional for professions like medicina
   status?: string
   category?: string
   notes?: string
@@ -63,19 +63,8 @@ export interface ContractSummary {
   averageContractValue: number
 }
 
-// Validation schema (extracted from API route) - TEMP: keep original until migration is stable
-export const ContractSchema = z.object({
-  clientName: z.string().min(1, 'Client name is required'),
-  projectName: z.string().min(1, 'Project name is required'),
-  description: z.string().optional(),
-  totalValue: z.number().positive('Total value must be positive'),
-  signedDate: z.string().min(1, 'Signed date is required'),
-  status: z.string().optional(),
-  category: z.string().optional(),
-  notes: z.string().optional(),
-})
-
-// Contract deletion interfaces now imported from validation layer
+// Contract deletion interfaces and validation schemas imported from validation layer
+// Note: ContractSchemas.create(profession) provides profession-aware validation
 
 export class ContractService extends BaseService<
   ContractWithReceivables,
@@ -92,15 +81,28 @@ export class ContractService extends BaseService<
   /**
    * Validate business rules for contract operations
    * Uses flexible validation: block clearly wrong data, warn about unusual patterns
+   * Phase 1: Added profession-aware validation support
    */
   async validateBusinessRules(data: ContractCreateData | ContractUpdateData, contractId?: string): Promise<void> {
-    // Validate using Zod schema
+    // Get team to determine profession for validation
+    const team = await this.context.teamScopedPrisma.team.findUnique({
+      where: { id: this.context.teamId },
+      select: { profession: true }
+    })
+
+    // Validate using profession-aware Zod schema
     if ('clientName' in data && 'projectName' in data) {
-      // This is create data - validate all required fields
-      ContractSchema.parse(data)
+      // This is create data - validate all required fields based on profession
+      const schema = ContractSchemas.create(team?.profession)
+      schema.parse(data)
+    } else {
+      // This is update data - validate based on profession
+      const schema = ContractSchemas.update(team?.profession)
+      schema.parse(data)
     }
 
     // BLOCKING: Total value must be positive (clearly wrong)
+    // Note: For medicina profession, totalValue is optional
     if (data.totalValue !== undefined) {
       ValidationUtils.validatePositiveNumber(data.totalValue, 'Total value')
     }

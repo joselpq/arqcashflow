@@ -1,7 +1,7 @@
 # ArqCashflow Development Backlog
 
 **Purpose**: Central source of truth for project priorities and development status
-**Last Updated**: 2025-10-27 (Dashboard Resolver Modals Redesign complete)
+**Last Updated**: 2025-10-28 (Chat Latency moved to DOING, added Profession Modularization & Design Review to BACKLOG)
 **Update Frequency**: Every LLM session MUST update this document when completing tasks
 
 ## 🚨 CRITICAL INSTRUCTIONS FOR LLM AGENTS
@@ -54,6 +54,111 @@ This backlog **DOES NOT** replace other documentation:
 ---
 
 ## 🔄 DOING (Currently In Progress)
+
+### **Profession-Based Modularization - Phase 1 (Doctors MVP)** 🚀 IN PROGRESS (Started 2025-11-03)
+**Goal**: Enable doctors to use ArqCashflow with medical terminology and validation
+**Status**: Just started - implementing core infrastructure
+**Priority**: HIGH (multi-vertical expansion, 3-5x TAM potential)
+**Estimated Time**: 2-3 weeks (Phase 1 only)
+**Related**: ADR-018 Profession-Based Application Modularization
+
+**Strategic Context**:
+- Doctors interested in platform → validate demand fast
+- Hybrid approach: Phase 1 MVP (2-3 weeks) → Phase 2 config system (if validated)
+- Keep validation layer adapted per profession (quality + flexibility)
+
+**Week 1: Core Infrastructure (Days 1-5)**
+- [x] Day 1-2: Database & Validation ✅ COMPLETE (2025-11-03)
+  - [x] Migrate `totalValue: Float?` and `signedDate: DateTime?` (optional fields)
+  - [x] Create `lib/professions/` directory structure
+  - [x] Implement `medicina.ts` (doctor-specific config)
+  - [x] Implement `terminology.ts` (label mappings)
+  - [x] Update validation layer with profession parameter
+  - [x] Update ContractService to use profession-aware validation
+  - [ ] Test backward compatibility with existing contracts (pending manual testing)
+- [ ] Day 3-4: AI Prompts & Services
+  - [ ] Update `OperationsAgentService.buildSystemPrompt()` with profession context
+  - [ ] Add medical terminology to AI prompts
+  - [ ] Update `SetupAssistantService` for medical spreadsheets
+  - [ ] Test AI understanding of medical context
+- [ ] Day 5: Onboarding
+  - [ ] Add "Medicina" to profession options
+  - [ ] Implement profession-aware file upload questions
+  - [ ] Save profession to Team model
+  - [ ] Test onboarding flow end-to-end
+
+**Week 2: UI Components (Days 6-10)**
+- [ ] Day 6-8: Forms & Terminology
+  - [ ] Create `useTerminology()` hook
+  - [ ] Update `ContractForm.tsx` with terminology
+  - [ ] Update Dashboard metrics with terminology
+  - [ ] Update table headers and column labels
+  - [ ] Update modal titles and buttons
+- [ ] Day 9-10: Testing & Refinement
+  - [ ] Unit tests for profession helpers
+  - [ ] Integration tests for validation
+  - [ ] E2E test for doctor onboarding flow
+  - [ ] Manual testing with internal "doctors"
+  - [ ] Fix bugs and polish UX
+
+**Week 3: Pilot Launch (Days 11-15)**
+- [ ] Day 11-13: Documentation & Deployment
+  - [ ] Update user documentation for doctors
+  - [ ] Create doctor-specific onboarding guide
+  - [ ] Deploy to staging for pilot testing
+  - [ ] Recruit 5-10 pilot doctors
+  - [ ] Deploy to production
+- [ ] Day 14-15: Support & Iteration
+  - [ ] Monitor pilot doctor usage
+  - [ ] Collect feedback and pain points
+  - [ ] Fix urgent issues
+  - [ ] Document learnings for Phase 2
+
+**Success Criteria (3 months)**:
+- 5+ paying doctor customers
+- Doctor onboarding completion rate ≥ 80%
+- Doctor retention rate ≥ 70% after 30 days
+- Support ticket rate < 2x architect baseline
+
+**Decision Point (Month 3)**: GO/NO-GO for Phase 2 (pattern extraction)
+
+**Files to Create**:
+- `lib/professions/index.ts` - Exports
+- `lib/professions/medicina.ts` - Doctor-specific config
+- `lib/professions/terminology.ts` - Terminology mappings
+- `prisma/migrations/XXX_optional_contract_fields.sql` - Migration
+
+**Files to Modify**:
+- `lib/validation/financial.ts` - Profession-aware validation
+- `lib/services/OperationsAgentService.ts` - AI prompt updates
+- `lib/services/ContractService.ts` - Use profession-aware validation
+- `app/onboarding/page.tsx` - Add medicina option
+- `app/components/forms/ContractForm.tsx` - Terminology
+- `app/page.tsx` - Dashboard terminology
+- `prisma/schema.prisma` - Optional fields
+
+---
+
+### **Chat with Arnaldo Latency Optimization** 🚀 IN PROGRESS (Started 2025-10-28)
+**Goal**: Achieve sub-second response start with streaming
+**Status**: Paused - prioritizing profession modularization
+**Priority**: HIGH (critical for AI-first positioning)
+**Estimated Time**: 4-6 hours
+
+**Problem**: User perceives lag in chat responses
+**Goal**: Sub-second response start with streaming
+**Scope**:
+- Claude API latency profiling
+- Streaming optimization
+- Caching strategies for common queries
+- Response time measurement and monitoring
+
+**Success Criteria**:
+- Time to first token < 1 second for 95% of queries
+- Full streaming implementation with immediate feedback
+- Improved perceived responsiveness
+
+---
 
 ### **Chat-First Onboarding Redesign** 🚀 IN PROGRESS (Started 2025-10-17)
 **Goal**: Transform onboarding into AI-first conversational experience
@@ -189,14 +294,6 @@ This backlog **DOES NOT** replace other documentation:
 - **Priority**: HIGH (affects onboarding experience)
 - **Goal**: Reduce processing time by 40-50% (2-3 min → 1-1.5 min)
 
-#### **Chat with Arnaldo Latency** (4-6 hours)
-- **Problem**: User perceives lag in chat responses
-- **Goal**: Sub-second response start with streaming
-- **Needs**: Claude API latency profiling, streaming optimization, caching strategies
-- **Priority**: MEDIUM (chat works but could be snappier)
-
----
-
 ---
 
 ### **Landing Page Redesign** (8-12 hours)
@@ -303,6 +400,45 @@ This backlog **DOES NOT** replace other documentation:
 ---
 
 ### Platform & Architecture
+
+#### **Profession-Based Application Modularization** (6-8 weeks)
+- **Problem**: Application is architecture-centric, needs to adapt to different professions
+- **Scope**: Make platform adaptable to different professional contexts
+- **Features**:
+  - Dynamic terminology per profession (Projects → Patients for doctors, Projects → Cases for lawyers, etc.)
+  - Profession-specific AI agent prompts and behavior
+  - Adapted onboarding flow per profession (questions, file upload expectations)
+  - Profession-specific validation rules (e.g., medical codes vs. construction codes)
+  - Industry-specific templates and suggestions
+  - Configurable entity names and fields
+- **Architecture**:
+  - Create profession configuration system (JSON/database-driven)
+  - Implement i18n-like terminology replacement system
+  - Refactor AI prompts to use profession context
+  - Build profession-aware validation schema system
+  - Update onboarding to branch based on selected profession
+- **Priority**: MEDIUM-HIGH (enables multi-vertical expansion)
+- **Prerequisites**: Stable core platform, clear multi-profession strategy
+- **Related**: Onboarding profession question, validation layer refactor
+
+#### **Logged Area Design Review & Refresh** (2-3 weeks)
+- **Problem**: Current logged area design needs polish and modern visual identity
+- **Scope**: Comprehensive visual design review of authenticated experience
+- **Focus Areas**:
+  - Color palette review and modernization (primary, secondary, accent colors)
+  - Typography hierarchy and readability
+  - Spacing and layout consistency
+  - Dark mode preparation (color system foundation)
+  - Component visual consistency (buttons, cards, forms, tables)
+  - Dashboard visual hierarchy improvements
+  - Navigation and sidebar design refinement
+- **Deliverables**:
+  - Updated design system documentation
+  - Tailwind config with new color palette
+  - Component library refresh
+  - Before/after screenshots
+- **Priority**: MEDIUM (quality improvement, brand perception)
+- **Related**: Landing page redesign, design principles
 
 #### **Frontend Infrastructure Refactor** (4-6 weeks)
 - Component library standardization
@@ -506,5 +642,5 @@ Users clicking "Resolver" on overdue items were greeted with 14-21 field forms. 
 
 ---
 
-**Last Updated**: 2025-10-27
-**Status**: DOING (1 active - Onboarding Phase 6 skipped), TO DO (8 items), BACKLOG (20+ items), DONE (2 recent - Phase 7 + Phase 1)
+**Last Updated**: 2025-10-28
+**Status**: DOING (2 active - Chat Latency + Onboarding), TO DO (2 items - file speed + landing page), BACKLOG (22+ items), DONE (4 recent)
