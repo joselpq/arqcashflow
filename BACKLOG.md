@@ -76,10 +76,12 @@ This backlog **DOES NOT** replace other documentation:
   - [x] Update validation layer with profession parameter
   - [x] Update ContractService to use profession-aware validation
   - [ ] Test backward compatibility with existing contracts (pending manual testing)
-- [ ] Day 3-4: AI Prompts & Services
-  - [ ] Update `OperationsAgentService.buildSystemPrompt()` with profession context
-  - [ ] Add medical terminology to AI prompts
-  - [ ] Update `SetupAssistantService` for medical spreadsheets
+- [x] Day 3-4: AI Prompts & Services ⚠️ PARTIAL (2025-11-03)
+  - [x] Update `OperationsAgentService.buildSystemPrompt()` with profession context
+  - [x] Add medical terminology to AI prompts (OperationsAgent)
+  - [x] Create arquitetura.ts config for backward compatibility
+  - [x] Add `getProfessionConfig()` helper function
+  - [ ] Update `SetupAssistantService` for medical spreadsheets (3 locations: lines 349, 668, 815)
   - [ ] Test AI understanding of medical context
 - [ ] Day 5: Onboarding
   - [ ] Add "Medicina" to profession options

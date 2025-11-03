@@ -71,6 +71,27 @@ CONTEXTO MÉDICO:
       contracts: 'pacientes em tratamento ou acompanhamento',
       receivables: 'honorários de consultas e procedimentos',
       expenses: 'despesas operacionais do consultório/clínica'
+    },
+
+    // Query examples (for CONSULTAS section)
+    queryExamples: {
+      contracts: '"Quais pacientes estão ativos?"',
+    },
+
+    // Database schema field requirements
+    schemaRequirements: {
+      contract: {
+        totalValue: 'OPTIONAL',
+        signedDate: 'OPTIONAL'
+      }
+    },
+
+    // Service API requirements
+    serviceRequirements: {
+      contract: {
+        required: 'clientName, projectName',
+        optional: 'totalValue, signedDate, description, status, category, notes'
+      }
     }
   }
 } as const

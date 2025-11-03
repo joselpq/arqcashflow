@@ -27,6 +27,8 @@ import { ExpenseService } from './ExpenseService'
 import { ContractService } from './ContractService'
 import { ReceivableService } from './ReceivableService'
 import { RecurringExpenseService } from './RecurringExpenseService'
+import { getProfessionConfig } from '@/lib/professions'
+import prisma from '@/lib/db'
 
 export class OperationsAgentService {
   private expenseService: ExpenseService
@@ -57,7 +59,7 @@ export class OperationsAgentService {
     history: CoreMessage[] = []
   ) {
     const today = new Date().toISOString().split('T')[0]
-    const systemPrompt = this.buildSystemPrompt(today)
+    const systemPrompt = await this.buildSystemPrompt(today)
 
     console.log('[Operations] Starting Vercel AI SDK agentic loop')
     console.log('[Operations] Received history items:', history.length)
@@ -331,11 +333,22 @@ export class OperationsAgentService {
 
   /**
    * Build comprehensive system prompt.
-   * Kept from previous implementation - same content.
+   * Phase 1: Now profession-aware using config system
+   * For architecture profession, produces IDENTICAL output to original
    */
-  private buildSystemPrompt(today: string): string {
+  private async buildSystemPrompt(today: string): Promise<string> {
     const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
     const teamId = this.context.teamId
+
+    // Get team profession for prompt customization
+    const team = await prisma.team.findUnique({
+      where: { id: teamId },
+      select: { profession: true }
+    })
+
+    // Get profession configuration
+    const professionConfig = getProfessionConfig(team?.profession)
+    const ai = professionConfig.ai
 
     return `Você é um assistente financeiro da ArqCashflow com acesso ao database e APIs do sistema.
 
@@ -354,13 +367,14 @@ Você pode atender dois tipos de solicitação:
 
 1. CONSULTAS: Responder perguntas sobre o negócio do usuário
    - "Quanto gastei em setembro?"
-   - "Quais contratos estão ativos?"
+   - ${ai.queryExamples.contracts}
    - "Qual o total a receber este mês?"
 
 2. OPERAÇÕES: Criar, editar ou deletar registros financeiros
-   - Contratos (projetos do usuário)
-   - Recebíveis (valores a receber de clientes)
-   - Despesas (gastos únicos ou recorrentes)
+   - Contratos (${ai.entityDescriptions.contracts})
+   - Recebíveis (${ai.entityDescriptions.receivables})
+   - Despesas (${ai.entityDescriptions.expenses})
+${ai.systemContextAddition}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -407,8 +421,8 @@ Contract (Contratos/Projetos):
 - id: TEXT (primary key)
 - clientName: TEXT (REQUIRED)
 - projectName: TEXT (REQUIRED)
-- totalValue: DECIMAL (REQUIRED)
-- signedDate: TIMESTAMP (REQUIRED)
+- totalValue: DECIMAL (${ai.schemaRequirements.contract.totalValue})
+- signedDate: TIMESTAMP (${ai.schemaRequirements.contract.signedDate})
 - status: TEXT (active, completed, cancelled)
 - description, category, notes: TEXT
 - teamId: TEXT (always '${teamId}')
@@ -481,8 +495,8 @@ APIS DISPONÍVEIS:
 ║ ContractService                                                ║
 ╠═══════════════════════════════════════════════════════════════╣
 ║ create(data)                                                   ║
-║   OBRIGATÓRIO: clientName, projectName, totalValue, signedDate║
-║   OPCIONAL: description, status, category, notes              ║
+║   OBRIGATÓRIO: ${ai.serviceRequirements.contract.required}    ║
+║   OPCIONAL: ${ai.serviceRequirements.contract.optional}       ║
 ║   Padrões: status = "active"                                  ║
 ║                                                                ║
 ║ bulkCreate(items)                                             ║
