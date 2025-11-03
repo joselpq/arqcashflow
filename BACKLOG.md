@@ -81,8 +81,9 @@ This backlog **DOES NOT** replace other documentation:
   - [x] Add medical terminology to AI prompts (OperationsAgent)
   - [x] Create arquitetura.ts config for backward compatibility
   - [x] Add `getProfessionConfig()` helper function
+  - [x] Fix TypeScript errors (TeamScopedPrisma access)
   - [ ] Update `SetupAssistantService` for medical spreadsheets (3 locations: lines 349, 668, 815)
-  - [ ] Test AI understanding of medical context
+  - [ ] Test AI understanding of medical context with both professions
 - [ ] Day 5: Onboarding
   - [ ] Add "Medicina" to profession options
   - [ ] Implement profession-aware file upload questions

@@ -19,7 +19,6 @@ import { ExpenseService } from './ExpenseService'
 import Anthropic from '@anthropic-ai/sdk'
 import * as XLSX from 'xlsx'
 import { getProfessionConfig } from '@/lib/professions'
-import prisma from '@/lib/db'
 
 // Type definitions for extracted entities
 export interface ExtractedContract {

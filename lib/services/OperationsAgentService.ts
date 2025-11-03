@@ -28,7 +28,6 @@ import { ContractService } from './ContractService'
 import { ReceivableService } from './ReceivableService'
 import { RecurringExpenseService } from './RecurringExpenseService'
 import { getProfessionConfig } from '@/lib/professions'
-import prisma from '@/lib/db'
 
 export class OperationsAgentService {
   private expenseService: ExpenseService
@@ -341,7 +340,7 @@ export class OperationsAgentService {
     const teamId = this.context.teamId
 
     // Get team profession for prompt customization
-    const team = await prisma.team.findUnique({
+    const team = await this.context.teamScopedPrisma.raw.team.findUnique({
       where: { id: teamId },
       select: { profession: true }
     })
