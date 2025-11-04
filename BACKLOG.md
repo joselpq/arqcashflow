@@ -175,15 +175,34 @@ This backlog **DOES NOT** replace other documentation:
 - **UI Components: ALL forms, modals, tables, filters now profession-aware** ✅
 
 **Week 2 Implementation Complete**:
-- ✅ 3 commits across 2 days (Day 6-7, Day 8, Day 8-9)
-- ✅ 12+ files updated with profession-aware terminology
+- ✅ 6 commits across 4 days (Day 6-7, Day 8, Day 8-9, Day 9)
+- ✅ 19 files modified with profession-aware functionality
 - ✅ 18+ hardcoded instances replaced with dynamic terminology
 - ✅ useTerminology() React hook with localStorage caching
-- ✅ HIGH priority user-facing workflows complete
-- ✅ MEDIUM priority secondary UI complete
-- ✅ LOW priority system/internal complete
+- ✅ Profession-aware form options (categories, statuses)
+- ✅ Dynamic VALOR column calculation (profession-based logic)
+- ✅ All UI components profession-aware (forms, modals, chat, tables)
+- ✅ Manual testing completed (medicina & arquitetura)
+- ✅ Bug fixes from user testing (3 critical fixes)
 
-**Next**: Manual testing with both professions (Day 9-10)
+**Key Technical Achievements**:
+- Profession-based logic (not inference-based) for VALOR column
+- Client-side calculation using existing API data (zero API changes)
+- Optional field handling for medicina (totalValue, signedDate)
+- Form validation adapts per profession (required vs optional)
+- Chat interface fully customized per profession
+
+**Files Modified Summary**:
+- Profession configs: 2 files (medicina.ts, arquitetura.ts)
+- Forms: 4 files (ContractForm, ExpenseForm, EnhancedExpenseForm, ReceivableForm)
+- Tables/Tabs: 3 files (ContractsTab, ExpensesTab, ReceivablesTab)
+- Modals: 3 files (DashboardEmptyState, ContractDeletionModal, ContractDetailsModal)
+- Chat: 2 files (ChatInput, MessageList)
+- Onboarding: 2 files (SetupAssistantModal, MultiFileSetupAssistant)
+- Filters: 2 files (AdvancedFilterModal, despesas/page.tsx)
+- Docs: 1 file (BACKLOG.md)
+
+**Next**: Week 3 - Pilot Launch (if validated) or pivot based on feedback
 
 ---
 
@@ -201,12 +220,25 @@ This backlog **DOES NOT** replace other documentation:
   - [x] LOW Priority (4 files): SetupAssistantModal, MultiFileSetupAssistant, AdvancedFilterModal, despesas/page.tsx
   - [x] Total: 18 instances across 12 files updated with profession-aware terminology
 
-- [ ] Day 9-10: Testing & Refinement ⏭️ NEXT
-  - [ ] Test form validation with medicina (optional fields should work)
-  - [ ] Test form submission for both professions
-  - [ ] Manual testing: Create patient vs Create project workflows
-  - [ ] Fix any UI/UX issues discovered
-  - [ ] Polish terminology consistency across all screens
+- [x] Day 9: Testing & UX Refinement ✅ COMPLETE
+  - [x] Manual testing with both professions (arquitetura & medicina)
+  - [x] Fixed: Field labels (Nome do Paciente vs Nome do Responsável)
+  - [x] Fixed: Optional field indicators (removed asterisks for medicina)
+  - [x] Added: Profession-aware form options (categories & statuses)
+  - [x] Added: Profession-aware chat examples (medicina vs arquitetura)
+  - [x] Fixed: VALOR column calculation (profession-based, not inference-based)
+  - [x] Fixed: Chat welcome message (profession-aware)
+  - [x] Fixed: "Recebido" label bug (only shows for values > 0)
+
+**Testing Results (Day 9):**
+- ✅ Medicina: All forms show correct terminology ("Paciente", "Responsável")
+- ✅ Medicina: Optional fields work (totalValue, signedDate)
+- ✅ Medicina: Categories show medical options (Consulta de Rotina, Procedimento, etc.)
+- ✅ Medicina: Status shows medical terms (Em Tratamento, Alta Médica)
+- ✅ Medicina: VALOR column shows sum of received payments (even with totalValue filled)
+- ✅ Medicina: Chat examples relevant to medical practice
+- ✅ Arquitetura: All existing behavior preserved (regression testing passed)
+- ✅ Backward compatibility: 100% maintained for arquitetura users
 
 **Week 3: Pilot Launch (Days 11-15)**
 - [ ] Day 11-13: Documentation & Deployment
