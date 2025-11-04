@@ -831,18 +831,30 @@ export default function ContractsTab() {
                 </thead>
                 <tbody className="bg-white divide-y divide-neutral-200">
                   {filteredContracts.map((contract: any) => {
-                    // Calculate display value: totalValue or sum of received payments
+                    // Calculate display value based on profession
+                    // For medicina: ALWAYS show sum of received payments (totalValue is just reference)
+                    // For arquitetura: Show fixed totalValue
                     let displayValue: string
                     let calculatedValue: number | null = null
+                    let isCalculatedFromPayments = false
 
+                    // Get received payments sum
+                    const receivedPayments = contract.receivables?.filter((r: any) => r.status === 'received') || []
+                    const receivedSum = receivedPayments.reduce((sum: number, r: any) => sum + (r.amount || 0), 0)
+
+                    // Determine display logic based on whether totalValue exists
+                    // If totalValue is null, user is medicina profession → always show received sum
+                    // If totalValue exists, user is arquitetura → show totalValue
                     if (contract.totalValue !== null) {
+                      // Arquitetura: show fixed contract value
                       calculatedValue = contract.totalValue
                       displayValue = contract.totalValue.toLocaleString('pt-BR')
+                      isCalculatedFromPayments = false
                     } else {
-                      // For medicina profession, calculate sum of received payments
-                      const receivedPayments = contract.receivables?.filter((r: any) => r.status === 'received') || []
-                      calculatedValue = receivedPayments.reduce((sum: number, r: any) => sum + (r.amount || 0), 0)
-                      displayValue = calculatedValue > 0 ? calculatedValue.toLocaleString('pt-BR') : '-'
+                      // Medicina: show sum of received payments
+                      calculatedValue = receivedSum
+                      displayValue = receivedSum > 0 ? receivedSum.toLocaleString('pt-BR') : '-'
+                      isCalculatedFromPayments = true
                     }
 
                     return (
@@ -862,7 +874,7 @@ export default function ContractsTab() {
                         <div className="font-bold text-lg text-neutral-900">
                           {calculatedValue !== null && calculatedValue > 0 ? `R$ ${displayValue}` : '-'}
                         </div>
-                        {contract.totalValue === null && calculatedValue && calculatedValue > 0 && (
+                        {isCalculatedFromPayments && calculatedValue > 0 && (
                           <div className="text-xs text-neutral-500">Recebido</div>
                         )}
                       </td>

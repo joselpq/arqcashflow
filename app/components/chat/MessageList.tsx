@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import { useTerminology } from '@/lib/hooks/useTerminology'
 
 export interface Message {
   role: 'user' | 'assistant'
@@ -14,6 +15,7 @@ interface MessageListProps {
 }
 
 export default function MessageList({ messages, loading = false }: MessageListProps) {
+  const { profession } = useTerminology()
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -28,6 +30,11 @@ export default function MessageList({ messages, loading = false }: MessageListPr
   }, [messages, loading])
 
   if (messages.length === 0 && !loading) {
+    // Profession-aware welcome message
+    const welcomeMessage = profession === 'medicina'
+      ? 'Compartilhe comigo todo novo paciente. Me conte sobre suas consultas, procedimentos e despesas do consultório, através de mensagem ou planilhas/documentos. Assim posso organizar suas finanças e responder suas dúvidas!'
+      : 'Compartilhe comigo todo novo projeto/contrato. Me conte suas despesas e recebíveis, através de mensagem ou planilhas/documentos. Assim posso organizar suas finanças e responder suas dúvidas!'
+
     return (
       <div className="flex-1 flex items-center justify-center px-6 py-8">
         <div className="w-full text-center">
@@ -35,7 +42,7 @@ export default function MessageList({ messages, loading = false }: MessageListPr
             Olá, sou Arnaldo, seu assistente financeiro 👋
           </p>
           <p className="text-sm text-neutral-600 leading-relaxed">
-            Compartilhe comigo todo novo projeto/contrato. Me conte suas despesas e recebíveis, através de mensagem ou planilhas/documentos. Assim posso organizar suas finanças e responder suas dúvidas!
+            {welcomeMessage}
           </p>
         </div>
       </div>
