@@ -3,6 +3,11 @@
  *
  * Centralized validation schemas for all financial entities (contracts, receivables, expenses).
  * Built on top of base schemas to ensure consistency and reusability.
+ *
+ * Phase 1 Update: Added profession-aware validation for multi-profession support.
+ * - ContractSchemas.create(profession) - validates based on profession
+ * - Medical professions can have optional totalValue and signedDate
+ * - Architecture professions require these fields (backward compatible)
  */
 
 import { z } from 'zod'
@@ -22,31 +27,57 @@ export const BaseFinancialSchema = z.object({
 
 /**
  * Contract validation schemas
+ * Phase 1: Profession-aware validation functions
  */
 export const ContractSchemas = {
-  // Full contract creation schema
-  create: z.object({
-    clientName: BaseFieldSchemas.name,
-    projectName: BaseFieldSchemas.name,
-    description: BaseFieldSchemas.description,
-    totalValue: BaseFieldSchemas.amount,
-    signedDate: RefinedFieldSchemas.signedDate,
-    status: EnumSchemas.contractStatus.optional().default('draft'),
-    category: BaseFieldSchemas.optionalCategory,
-    notes: BaseFieldSchemas.notes,
-  }),
+  /**
+   * Contract creation schema - profession-aware
+   * @param profession - Profession identifier (e.g., 'medicina', 'arquitetura')
+   * @returns Zod schema appropriate for the profession
+   */
+  create: (profession?: string | null) => {
+    const baseSchema = z.object({
+      clientName: BaseFieldSchemas.name,
+      projectName: BaseFieldSchemas.name,
+      description: BaseFieldSchemas.description,
+      status: EnumSchemas.contractStatus.optional().default('draft'),
+      category: BaseFieldSchemas.optionalCategory,
+      notes: BaseFieldSchemas.notes,
+    })
 
-  // Contract update schema (all fields optional for partial updates)
-  update: z.object({
-    clientName: BaseFieldSchemas.name.optional(),
-    projectName: BaseFieldSchemas.name.optional(),
-    description: BaseFieldSchemas.description,
-    totalValue: BaseFieldSchemas.amount.optional(),
-    signedDate: RefinedFieldSchemas.signedDate.optional(),
-    status: EnumSchemas.contractStatus.optional(),
-    category: BaseFieldSchemas.optionalCategory,
-    notes: BaseFieldSchemas.notes,
-  }),
+    // Medical profession: totalValue and signedDate are optional
+    if (profession === 'medicina') {
+      return baseSchema.extend({
+        totalValue: BaseFieldSchemas.amount.optional(),
+        signedDate: RefinedFieldSchemas.signedDate.optional(),
+      })
+    }
+
+    // Default (architecture): totalValue and signedDate are required
+    return baseSchema.extend({
+      totalValue: BaseFieldSchemas.amount,
+      signedDate: RefinedFieldSchemas.signedDate,
+    })
+  },
+
+  /**
+   * Contract update schema - profession-aware
+   * @param profession - Profession identifier (e.g., 'medicina', 'arquitetura')
+   * @returns Zod schema appropriate for the profession
+   */
+  update: (profession?: string | null) => {
+    // All fields optional for updates regardless of profession
+    return z.object({
+      clientName: BaseFieldSchemas.name.optional(),
+      projectName: BaseFieldSchemas.name.optional(),
+      description: BaseFieldSchemas.description,
+      totalValue: BaseFieldSchemas.amount.optional(),
+      signedDate: RefinedFieldSchemas.signedDate.optional(),
+      status: EnumSchemas.contractStatus.optional(),
+      category: BaseFieldSchemas.optionalCategory,
+      notes: BaseFieldSchemas.notes,
+    })
+  },
 
   // Contract filters for querying
   filters: z.object({
@@ -277,9 +308,10 @@ export const BusinessRuleValidation = {
 
 /**
  * Export individual schemas for backward compatibility
+ * Note: ContractSchema and ContractUpdateSchema now default to architecture profession
  */
-export const ContractSchema = ContractSchemas.create
-export const ContractUpdateSchema = ContractSchemas.update
+export const ContractSchema = ContractSchemas.create() // Default to architecture
+export const ContractUpdateSchema = ContractSchemas.update() // Default to architecture
 export const ReceivableSchema = ReceivableSchemas.create
 export const ReceivableUpdateSchema = ReceivableSchemas.update
 export const ExpenseSchema = ExpenseSchemas.create

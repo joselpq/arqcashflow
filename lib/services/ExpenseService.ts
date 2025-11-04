@@ -287,6 +287,24 @@ export class ExpenseService extends BaseService<
       isRecurring: isRecurring || false
     }
 
+    // Auto-infer status based on dueDate if not explicitly provided
+    if (!processedData.status) {
+      const dueDate = new Date(processedData.dueDate)
+      dueDate.setHours(0, 0, 0, 0)
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+
+      if (dueDate < today) {
+        // Past date → paid
+        processedData.status = 'paid'
+        processedData.paidDate = processedData.paidDate || processedData.dueDate
+        processedData.paidAmount = processedData.paidAmount || processedData.amount
+      } else {
+        // Today or future → pending
+        processedData.status = 'pending'
+      }
+    }
+
     // Handle contract relationship
     if (contractId) {
       processedData.contract = {

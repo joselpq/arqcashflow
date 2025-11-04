@@ -12,8 +12,8 @@ model Contract {
   clientName        String
   projectName       String
   description       String?
-  totalValue        Float
-  signedDate        DateTime
+  totalValue        Float?             // Optional for professions like medicina
+  signedDate        DateTime?          // Optional for professions like medicina
   status            String             @default("active")
   category          String?
   notes             String?

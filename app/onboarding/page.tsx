@@ -11,6 +11,7 @@ import ChatFileUpload from "../components/onboarding/ChatFileUpload";
 import EducationPhase from "../components/onboarding/EducationPhase";
 import StreamingMessage from "../components/onboarding/StreamingMessage";
 import { useOnboardingTransition } from "../hooks/useOnboardingTransition";
+import { getOnboardingMessages } from "@/lib/professions";
 
 type UserType = "individual" | "small_business";
 
@@ -137,6 +138,7 @@ export default function OnboardingPage() {
         { label: 'Design de Interiores', value: 'design-interiores' },
         { label: 'Paisagismo', value: 'paisagismo' },
         { label: 'Urbanismo', value: 'urbanismo' },
+        { label: 'Medicina', value: 'medicina' },
         { label: 'Outros', value: 'outros' }
       ];
       const selectedOption = professionOptions.find(opt => opt.value === value);
@@ -176,8 +178,9 @@ export default function OnboardingPage() {
       setChatMessages(prev => [...prev, { role: 'user', content: selectedOption?.label || value }]);
       setProfileData(prev => ({ ...prev, revenueTier: value }));
 
-      // Ask spreadsheet question
-      setChatMessages(prev => [...prev, { role: 'assistant', content: 'Você tem alguma planilha onde controla seus projetos, recebíveis e/ou despesas?' }]);
+      // Ask spreadsheet question (profession-aware)
+      const onboardingMessages = getOnboardingMessages(profileData.profession);
+      setChatMessages(prev => [...prev, { role: 'assistant', content: onboardingMessages.hasSpreadsheetQuestion }]);
       setCurrentQuestion(4);
     }
     // Fifth question: Has spreadsheet
@@ -189,16 +192,18 @@ export default function OnboardingPage() {
       await handleProfileSubmit();
 
       if (value === 'yes') {
-        // User has spreadsheet - show upload
+        // User has spreadsheet - show upload (profession-aware)
         setHasSpreadsheet(true);
         setUploadType('spreadsheet');
-        setChatMessages(prev => [...prev, { role: 'assistant', content: 'Ótimo! Envie sua(s) planilha(s) abaixo:' }]);
+        const onboardingMessages = getOnboardingMessages(profileData.profession);
+        setChatMessages(prev => [...prev, { role: 'assistant', content: `Ótimo! ${onboardingMessages.fileUploadMessage}:` }]);
         setShowFileUpload(true);
         setCurrentQuestion(5);
       } else {
-        // User doesn't have spreadsheet - ask about contracts
+        // User doesn't have spreadsheet - ask about contracts (profession-aware)
         setHasSpreadsheet(false);
-        setChatMessages(prev => [...prev, { role: 'assistant', content: 'Você tem contratos ou propostas dos seus projetos? Assim podemos extrair e cadastrar os valores e datas de todos os recebíveis' }]);
+        const onboardingMessages = getOnboardingMessages(profileData.profession);
+        setChatMessages(prev => [...prev, { role: 'assistant', content: onboardingMessages.hasContractsQuestion }]);
         setCurrentQuestion(5);
       }
     }
@@ -231,8 +236,9 @@ export default function OnboardingPage() {
       setChatMessages(prev => [...prev, { role: 'user', content: responseLabel }]);
 
       if (value === 'yes') {
-        // Show upload again
-        setChatMessages(prev => [...prev, { role: 'assistant', content: 'Perfeito! Envie mais planilhas abaixo:' }]);
+        // Show upload again (profession-aware)
+        const onboardingMessages = getOnboardingMessages(profileData.profession);
+        setChatMessages(prev => [...prev, { role: 'assistant', content: `Perfeito! ${onboardingMessages.fileUploadMessage}:` }]);
         setShowFileUpload(true);
       } else {
         // Show education phase
@@ -482,6 +488,7 @@ export default function OnboardingPage() {
                       { label: 'Design de Interiores', value: 'design-interiores' },
                       { label: 'Paisagismo', value: 'paisagismo' },
                       { label: 'Urbanismo', value: 'urbanismo' },
+                      { label: 'Medicina', value: 'medicina' },
                       { label: 'Outros', value: 'outros' }
                     ]}
                     onSelect={handleChatResponse}

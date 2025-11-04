@@ -4,15 +4,51 @@ import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
-import { terminology } from "@/lib/utils/terminology";
+import { getProfessionTerminology, type ProfessionTerminology } from "@/lib/professions";
 
 export default function NavBar() {
   const { data: session } = useSession();
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [profession, setProfession] = useState<string | null>(null);
   const navRef = useRef<HTMLElement>(null);
 
+  // Fetch team profession for terminology (with localStorage caching)
+  useEffect(() => {
+    if (session?.user?.email) {
+      // Check localStorage cache first
+      const cachedProfession = localStorage.getItem('userProfession');
+      if (cachedProfession) {
+        console.log('[NavBar] Using cached profession:', cachedProfession)
+        setProfession(cachedProfession);
+      }
+
+      // Fetch fresh data in background
+      console.log('[NavBar] Fetching team profession...')
+      fetch('/api/user/team')
+        .then(res => {
+          console.log('[NavBar] API response status:', res.status)
+          return res.json()
+        })
+        .then(data => {
+          console.log('[NavBar] Team data:', data)
+          if (data.team?.profession) {
+            console.log('[NavBar] Setting profession to:', data.team.profession)
+            setProfession(data.team.profession);
+            // Cache in localStorage
+            localStorage.setItem('userProfession', data.team.profession);
+          } else {
+            console.log('[NavBar] No profession in team data, defaulting to architecture')
+            localStorage.setItem('userProfession', 'arquitetura');
+          }
+        })
+        .catch(err => console.error('[NavBar] Failed to fetch team profession:', err));
+    }
+  }, [session]);
+
   const handleLogout = async () => {
+    // Clear cached profession on logout
+    localStorage.removeItem('userProfession');
     await signOut({ redirect: false });
     window.location.href = '/';
   };
@@ -50,11 +86,16 @@ export default function NavBar() {
 
   if (!session) return null;
 
+  // Get profession-aware terminology
+  const terminology = getProfessionTerminology(profession);
+  console.log('[NavBar] Current profession:', profession)
+  console.log('[NavBar] Terminology for contracts:', terminology.contracts)
+
   const navItems = [
     { href: "/", label: "Dashboard" },
-    { href: "/projetos", label: terminology.projects },
-    { href: "/recebiveis", label: terminology.receivables },
-    { href: "/despesas", label: terminology.expenses },
+    { href: "/projetos", label: terminology.contracts }, // Pacientes for medicina, Contratos for arquitetura
+    { href: "/recebiveis", label: "Recebíveis" },
+    { href: "/despesas", label: "Despesas" },
     { href: "/ai-chat", label: "Assistente IA" }
   ];
 

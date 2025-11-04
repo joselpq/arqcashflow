@@ -1,8 +1,32 @@
 # ArqCashflow Development Backlog
 
 **Purpose**: Central source of truth for project priorities and development status
-**Last Updated**: 2025-10-27 (Dashboard Resolver Modals Redesign complete)
+**Last Updated**: 2025-11-03 (Week 1 Profession Modularization COMPLETE + Bug Fixes)
 **Update Frequency**: Every LLM session MUST update this document when completing tasks
+
+---
+
+## 🎯 QUICK START FOR NEXT AGENT (2025-11-03)
+
+**We just completed**: Week 1 of Profession-Based Modularization (Doctors MVP)
+- ✅ Database, validation, services, AI prompts, onboarding all profession-aware
+- ✅ Tested and fixed 4 bugs found during manual testing
+- ✅ Patient creation via AI works, navigation terminology works
+
+**Current state**: System is WORKING and ready for Week 2
+- Doctors can onboard, select "Medicina" profession
+- OperationsAgent can create patients with optional fields (totalValue, signedDate)
+- NavBar shows "Pacientes" for doctors, "Contratos" for architects
+
+**Next work**: Week 2 - UI Components & Forms (Days 6-10)
+- Update ContractForm.tsx to use profession-aware labels
+- Update Dashboard to use terminology system
+- Create useTerminology() React hook for easy component usage
+- Update all hardcoded "Projeto" / "Contrato" text to dynamic terminology
+
+**See details**: Scroll to "Profession-Based Modularization" section in DOING
+
+---
 
 ## 🚨 CRITICAL INSTRUCTIONS FOR LLM AGENTS
 
@@ -54,6 +78,182 @@ This backlog **DOES NOT** replace other documentation:
 ---
 
 ## 🔄 DOING (Currently In Progress)
+
+### **Profession-Based Modularization - Phase 1 (Doctors MVP)** 🚀 IN PROGRESS (Started 2025-11-03)
+**Goal**: Enable doctors to use ArqCashflow with medical terminology and validation
+**Status**: ✅ Week 1 COMPLETE - Core infrastructure working, tested, and bug-fixed (2025-11-03)
+**Priority**: HIGH (multi-vertical expansion, 3-5x TAM potential)
+**Estimated Time**: 2-3 weeks (Phase 1 only)
+**Related**: ADR-019 Profession-Based Application Modularization
+
+**Strategic Context**:
+- Doctors interested in platform → validate demand fast
+- Hybrid approach: Phase 1 MVP (2-3 weeks) → Phase 2 config system (if validated)
+- Keep validation layer adapted per profession (quality + flexibility)
+
+**Week 1: Core Infrastructure (Days 1-5)** ✅ COMPLETE + POST-TESTING FIXES (2025-11-03)
+- [x] Day 1-2: Database & Validation ✅ COMPLETE (2025-11-03)
+  - [x] Migrate `totalValue: Float?` and `signedDate: DateTime?` (optional fields)
+  - [x] Create `lib/professions/` directory structure
+  - [x] Implement `medicina.ts` (doctor-specific config)
+  - [x] Implement `terminology.ts` (label mappings)
+  - [x] Update validation layer with profession parameter
+  - [x] Update ContractService to use profession-aware validation
+  - [x] Test backward compatibility - ✅ WORKING
+
+- [x] Day 3-4: AI Prompts & Services ✅ COMPLETE (2025-11-03)
+  - [x] Update `OperationsAgentService.buildSystemPrompt()` with profession context
+  - [x] Add medical terminology to AI prompts (OperationsAgent)
+  - [x] Create arquitetura.ts config for backward compatibility
+  - [x] Add `getProfessionConfig()` helper function
+  - [x] Fix TypeScript errors (TeamScopedPrisma access)
+  - [x] Update `SetupAssistantService` for medical spreadsheets (3 locations: lines 349, 668, 815)
+  - [x] Add `businessContext` to arquitetura.ts and medicina.ts configs
+  - [x] Test AI understanding - ✅ Patient creation working via OperationsAgent
+
+- [x] Day 5: Onboarding ✅ COMPLETE (2025-11-03)
+  - [x] Add "Medicina" to profession options (2 locations: line 140 logic, line 490 UI)
+  - [x] Implement profession-aware file upload questions with `getOnboardingMessages()`
+  - [x] Verify profession is saved to Team model (already implemented in API route)
+  - [x] Test onboarding flow - ✅ WORKING
+
+**Post-Testing Bug Fixes** (2025-11-03 evening)
+- [x] **Issue #1**: Onboarding questions not profession-specific
+  - [x] Updated medicina.ts: "Você controla suas consultas e finanças em alguma planilha?"
+  - [x] Added `hasContractsQuestion` for follow-up prompt differentiation
+  - [x] Updated app/onboarding/page.tsx to use profession-aware messages (3 locations)
+
+- [x] **Issue #2**: Navigation tab showing "Contratos" instead of "Pacientes"
+  - [x] Updated NavBar.tsx to fetch team profession from new API endpoint
+  - [x] Created `/api/user/team` route to return team data including profession
+  - [x] NavBar now shows profession-aware terminology (Pacientes vs Contratos)
+
+- [x] **Issue #3**: OperationsAgent patient creation failure
+  - [x] Fixed ContractService.ts line 88: `raw.team.findUnique()` Prisma access
+  - [x] Fixed ContractService.ts line 342: Null handling for optional `totalValue`
+
+- [x] **Issue #4**: Build error "Cannot read properties of null (reading 'toString')"
+  - [x] Fixed ContractsTab.tsx lines 225-231: Null check before `.toString()`
+  - [x] Fixed ContractsTab.tsx lines 833-843: Display "-" when `totalValue` is null
+  - [x] Fixed ContractsTab.tsx line 930: Display "-" when `signedDate` is null
+
+**Files Modified (Week 1 + Bug Fixes)**:
+- Database: `prisma/schema.prisma`
+- Profession configs: `lib/professions/medicina.ts`, `arquitetura.ts`, `index.ts`, `terminology.ts`
+- Services: `OperationsAgentService.ts`, `SetupAssistantService.ts`, `ContractService.ts`
+- Validation: `lib/validation/contracts.ts`
+- Onboarding: `app/onboarding/page.tsx`
+- Navigation: `app/components/NavBar.tsx`
+- Pages: `app/projetos/components/ContractsTab.tsx`
+- API: `app/api/user/team/route.ts` (NEW)
+- Docs: `ADR-019` (renamed from ADR-018)
+
+**Testing Results**:
+- ✅ Medicina onboarding: Profession selection works
+- ✅ Profession-aware questions: Displays correct terminology
+- ✅ AI patient creation: OperationsAgent successfully creates patients with optional fields
+- ✅ Navigation terminology: Shows "Pacientes" for medicina users
+- ✅ Projetos page: Handles null values gracefully (displays "-")
+- ✅ Backward compatibility: Architects still see "Contratos" and required fields
+
+**📍 NEXT STEPS (Week 2)**: ⏭️ UI Components & Forms (Days 6-10)
+
+**IMPORTANT CONTEXT FOR NEXT AGENT**:
+- Week 1 is COMPLETE ✅ - all core infrastructure working
+- Patient creation via AI works (tested with OperationsAgent)
+- Navigation terminology works (NavBar fetches profession dynamically)
+- Optional fields (totalValue, signedDate) handled properly for medicina
+- All bugs from testing fixed (see Post-Testing Bug Fixes section above)
+
+**Current System State**:
+- Profession configs: `lib/professions/medicina.ts` and `arquitetura.ts` fully configured
+- Terminology system: `getProfessionTerminology(profession)` function available
+- Onboarding: Profession-aware questions working
+- Services: ContractService, SetupAssistantService, OperationsAgent all profession-aware
+- Database: Optional fields for medicina contracts
+
+**What Still Needs Profession-Awareness** (Week 2):
+- Forms: ContractForm.tsx uses hardcoded labels ("Projeto", "Contrato")
+- Dashboard: Metrics cards use hardcoded terms
+- Tables: Column headers still say "Projeto" instead of using terminology
+- Modals: Modal titles and buttons use hardcoded terms
+
+---
+
+**Week 2: UI Components (Days 6-10)** ⏭️ NEXT
+- [ ] Day 6-8: Forms & Terminology
+  - [ ] Create `useTerminology()` React hook for easy component usage
+  - [ ] Update `ContractForm.tsx` labels to use terminology (projectName → terminology.projectName)
+  - [ ] Update Dashboard metrics with terminology (contracts → terminology.contracts)
+  - [ ] Update table headers in ContractsTab.tsx ("Projeto / Cliente" → terminology)
+  - [ ] Update modal titles ("Adicionar Contrato" → `Adicionar ${terminology.contract}`)
+  - [ ] Update action buttons with profession-aware text
+
+- [ ] Day 9-10: Testing & Refinement
+  - [ ] Test form validation with medicina (optional fields should work)
+  - [ ] Test form submission for both professions
+  - [ ] Manual testing: Create patient vs Create project workflows
+  - [ ] Fix any UI/UX issues discovered
+  - [ ] Polish terminology consistency across all screens
+
+**Week 3: Pilot Launch (Days 11-15)**
+- [ ] Day 11-13: Documentation & Deployment
+  - [ ] Update user documentation for doctors
+  - [ ] Create doctor-specific onboarding guide
+  - [ ] Deploy to staging for pilot testing
+  - [ ] Recruit 5-10 pilot doctors
+  - [ ] Deploy to production
+- [ ] Day 14-15: Support & Iteration
+  - [ ] Monitor pilot doctor usage
+  - [ ] Collect feedback and pain points
+  - [ ] Fix urgent issues
+  - [ ] Document learnings for Phase 2
+
+**Success Criteria (3 months)**:
+- 5+ paying doctor customers
+- Doctor onboarding completion rate ≥ 80%
+- Doctor retention rate ≥ 70% after 30 days
+- Support ticket rate < 2x architect baseline
+
+**Decision Point (Month 3)**: GO/NO-GO for Phase 2 (pattern extraction)
+
+**Files to Create**:
+- `lib/professions/index.ts` - Exports
+- `lib/professions/medicina.ts` - Doctor-specific config
+- `lib/professions/terminology.ts` - Terminology mappings
+- `prisma/migrations/XXX_optional_contract_fields.sql` - Migration
+
+**Files to Modify**:
+- `lib/validation/financial.ts` - Profession-aware validation
+- `lib/services/OperationsAgentService.ts` - AI prompt updates
+- `lib/services/ContractService.ts` - Use profession-aware validation
+- `app/onboarding/page.tsx` - Add medicina option
+- `app/components/forms/ContractForm.tsx` - Terminology
+- `app/page.tsx` - Dashboard terminology
+- `prisma/schema.prisma` - Optional fields
+
+---
+
+### **Chat with Arnaldo Latency Optimization** 🚀 IN PROGRESS (Started 2025-10-28)
+**Goal**: Achieve sub-second response start with streaming
+**Status**: Paused - prioritizing profession modularization
+**Priority**: HIGH (critical for AI-first positioning)
+**Estimated Time**: 4-6 hours
+
+**Problem**: User perceives lag in chat responses
+**Goal**: Sub-second response start with streaming
+**Scope**:
+- Claude API latency profiling
+- Streaming optimization
+- Caching strategies for common queries
+- Response time measurement and monitoring
+
+**Success Criteria**:
+- Time to first token < 1 second for 95% of queries
+- Full streaming implementation with immediate feedback
+- Improved perceived responsiveness
+
+---
 
 ### **Chat-First Onboarding Redesign** 🚀 IN PROGRESS (Started 2025-10-17)
 **Goal**: Transform onboarding into AI-first conversational experience
@@ -182,22 +382,12 @@ This backlog **DOES NOT** replace other documentation:
 
 ### **User Feedback Improvements - Performance** (HIGH PRIORITY)
 
-#### **File Import Performance & Reliability** (6-8 hours)
-- **Problem**: Import slow and failing with multiple files
-- **Scope**: Debug logs, error handling, performance profiling
+#### **File Import & Upload Speed Optimization** (6-8 hours)
+- **Problem**: Import and upload are slow (2-3 minutes for files)
+- **Status**: Reliability ✅ FIXED, Speed ❌ NEEDS WORK
+- **Scope**: Performance profiling, Claude API optimization, parallel processing
 - **Priority**: HIGH (affects onboarding experience)
-
-#### **Chat with Arnaldo Latency** (4-6 hours)
-- **Problem**: User perceives lag
-- **Goal**: Sub-second response start
-- **Needs**: Claude API latency profiling, streaming optimization
-
-#### **Make Chat with Arnaldo More Evident** (2-3 hours)
-- **Problem**: FAB not prominent enough
-- **Ideas**: Onboarding tooltips, empty state CTAs
-- **Goal**: Users discover chat as primary interaction method
-
----
+- **Goal**: Reduce processing time by 40-50% (2-3 min → 1-1.5 min)
 
 ---
 
@@ -219,22 +409,6 @@ This backlog **DOES NOT** replace other documentation:
 **Location**: `app/components/LandingPage.tsx`
 
 ---
-
-### **Setup Assistant Production Enhancements**
-
-#### **Improve File Upload Loading Experience** (3-4 hours)
-- **Current**: Generic loading spinner during 2-3 minute processing
-- **Goal**: Phase-specific progress ("Analyzing file structure...", "Extracting contracts...")
-- **Add**: Funny/engaging Brazilian Portuguese messages
-- **Show**: Entity count as discovered: "Found 37 contracts, 120 receivables so far..."
-- **Location**: `app/components/onboarding/OnboardingFileUpload.tsx`, `app/components/ai/MultiFileSetupAssistant.tsx`
-
-#### **PDF Processing Implementation** (1-2 days) - OPTIONAL
-- **Status**: `pdf-parse` installed but NOT integrated
-- **Current**: PDFs fail with "Invalid Excel file"
-- **Options**: Claude Vision (85-95% accuracy, 1-2 days) OR text-based (60-75%, 4-6 hours)
-- **Priority**: MEDIUM (based on user demand)
-- **Location**: `SetupAssistantService.ts`
 
 ---
 
@@ -322,6 +496,45 @@ This backlog **DOES NOT** replace other documentation:
 
 ### Platform & Architecture
 
+#### **Profession-Based Application Modularization** (6-8 weeks)
+- **Problem**: Application is architecture-centric, needs to adapt to different professions
+- **Scope**: Make platform adaptable to different professional contexts
+- **Features**:
+  - Dynamic terminology per profession (Projects → Patients for doctors, Projects → Cases for lawyers, etc.)
+  - Profession-specific AI agent prompts and behavior
+  - Adapted onboarding flow per profession (questions, file upload expectations)
+  - Profession-specific validation rules (e.g., medical codes vs. construction codes)
+  - Industry-specific templates and suggestions
+  - Configurable entity names and fields
+- **Architecture**:
+  - Create profession configuration system (JSON/database-driven)
+  - Implement i18n-like terminology replacement system
+  - Refactor AI prompts to use profession context
+  - Build profession-aware validation schema system
+  - Update onboarding to branch based on selected profession
+- **Priority**: MEDIUM-HIGH (enables multi-vertical expansion)
+- **Prerequisites**: Stable core platform, clear multi-profession strategy
+- **Related**: Onboarding profession question, validation layer refactor
+
+#### **Logged Area Design Review & Refresh** (2-3 weeks)
+- **Problem**: Current logged area design needs polish and modern visual identity
+- **Scope**: Comprehensive visual design review of authenticated experience
+- **Focus Areas**:
+  - Color palette review and modernization (primary, secondary, accent colors)
+  - Typography hierarchy and readability
+  - Spacing and layout consistency
+  - Dark mode preparation (color system foundation)
+  - Component visual consistency (buttons, cards, forms, tables)
+  - Dashboard visual hierarchy improvements
+  - Navigation and sidebar design refinement
+- **Deliverables**:
+  - Updated design system documentation
+  - Tailwind config with new color palette
+  - Component library refresh
+  - Before/after screenshots
+- **Priority**: MEDIUM (quality improvement, brand perception)
+- **Related**: Landing page redesign, design principles
+
 #### **Frontend Infrastructure Refactor** (4-6 weeks)
 - Component library standardization
 - Layout system for customization
@@ -356,6 +569,35 @@ This backlog **DOES NOT** replace other documentation:
 ---
 
 ## ✅ DONE (Recently Completed)
+
+### **Chat Visibility & Onboarding Integration** ✅ COMPLETE (2025-10-27)
+**Impact**: Chat now prominently featured throughout user journey
+**Result**: Onboarding redesign made Arnaldo the primary interaction method
+
+**Improvements:**
+- ✅ Chat-first onboarding (Phases 1-5)
+- ✅ File upload integrated into chat conversation
+- ✅ GlobalChat FAB appears immediately after onboarding transition
+- ✅ Expense reinforcement via AI proactive messaging
+- ✅ Users now discover chat naturally as part of core flow
+
+**Related**: ADR-017, Onboarding redesign PR #5
+
+---
+
+### **File Import Reliability & PDF Processing** ✅ COMPLETE (2025-10-27)
+**Impact**: Robust file handling across all formats
+**Result**: PDF processing working, import reliability at production quality
+
+**Improvements:**
+- ✅ PDF processing implemented and working
+- ✅ Excel/spreadsheet import reliability fixed
+- ✅ Error handling improved
+- ✅ Multi-file upload stability achieved
+
+**Status**: Reliability complete, speed optimization remains in TO DO
+
+---
 
 ### **Dashboard "Resolver" Modals Redesign** ✅ COMPLETE (2025-10-27)
 **Impact**: Transformed first-touch experience from overwhelming to delightful
@@ -495,5 +737,5 @@ Users clicking "Resolver" on overdue items were greeted with 14-21 field forms. 
 
 ---
 
-**Last Updated**: 2025-10-27
-**Status**: DOING (1 active - Onboarding Phase 6 skipped), TO DO (8 items), BACKLOG (20+ items), DONE (2 recent - Phase 7 + Phase 1)
+**Last Updated**: 2025-10-28
+**Status**: DOING (2 active - Chat Latency + Onboarding), TO DO (2 items - file speed + landing page), BACKLOG (22+ items), DONE (4 recent)

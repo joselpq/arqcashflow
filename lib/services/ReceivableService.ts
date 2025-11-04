@@ -223,7 +223,7 @@ export class ReceivableService extends BaseService<
     await this.validateBusinessRules(data)
 
     // Process dates
-    const processedData = {
+    const processedData: any = {
       ...data,
       // Normalize contractId (for standalone receivables)
       contractId: ValidationUtils.normalizeEmptyString(data.contractId),
@@ -235,6 +235,24 @@ export class ReceivableService extends BaseService<
       invoiceNumber: ValidationUtils.normalizeEmptyString(data.invoiceNumber),
       category: ValidationUtils.normalizeEmptyString(data.category),
       notes: ValidationUtils.normalizeEmptyString(data.notes)
+    }
+
+    // Auto-infer status based on expectedDate if not explicitly provided
+    if (!processedData.status) {
+      const expectedDate = new Date(processedData.expectedDate)
+      expectedDate.setHours(0, 0, 0, 0)
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+
+      if (expectedDate < today) {
+        // Past date → received
+        processedData.status = 'received'
+        processedData.receivedDate = processedData.receivedDate || processedData.expectedDate
+        processedData.receivedAmount = processedData.receivedAmount || processedData.amount
+      } else {
+        // Today or future → pending
+        processedData.status = 'pending'
+      }
     }
 
     return await super.create(processedData as any, {
