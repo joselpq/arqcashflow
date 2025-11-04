@@ -8,8 +8,10 @@ import ContractForm from '../../components/forms/ContractForm'
 import ContractDeletionModal from '../../components/ContractDeletionModal'
 import ContractDetailsModal from '../../components/ContractDetailsModal'
 import { AdvancedFilterModal } from '../../components/AdvancedFilterModal'
+import { useTerminology } from '@/lib/hooks/useTerminology'
 
 export default function ContractsTab() {
+  const { terminology } = useTerminology()
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
@@ -544,7 +546,7 @@ export default function ContractsTab() {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            <span className="hidden sm:inline">Adicionar Contrato</span>
+            <span className="hidden sm:inline">{terminology.createContract}</span>
             <span className="sm:hidden">Adicionar</span>
           </button>
         </div>
@@ -782,7 +784,7 @@ export default function ContractsTab() {
                         onClick={() => handleSort('projectName')}
                         className="group flex items-center gap-1 text-xs font-medium text-neutral-500 uppercase tracking-wider hover:text-neutral-700 transition-colors"
                       >
-                        Projeto / Cliente
+                        {terminology.project} / {terminology.client}
                         {getSortIcon('projectName')}
                       </button>
                     </th>
@@ -963,7 +965,7 @@ export default function ContractsTab() {
       <Modal
         isOpen={isModalOpen}
         onClose={closeModal}
-        title={editingContract ? 'Editar Contrato' : 'Adicionar Contrato'}
+        title={editingContract ? terminology.editContract : terminology.createContract}
         size="lg"
       >
         <ContractForm
