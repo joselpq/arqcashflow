@@ -85,7 +85,7 @@ export class ContractService extends BaseService<
    */
   async validateBusinessRules(data: ContractCreateData | ContractUpdateData, contractId?: string): Promise<void> {
     // Get team to determine profession for validation
-    const team = await this.context.teamScopedPrisma.team.findUnique({
+    const team = await this.context.teamScopedPrisma.raw.team.findUnique({
       where: { id: this.context.teamId },
       select: { profession: true }
     })
@@ -339,7 +339,7 @@ export class ContractService extends BaseService<
 
     const summary: ContractSummary = {
       totalContracts: contracts.length,
-      totalValue: contracts.reduce((sum, contract) => sum + contract.totalValue, 0),
+      totalValue: contracts.reduce((sum, contract) => sum + (contract.totalValue || 0), 0),
       contractsByStatus: {},
       contractsByCategory: {},
       averageContractValue: 0

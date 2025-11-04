@@ -1,5 +1,5 @@
 ---
-title: "ADR-018: Profession-Based Application Modularization"
+title: "ADR-019: Profession-Based Application Modularization"
 type: "decision"
 audience: ["developer", "agent", "product-manager", "designer"]
 contexts: ["architecture", "multi-vertical", "professions", "scalability", "validation", "terminology", "onboarding"]
@@ -16,7 +16,7 @@ related:
 dependencies: ["profession-config-system", "terminology-layer", "validation-refactor", "ai-prompt-templates"]
 ---
 
-# ADR-018: Profession-Based Application Modularization
+# ADR-019: Profession-Based Application Modularization
 
 ## Context for LLM Agents
 

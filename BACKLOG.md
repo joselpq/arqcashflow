@@ -1,8 +1,32 @@
 # ArqCashflow Development Backlog
 
 **Purpose**: Central source of truth for project priorities and development status
-**Last Updated**: 2025-10-28 (Chat Latency moved to DOING, added Profession Modularization & Design Review to BACKLOG)
+**Last Updated**: 2025-11-03 (Week 1 Profession Modularization COMPLETE + Bug Fixes)
 **Update Frequency**: Every LLM session MUST update this document when completing tasks
+
+---
+
+## 🎯 QUICK START FOR NEXT AGENT (2025-11-03)
+
+**We just completed**: Week 1 of Profession-Based Modularization (Doctors MVP)
+- ✅ Database, validation, services, AI prompts, onboarding all profession-aware
+- ✅ Tested and fixed 4 bugs found during manual testing
+- ✅ Patient creation via AI works, navigation terminology works
+
+**Current state**: System is WORKING and ready for Week 2
+- Doctors can onboard, select "Medicina" profession
+- OperationsAgent can create patients with optional fields (totalValue, signedDate)
+- NavBar shows "Pacientes" for doctors, "Contratos" for architects
+
+**Next work**: Week 2 - UI Components & Forms (Days 6-10)
+- Update ContractForm.tsx to use profession-aware labels
+- Update Dashboard to use terminology system
+- Create useTerminology() React hook for easy component usage
+- Update all hardcoded "Projeto" / "Contrato" text to dynamic terminology
+
+**See details**: Scroll to "Profession-Based Modularization" section in DOING
+
+---
 
 ## 🚨 CRITICAL INSTRUCTIONS FOR LLM AGENTS
 
@@ -57,17 +81,17 @@ This backlog **DOES NOT** replace other documentation:
 
 ### **Profession-Based Modularization - Phase 1 (Doctors MVP)** 🚀 IN PROGRESS (Started 2025-11-03)
 **Goal**: Enable doctors to use ArqCashflow with medical terminology and validation
-**Status**: Just started - implementing core infrastructure
+**Status**: ✅ Week 1 COMPLETE - Core infrastructure working, tested, and bug-fixed (2025-11-03)
 **Priority**: HIGH (multi-vertical expansion, 3-5x TAM potential)
 **Estimated Time**: 2-3 weeks (Phase 1 only)
-**Related**: ADR-018 Profession-Based Application Modularization
+**Related**: ADR-019 Profession-Based Application Modularization
 
 **Strategic Context**:
 - Doctors interested in platform → validate demand fast
 - Hybrid approach: Phase 1 MVP (2-3 weeks) → Phase 2 config system (if validated)
 - Keep validation layer adapted per profession (quality + flexibility)
 
-**Week 1: Core Infrastructure (Days 1-5)**
+**Week 1: Core Infrastructure (Days 1-5)** ✅ COMPLETE + POST-TESTING FIXES (2025-11-03)
 - [x] Day 1-2: Database & Validation ✅ COMPLETE (2025-11-03)
   - [x] Migrate `totalValue: Float?` and `signedDate: DateTime?` (optional fields)
   - [x] Create `lib/professions/` directory structure
@@ -75,34 +99,102 @@ This backlog **DOES NOT** replace other documentation:
   - [x] Implement `terminology.ts` (label mappings)
   - [x] Update validation layer with profession parameter
   - [x] Update ContractService to use profession-aware validation
-  - [ ] Test backward compatibility with existing contracts (pending manual testing)
-- [x] Day 3-4: AI Prompts & Services ⚠️ PARTIAL (2025-11-03)
+  - [x] Test backward compatibility - ✅ WORKING
+
+- [x] Day 3-4: AI Prompts & Services ✅ COMPLETE (2025-11-03)
   - [x] Update `OperationsAgentService.buildSystemPrompt()` with profession context
   - [x] Add medical terminology to AI prompts (OperationsAgent)
   - [x] Create arquitetura.ts config for backward compatibility
   - [x] Add `getProfessionConfig()` helper function
   - [x] Fix TypeScript errors (TeamScopedPrisma access)
-  - [ ] Update `SetupAssistantService` for medical spreadsheets (3 locations: lines 349, 668, 815)
-  - [ ] Test AI understanding of medical context with both professions
-- [ ] Day 5: Onboarding
-  - [ ] Add "Medicina" to profession options
-  - [ ] Implement profession-aware file upload questions
-  - [ ] Save profession to Team model
-  - [ ] Test onboarding flow end-to-end
+  - [x] Update `SetupAssistantService` for medical spreadsheets (3 locations: lines 349, 668, 815)
+  - [x] Add `businessContext` to arquitetura.ts and medicina.ts configs
+  - [x] Test AI understanding - ✅ Patient creation working via OperationsAgent
 
-**Week 2: UI Components (Days 6-10)**
+- [x] Day 5: Onboarding ✅ COMPLETE (2025-11-03)
+  - [x] Add "Medicina" to profession options (2 locations: line 140 logic, line 490 UI)
+  - [x] Implement profession-aware file upload questions with `getOnboardingMessages()`
+  - [x] Verify profession is saved to Team model (already implemented in API route)
+  - [x] Test onboarding flow - ✅ WORKING
+
+**Post-Testing Bug Fixes** (2025-11-03 evening)
+- [x] **Issue #1**: Onboarding questions not profession-specific
+  - [x] Updated medicina.ts: "Você controla suas consultas e finanças em alguma planilha?"
+  - [x] Added `hasContractsQuestion` for follow-up prompt differentiation
+  - [x] Updated app/onboarding/page.tsx to use profession-aware messages (3 locations)
+
+- [x] **Issue #2**: Navigation tab showing "Contratos" instead of "Pacientes"
+  - [x] Updated NavBar.tsx to fetch team profession from new API endpoint
+  - [x] Created `/api/user/team` route to return team data including profession
+  - [x] NavBar now shows profession-aware terminology (Pacientes vs Contratos)
+
+- [x] **Issue #3**: OperationsAgent patient creation failure
+  - [x] Fixed ContractService.ts line 88: `raw.team.findUnique()` Prisma access
+  - [x] Fixed ContractService.ts line 342: Null handling for optional `totalValue`
+
+- [x] **Issue #4**: Build error "Cannot read properties of null (reading 'toString')"
+  - [x] Fixed ContractsTab.tsx lines 225-231: Null check before `.toString()`
+  - [x] Fixed ContractsTab.tsx lines 833-843: Display "-" when `totalValue` is null
+  - [x] Fixed ContractsTab.tsx line 930: Display "-" when `signedDate` is null
+
+**Files Modified (Week 1 + Bug Fixes)**:
+- Database: `prisma/schema.prisma`
+- Profession configs: `lib/professions/medicina.ts`, `arquitetura.ts`, `index.ts`, `terminology.ts`
+- Services: `OperationsAgentService.ts`, `SetupAssistantService.ts`, `ContractService.ts`
+- Validation: `lib/validation/contracts.ts`
+- Onboarding: `app/onboarding/page.tsx`
+- Navigation: `app/components/NavBar.tsx`
+- Pages: `app/projetos/components/ContractsTab.tsx`
+- API: `app/api/user/team/route.ts` (NEW)
+- Docs: `ADR-019` (renamed from ADR-018)
+
+**Testing Results**:
+- ✅ Medicina onboarding: Profession selection works
+- ✅ Profession-aware questions: Displays correct terminology
+- ✅ AI patient creation: OperationsAgent successfully creates patients with optional fields
+- ✅ Navigation terminology: Shows "Pacientes" for medicina users
+- ✅ Projetos page: Handles null values gracefully (displays "-")
+- ✅ Backward compatibility: Architects still see "Contratos" and required fields
+
+**📍 NEXT STEPS (Week 2)**: ⏭️ UI Components & Forms (Days 6-10)
+
+**IMPORTANT CONTEXT FOR NEXT AGENT**:
+- Week 1 is COMPLETE ✅ - all core infrastructure working
+- Patient creation via AI works (tested with OperationsAgent)
+- Navigation terminology works (NavBar fetches profession dynamically)
+- Optional fields (totalValue, signedDate) handled properly for medicina
+- All bugs from testing fixed (see Post-Testing Bug Fixes section above)
+
+**Current System State**:
+- Profession configs: `lib/professions/medicina.ts` and `arquitetura.ts` fully configured
+- Terminology system: `getProfessionTerminology(profession)` function available
+- Onboarding: Profession-aware questions working
+- Services: ContractService, SetupAssistantService, OperationsAgent all profession-aware
+- Database: Optional fields for medicina contracts
+
+**What Still Needs Profession-Awareness** (Week 2):
+- Forms: ContractForm.tsx uses hardcoded labels ("Projeto", "Contrato")
+- Dashboard: Metrics cards use hardcoded terms
+- Tables: Column headers still say "Projeto" instead of using terminology
+- Modals: Modal titles and buttons use hardcoded terms
+
+---
+
+**Week 2: UI Components (Days 6-10)** ⏭️ NEXT
 - [ ] Day 6-8: Forms & Terminology
-  - [ ] Create `useTerminology()` hook
-  - [ ] Update `ContractForm.tsx` with terminology
-  - [ ] Update Dashboard metrics with terminology
-  - [ ] Update table headers and column labels
-  - [ ] Update modal titles and buttons
+  - [ ] Create `useTerminology()` React hook for easy component usage
+  - [ ] Update `ContractForm.tsx` labels to use terminology (projectName → terminology.projectName)
+  - [ ] Update Dashboard metrics with terminology (contracts → terminology.contracts)
+  - [ ] Update table headers in ContractsTab.tsx ("Projeto / Cliente" → terminology)
+  - [ ] Update modal titles ("Adicionar Contrato" → `Adicionar ${terminology.contract}`)
+  - [ ] Update action buttons with profession-aware text
+
 - [ ] Day 9-10: Testing & Refinement
-  - [ ] Unit tests for profession helpers
-  - [ ] Integration tests for validation
-  - [ ] E2E test for doctor onboarding flow
-  - [ ] Manual testing with internal "doctors"
-  - [ ] Fix bugs and polish UX
+  - [ ] Test form validation with medicina (optional fields should work)
+  - [ ] Test form submission for both professions
+  - [ ] Manual testing: Create patient vs Create project workflows
+  - [ ] Fix any UI/UX issues discovered
+  - [ ] Polish terminology consistency across all screens
 
 **Week 3: Pilot Launch (Days 11-15)**
 - [ ] Day 11-13: Documentation & Deployment

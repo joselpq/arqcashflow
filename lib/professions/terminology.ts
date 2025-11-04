@@ -128,6 +128,7 @@ export function getOnboardingMessages(profession: string | null | undefined) {
     case 'medicina':
       return {
         hasSpreadsheetQuestion: medicinaProfession.onboarding.hasSpreadsheetQuestion,
+        hasContractsQuestion: medicinaProfession.onboarding.hasContractsQuestion,
         fileUploadMessage: medicinaProfession.onboarding.fileUploadMessage,
         fileUploadDescription: medicinaProfession.onboarding.fileUploadDescription
       }
@@ -136,6 +137,7 @@ export function getOnboardingMessages(profession: string | null | undefined) {
     default:
       return {
         hasSpreadsheetQuestion: 'Tem alguma planilha onde controla seus projetos?',
+        hasContractsQuestion: 'Você tem contratos ou propostas dos seus projetos? Assim podemos extrair e cadastrar os valores e datas de todos os recebíveis',
         fileUploadMessage: 'Envie sua(s) planilha(s) de projetos',
         fileUploadDescription: 'Aceito: Excel (.xlsx, .xls), CSV, Google Sheets'
       }

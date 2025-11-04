@@ -222,9 +222,13 @@ export default function ContractsTab() {
         console.log(`    - Client: ${contract.clientName}`)
         console.log(`    - Frontend totalValue: ${contract.totalValue}`)
         console.log(`    - Frontend totalValue type: ${typeof contract.totalValue}`)
-        console.log(`    - Frontend totalValue precise?: ${Number.isInteger(contract.totalValue * 100)}`)
-        console.log(`    - Frontend totalValue as string: "${contract.totalValue.toString()}"`)
-        console.log(`    - Formatted display: R$ ${contract.totalValue.toLocaleString('pt-BR')}`)
+        if (contract.totalValue !== null) {
+          console.log(`    - Frontend totalValue precise?: ${Number.isInteger(contract.totalValue * 100)}`)
+          console.log(`    - Frontend totalValue as string: "${contract.totalValue.toString()}"`)
+          console.log(`    - Formatted display: R$ ${contract.totalValue.toLocaleString('pt-BR')}`)
+        } else {
+          console.log(`    - totalValue is null (optional for this profession)`)
+        }
       })
 
       setContracts(data)
@@ -826,12 +830,17 @@ export default function ContractsTab() {
                 <tbody className="bg-white divide-y divide-neutral-200">
                   {filteredContracts.map((contract: any) => {
                     // 🔍 DEBUG: Track values at render time
-                    const displayValue = contract.totalValue.toLocaleString('pt-BR')
-                    console.log(`🎨 RENDER DEBUG - Contract ${contract.id}:`)
-                    console.log(`    - Raw value: ${contract.totalValue}`)
-                    console.log(`    - Raw value type: ${typeof contract.totalValue}`)
-                    console.log(`    - Rendered display: "${displayValue}"`)
-                    console.log(`    - Value precise?: ${Number.isInteger(contract.totalValue * 100)}`)
+                    const displayValue = contract.totalValue !== null
+                      ? contract.totalValue.toLocaleString('pt-BR')
+                      : '-'
+
+                    if (contract.totalValue !== null) {
+                      console.log(`🎨 RENDER DEBUG - Contract ${contract.id}:`)
+                      console.log(`    - Raw value: ${contract.totalValue}`)
+                      console.log(`    - Raw value type: ${typeof contract.totalValue}`)
+                      console.log(`    - Rendered display: "${displayValue}"`)
+                      console.log(`    - Value precise?: ${Number.isInteger(contract.totalValue * 100)}`)
+                    }
 
                     return (
                     <tr key={contract.id} className="group hover:bg-neutral-50 transition-colors">
@@ -848,7 +857,7 @@ export default function ContractsTab() {
                       </td>
                       <td className="px-4 py-4 text-right">
                         <div className="font-bold text-lg text-neutral-900">
-                          R$ {displayValue}
+                          {contract.totalValue !== null ? `R$ ${displayValue}` : '-'}
                         </div>
                       </td>
                       <td className="px-4 py-4 relative">
@@ -918,7 +927,7 @@ export default function ContractsTab() {
                         </div>
                       </td>
                       <td className="px-4 py-4 text-sm text-neutral-900">
-                        {formatDateForDisplay(contract.signedDate)}
+                        {contract.signedDate ? formatDateForDisplay(contract.signedDate) : '-'}
                       </td>
                       <td className="px-4 py-4 text-sm text-neutral-900">
                         {contract.category || '-'}

@@ -326,6 +326,13 @@ export class SetupAssistantService extends BaseService<any, any, any, any> {
   ): Promise<ExtractionResult> {
     console.log(`🔍 Processing ${fileType.toUpperCase()} with single-phase vision extraction...`)
 
+    // Get team profession for context-aware prompts
+    const team = await this.context.teamScopedPrisma.raw.team.findUnique({
+      where: { id: this.context.teamId },
+      select: { profession: true }
+    })
+    const professionConfig = getProfessionConfig(team?.profession)
+
     // Determine media type and content type for Anthropic API
     const mediaType = fileType === 'pdf'
       ? 'application/pdf'
@@ -333,8 +340,8 @@ export class SetupAssistantService extends BaseService<any, any, any, any> {
 
     const contentType = fileType === 'pdf' ? 'document' : 'image'
 
-    // Full schema prompt with Brazilian architecture context
-    const prompt = `Você está analisando um documento de um escritório de arquitetura no Brasil.
+    // Full schema prompt with profession-aware context
+    const prompt = `Você está analisando um documento de ${professionConfig.businessContext.businessType}.
 
 • Este documento pode estar em formato PDF, imagem, ou qualquer outro formato visual, pode se tratar por exemplo de um contrato, uma proposta, um recibo, etc.
 • Sua tarefa é extrair TODAS as entidades financeiras (contratos, recebíveis, despesas) encontradas neste documento.
@@ -345,29 +352,14 @@ export class SetupAssistantService extends BaseService<any, any, any, any> {
 • Revise o documento por inteiro antes de extrair as entidades financeiras, para ter todo contexto necessário
 
 ═══════════════════════════════════════════════════════════════════
-CONTEXTO FINANCEIRO DE ESCRITÓRIOS DE ARQUITETURA NO BRASIL
+CONTEXTO FINANCEIRO - ${professionConfig.businessContext.professionName.toUpperCase()}
 ═══════════════════════════════════════════════════════════════════
 
-Arquitetos ou escritórios de arquitetura no Brasil ganham dinheiro majoritariamente de:
-• Projetos (geralmente pago em múltiplas parcelas por projeto)
-• Comissão de RT (responsabilidade técnica) na intermediação de venda/contratação de móveis ou demais fornecedores pelos seus clientes (geralmente múltiplas entradas por projeto, pagas por diversos fornecedores)
-• Acompanhamento de obra ou de projeto (geralmente também em parcelas)
-• Percentual de gestão ou comissão sobre o orçamento da obra
+${professionConfig.businessContext.revenueDescription}
 
-Tipos de projetos comuns:
-• Residenciais: apartamentos, áreas comuns de prédios
-• Comerciais: lojas, bares, restaurantes
-• Corporativos: escritórios, sedes de empresas
-• Industriais (mais raro)
+${professionConfig.businessContext.projectTypes}
 
-Principais despesas:
-• Salários
-• Espaço: aluguel, energia, internet
-• Softwares de arquitetura (mensais ou anuais)
-• Marketing: branding, PR, instagram, ads
-• Impostos
-• Equipamentos: computador, mesa, celular, manutenções
-• Outros custos operacionais
+${professionConfig.businessContext.expenseDescription}
 
 Use este contexto para identificar e classificar corretamente as entidades financeiras.
 
@@ -657,15 +649,22 @@ COMECE A EXTRAÇÃO
    * PHASE 1: Analyze file structure and create extraction plan
    */
   private async analyzeFileStructure(sheetsData: SheetData[], filename: string): Promise<ExtractionPlan> {
+    // Get team profession for context-aware prompts
+    const team = await this.context.teamScopedPrisma.raw.team.findUnique({
+      where: { id: this.context.teamId },
+      select: { profession: true }
+    })
+    const professionConfig = getProfessionConfig(team?.profession)
+
     const allSheetsPreview = sheetsData.map(sheet => ({
       name: sheet.name,
       preview: sheet.csv.split('\n').slice(0, 10).join('\n')  // First 10 rows
     }))
 
-    const prompt = `Analise este arquivo Excel "${filename}" de um escritório de arquitetura no Brasil.
+    const prompt = `Analise este arquivo Excel "${filename}" de ${professionConfig.businessContext.businessType}.
 
-CONTEXTO FINANCEIRO DE ESCRITÓRIOS DE ARQUITETURA:
-Arquitetos ou escritórios de arquitetura no Brasil ganham dinheiro majoritariamente de projetos (geralmente pago em múltiplas parcelas por projeto), comissão de RT (responsabilidade técnica) na intermediação de venda/contratação de móveis ou demais fornecedores pelos seus clientes (geralmente múltiplas entradas por projeto, pagas por diversos fornecedores), acompanhamento de obra ou de projeto (geralmente também em parcelas) ou até um % de gestão ou comissão sobre o orçamento da obra. Os projetos podem ser residenciais (ex: apartamentos, áreas comuns de prédios), comerciais (ex: lojas, bares, restaurantes), corporativos (ex: escritórios, sedes de empresas), industriais (mais raro). As principais despesas geralmente são com salários, espaço (ex: aluguel, energia, internet), softwares de arquitetura (geralmente pagos mensalmente ou anualmente), marketing (ex: branding, PR, instagram, ads), impostos, equipamentos (mais pontuais, como computador, mesa, celular, manutenções), entre outros menores. Agregue este contexto aos seus conhecimentos para identificar sinais de que uma entrada se trata de um contrato, uma receita ou uma despesa, o nome do arquivo, da planilha e as colunas podem fornecer dicas importantes.
+CONTEXTO FINANCEIRO - ${professionConfig.businessContext.professionName.toUpperCase()}:
+${professionConfig.businessContext.summaryContext}
 
 Aqui estão prévias de todas as planilhas (primeiras 10 linhas de cada):
 
@@ -809,16 +808,23 @@ Retorne APENAS o JSON, nada mais.`
     plan: ExtractionPlan,
     filename: string
   ): Promise<ExtractionResult> {
-    const prompt = `Você está extraindo dados financeiros de um escritório de arquitetura no Brasil.
+    // Get team profession for context-aware prompts
+    const team = await this.context.teamScopedPrisma.raw.team.findUnique({
+      where: { id: this.context.teamId },
+      select: { profession: true }
+    })
+    const professionConfig = getProfessionConfig(team?.profession)
 
-CONTEXTO FINANCEIRO DE ESCRITÓRIOS DE ARQUITETURA:
-Arquitetos ou escritórios de arquitetura no Brasil ganham dinheiro majoritariamente de projetos (geralmente pago em múltiplas parcelas por projeto), comissão de RT (responsabilidade técnica) na intermediação de venda/contratação de móveis ou demais fornecedores pelos seus clientes (geralmente múltiplas entradas por projeto, pagas por diversos fornecedores), acompanhamento de obra ou de projeto (geralmente também em parcelas) ou até um % de gestão ou comissão sobre o orçamento da obra. Os projetos podem ser residenciais (ex: apartamentos, áreas comuns de prédios), comerciais (ex: lojas, bares, restaurantes), corporativos (ex: escritórios, sedes de empresas), industriais (mais raro). As principais despesas geralmente são com salários, espaço (ex: aluguel, energia, internet), softwares de arquitetura (geralmente pagos mensalmente ou anualmente), marketing (ex: branding, PR, instagram, ads), impostos, equipamentos (mais pontuais, como computador, mesa, celular, manutenções), entre outros menores. Agregue este contexto aos seus conhecimentos para identificar sinais de que uma entrada se trata de um contrato, uma receita ou uma despesa, o nome do arquivo, da planilha e as colunas podem fornecer dicas importantes.
+    const prompt = `Você está extraindo dados financeiros de ${professionConfig.businessContext.businessType}.
+
+CONTEXTO FINANCEIRO - ${professionConfig.businessContext.professionName.toUpperCase()}:
+${professionConfig.businessContext.summaryContext}
 
 CONTEXTO DO ARQUIVO E PLANILHA:
 - Arquivo: "${filename}"
 - Planilha: "${sheetData.name}"
 - Tipo de dados: ${sheetInfo.type} (entidades financeiras)
-- Setor: Arquitetura/Engenharia
+- Setor: ${professionConfig.businessContext.professionName}
 - País: Brasil (valores em Real, datas em formato brasileiro)
 
 CONTEXTO DA ANÁLISE:

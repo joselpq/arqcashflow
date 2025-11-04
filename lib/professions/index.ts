@@ -7,17 +7,21 @@
  * Phase 3: Will add database-driven configs and admin UI
  */
 
-// Profession configuration exports
+// Import configs for local use
+import { arquiteturaProfession, isArchitectureProfession } from './arquitetura'
+import { medicinaProfession, isMedicalProfession, getMedicalValidationRules } from './medicina'
+
+// Re-export for external use
 export {
   arquiteturaProfession,
   isArchitectureProfession
-} from './arquitetura'
+}
 
 export {
   medicinaProfession,
   isMedicalProfession,
   getMedicalValidationRules
-} from './medicina'
+}
 
 // Terminology system exports
 export {

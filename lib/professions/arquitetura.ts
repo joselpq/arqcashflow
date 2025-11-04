@@ -52,8 +52,42 @@ export const arquiteturaProfession = {
   // Onboarding (original messaging)
   onboarding: {
     hasSpreadsheetQuestion: 'Tem alguma planilha onde controla seus projetos?',
+    hasContractsQuestion: 'Você tem contratos ou propostas dos seus projetos? Assim podemos extrair e cadastrar os valores e datas de todos os recebíveis',
     fileUploadMessage: 'Envie sua(s) planilha(s) de projetos',
     fileUploadDescription: 'Aceito: Excel (.xlsx, .xls), CSV, Google Sheets'
+  },
+
+  // Business context for SetupAssistant AI extraction prompts
+  businessContext: {
+    businessType: 'um escritório de arquitetura no Brasil',
+    professionName: 'Arquitetura',
+
+    // Condensed summary for file analysis prompt
+    summaryContext: 'Arquitetos ou escritórios de arquitetura no Brasil ganham dinheiro majoritariamente de projetos (geralmente pago em múltiplas parcelas por projeto), comissão de RT (responsabilidade técnica) na intermediação de venda/contratação de móveis ou demais fornecedores pelos seus clientes (geralmente múltiplas entradas por projeto, pagas por diversos fornecedores), acompanhamento de obra ou de projeto (geralmente também em parcelas) ou até um % de gestão ou comissão sobre o orçamento da obra. Os projetos podem ser residenciais (ex: apartamentos, áreas comuns de prédios), comerciais (ex: lojas, bares, restaurantes), corporativos (ex: escritórios, sedes de empresas), industriais (mais raro). As principais despesas geralmente são com salários, espaço (ex: aluguel, energia, internet), softwares de arquitetura (geralmente pagos mensalmente ou anualmente), marketing (ex: branding, PR, instagram, ads), impostos, equipamentos (mais pontuais, como computador, mesa, celular, manutenções), entre outros menores. Agregue este contexto aos seus conhecimentos para identificar sinais de que uma entrada se trata de um contrato, uma receita ou uma despesa, o nome do arquivo, da planilha e as colunas podem fornecer dicas importantes.',
+
+    // Detailed revenue sources for PDF/vision extraction
+    revenueDescription: `Arquitetos ou escritórios de arquitetura no Brasil ganham dinheiro majoritariamente de:
+• Projetos (geralmente pago em múltiplas parcelas por projeto)
+• Comissão de RT (responsabilidade técnica) na intermediação de venda/contratação de móveis ou demais fornecedores pelos seus clientes (geralmente múltiplas entradas por projeto, pagas por diversos fornecedores)
+• Acompanhamento de obra ou de projeto (geralmente também em parcelas)
+• Percentual de gestão ou comissão sobre o orçamento da obra`,
+
+    // Project types for PDF/vision extraction
+    projectTypes: `Tipos de projetos comuns:
+• Residenciais: apartamentos, áreas comuns de prédios
+• Comerciais: lojas, bares, restaurantes
+• Corporativos: escritórios, sedes de empresas
+• Industriais (mais raro)`,
+
+    // Common expenses for PDF/vision extraction
+    expenseDescription: `Principais despesas:
+• Salários
+• Espaço: aluguel, energia, internet
+• Softwares de arquitetura (mensais ou anuais)
+• Marketing: branding, PR, instagram, ads
+• Impostos
+• Equipamentos: computador, mesa, celular, manutenções
+• Outros custos operacionais`
   },
 
   // AI prompt configuration (original text)
@@ -87,6 +121,12 @@ export const arquiteturaProfession = {
         required: 'clientName, projectName, totalValue, signedDate',
         optional: 'description, status, category, notes'
       }
+    },
+
+    // API terminology for prompt injection (maps database terms to user terms)
+    apiTerminology: {
+      contract: 'projeto',      // "contract" in DB = "projeto" for users
+      project: 'projeto'        // "project" in DB = "projeto" for users
     }
   }
 } as const

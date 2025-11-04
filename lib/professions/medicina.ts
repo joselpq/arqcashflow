@@ -52,9 +52,51 @@ export const medicinaProfession = {
 
   // Onboarding customization
   onboarding: {
-    hasSpreadsheetQuestion: 'Você controla seus pacientes e consultas em alguma planilha?',
+    hasSpreadsheetQuestion: 'Você controla suas consultas e finanças em alguma planilha?',
+    hasContractsQuestion: 'Você tem alguma lista ou planilha com seus pacientes e os valores das consultas/procedimentos?',
     fileUploadMessage: 'Envie sua(s) planilha(s) de pacientes e consultas',
     fileUploadDescription: 'Aceito: Excel (.xlsx, .xls), CSV, Google Sheets'
+  },
+
+  // Business context for SetupAssistant AI extraction prompts
+  businessContext: {
+    businessType: 'um profissional de medicina no Brasil',
+    professionName: 'Medicina',
+
+    // Condensed summary for file analysis prompt
+    summaryContext: 'Profissionais de medicina no Brasil atendem pacientes em consultórios, clínicas ou hospitais. A receita vem principalmente de consultas (valor por sessão, que pode variar), procedimentos médicos (exames, pequenas cirurgias), atendimentos de emergência, plantões, e eventualmente convênios médicos ou planos de saúde. Os "contratos" no contexto médico são na verdade PACIENTES em tratamento ou acompanhamento contínuo. Não há necessariamente um valor fixo de contrato ou data de assinatura formal - o relacionamento é contínuo e baseado em consultas. As principais despesas incluem salários de equipe (secretária, enfermeiros), aluguel de consultório/clínica, equipamentos médicos, materiais descartáveis, software de gestão médica, impostos, plano de saúde profissional, seguro de responsabilidade civil, marketing e manutenção de equipamentos.',
+
+    // Detailed revenue sources for PDF/vision extraction
+    revenueDescription: `Profissionais de medicina no Brasil ganham dinheiro principalmente de:
+• Consultas médicas (valor por sessão, pode variar por especialidade)
+• Procedimentos médicos (exames, pequenas cirurgias, tratamentos)
+• Atendimentos de emergência e plantões
+• Aluguel de sala para outros médicos
+• Convênios médicos e planos de saúde (recebimento por atendimentos)
+• Telemedicina (consultas online)
+• Aulas ou palestras
+• Comissão por encaminhamento de pacientes para outros especialistas`,
+
+    // Project types for PDF/vision extraction
+    projectTypes: `Tipos de atendimento comuns:
+• Consultas de rotina e check-ups
+• Tratamentos especializados por área médica
+• Procedimentos ambulatoriais
+• Acompanhamento de pacientes crônicos
+• Atendimentos de emergência
+• Telemedicina e consultas online`,
+
+    // Common expenses for PDF/vision extraction
+    expenseDescription: `Principais despesas:
+• Salários: secretária, enfermeiros, assistentes
+• Espaço: aluguel de consultório/clínica, energia, internet
+• Equipamentos médicos e manutenção
+• Materiais descartáveis e insumos médicos
+• Software de gestão médica e prontuário eletrônico
+• Marketing: site, redes sociais, Google Ads
+• Impostos e taxas profissionais
+• Plano de saúde profissional e seguro de responsabilidade civil
+• Formação continuada e congressos médicos`
   },
 
   // AI prompt context additions
@@ -62,10 +104,12 @@ export const medicinaProfession = {
     systemContextAddition: `
 CONTEXTO MÉDICO:
 - Usuário é profissional da área de medicina
-- "Contratos" são PACIENTES (pessoas em tratamento/acompanhamento)
+- Para fins de APIs, "Contratos" são Pacientes
+- Se o usuário mencionar o nome de um paciente para associar uma despesa ou recebível, encontre esse paciente (contrato) para associar essa despesa/recebível a ele ao invés de criar sem contrato
 - Valores podem ser por consulta/sessão (não necessariamente fixos)
 - Relacionamentos são contínuos (não há "data de assinatura" formal)
-- Recebíveis são honorários por consultas/procedimentos realizados
+- Recebíveis podem ser honorários por consultas/procedimentos, aluguéis de salas para outros médicos, aulas, palestras, etc.
+- Quando o usuário menciona uma consulta, ele está se referindo a uma consulta médica, e não uma consulta ao banco de dados (a não ser que mencione explicitamente isso)
 `,
     entityDescriptions: {
       contracts: 'pacientes em tratamento ou acompanhamento',
@@ -92,6 +136,12 @@ CONTEXTO MÉDICO:
         required: 'clientName, projectName',
         optional: 'totalValue, signedDate, description, status, category, notes'
       }
+    },
+
+    // API terminology for prompt injection (maps database terms to user terms)
+    apiTerminology: {
+      contract: 'paciente',     // "contract" in DB = "paciente" for users
+      project: 'paciente'       // "project" in DB = "paciente" for users
     }
   }
 } as const
