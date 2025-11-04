@@ -11,7 +11,7 @@ import { AdvancedFilterModal } from '../../components/AdvancedFilterModal'
 import { useTerminology } from '@/lib/hooks/useTerminology'
 
 export default function ContractsTab() {
-  const { terminology } = useTerminology()
+  const { terminology, profession } = useTerminology()
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
@@ -831,9 +831,10 @@ export default function ContractsTab() {
                 </thead>
                 <tbody className="bg-white divide-y divide-neutral-200">
                   {filteredContracts.map((contract: any) => {
-                    // Calculate display value based on profession
-                    // For medicina: ALWAYS show sum of received payments (totalValue is just reference)
-                    // For arquitetura: Show fixed totalValue
+                    // Calculate display value based on profession (explicit check, no inference)
+                    // For medicina: ALWAYS show actual earnings (sum of received payments)
+                    //               totalValue is just a reference field (average price per consultation)
+                    // For arquitetura: Show fixed contract totalValue (contracted amount)
                     let displayValue: string
                     let calculatedValue: number | null = null
                     let isCalculatedFromPayments = false
@@ -842,19 +843,17 @@ export default function ContractsTab() {
                     const receivedPayments = contract.receivables?.filter((r: any) => r.status === 'received') || []
                     const receivedSum = receivedPayments.reduce((sum: number, r: any) => sum + (r.amount || 0), 0)
 
-                    // Determine display logic based on whether totalValue exists
-                    // If totalValue is null, user is medicina profession → always show received sum
-                    // If totalValue exists, user is arquitetura → show totalValue
-                    if (contract.totalValue !== null) {
-                      // Arquitetura: show fixed contract value
-                      calculatedValue = contract.totalValue
-                      displayValue = contract.totalValue.toLocaleString('pt-BR')
-                      isCalculatedFromPayments = false
-                    } else {
-                      // Medicina: show sum of received payments
+                    // Profession-based logic (Option A)
+                    if (profession === 'medicina') {
+                      // Medicina: ALWAYS show actual earnings (even if totalValue is filled as reference)
                       calculatedValue = receivedSum
                       displayValue = receivedSum > 0 ? receivedSum.toLocaleString('pt-BR') : '-'
                       isCalculatedFromPayments = true
+                    } else {
+                      // Arquitetura: Show fixed contract value
+                      calculatedValue = contract.totalValue || 0
+                      displayValue = contract.totalValue ? contract.totalValue.toLocaleString('pt-BR') : '-'
+                      isCalculatedFromPayments = false
                     }
 
                     return (
