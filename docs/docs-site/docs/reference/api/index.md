@@ -35,7 +35,6 @@ Comprehensive API documentation for ArqCashflow REST endpoints.
 - [Export-excel API](./export-excel.md)
 - [Export-google-sheets API](./export-google-sheets.md)
 - [Export-sheets-data API](./export-sheets-data.md)
-- [Monitoring-health API](./monitoring-health.md)
 - [Onboarding-complete API](./onboarding-complete.md)
 - [Onboarding-profile API](./onboarding-profile.md)
 - [Onboarding-status API](./onboarding-status.md)

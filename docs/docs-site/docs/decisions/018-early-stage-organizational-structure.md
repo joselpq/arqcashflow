@@ -157,7 +157,7 @@ dependencies: ["claude-api", "service-layer", "onboarding-flow"]
 - Target: 60%+ use Arnaldo in first month
 
 **Secondary Metrics**:
-- Time to first value (currently ~5 min, target <3 min)
+- Time to first value (currently ~5 min, target `<3 min`)
 - Week 1 retention rate (target: 70%+)
 - Organic traffic growth (MoM increase)
 - Cost per activated user (CAC efficiency)
@@ -237,7 +237,7 @@ dependencies: ["claude-api", "service-layer", "onboarding-flow"]
 
 **Secondary Metrics**:
 - Monthly Active Users (MAU) percentage (target: 80%+ of paid users)
-- Churn rate (target: <5% monthly)
+- Churn rate (target: `<5%` monthly)
 - User-generated referrals (target: 30%+ of new users from referrals)
 - NPS score among architects (target: 50+)
 - Industry-specific feature adoption rate
@@ -295,7 +295,7 @@ dependencies: ["claude-api", "service-layer", "onboarding-flow"]
    - Chat UI/UX optimization (typing indicators, loading states, message formatting)
 
 2. **AI Performance**:
-   - Response latency optimization (target: <2s median)
+   - Response latency optimization (target: `<2s` median)
    - Claude API cost reduction (token usage optimization)
    - Accuracy improvements (contract extraction, expense creation, query responses)
    - Context management (conversation history, user preferences, business data)
@@ -320,12 +320,12 @@ dependencies: ["claude-api", "service-layer", "onboarding-flow"]
 - Ultimate goal: 80%+ (AI-first becomes default behavior)
 
 **Secondary Metrics**:
-- Arnaldo response latency (median and p95, target: <2s median, <5s p95)
+- Arnaldo response latency (median and p95, target: `<2s` median, `<5s` p95)
 - Claude API cost per active user (target: 25% reduction quarter-over-quarter)
 - Task completion rate via chat (target: 85%+ successful completions)
 - User satisfaction with AI responses (thumbs up/down, target: 80%+ positive)
 - Setup Assistant extraction accuracy (target: 100% for supported file types)
-- Conversation abandonment rate (target: <15%)
+- Conversation abandonment rate (target: `<15%`)
 
 **Aligned Incentives**:
 - ✅ **Bonus tied to chat usage rate** (% of tasks via Arnaldo)
@@ -473,16 +473,16 @@ dependencies: ["claude-api", "service-layer", "onboarding-flow"]
 - Launch 8+ A/B tests on onboarding flow
 - Publish 4+ SEO content pieces targeting architects
 - Achieve 90%+ activation rate
-- Reduce time-to-first-value to <3 minutes
+- Reduce time-to-first-value to `<3` minutes
 
 **Vertical Customer Success Team**:
 - Conduct 3+ architect roundtables
 - Publish 2+ case studies
-- Achieve <5% monthly churn rate
+- Achieve `<5%` monthly churn rate
 - Launch referral program
 
 **AI Optimization Team**:
-- Reduce median Arnaldo latency to <2s
+- Reduce median Arnaldo latency to `<2s`
 - Reduce Claude API cost per user by 25%
 - Achieve 100% Setup Assistant accuracy
 - Increase chat usage to 60%+ of tasks
@@ -608,8 +608,8 @@ dependencies: ["claude-api", "service-layer", "onboarding-flow"]
 
 **Quarter 2 (Months 3-6)**:
 - ✅ Growth Team: 90%+ activation rate, 60%+ Arnaldo usage in Month 1
-- ✅ Vertical Team: <5% churn, 2+ case studies, referral program launched
-- ✅ AI Team: <2s median latency, 70%+ tasks via Arnaldo, 100% extraction accuracy
+- ✅ Vertical Team: `<5%` churn, 2+ case studies, referral program launched
+- ✅ AI Team: `<2s` median latency, 70%+ tasks via Arnaldo, 100% extraction accuracy
 
 **Quarter 3-4 (Months 6-12)**:
 - ✅ Company-wide: 120%+ NRR, 500+ activated architect users

@@ -1227,8 +1227,8 @@ prisma/schema.prisma            # Optional fields
 - Business case validated (≥$10k MRR potential)
 
 **NO-GO (Stay Phase 1 or Pivot) if:**
-- <3 doctors adopt after 2 months
-- High churn rate (>50% drop after 30 days)
+- `<3` doctors adopt after 2 months
+- High churn rate (`>50%` drop after 30 days)
 - Major unforeseen technical complexity
 - Lack of clarity on next profession
 
