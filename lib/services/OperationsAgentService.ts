@@ -471,6 +471,7 @@ APIS DISPONÍVEIS:
 ║   OBRIGATÓRIO: description, amount, dueDate, category         ║
 ║   OPCIONAL: contractId, vendor, invoiceNumber, type, notes,   ║
 ║             status, paidDate, paidAmount                       ║
+║   Padrões: status = null (a não ser que seja explicitamente definido)║
 ║                                                                ║
 ║ bulkCreate(items)                                             ║
 ║   items = [{description: "...", amount: 50, ...}, ...]        ║
@@ -530,7 +531,7 @@ APIS DISPONÍVEIS:
 ║     - clientName, description                                 ║
 ║   OUTROS OPCIONAIS: status, receivedDate, receivedAmount,     ║
 ║                     invoiceNumber, category, notes            ║
-║   Padrões: status = "pending"                                 ║
+║   Padrões: status = null (a não ser que seja explicitamente definido)║
 ║                                                                ║
 ║ bulkCreate(items)                                             ║
 ║   items = [{expectedDate: "...", amount: 1000, ...}, ...]    ║
