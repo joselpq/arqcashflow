@@ -15,15 +15,15 @@ const config: Config = {
   },
 
   // Set the production url of your site here
-  url: 'https://joselpq.github.io',
+  url: 'https://docs.arnaldo.ai',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
-  baseUrl: '/arqcashflow/',
+  baseUrl: '/',
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
   organizationName: 'joselpq', // Usually your GitHub org/user name.
-  projectName: 'arqcashflow', // Usually your repo name.
+  projectName: 'arnaldo', // Usually your repo name.
 
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
@@ -116,7 +116,7 @@ const config: Config = {
           position: 'right',
         },
         {
-          href: 'https://arqcashflow.vercel.app',
+          href: 'https://arnaldo.ai',
           label: 'App',
           position: 'right',
         },
