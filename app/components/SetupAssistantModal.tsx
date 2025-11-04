@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Modal from './Modal'
+import { useTerminology } from '@/lib/hooks/useTerminology'
 
 interface SetupAssistantModalProps {
   isOpen: boolean
@@ -27,6 +28,7 @@ interface FileItem {
 }
 
 export default function SetupAssistantModal({ isOpen, onClose, onComplete }: SetupAssistantModalProps) {
+  const { terminology } = useTerminology()
   const [files, setFiles] = useState<FileItem[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
   const [dragActive, setDragActive] = useState(false)
@@ -224,7 +226,7 @@ export default function SetupAssistantModal({ isOpen, onClose, onComplete }: Set
           <div className="grid grid-cols-3 gap-4 mb-8 max-w-md mx-auto">
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <div className="text-3xl font-bold text-blue-700">{results.totalContracts}</div>
-              <div className="text-sm text-neutral-600">Contratos</div>
+              <div className="text-sm text-neutral-600">{terminology.contracts}</div>
             </div>
             <div className="bg-green-50 border border-green-200 rounded-lg p-4">
               <div className="text-3xl font-bold text-green-700">{results.totalReceivables}</div>

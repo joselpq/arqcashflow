@@ -7,8 +7,10 @@ import Modal from '../components/Modal'
 import ExpenseForm from '../components/forms/ExpenseForm'
 import RecurringExpenseActionModal from '../components/RecurringExpenseActionModal'
 import { AdvancedFilterModal } from '../components/AdvancedFilterModal'
+import { useTerminology } from '@/lib/hooks/useTerminology'
 
 function ExpensesPageContent() {
+  const { terminology } = useTerminology()
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
@@ -65,7 +67,7 @@ function ExpensesPageContent() {
 
   const expenseTypes = [
     { value: 'operational', label: 'Operacional' },
-    { value: 'project', label: 'Projeto' },
+    { value: 'project', label: terminology.project },
     { value: 'administrative', label: 'Administrativo' },
   ]
 

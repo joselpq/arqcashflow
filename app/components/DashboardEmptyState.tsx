@@ -1,10 +1,13 @@
 'use client'
 
+import { useTerminology } from '@/lib/hooks/useTerminology'
+
 interface DashboardEmptyStateProps {
   onImportData: () => void
 }
 
 export default function DashboardEmptyState({ onImportData }: DashboardEmptyStateProps) {
+  const { terminology } = useTerminology()
   return (
     <div className="min-h-[600px] flex items-center justify-center px-4">
       <div className="max-w-2xl w-full text-center">
@@ -32,7 +35,7 @@ export default function DashboardEmptyState({ onImportData }: DashboardEmptyStat
               <span className="text-2xl">📈</span>
               <div>
                 <p className="font-medium text-neutral-900">Planilhas Excel/CSV</p>
-                <p className="text-sm text-neutral-600">Contratos, recebíveis e despesas</p>
+                <p className="text-sm text-neutral-600">{terminology.contracts}, recebíveis e despesas</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
@@ -82,7 +85,7 @@ export default function DashboardEmptyState({ onImportData }: DashboardEmptyStat
               href="/projetos?tab=contratos"
               className="px-4 py-2 border border-neutral-300 text-neutral-700 rounded-lg text-sm hover:bg-neutral-50 transition-colors"
             >
-              + Criar Contrato
+              + Criar {terminology.contract}
             </a>
             <a
               href="/projetos?tab=recebiveis"
