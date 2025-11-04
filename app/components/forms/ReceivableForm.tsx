@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { formatDateForInput, getTodayDateString } from '@/lib/utils/date'
+import { useTerminology } from '@/lib/hooks/useTerminology'
 
 interface ReceivableFormProps {
   receivable?: any
@@ -12,6 +13,7 @@ interface ReceivableFormProps {
 }
 
 export default function ReceivableForm({ receivable, contracts, onSubmit, onCancel, loading = false }: ReceivableFormProps) {
+  const { terminology } = useTerminology()
   const [customCategory, setCustomCategory] = useState('')
   const [showCustomCategory, setShowCustomCategory] = useState(false)
   const [isStandalone, setIsStandalone] = useState(false)
@@ -120,7 +122,7 @@ export default function ReceivableForm({ receivable, contracts, onSubmit, onCanc
       {/* Contract Selection */}
       {!isStandalone ? (
         <div>
-          <label className="block mb-2 font-medium text-neutral-900">Contrato *</label>
+          <label className="block mb-2 font-medium text-neutral-900">{terminology.contract} *</label>
           <select
             required
             className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900"
@@ -128,7 +130,7 @@ export default function ReceivableForm({ receivable, contracts, onSubmit, onCanc
             onChange={(e) => setFormData({ ...formData, contractId: e.target.value })}
             disabled={loading}
           >
-            <option value="">Selecione um contrato</option>
+            <option value="">Selecione um {terminology.contract.toLowerCase()}</option>
             {contracts.map(contract => (
               <option key={contract.id} value={contract.id}>
                 {contract.clientName} - {contract.projectName}
@@ -138,7 +140,7 @@ export default function ReceivableForm({ receivable, contracts, onSubmit, onCanc
         </div>
       ) : (
         <div>
-          <label className="block mb-2 font-medium text-neutral-900">Cliente/Origem *</label>
+          <label className="block mb-2 font-medium text-neutral-900">{terminology.clientName} *</label>
           <input
             type="text"
             required

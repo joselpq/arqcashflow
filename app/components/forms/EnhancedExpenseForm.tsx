@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { formatDateForInput, getTodayDateString } from '@/lib/utils/date'
+import { useTerminology } from '@/lib/hooks/useTerminology'
 
 interface EnhancedExpenseFormProps {
   expense?: any
@@ -12,6 +13,7 @@ interface EnhancedExpenseFormProps {
 }
 
 export default function EnhancedExpenseForm({ expense, contracts, onSubmit, onCancel, loading = false }: EnhancedExpenseFormProps) {
+  const { terminology } = useTerminology()
   const [formData, setFormData] = useState({
     description: '',
     amount: '',
@@ -321,14 +323,14 @@ export default function EnhancedExpenseForm({ expense, contracts, onSubmit, onCa
       </div>
 
       <div>
-        <label className="block mb-2 font-medium text-neutral-900">Projeto (Opcional)</label>
+        <label className="block mb-2 font-medium text-neutral-900">{terminology.project} (Opcional)</label>
         <select
           className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900"
           value={formData.contractId}
           onChange={(e) => setFormData({ ...formData, contractId: e.target.value })}
           disabled={loading}
         >
-          <option value="">Nenhum projeto específico</option>
+          <option value="">Nenhum {terminology.project.toLowerCase()} específico</option>
           {contracts.map(contract => (
             <option key={contract.id} value={contract.id}>
               {contract.clientName} - {contract.projectName}

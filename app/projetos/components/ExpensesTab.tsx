@@ -7,8 +7,10 @@ import Modal from '../../components/Modal'
 import EnhancedExpenseForm from '../../components/forms/EnhancedExpenseForm'
 import RecurringExpenseActionModal from '../../components/RecurringExpenseActionModal'
 import DateRangePicker, { DateRange } from '../../components/DateRangePicker'
+import { useTerminology } from '@/lib/hooks/useTerminology'
 
 export default function ExpensesTab() {
+  const { terminology } = useTerminology()
   const searchParams = useSearchParams()
   const editId = searchParams.get('edit')
 
@@ -462,7 +464,7 @@ export default function ExpensesTab() {
       {/* Filters - Horizontal Bar */}
       <div className="flex flex-wrap items-center gap-3 mb-6 p-4 bg-neutral-50 rounded-lg border border-neutral-200">
         <div className="flex items-center gap-2">
-          <label className="text-sm font-medium text-neutral-700 whitespace-nowrap">Projeto:</label>
+          <label className="text-sm font-medium text-neutral-700 whitespace-nowrap">{terminology.project}:</label>
           <select
             className="border border-neutral-300 rounded-md px-3 py-1 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none min-w-[180px]"
             value={filters.contractId}
@@ -735,7 +737,7 @@ export default function ExpensesTab() {
               </p>
               {expenseToMark.contract && (
                 <p className="text-sm text-neutral-600">
-                  Projeto: {expenseToMark.contract.projectName} - {expenseToMark.contract.clientName}
+                  {terminology.project}: {expenseToMark.contract.projectName} - {expenseToMark.contract.clientName}
                 </p>
               )}
             </div>
