@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, KeyboardEvent, useRef, useEffect } from 'react'
+import { useTerminology } from '@/lib/hooks/useTerminology'
+import { getProfessionConfig } from '@/lib/professions'
 
 interface ChatInputProps {
   onSend: (message: string, file?: File) => void
@@ -8,6 +10,8 @@ interface ChatInputProps {
 }
 
 export default function ChatInput({ onSend, disabled = false }: ChatInputProps) {
+  const { profession } = useTerminology()
+  const professionConfig = getProfessionConfig(profession)
   const [message, setMessage] = useState('')
   const [isSending, setIsSending] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
@@ -112,11 +116,17 @@ export default function ChatInput({ onSend, disabled = false }: ChatInputProps) 
     }
   }
 
-  const exampleQueries = [
-    "Quanto faturei em setembro?",
-    "Recebi 500 reais do projeto João",
-    "Salário Pedro R$5k todo dia 5"
-  ]
+  const exampleQueries = profession === 'medicina'
+    ? [
+        "Quantos pacientes atendi em setembro?",
+        "Recebi R$350 da consulta do João",
+        "Salário enfermeira R$4k todo dia 5"
+      ]
+    : [
+        "Quanto faturei em setembro?",
+        "Recebi 500 reais do projeto João",
+        "Salário Pedro R$5k todo dia 5"
+      ]
 
   const handleExampleClick = (example: string) => {
     setMessage(example)

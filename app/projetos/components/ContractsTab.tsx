@@ -831,17 +831,18 @@ export default function ContractsTab() {
                 </thead>
                 <tbody className="bg-white divide-y divide-neutral-200">
                   {filteredContracts.map((contract: any) => {
-                    // 🔍 DEBUG: Track values at render time
-                    const displayValue = contract.totalValue !== null
-                      ? contract.totalValue.toLocaleString('pt-BR')
-                      : '-'
+                    // Calculate display value: totalValue or sum of received payments
+                    let displayValue: string
+                    let calculatedValue: number | null = null
 
                     if (contract.totalValue !== null) {
-                      console.log(`🎨 RENDER DEBUG - Contract ${contract.id}:`)
-                      console.log(`    - Raw value: ${contract.totalValue}`)
-                      console.log(`    - Raw value type: ${typeof contract.totalValue}`)
-                      console.log(`    - Rendered display: "${displayValue}"`)
-                      console.log(`    - Value precise?: ${Number.isInteger(contract.totalValue * 100)}`)
+                      calculatedValue = contract.totalValue
+                      displayValue = contract.totalValue.toLocaleString('pt-BR')
+                    } else {
+                      // For medicina profession, calculate sum of received payments
+                      const receivedPayments = contract.receivables?.filter((r: any) => r.status === 'received') || []
+                      calculatedValue = receivedPayments.reduce((sum: number, r: any) => sum + (r.amount || 0), 0)
+                      displayValue = calculatedValue > 0 ? calculatedValue.toLocaleString('pt-BR') : '-'
                     }
 
                     return (
@@ -859,8 +860,11 @@ export default function ContractsTab() {
                       </td>
                       <td className="px-4 py-4 text-right">
                         <div className="font-bold text-lg text-neutral-900">
-                          {contract.totalValue !== null ? `R$ ${displayValue}` : '-'}
+                          {calculatedValue !== null && calculatedValue > 0 ? `R$ ${displayValue}` : '-'}
                         </div>
+                        {contract.totalValue === null && calculatedValue && calculatedValue > 0 && (
+                          <div className="text-xs text-neutral-500">Recebido</div>
+                        )}
                       </td>
                       <td className="px-4 py-4 relative">
                         <div data-status-dropdown>

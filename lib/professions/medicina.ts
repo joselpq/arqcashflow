@@ -29,12 +29,12 @@ export const medicinaProfession = {
     projects: 'Pacientes',
 
     // Client terminology
-    client: 'Paciente',
-    clients: 'Pacientes',
+    client: 'Responsável',
+    clients: 'Responsáveis',
 
     // Form field labels
     projectName: 'Nome do Paciente',
-    clientName: 'Nome do Paciente',
+    clientName: 'Nome do Responsável',
     totalValue: 'Valor Médio por Consulta',
     signedDate: 'Data da Primeira Consulta',
 
@@ -48,6 +48,27 @@ export const medicinaProfession = {
     editContract: 'Editar Paciente',
     deleteContract: 'Remover Paciente',
     viewContract: 'Ver Paciente'
+  },
+
+  // Form options (categories and status)
+  formOptions: {
+    categories: [
+      'Consulta de Rotina',
+      'Consulta de Retorno',
+      'Procedimento',
+      'Exame',
+      'Cirurgia',
+      'Tratamento Continuado',
+      'Emergência',
+      'Telemedicina',
+      'Outros'
+    ],
+    statuses: [
+      { value: 'active', label: 'Em Tratamento' },
+      { value: 'completed', label: 'Alta Médica' },
+      { value: 'paused', label: 'Pausado' },
+      { value: 'cancelled', label: 'Cancelado' }
+    ]
   },
 
   // Onboarding customization

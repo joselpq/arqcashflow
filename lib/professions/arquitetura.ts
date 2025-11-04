@@ -49,6 +49,27 @@ export const arquiteturaProfession = {
     viewContract: 'Ver Contrato'
   },
 
+  // Form options (categories and status)
+  formOptions: {
+    categories: [
+      'Projeto Residencial',
+      'Projeto Comercial',
+      'Projeto Corporativo',
+      'Projeto Industrial',
+      'Reforma',
+      'Paisagismo',
+      'Interiores',
+      'Consultoria',
+      'Outros'
+    ],
+    statuses: [
+      { value: 'active', label: 'Ativo' },
+      { value: 'completed', label: 'Concluído' },
+      { value: 'paused', label: 'Pausado' },
+      { value: 'cancelled', label: 'Cancelado' }
+    ]
+  },
+
   // Onboarding (original messaging)
   onboarding: {
     hasSpreadsheetQuestion: 'Tem alguma planilha onde controla seus projetos?',

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { formatDateForInput, getTodayDateString } from '@/lib/utils/date'
 import { useTerminology } from '@/lib/hooks/useTerminology'
+import { getProfessionConfig } from '@/lib/professions'
 
 interface ContractFormProps {
   contract?: any
@@ -12,15 +13,14 @@ interface ContractFormProps {
 }
 
 export default function ContractForm({ contract, onSubmit, onCancel, loading = false }: ContractFormProps) {
-  const { terminology } = useTerminology()
+  const { terminology, profession } = useTerminology()
+  const professionConfig = getProfessionConfig(profession)
   const [customCategory, setCustomCategory] = useState('')
   const [showCustomCategory, setShowCustomCategory] = useState(false)
-  const [predefinedCategories, setPredefinedCategories] = useState([
-    'Residencial',
-    'Comercial',
-    'Restaurante',
-    'Loja'
-  ])
+  const predefinedCategories = professionConfig.formOptions.categories
+  const statusOptions = professionConfig.formOptions.statuses
+  const isValueRequired = professionConfig.validation.contractValueRequired
+  const isDateRequired = professionConfig.validation.signedDateRequired
   const [formData, setFormData] = useState({
     clientName: '',
     projectName: '',
@@ -73,15 +73,22 @@ export default function ContractForm({ contract, onSubmit, onCancel, loading = f
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
 
-    const totalValue = parseFloat(formData.totalValue)
-    if (isNaN(totalValue)) {
-      alert('Total value must be a valid number')
-      return
-    }
-
-    const submissionData = {
-      ...formData,
-      totalValue
+    // Handle optional totalValue for medicina profession
+    let submissionData
+    if (formData.totalValue) {
+      const totalValue = parseFloat(formData.totalValue)
+      if (isNaN(totalValue)) {
+        alert('Valor deve ser um número válido')
+        return
+      }
+      submissionData = {
+        ...formData,
+        totalValue
+      }
+    } else {
+      // If totalValue is not provided (medicina profession), exclude it
+      const { totalValue, ...dataWithoutValue } = formData
+      submissionData = dataWithoutValue
     }
 
     await onSubmit(submissionData)
@@ -114,10 +121,12 @@ export default function ContractForm({ contract, onSubmit, onCancel, loading = f
       </div>
 
       <div>
-        <label className="block mb-2 font-medium text-neutral-900">{terminology.totalValue} *</label>
+        <label className="block mb-2 font-medium text-neutral-900">
+          {terminology.totalValue} {isValueRequired && '*'}
+        </label>
         <input
           type="number"
-          required
+          required={isValueRequired}
           className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900 placeholder-neutral-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           value={formData.totalValue}
           onChange={(e) => setFormData({ ...formData, totalValue: e.target.value })}
@@ -127,10 +136,12 @@ export default function ContractForm({ contract, onSubmit, onCancel, loading = f
       </div>
 
       <div>
-        <label className="block mb-2 font-medium text-neutral-900">{terminology.signedDate} *</label>
+        <label className="block mb-2 font-medium text-neutral-900">
+          {terminology.signedDate} {isDateRequired && '*'}
+        </label>
         <input
           type="date"
-          required
+          required={isDateRequired}
           className="w-full border-2 border-neutral-300 rounded-lg px-3 py-2 focus:border-blue-600 focus:outline-none bg-white text-neutral-900"
           value={formData.signedDate}
           onChange={(e) => setFormData({ ...formData, signedDate: e.target.value })}
@@ -188,9 +199,11 @@ export default function ContractForm({ contract, onSubmit, onCancel, loading = f
           disabled={loading}
           required
         >
-          <option value="active">Ativo</option>
-          <option value="completed">Concluído</option>
-          <option value="cancelled">Cancelado</option>
+          {statusOptions.map((status) => (
+            <option key={status.value} value={status.value}>
+              {status.label}
+            </option>
+          ))}
         </select>
       </div>
 
