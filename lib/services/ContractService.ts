@@ -101,9 +101,9 @@ export class ContractService extends BaseService<
       schema.parse(data)
     }
 
-    // BLOCKING: Total value must be positive (clearly wrong)
-    // Note: For medicina profession, totalValue is optional
-    if (data.totalValue !== undefined) {
+    // BLOCKING: Total value must be positive if provided (clearly wrong data)
+    // Note: For medicina profession, totalValue is optional (can be null or undefined)
+    if (data.totalValue !== undefined && data.totalValue !== null) {
       ValidationUtils.validatePositiveNumber(data.totalValue, 'Total value')
     }
 
@@ -174,20 +174,26 @@ export class ContractService extends BaseService<
     await this.logAudit(async () => {
       const auditContext = this.createAuditContext('business_rule_warning')
       // Store in audit log with special 'warning' type for supervisor dashboard
-      await this.context.teamScopedPrisma.auditLog.create({
-        data: {
-          ...auditContext,
-          entityType: 'contract',
-          action: warning.rule,
-          metadata: {
-            warning: true,
-            severity: warning.severity,
-            message: warning.message,
-            data: warning.data,
-            needsReview: warning.severity === 'attention'
-          }
+      // Note: entityId may not exist during validation (before entity creation)
+      const auditData: any = {
+        ...auditContext,
+        entityType: 'contract',
+        action: warning.rule,
+        metadata: {
+          warning: true,
+          severity: warning.severity,
+          message: warning.message,
+          data: warning.data,
+          needsReview: warning.severity === 'attention'
         }
-      })
+      }
+
+      // If no entityId (during validation before creation), use placeholder
+      if (!auditData.entityId) {
+        auditData.entityId = 'pending-creation'
+      }
+
+      await this.context.teamScopedPrisma.auditLog.create({ data: auditData })
     })
   }
 

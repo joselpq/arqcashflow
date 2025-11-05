@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { formatDateFull } from '@/lib/utils/date'
+import { useTerminology } from '@/lib/hooks/useTerminology'
 
 interface ContractDetailsModalProps {
   isOpen: boolean
@@ -26,6 +27,7 @@ interface Expense {
 }
 
 export default function ContractDetailsModal({ isOpen, onClose, contract }: ContractDetailsModalProps) {
+  const { terminology } = useTerminology()
   const [receivables, setReceivables] = useState<Receivable[]>([])
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [loading, setLoading] = useState(true)
@@ -155,7 +157,7 @@ export default function ContractDetailsModal({ isOpen, onClose, contract }: Cont
               <div className="space-y-6">
                 {/* Contract Information */}
                 <div className="bg-neutral-50 rounded-lg p-4 border border-neutral-200">
-                  <h4 className="font-semibold text-neutral-900 mb-3">Informações do Contrato</h4>
+                  <h4 className="font-semibold text-neutral-900 mb-3">Informações do {terminology.contract}</h4>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-xs text-neutral-500 uppercase tracking-wider mb-1">Valor Total</p>

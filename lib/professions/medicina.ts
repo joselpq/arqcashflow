@@ -29,12 +29,12 @@ export const medicinaProfession = {
     projects: 'Pacientes',
 
     // Client terminology
-    client: 'Paciente',
-    clients: 'Pacientes',
+    client: 'Responsável',
+    clients: 'Responsáveis',
 
     // Form field labels
     projectName: 'Nome do Paciente',
-    clientName: 'Nome do Paciente',
+    clientName: 'Nome do Responsável',
     totalValue: 'Valor Médio por Consulta',
     signedDate: 'Data da Primeira Consulta',
 
@@ -48,6 +48,27 @@ export const medicinaProfession = {
     editContract: 'Editar Paciente',
     deleteContract: 'Remover Paciente',
     viewContract: 'Ver Paciente'
+  },
+
+  // Form options (categories and status)
+  formOptions: {
+    categories: [
+      'Consulta de Rotina',
+      'Consulta de Retorno',
+      'Procedimento',
+      'Exame',
+      'Cirurgia',
+      'Tratamento Continuado',
+      'Emergência',
+      'Telemedicina',
+      'Outros'
+    ],
+    statuses: [
+      { value: 'active', label: 'Em Tratamento' },
+      { value: 'completed', label: 'Alta Médica' },
+      { value: 'paused', label: 'Pausado' },
+      { value: 'cancelled', label: 'Cancelado' }
+    ]
   },
 
   // Onboarding customization
@@ -105,6 +126,10 @@ export const medicinaProfession = {
 CONTEXTO MÉDICO:
 - Usuário é profissional da área de medicina
 - Para fins de APIs, "Contratos" são Pacientes
+- MAPEAMENTO DE CAMPOS DO DATABASE:
+  • projectName = Nome do Paciente (o paciente em si)
+  • clientName = Nome do Responsável (quem paga/responsável legal, pode ser o próprio paciente)
+  • contractId = ID do paciente (quando vincular recebíveis/despesas)
 - Se o usuário mencionar o nome de um paciente para associar uma despesa ou recebível, encontre esse paciente (contrato) para associar essa despesa/recebível a ele ao invés de criar sem contrato
 - Valores podem ser por consulta/sessão (não necessariamente fixos)
 - Relacionamentos são contínuos (não há "data de assinatura" formal)

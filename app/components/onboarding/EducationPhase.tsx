@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import StreamingMessage from './StreamingMessage'
 import TypingIndicator from './TypingIndicator'
+import { getProfessionTerminology } from '@/lib/professions'
 
 interface EducationMessage {
   content: string
@@ -12,22 +13,30 @@ interface EducationMessage {
 
 interface EducationPhaseProps {
   onComplete: () => void
+  profession?: string // Profession for terminology
 }
 
-const educationMessages: EducationMessage[] = [
-  {
-    content: "Se precisar de mim para criar ou editar contratos, recebíveis ou despesas, é só me mandar uma mensagem.",
-    buttonLabel: "Ok", // Not shown - typing indicator used instead
-    autoAdvanceDelay: null // Handled by typing indicator
-  },
-  {
-    content: "Ah, e também pode contar comigo para responder perguntas sobre seus projetos e finanças, como o lucro de um mês específico, receita média por projeto etc. Estarei logo ali!",
-    buttonLabel: "Continuar",
-    autoAdvanceDelay: null // Wait for user click
-  }
-]
+/**
+ * Generate profession-aware education messages
+ */
+const getEducationMessages = (profession?: string): EducationMessage[] => {
+  const terminology = getProfessionTerminology(profession)
 
-export default function EducationPhase({ onComplete }: EducationPhaseProps) {
+  return [
+    {
+      content: `Se precisar de mim para criar ou editar ${terminology.contracts.toLowerCase()}, recebíveis ou despesas, é só me mandar uma mensagem.`,
+      buttonLabel: "Ok", // Not shown - typing indicator used instead
+      autoAdvanceDelay: null // Handled by typing indicator
+    },
+    {
+      content: `Ah, e também pode contar comigo para responder perguntas sobre seus ${terminology.projects.toLowerCase()} e finanças, como o lucro de um mês específico, receita média por ${terminology.project.toLowerCase()} etc. Estarei logo ali!`,
+      buttonLabel: "Continuar",
+      autoAdvanceDelay: null // Wait for user click
+    }
+  ]
+}
+
+export default function EducationPhase({ onComplete, profession }: EducationPhaseProps) {
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0)
   const [showButton, setShowButton] = useState(false)
   const [showTyping, setShowTyping] = useState(false)
@@ -35,6 +44,8 @@ export default function EducationPhase({ onComplete }: EducationPhaseProps) {
   const buttonRef = useRef<HTMLDivElement>(null)
   const typingRef = useRef<HTMLDivElement>(null)
 
+  // Get profession-aware messages
+  const educationMessages = getEducationMessages(profession)
   const currentMessage = educationMessages[currentMessageIndex]
   const isLastMessage = currentMessageIndex === educationMessages.length - 1
   const isFirstMessage = currentMessageIndex === 0

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { DeletionInfo } from '@/lib/validation'
+import { useTerminology } from '@/lib/hooks/useTerminology'
 
 interface ContractDeletionModalProps {
   isOpen: boolean
@@ -20,6 +21,7 @@ export default function ContractDeletionModal({
   contract,
   onDeleteConfirm
 }: ContractDeletionModalProps) {
+  const { terminology } = useTerminology()
   const [deletionInfo, setDeletionInfo] = useState<DeletionInfo | null>(null)
   const [loading, setLoading] = useState(false)
   const [selectedMode, setSelectedMode] = useState<'contract-only' | 'contract-and-receivables'>('contract-only')
@@ -115,7 +117,7 @@ export default function ContractDeletionModal({
           <div className="bg-white px-6 py-4 border-b border-neutral-200">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-neutral-900">
-                Excluir Contrato
+                Excluir {terminology.contract}
               </h3>
               <button
                 onClick={onClose}
@@ -140,7 +142,7 @@ export default function ContractDeletionModal({
               <div className="space-y-4">
                 {/* Contract Info */}
                 <div className="bg-neutral-50 p-4 rounded-lg">
-                  <p className="text-sm text-neutral-600 mb-1">Contrato a ser excluído:</p>
+                  <p className="text-sm text-neutral-600 mb-1">{terminology.contract} a ser excluído:</p>
                   <p className="font-medium text-neutral-900">{contract.clientName}</p>
                   <p className="text-sm text-neutral-700">{contract.projectName}</p>
                 </div>
@@ -256,7 +258,7 @@ export default function ContractDeletionModal({
                     : 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500'
                 }`}
               >
-                {selectedMode === 'contract-and-receivables' ? 'Excluir Tudo' : 'Excluir Contrato'}
+                {selectedMode === 'contract-and-receivables' ? 'Excluir Tudo' : `Excluir ${terminology.contract}`}
               </button>
             </div>
           )}

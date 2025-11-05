@@ -11,7 +11,7 @@ import { AdvancedFilterModal } from '../../components/AdvancedFilterModal'
 import { useTerminology } from '@/lib/hooks/useTerminology'
 
 export default function ContractsTab() {
-  const { terminology } = useTerminology()
+  const { terminology, profession } = useTerminology()
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
@@ -831,17 +831,29 @@ export default function ContractsTab() {
                 </thead>
                 <tbody className="bg-white divide-y divide-neutral-200">
                   {filteredContracts.map((contract: any) => {
-                    // 🔍 DEBUG: Track values at render time
-                    const displayValue = contract.totalValue !== null
-                      ? contract.totalValue.toLocaleString('pt-BR')
-                      : '-'
+                    // Calculate display value based on profession (explicit check, no inference)
+                    // For medicina: ALWAYS show actual earnings (sum of received payments)
+                    //               totalValue is just a reference field (average price per consultation)
+                    // For arquitetura: Show fixed contract totalValue (contracted amount)
+                    let displayValue: string
+                    let calculatedValue: number | null = null
+                    let isCalculatedFromPayments = false
 
-                    if (contract.totalValue !== null) {
-                      console.log(`🎨 RENDER DEBUG - Contract ${contract.id}:`)
-                      console.log(`    - Raw value: ${contract.totalValue}`)
-                      console.log(`    - Raw value type: ${typeof contract.totalValue}`)
-                      console.log(`    - Rendered display: "${displayValue}"`)
-                      console.log(`    - Value precise?: ${Number.isInteger(contract.totalValue * 100)}`)
+                    // Get received payments sum
+                    const receivedPayments = contract.receivables?.filter((r: any) => r.status === 'received') || []
+                    const receivedSum = receivedPayments.reduce((sum: number, r: any) => sum + (r.amount || 0), 0)
+
+                    // Profession-based logic (Option A)
+                    if (profession === 'medicina') {
+                      // Medicina: ALWAYS show actual earnings (even if totalValue is filled as reference)
+                      calculatedValue = receivedSum
+                      displayValue = receivedSum > 0 ? receivedSum.toLocaleString('pt-BR') : '-'
+                      isCalculatedFromPayments = true
+                    } else {
+                      // Arquitetura: Show fixed contract value
+                      calculatedValue = contract.totalValue || 0
+                      displayValue = contract.totalValue ? contract.totalValue.toLocaleString('pt-BR') : '-'
+                      isCalculatedFromPayments = false
                     }
 
                     return (
@@ -859,8 +871,11 @@ export default function ContractsTab() {
                       </td>
                       <td className="px-4 py-4 text-right">
                         <div className="font-bold text-lg text-neutral-900">
-                          {contract.totalValue !== null ? `R$ ${displayValue}` : '-'}
+                          {calculatedValue !== null && calculatedValue > 0 ? `R$ ${displayValue}` : '-'}
                         </div>
+                        {isCalculatedFromPayments && calculatedValue > 0 && (
+                          <div className="text-xs text-neutral-500">Recebido</div>
+                        )}
                       </td>
                       <td className="px-4 py-4 relative">
                         <div data-status-dropdown>

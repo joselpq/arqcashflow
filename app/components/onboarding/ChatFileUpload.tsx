@@ -7,6 +7,7 @@ interface ChatFileUploadProps {
   onUploadComplete: (results: UploadResults) => void
   onUploadStart: () => void
   onFilesSelected?: () => void
+  profession?: string  // Optional profession override for onboarding
 }
 
 interface UploadResults {
@@ -17,7 +18,7 @@ interface UploadResults {
   success: boolean
 }
 
-export default function ChatFileUpload({ onUploadComplete, onUploadStart, onFilesSelected }: ChatFileUploadProps) {
+export default function ChatFileUpload({ onUploadComplete, onUploadStart, onFilesSelected, profession }: ChatFileUploadProps) {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
   const [dragActive, setDragActive] = useState(false)
@@ -90,7 +91,12 @@ export default function ChatFileUpload({ onUploadComplete, onUploadStart, onFile
         formData.append(`file${index}`, file)
       })
 
-      const response = await fetch('/api/ai/setup-assistant-v2/multi', {
+      // Build API URL with optional profession parameter (for onboarding timing fix)
+      const apiUrl = profession
+        ? `/api/ai/setup-assistant-v2/multi?profession=${encodeURIComponent(profession)}`
+        : '/api/ai/setup-assistant-v2/multi'
+
+      const response = await fetch(apiUrl, {
         method: 'POST',
         body: formData
       })

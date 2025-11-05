@@ -417,7 +417,7 @@ Use: descrição, valor, data, nome do cliente/${apiTerm.project} - informaçõe
 
 DATABASE SCHEMA (PostgreSQL):
 
-Contract/${apiTerm.contract} (entity plurais: Contratos/${apiTerm.contract}s):
+Contract/${apiTerm.contract} (entidade plural: ${apiTerm.contract}s):
 - id: TEXT (primary key)
 - clientName: TEXT (REQUIRED)
 - projectName: TEXT (REQUIRED)

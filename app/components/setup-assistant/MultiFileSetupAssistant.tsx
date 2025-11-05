@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback } from 'react'
 import { XMarkIcon, DocumentIcon, CheckCircleIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline'
+import { useTerminology } from '@/lib/hooks/useTerminology'
 
 interface FileItem {
   id: string
@@ -35,6 +36,7 @@ interface CombinedResults {
 }
 
 export default function MultiFileSetupAssistant() {
+  const { terminology } = useTerminology()
   const [files, setFiles] = useState<FileItem[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
   const [dragActive, setDragActive] = useState(false)
@@ -445,7 +447,7 @@ export default function MultiFileSetupAssistant() {
           <div className="grid grid-cols-3 gap-4 mb-4">
             <div className="text-center p-3 bg-white border border-green-300 rounded">
               <div className="text-2xl font-bold text-green-700">{combinedResults.totalContracts}</div>
-              <div className="text-sm text-green-600">Contratos Criados</div>
+              <div className="text-sm text-green-600">{terminology.contracts} Criados</div>
             </div>
             <div className="text-center p-3 bg-white border border-blue-300 rounded">
               <div className="text-2xl font-bold text-blue-700">{combinedResults.totalReceivables}</div>
@@ -493,7 +495,7 @@ export default function MultiFileSetupAssistant() {
               href="/projetos?tab=contratos"
               className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm"
             >
-              Ver Contratos
+              Ver {terminology.contracts}
             </a>
             <a
               href="/projetos?tab=recebiveis"

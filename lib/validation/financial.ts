@@ -45,11 +45,11 @@ export const ContractSchemas = {
       notes: BaseFieldSchemas.notes,
     })
 
-    // Medical profession: totalValue and signedDate are optional
+    // Medical profession: totalValue and signedDate are optional (nullable for AI extraction)
     if (profession === 'medicina') {
       return baseSchema.extend({
-        totalValue: BaseFieldSchemas.amount.optional(),
-        signedDate: RefinedFieldSchemas.signedDate.optional(),
+        totalValue: BaseFieldSchemas.amount.nullish(),  // Allow null, undefined, or omitted
+        signedDate: RefinedFieldSchemas.signedDate.nullish(),  // Allow null, undefined, or omitted
       })
     }
 
@@ -67,12 +67,13 @@ export const ContractSchemas = {
    */
   update: (profession?: string | null) => {
     // All fields optional for updates regardless of profession
+    // Use nullish() to allow null values from AI extraction or manual edits
     return z.object({
       clientName: BaseFieldSchemas.name.optional(),
       projectName: BaseFieldSchemas.name.optional(),
       description: BaseFieldSchemas.description,
-      totalValue: BaseFieldSchemas.amount.optional(),
-      signedDate: RefinedFieldSchemas.signedDate.optional(),
+      totalValue: BaseFieldSchemas.amount.nullish(),  // Allow null for medicina
+      signedDate: RefinedFieldSchemas.signedDate.nullish(),  // Allow null for medicina
       status: EnumSchemas.contractStatus.optional(),
       category: BaseFieldSchemas.optionalCategory,
       notes: BaseFieldSchemas.notes,

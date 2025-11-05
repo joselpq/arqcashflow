@@ -5,8 +5,10 @@ import { useSearchParams } from 'next/navigation'
 import { formatDateFull as formatDateForDisplay, getTodayDateString } from '@/lib/utils/date'
 import Modal from '../../components/Modal'
 import ReceivableForm from '../../components/forms/ReceivableForm'
+import { useTerminology } from '@/lib/hooks/useTerminology'
 
 export default function ReceivablesTab() {
+  const { terminology } = useTerminology()
   const searchParams = useSearchParams()
   const editId = searchParams.get('edit')
 
@@ -283,7 +285,7 @@ export default function ReceivablesTab() {
       {/* Filters - Horizontal Bar */}
       <div className="flex flex-wrap items-center gap-3 mb-6 p-4 bg-neutral-50 rounded-lg border border-neutral-200">
         <div className="flex items-center gap-2">
-          <label className="text-sm font-medium text-neutral-700 whitespace-nowrap">Contrato:</label>
+          <label className="text-sm font-medium text-neutral-700 whitespace-nowrap">{terminology.contract}:</label>
           <select
             className="border border-neutral-300 rounded-md px-3 py-1 text-sm bg-white text-neutral-900 focus:border-blue-600 focus:outline-none min-w-[180px]"
             value={filters.contractId}
@@ -385,7 +387,7 @@ export default function ReceivablesTab() {
               <thead className="bg-neutral-50 border-b border-neutral-200">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                    Cliente / Projeto
+                    {terminology.client} / {terminology.project}
                   </th>
                   <th className="px-4 py-3 text-right text-xs font-medium text-neutral-500 uppercase tracking-wider">
                     Valor

@@ -1,7 +1,7 @@
 # ArqCashflow Development Backlog
 
 **Purpose**: Central source of truth for project priorities and development status
-**Last Updated**: 2025-11-03 (Week 1 Profession Modularization COMPLETE + Bug Fixes)
+**Last Updated**: 2025-11-04 (ADR-020 Chat Streaming created, ready for implementation)
 **Update Frequency**: Every LLM session MUST update this document when completing tasks
 
 ---
@@ -160,41 +160,85 @@ This backlog **DOES NOT** replace other documentation:
 
 **IMPORTANT CONTEXT FOR NEXT AGENT**:
 - Week 1 is COMPLETE ✅ - all core infrastructure working
+- Week 2 Days 6-9 COMPLETE ✅ - all UI components profession-aware
 - Patient creation via AI works (tested with OperationsAgent)
 - Navigation terminology works (NavBar fetches profession dynamically)
 - Optional fields (totalValue, signedDate) handled properly for medicina
-- All bugs from testing fixed (see Post-Testing Bug Fixes section above)
+- All bugs from testing fixed
 
 **Current System State**:
 - Profession configs: `lib/professions/medicina.ts` and `arquitetura.ts` fully configured
-- Terminology system: `getProfessionTerminology(profession)` function available
+- Terminology system: `getProfessionTerminology(profession)` + `useTerminology()` hook available
 - Onboarding: Profession-aware questions working
 - Services: ContractService, SetupAssistantService, OperationsAgent all profession-aware
 - Database: Optional fields for medicina contracts
+- **UI Components: ALL forms, modals, tables, filters now profession-aware** ✅
 
-**What Still Needs Profession-Awareness** (Week 2):
-- Forms: ContractForm.tsx uses hardcoded labels ("Projeto", "Contrato")
-- Dashboard: Metrics cards use hardcoded terms
-- Tables: Column headers still say "Projeto" instead of using terminology
-- Modals: Modal titles and buttons use hardcoded terms
+**Week 2 Implementation Complete**:
+- ✅ 6 commits across 4 days (Day 6-7, Day 8, Day 8-9, Day 9)
+- ✅ 19 files modified with profession-aware functionality
+- ✅ 18+ hardcoded instances replaced with dynamic terminology
+- ✅ useTerminology() React hook with localStorage caching
+- ✅ Profession-aware form options (categories, statuses)
+- ✅ Dynamic VALOR column calculation (profession-based logic)
+- ✅ All UI components profession-aware (forms, modals, chat, tables)
+- ✅ Manual testing completed (medicina & arquitetura)
+- ✅ Bug fixes from user testing (3 critical fixes)
+
+**Key Technical Achievements**:
+- Profession-based logic (not inference-based) for VALOR column
+- Client-side calculation using existing API data (zero API changes)
+- Optional field handling for medicina (totalValue, signedDate)
+- Form validation adapts per profession (required vs optional)
+- Chat interface fully customized per profession
+
+**Files Modified Summary**:
+- Profession configs: 2 files (medicina.ts, arquitetura.ts)
+- Forms: 4 files (ContractForm, ExpenseForm, EnhancedExpenseForm, ReceivableForm)
+- Tables/Tabs: 3 files (ContractsTab, ExpensesTab, ReceivablesTab)
+- Modals: 3 files (DashboardEmptyState, ContractDeletionModal, ContractDetailsModal)
+- Chat: 2 files (ChatInput, MessageList)
+- Onboarding: 2 files (SetupAssistantModal, MultiFileSetupAssistant)
+- Filters: 2 files (AdvancedFilterModal, despesas/page.tsx)
+- Docs: 1 file (BACKLOG.md)
+
+**Next**: Week 3 - Pilot Launch (if validated) or pivot based on feedback
 
 ---
 
-**Week 2: UI Components (Days 6-10)** ⏭️ NEXT
-- [ ] Day 6-8: Forms & Terminology
-  - [ ] Create `useTerminology()` React hook for easy component usage
-  - [ ] Update `ContractForm.tsx` labels to use terminology (projectName → terminology.projectName)
-  - [ ] Update Dashboard metrics with terminology (contracts → terminology.contracts)
-  - [ ] Update table headers in ContractsTab.tsx ("Projeto / Cliente" → terminology)
-  - [ ] Update modal titles ("Adicionar Contrato" → `Adicionar ${terminology.contract}`)
-  - [ ] Update action buttons with profession-aware text
+**Week 2: UI Components (Days 6-10)** ✅ COMPLETE (2025-11-04)
+- [x] Day 6-7: useTerminology Hook & Core Forms ✅ COMPLETE
+  - [x] Create `useTerminology()` React hook with localStorage caching
+  - [x] Update `ContractForm.tsx` labels to use terminology (projectName → terminology.projectName)
+  - [x] Update Dashboard metrics with terminology (contracts → terminology.contracts)
+  - [x] Update table headers in ContractsTab.tsx ("Projeto / Cliente" → terminology)
+  - [x] Update modal titles ("Adicionar Contrato" → `Adicionar ${terminology.contract}`)
 
-- [ ] Day 9-10: Testing & Refinement
-  - [ ] Test form validation with medicina (optional fields should work)
-  - [ ] Test form submission for both professions
-  - [ ] Manual testing: Create patient vs Create project workflows
-  - [ ] Fix any UI/UX issues discovered
-  - [ ] Polish terminology consistency across all screens
+- [x] Day 8-9: All Remaining UI Components ✅ COMPLETE
+  - [x] HIGH Priority (5 files): ReceivableForm, ExpenseForm, EnhancedExpenseForm, ReceivablesTab, ExpensesTab
+  - [x] MEDIUM Priority (3 files): DashboardEmptyState, ContractDeletionModal, ContractDetailsModal
+  - [x] LOW Priority (4 files): SetupAssistantModal, MultiFileSetupAssistant, AdvancedFilterModal, despesas/page.tsx
+  - [x] Total: 18 instances across 12 files updated with profession-aware terminology
+
+- [x] Day 9: Testing & UX Refinement ✅ COMPLETE
+  - [x] Manual testing with both professions (arquitetura & medicina)
+  - [x] Fixed: Field labels (Nome do Paciente vs Nome do Responsável)
+  - [x] Fixed: Optional field indicators (removed asterisks for medicina)
+  - [x] Added: Profession-aware form options (categories & statuses)
+  - [x] Added: Profession-aware chat examples (medicina vs arquitetura)
+  - [x] Fixed: VALOR column calculation (profession-based, not inference-based)
+  - [x] Fixed: Chat welcome message (profession-aware)
+  - [x] Fixed: "Recebido" label bug (only shows for values > 0)
+
+**Testing Results (Day 9):**
+- ✅ Medicina: All forms show correct terminology ("Paciente", "Responsável")
+- ✅ Medicina: Optional fields work (totalValue, signedDate)
+- ✅ Medicina: Categories show medical options (Consulta de Rotina, Procedimento, etc.)
+- ✅ Medicina: Status shows medical terms (Em Tratamento, Alta Médica)
+- ✅ Medicina: VALOR column shows sum of received payments (even with totalValue filled)
+- ✅ Medicina: Chat examples relevant to medical practice
+- ✅ Arquitetura: All existing behavior preserved (regression testing passed)
+- ✅ Backward compatibility: 100% maintained for arquitetura users
 
 **Week 3: Pilot Launch (Days 11-15)**
 - [ ] Day 11-13: Documentation & Deployment
@@ -236,22 +280,37 @@ This backlog **DOES NOT** replace other documentation:
 
 ### **Chat with Arnaldo Latency Optimization** 🚀 IN PROGRESS (Started 2025-10-28)
 **Goal**: Achieve sub-second response start with streaming
-**Status**: Paused - prioritizing profession modularization
+**Status**: ✅ ADR-020 created, ready for implementation
 **Priority**: HIGH (critical for AI-first positioning)
-**Estimated Time**: 4-6 hours
+**Related**: ADR-020 Chat Streaming for Sub-Second Response Latency
+**Estimated Time**: 5-7 hours total (phased implementation)
 
-**Problem**: User perceives lag in chat responses
-**Goal**: Sub-second response start with streaming
-**Scope**:
-- Claude API latency profiling
-- Streaming optimization
-- Caching strategies for common queries
-- Response time measurement and monitoring
+**Problem**: Users experience 3-8 second blocking waits with only a loading spinner
+**Solution**: Three-phase streaming optimization strategy
+
+**Implementation Plan** (from ADR-020):
+- **Phase 1 (1 hour)**: Quick wins - Optimistic UI + Prompt caching
+  - 20-30% perceived improvement + 90% cost reduction for cached tokens
+- **Phase 2 (4-6 hours)**: Core fix - Streaming implementation
+  - 90% perceived latency reduction (3-8s → <1s to first token)
+  - `generateText()` → `streamText()` with frontend streaming handler
+- **Phase 3 (2-3 hours)**: Optional polish - System prompt optimization
+  - Additional ~5% improvement + cleaner code
 
 **Success Criteria**:
-- Time to first token < 1 second for 95% of queries
-- Full streaming implementation with immediate feedback
-- Improved perceived responsiveness
+- Time to first token < 1 second for 95% of queries (currently 3-8s)
+- 90% perceived latency reduction
+- 90% cost reduction for cached tokens (~400 tokens)
+- Streaming error rate < 1%
+- Chat engagement increase ≥ 30%
+
+**Files to Modify**:
+- `lib/services/OperationsAgentService.ts` - Add streaming + caching
+- `app/api/ai/operations/route.ts` - Add streaming endpoint
+- `app/contexts/ChatContext.tsx` - Implement streaming handler
+- `app/components/chat/ThinkingIndicator.tsx` (NEW) - Optimistic UI
+
+**Documentation**: See `/CHAT_LATENCY_OPTIONS.md` for detailed analysis
 
 ---
 
@@ -496,6 +555,27 @@ This backlog **DOES NOT** replace other documentation:
 
 ### Platform & Architecture
 
+#### **Validation & Audit Logging Review** (3-5 days)
+- **Problem**: Current validation and audit logging systems add complexity with limited value
+- **Scope**: Review and simplify validation rules and audit logging logic
+- **Issues Identified**:
+  - Overly restrictive validation rules blocking valid use cases (e.g., prepayments, scheduled dates)
+  - Audit logging creating foreign key constraints that complicate deletion flows
+  - Business rule warnings generating noise without clear actionable insights
+  - Validation logic duplicated across multiple layers (schemas, services, database)
+- **Potential Solutions**:
+  - Simplify validation to critical rules only (security, data integrity)
+  - Make audit logging optional or move to separate event log with soft references
+  - Remove business rule warnings or convert to passive analytics
+  - Consolidate validation into single layer
+- **Benefits**:
+  - Faster development (less validation to maintain)
+  - More flexible system (fewer blocked edge cases)
+  - Simpler deletion flows (no audit log constraints)
+  - Clearer error messages (only critical validations fail)
+- **Priority**: MEDIUM-HIGH (affecting development velocity and UX)
+- **Risks**: Need to ensure critical data integrity rules remain enforced
+
 #### **Profession-Based Application Modularization** (6-8 weeks)
 - **Problem**: Application is architecture-centric, needs to adapt to different professions
 - **Scope**: Make platform adaptable to different professional contexts
@@ -737,5 +817,5 @@ Users clicking "Resolver" on overdue items were greeted with 14-21 field forms. 
 
 ---
 
-**Last Updated**: 2025-10-28
-**Status**: DOING (2 active - Chat Latency + Onboarding), TO DO (2 items - file speed + landing page), BACKLOG (22+ items), DONE (4 recent)
+**Last Updated**: 2025-11-04
+**Status**: DOING (2 active - Profession Modularization Week 3 + Chat Latency ADR ready), TO DO (2 items - file speed + landing page), BACKLOG (22+ items), DONE (4 recent)

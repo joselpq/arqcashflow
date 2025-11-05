@@ -8,6 +8,7 @@
  */
 
 import { useState } from 'react'
+import { useTerminology } from '@/lib/hooks/useTerminology'
 
 interface AdvancedFilterModalProps {
   entity: 'receivable' | 'expense' | 'contract'
@@ -35,6 +36,7 @@ export function AdvancedFilterModal({
   onClose,
   onResultsReceived
 }: AdvancedFilterModalProps) {
+  const { terminology } = useTerminology()
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<FilterResult | null>(null)
@@ -123,7 +125,7 @@ export function AdvancedFilterModal({
     switch (entity) {
       case 'receivable': return 'Recebíveis'
       case 'expense': return 'Despesas'
-      case 'contract': return 'Projetos'
+      case 'contract': return terminology.projects
     }
   }
 

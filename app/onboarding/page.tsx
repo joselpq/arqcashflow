@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import OnboardingFileUpload from "../components/onboarding/OnboardingFileUpload";
@@ -11,7 +11,7 @@ import ChatFileUpload from "../components/onboarding/ChatFileUpload";
 import EducationPhase from "../components/onboarding/EducationPhase";
 import StreamingMessage from "../components/onboarding/StreamingMessage";
 import { useOnboardingTransition } from "../hooks/useOnboardingTransition";
-import { getOnboardingMessages } from "@/lib/professions";
+import { getOnboardingMessages, getProfessionTerminology } from "@/lib/professions";
 
 type UserType = "individual" | "small_business";
 
@@ -144,6 +144,9 @@ export default function OnboardingPage() {
       const selectedOption = professionOptions.find(opt => opt.value === value);
       setChatMessages(prev => [...prev, { role: 'user', content: selectedOption?.label || value }]);
       setProfileData(prev => ({ ...prev, profession: value }));
+
+      // ✅ Cache profession in localStorage immediately for NavBar
+      localStorage.setItem('userProfession', value);
 
       // Ask next question: Employee count
       setChatMessages(prev => [...prev, { role: 'assistant', content: 'Quantas pessoas trabalham no negócio?' }]);
@@ -360,8 +363,12 @@ export default function OnboardingPage() {
       expenses: prev.expenses + results.totalExpenses
     }));
 
-    // Replace loading message with success summary
-    const summary = `Pronto! Encontrei ${results.totalContracts} contrato${results.totalContracts !== 1 ? 's' : ''}, ${results.totalReceivables} recebíve${results.totalReceivables !== 1 ? 'is' : 'l'} e ${results.totalExpenses} despesa${results.totalExpenses !== 1 ? 's' : ''}.`;
+    // Get profession-aware terminology
+    const terminology = getProfessionTerminology(profileData.profession);
+    const contractTerm = results.totalContracts !== 1 ? terminology.contracts.toLowerCase() : terminology.contract.toLowerCase();
+
+    // Replace loading message with success summary (profession-aware)
+    const summary = `Pronto! Encontrei ${results.totalContracts} ${contractTerm}, ${results.totalReceivables} recebíve${results.totalReceivables !== 1 ? 'is' : 'l'} e ${results.totalExpenses} despesa${results.totalExpenses !== 1 ? 's' : ''}.`;
 
     setChatMessages(prev => {
       const newMessages = [...prev];
@@ -385,14 +392,17 @@ export default function OnboardingPage() {
   const handleImportComplete = async (results: OnboardingResults) => {
     setImportResults(results);
 
-    // Accumulate results for when user adds more files
+    // Get profession-aware terminology
+    const terminology = getProfessionTerminology(profileData.profession);
+
+    // Accumulate results for when user adds more files (profession-aware)
     setCumulativeResults(prev => ({
       totalContracts: prev.totalContracts + results.totalContracts,
       totalReceivables: prev.totalReceivables + results.totalReceivables,
       totalExpenses: prev.totalExpenses + results.totalExpenses,
       totalErrors: prev.totalErrors + results.totalErrors,
       success: true,
-      message: `Total processado: ${prev.totalContracts + results.totalContracts} contratos, ${prev.totalReceivables + results.totalReceivables} recebíveis, ${prev.totalExpenses + results.totalExpenses} despesas`
+      message: `Total processado: ${prev.totalContracts + results.totalContracts} ${terminology.contracts.toLowerCase()}, ${prev.totalReceivables + results.totalReceivables} recebíveis, ${prev.totalExpenses + results.totalExpenses} despesas`
     }));
     // Remove auto-redirect - let user control when to complete
   };
@@ -430,6 +440,17 @@ export default function OnboardingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 to-blue-50 p-4 sm:p-6 lg:p-8">
       <div className="relative w-full h-full min-h-screen">
+        {/* Logout button - top right */}
+        <div className="absolute top-0 right-0 z-10">
+          <button
+            onClick={() => signOut({ callbackUrl: '/' })}
+            className="text-sm text-neutral-600 hover:text-neutral-900 transition-colors px-4 py-2 rounded-lg hover:bg-white/50"
+            title="Sair e voltar para página inicial"
+          >
+            Sair
+          </button>
+        </div>
+
         {/* Progress Indicator */}
         <div className="mb-8">
           <div className="flex items-center justify-center mb-4">
@@ -623,6 +644,7 @@ export default function OnboardingPage() {
               <ChatFileUpload
                 onUploadStart={handleFileUploadStart}
                 onUploadComplete={handleFileUploadComplete}
+                profession={profileData.profession}
               />
             )}
 
@@ -631,12 +653,13 @@ export default function OnboardingPage() {
               <ChatFileUpload
                 onUploadStart={handleFileUploadStart}
                 onUploadComplete={handleFileUploadComplete}
+                profession={profileData.profession}
               />
             )}
 
             {/* Show education phase */}
             {showEducation && (
-              <EducationPhase onComplete={handleCompleteOnboarding} />
+              <EducationPhase onComplete={handleCompleteOnboarding} profession={profileData.profession} />
             )}
           </OnboardingChatContainer>
         )}
