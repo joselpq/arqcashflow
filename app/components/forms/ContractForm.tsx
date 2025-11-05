@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { formatDateForInput, getTodayDateString } from '@/lib/utils/date'
+import { useTerminology } from '@/lib/hooks/useTerminology'
 
 interface ContractFormProps {
   contract?: any
@@ -11,6 +12,7 @@ interface ContractFormProps {
 }
 
 export default function ContractForm({ contract, onSubmit, onCancel, loading = false }: ContractFormProps) {
+  const { terminology } = useTerminology()
   const [customCategory, setCustomCategory] = useState('')
   const [showCustomCategory, setShowCustomCategory] = useState(false)
   const [predefinedCategories, setPredefinedCategories] = useState([
@@ -88,7 +90,7 @@ export default function ContractForm({ contract, onSubmit, onCancel, loading = f
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block mb-2 font-medium text-neutral-900">Nome do Cliente *</label>
+        <label className="block mb-2 font-medium text-neutral-900">{terminology.clientName} *</label>
         <input
           type="text"
           required
@@ -100,7 +102,7 @@ export default function ContractForm({ contract, onSubmit, onCancel, loading = f
       </div>
 
       <div>
-        <label className="block mb-2 font-medium text-neutral-900">Nome do Projeto *</label>
+        <label className="block mb-2 font-medium text-neutral-900">{terminology.projectName} *</label>
         <input
           type="text"
           required
@@ -112,7 +114,7 @@ export default function ContractForm({ contract, onSubmit, onCancel, loading = f
       </div>
 
       <div>
-        <label className="block mb-2 font-medium text-neutral-900">Valor Total *</label>
+        <label className="block mb-2 font-medium text-neutral-900">{terminology.totalValue} *</label>
         <input
           type="number"
           required
@@ -125,7 +127,7 @@ export default function ContractForm({ contract, onSubmit, onCancel, loading = f
       </div>
 
       <div>
-        <label className="block mb-2 font-medium text-neutral-900">Data de Criação *</label>
+        <label className="block mb-2 font-medium text-neutral-900">{terminology.signedDate} *</label>
         <input
           type="date"
           required

@@ -965,7 +965,7 @@ const handleExpenseCreationFlow = async () => {
 - ⚠️ Complex animation logic requiring careful testing
 
 **User Learning Curve:**
-- ⚠️ Some users may prefer traditional forms (estimated <5%)
+- ⚠️ Some users may prefer traditional forms (estimated `<5%`)
 - ⚠️ Chip buttons less flexible than open input (intentional trade-off)
 - ⚠️ Streaming messages may feel slow to power users (can be skipped)
 

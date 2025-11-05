@@ -14,6 +14,7 @@ import { useExpenseReinforcement } from './hooks/useExpenseReinforcement'
 import QuickResolveModal from './components/modals/QuickResolveModal'
 import QuickReceiveForm from './components/modals/QuickReceiveForm'
 import QuickPostponeForm from './components/modals/QuickPostponeForm'
+import { useTerminology } from '@/lib/hooks/useTerminology'
 
 interface DashboardData {
   metrics: {
@@ -214,6 +215,7 @@ function SimpleChart({ data }: { data: DashboardData['monthlyTrend'] }) {
 export default function Dashboard() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const { terminology } = useTerminology()
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -656,9 +658,9 @@ export default function Dashboard() {
             color={data.metrics.thisMonthProfit >= 0 ? 'blue' : 'red'}
           />
           <MetricCard
-            title="Contratos Ativos"
+            title={terminology.activeContracts}
             value={`${data.metrics.activeContracts}`}
-            subtitle="contratos ativos"
+            subtitle={terminology.activeContracts.toLowerCase()}
             color="blue"
           />
         </div>
