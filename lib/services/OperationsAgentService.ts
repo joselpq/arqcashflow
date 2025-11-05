@@ -64,17 +64,17 @@ export class OperationsAgentService {
     console.log('[Operations] Received history items:', history.length)
 
     // ✅ Vercel AI SDK handles the entire agentic loop automatically!
+    // Note: For prompt caching, we add system message to messages array (not system parameter)
     const result = await generateText({
       model: this.anthropic('claude-sonnet-4-20250514'),
-      // @ts-expect-error - Anthropic prompt caching requires array format, but Vercel AI SDK types expect string
-      system: [
-        {
-          type: 'text',
-          text: systemPrompt,
-          cache_control: { type: 'ephemeral' } // ✅ 90% cost reduction for cached tokens
-        }
-      ],
       messages: [
+        {
+          role: 'system',
+          content: systemPrompt,
+          providerOptions: {
+            anthropic: { cacheControl: { type: 'ephemeral' } } // ✅ 90% cost reduction for cached tokens
+          }
+        },
         ...history, // Previous conversation WITH all tool_use/tool_result blocks
         { role: 'user', content: message }
       ],
@@ -173,17 +173,17 @@ export class OperationsAgentService {
     console.log('[Operations] Received history items:', history.length)
 
     // ✅ Use streamText() for real-time streaming responses
+    // Note: For prompt caching, we add system message to messages array (not system parameter)
     const result = streamText({
       model: this.anthropic('claude-sonnet-4-20250514'),
-      // @ts-expect-error - Anthropic prompt caching requires array format, but Vercel AI SDK types expect string
-      system: [
-        {
-          type: 'text',
-          text: systemPrompt,
-          cache_control: { type: 'ephemeral' } // ✅ 90% cost reduction for cached tokens
-        }
-      ],
       messages: [
+        {
+          role: 'system',
+          content: systemPrompt,
+          providerOptions: {
+            anthropic: { cacheControl: { type: 'ephemeral' } } // ✅ 90% cost reduction for cached tokens
+          }
+        },
         ...history, // Previous conversation WITH all tool_use/tool_result blocks
         { role: 'user', content: message }
       ],
