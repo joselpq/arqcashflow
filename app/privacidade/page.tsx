@@ -10,13 +10,13 @@ export default function PrivacidadePage() {
             <section>
               <h2 className="text-xl font-semibold text-neutral-900 mb-4">1. Informações Gerais</h2>
               <p className="text-neutral-700 mb-4">
-                A ArqCashflow ("nós", "nosso" ou "empresa") está comprometida em proteger e respeitar sua privacidade.
+                A Arnaldo ("nós", "nosso" ou "empresa") está comprometida em proteger e respeitar sua privacidade.
                 Esta Política de Privacidade explica como coletamos, usamos, armazenamos e protegemos suas informações pessoais
                 em conformidade com a Lei Geral de Proteção de Dados (LGPD - Lei nº 13.709/2018).
               </p>
               <p className="text-neutral-700">
-                Esta política se aplica ao uso da plataforma ArqCashflow, um sistema de gestão financeira para arquitetos
-                e profissionais liberais, acessível através do site https://arqcashflow.vercel.app.
+                Esta política se aplica ao uso da plataforma Arnaldo, um sistema de gestão financeira para arquitetos
+                e profissionais liberais, acessível através do site https://arnaldo.ai.
               </p>
             </section>
 

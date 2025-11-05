@@ -257,7 +257,7 @@ curl -X GET "http://localhost:3000/api/cron/generate-recurring" \
 ## 🔌 Complete API Documentation
 
 ### Base URL
-- **Production**: `https://arqcashflow.vercel.app/api`
+- **Production**: `https://arnaldo.ai/api`
 - **Local Development**: `http://localhost:3000/api`
 
 **🔐 Authentication Required**: All API endpoints require authentication via NextAuth.js session cookies. Data is automatically filtered by team membership.
@@ -293,7 +293,7 @@ All API endpoints return JSON responses and support CORS for cross-origin reques
 
 **Example Request:**
 ```bash
-curl -X POST "https://arqcashflow.vercel.app/api/onboarding/profile" \
+curl -X POST "https://arnaldo.ai/api/onboarding/profile" \
   -H "Content-Type: application/json" \
   -d '{
     "type": "company",
@@ -425,7 +425,7 @@ The onboarding flow uses the existing `/api/ai/setup-assistant-direct` endpoint 
 
 **Example Request:**
 ```bash
-curl "https://arqcashflow.vercel.app/api/contracts?status=active&sortBy=totalValue&sortOrder=desc"
+curl "https://arnaldo.ai/api/contracts?status=active&sortBy=totalValue&sortOrder=desc"
 ```
 
 **Response Format:**
@@ -466,7 +466,7 @@ curl "https://arqcashflow.vercel.app/api/contracts?status=active&sortBy=totalVal
 
 **Example Request:**
 ```bash
-curl -X POST "https://arqcashflow.vercel.app/api/contracts" \
+curl -X POST "https://arnaldo.ai/api/contracts" \
   -H "Content-Type: application/json" \
   -d '{
     "clientName": "Maria Santos",
@@ -510,7 +510,7 @@ curl -X POST "https://arqcashflow.vercel.app/api/contracts" \
 
 **Example Request:**
 ```bash
-curl "https://arqcashflow.vercel.app/api/receivables?status=pending&sortBy=expectedDate&sortOrder=asc"
+curl "https://arnaldo.ai/api/receivables?status=pending&sortBy=expectedDate&sortOrder=asc"
 ```
 
 **Response Format:**
@@ -570,7 +570,7 @@ curl "https://arqcashflow.vercel.app/api/receivables?status=pending&sortBy=expec
 
 **Example Request:**
 ```bash
-curl -X POST "https://arqcashflow.vercel.app/api/receivables" \
+curl -X POST "https://arnaldo.ai/api/receivables" \
   -H "Content-Type: application/json" \
   -d '{
     "contractId": "cmflj9fi70001ju04pkdnplsq",
@@ -598,7 +598,7 @@ curl -X POST "https://arqcashflow.vercel.app/api/receivables" \
 
 **Example Request:**
 ```bash
-curl -X PUT "https://arqcashflow.vercel.app/api/receivables/receivable_id" \
+curl -X PUT "https://arnaldo.ai/api/receivables/receivable_id" \
   -H "Content-Type: application/json" \
   -d '{
     "status": "received",
@@ -633,7 +633,7 @@ curl -X PUT "https://arqcashflow.vercel.app/api/receivables/receivable_id" \
 
 **Example Request:**
 ```bash
-curl "https://arqcashflow.vercel.app/api/expenses?status=pending&type=project&sortBy=dueDate&sortOrder=asc"
+curl "https://arnaldo.ai/api/expenses?status=pending&type=project&sortBy=dueDate&sortOrder=asc"
 ```
 
 **Response Format:**
@@ -694,7 +694,7 @@ curl "https://arqcashflow.vercel.app/api/expenses?status=pending&type=project&so
 
 **Example Request:**
 ```bash
-curl -X POST "https://arqcashflow.vercel.app/api/expenses" \
+curl -X POST "https://arnaldo.ai/api/expenses" \
   -H "Content-Type: application/json" \
   -d '{
     "description": "Software de design AutoCAD",
@@ -773,7 +773,7 @@ curl -X POST "https://arqcashflow.vercel.app/api/expenses" \
 
 **Example Request:**
 ```bash
-curl -O "https://arqcashflow.vercel.app/api/export/excel"
+curl -O "https://arnaldo.ai/api/export/excel"
 ```
 
 #### **POST /api/export/google-sheets** - Google Sheets Export
@@ -799,7 +799,7 @@ curl -O "https://arqcashflow.vercel.app/api/export/excel"
 
 **Example Request:**
 ```bash
-curl -X POST "https://arqcashflow.vercel.app/api/ai/query" \
+curl -X POST "https://arnaldo.ai/api/ai/query" \
   -H "Content-Type: application/json" \
   -d '{
     "question": "Qual foi minha receita total este mês?"
@@ -823,7 +823,7 @@ curl -X POST "https://arqcashflow.vercel.app/api/ai/query" \
 
 **Example Request:**
 ```bash
-curl -X POST "https://arqcashflow.vercel.app/api/ai/create-contract" \
+curl -X POST "https://arnaldo.ai/api/ai/create-contract" \
   -H "Content-Type: application/json" \
   -d '{
     "message": "Projeto João e Maria, residencial, 70m2, R$17k, 1/5/2024",
@@ -847,7 +847,7 @@ curl -X POST "https://arqcashflow.vercel.app/api/ai/create-contract" \
 
 **Example Request:**
 ```bash
-curl -X POST "https://arqcashflow.vercel.app/api/ai/create-expense" \
+curl -X POST "https://arnaldo.ai/api/ai/create-expense" \
   -H "Content-Type: application/json" \
   -d '{
     "message": "Compra de materiais na Leroy Merlin, 5 mil reais, vencimento amanhã",
@@ -934,7 +934,7 @@ The AI Supervisor monitors all data inputs in real-time and provides intelligent
 
 **Example Request:**
 ```bash
-curl "https://arqcashflow.vercel.app/api/audit?entityType=contract&action=updated&limit=20"
+curl "https://arnaldo.ai/api/audit?entityType=contract&action=updated&limit=20"
 ```
 
 **Response:**
@@ -975,7 +975,7 @@ curl "https://arqcashflow.vercel.app/api/audit?entityType=contract&action=update
 
 **Example Request:**
 ```bash
-curl "https://arqcashflow.vercel.app/api/audit/entity/contract/contract_123"
+curl "https://arnaldo.ai/api/audit/entity/contract/contract_123"
 ```
 
 #### **GET /api/audit/user/[userId]** - User Activity
@@ -1281,7 +1281,7 @@ curl "https://arqcashflow.vercel.app/api/audit/entity/contract/contract_123"
 
 ### 🚀 Live Production Application
 
-**Production URL:** https://arqcashflow.vercel.app
+**Production URL:** https://arnaldo.ai
 
 The application is deployed using **Vercel** for hosting and **Neon** for PostgreSQL database and is fully operational.
 
@@ -1338,7 +1338,7 @@ The application is deployed using **Vercel** for hosting and **Neon** for Postgr
    ```
 
 #### **Production URLs:**
-- **Application**: https://arqcashflow.vercel.app
+- **Application**: https://arnaldo.ai
 - **Database**: Managed by Neon (PostgreSQL)
 - **GitHub**: https://github.com/joselpq/arqcashflow
 

@@ -425,7 +425,7 @@ export default function LandingPage() {
               Começar Grátis Agora
             </Link>
             <a
-              href="mailto:contato@arqcashflow.com?subject=Quero falar com um especialista"
+              href="mailto:contato@arnaldo.ai?subject=Quero falar com um especialista"
               className="border border-neutral-600 text-neutral-300 px-8 py-4 rounded-lg text-lg font-medium hover:bg-neutral-800 transition-colors inline-block"
             >
               Falar com Especialista
@@ -457,7 +457,7 @@ export default function LandingPage() {
               <div className="w-7 h-7 bg-neutral-900 rounded flex items-center justify-center">
                 <span className="text-white font-semibold text-xs">A</span>
               </div>
-              <span className="text-lg font-semibold text-neutral-900">ArqCashflow</span>
+              <span className="text-lg font-semibold text-neutral-900">Arnaldo</span>
             </div>
             <div className="flex space-x-6 text-sm text-neutral-500">
               <Link href="/privacidade" className="hover:text-neutral-700 transition-colors">
@@ -466,13 +466,13 @@ export default function LandingPage() {
               <Link href="/termos" className="hover:text-neutral-700 transition-colors">
                 Termos
               </Link>
-              <a href="mailto:contato@arqcashflow.com" className="hover:text-neutral-700 transition-colors">
+              <a href="mailto:contato@arnaldo.ai" className="hover:text-neutral-700 transition-colors">
                 Contato
               </a>
             </div>
           </div>
           <div className="mt-8 pt-8 border-t border-neutral-200 text-center text-sm text-neutral-500">
-            © 2025 ArqCashflow. Feito com ❤️ para profissionais brasileiros.
+            © 2025 Arnaldo. Feito com ❤️ para profissionais brasileiros.
           </div>
         </div>
       </footer>

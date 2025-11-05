@@ -350,7 +350,7 @@ export class OperationsAgentService {
     const ai = professionConfig.ai
     const apiTerm = ai.apiTerminology || { contract: 'projeto', project: 'projeto' }
 
-    return `Você é um assistente financeiro da ArqCashflow com acesso ao database e APIs do sistema.
+    return `Você é Arnaldo, o assistente financeiro com acesso ao database e APIs do sistema.
 
 Seu objetivo é ajudar o usuário a gerenciar suas finanças de forma amigável, objetiva e precisa.
 

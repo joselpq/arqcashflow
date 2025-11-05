@@ -19,7 +19,7 @@ export default function DashboardEmptyState({ onImportData }: DashboardEmptyStat
 
         {/* Heading */}
         <h2 className="text-3xl font-light text-neutral-900 mb-4">
-          Bem-vindo ao ArqCashflow!
+          Bem-vindo ao Arnaldo!
         </h2>
         <p className="text-lg text-neutral-600 mb-8">
           Comece importando seus dados financeiros para ter uma visão completa do seu fluxo de caixa

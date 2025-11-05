@@ -109,7 +109,7 @@ export default function NavBar() {
                 <div className="w-7 h-7 bg-neutral-900 rounded flex items-center justify-center">
                   <span className="text-white font-semibold text-xs">A</span>
                 </div>
-                <h1 className="text-lg font-semibold text-neutral-900 tracking-tight">ArqCashflow</h1>
+                <h1 className="text-lg font-semibold text-neutral-900 tracking-tight">Arnaldo</h1>
               </div>
             </div>
             <div className="hidden lg:ml-12 lg:flex lg:space-x-8">

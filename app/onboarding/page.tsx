@@ -458,7 +458,7 @@ export default function OnboardingPage() {
               <div className="w-8 h-8 bg-neutral-900 rounded flex items-center justify-center">
                 <span className="text-white font-semibold text-sm">A</span>
               </div>
-              <h1 className="text-xl font-semibold text-neutral-900 tracking-tight">ArqCashflow</h1>
+              <h1 className="text-xl font-semibold text-neutral-900 tracking-tight">Arnaldo</h1>
             </div>
           </div>
           <div className="flex items-center justify-center space-x-2">
