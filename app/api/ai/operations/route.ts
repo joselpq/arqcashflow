@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
         const result = await operationsService.processCommandStream(message, conversationHistory)
 
         // Return streaming response with proper headers
-        return result.toDataStreamResponse()
+        return result.toTextStreamResponse()
       }
 
       // ✅ NON-STREAMING MODE (Backward compatibility)

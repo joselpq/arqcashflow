@@ -150,26 +150,16 @@ export function ChatProvider({ children }: { children: ReactNode }) {
               const { done, value } = await reader.read()
               if (done) break
 
-              // Decode chunk and accumulate
+              // Decode chunk - simple text format from toTextStreamResponse()
               const chunk = decoder.decode(value, { stream: true })
+              accumulatedText += chunk
+              assistantMessage.content = accumulatedText
 
-              // Parse Vercel AI SDK data stream format (data: prefix)
-              const lines = chunk.split('\n').filter(line => line.trim())
-
-              for (const line of lines) {
-                if (line.startsWith('0:')) {
-                  // Text delta from Vercel AI SDK streaming
-                  const textChunk = line.slice(3, -1) // Remove prefix and quotes
-                  accumulatedText += textChunk
-                  assistantMessage.content = accumulatedText
-
-                  // Update message in place
-                  setMessages(prev => [
-                    ...prev.slice(0, -1),
-                    { ...assistantMessage }
-                  ])
-                }
-              }
+              // Update message in place
+              setMessages(prev => [
+                ...prev.slice(0, -1),
+                { ...assistantMessage }
+              ])
             }
 
             // Emit event to notify pages that data might have changed
