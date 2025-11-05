@@ -116,55 +116,84 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           setMessages([...newMessages, errorMessage])
         }
       } else {
-        // ✅ Route to OperationsAgent for text-based CRUD operations
+        // ✅ Route to OperationsAgent with STREAMING support (ADR-020 Phase 2)
         const response = await fetch('/api/ai/operations', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             message: messageContent,
-            conversationHistory: fullHistory // Preserve full conversation context
+            conversationHistory: fullHistory, // Preserve full conversation context
+            stream: true // Enable streaming
           })
         })
 
-        if (response.ok) {
-          const result = await response.json()
+        if (response.ok && response.body) {
+          // ✅ STREAMING MODE: Read response as stream
+          const reader = response.body.getReader()
+          const decoder = new TextDecoder()
 
-          // Emit event to notify pages that data might have changed
-          window.dispatchEvent(new CustomEvent('arnaldo-data-updated'))
-
-          // Update fullHistory with complete conversation (includes internal messages)
-          if (result.conversationHistory && result.conversationHistory.length > 0) {
-            setFullHistory(result.conversationHistory)
+          // Create assistant message container for streaming
+          const assistantMessage: Message = {
+            role: 'assistant',
+            content: '',
+            timestamp: new Date()
           }
 
-          // Update messages with user-facing display only
-          if (result.displayHistory && result.displayHistory.length > 0) {
-            // Use displayHistory - excludes internal messages like [QUERY_RESULTS]
-            const historyMessages: Message[] = result.displayHistory.map((msg: ConversationMessage) => ({
-              role: msg.role,
-              content: msg.content,
-              timestamp: new Date()
-            }))
-            setMessages(historyMessages)
-          } else if (result.conversationHistory && result.conversationHistory.length > 0) {
-            // Fallback to conversationHistory (legacy behavior)
-            const historyMessages: Message[] = result.conversationHistory.map((msg: ConversationMessage) => ({
-              role: msg.role,
-              content: msg.content,
-              timestamp: new Date()
-            }))
-            setMessages(historyMessages)
-          } else {
-            // Fallback to old behavior (single message)
-            const assistantMessage: Message = {
+          // Add empty assistant message to UI
+          setMessages([...newMessages, assistantMessage])
+          setLoading(false) // Hide thinking indicator, show streaming
+
+          try {
+            let accumulatedText = ''
+
+            while (true) {
+              const { done, value } = await reader.read()
+              if (done) break
+
+              // Decode chunk and accumulate
+              const chunk = decoder.decode(value, { stream: true })
+
+              // Parse Vercel AI SDK data stream format (data: prefix)
+              const lines = chunk.split('\n').filter(line => line.trim())
+
+              for (const line of lines) {
+                if (line.startsWith('0:')) {
+                  // Text delta from Vercel AI SDK streaming
+                  const textChunk = line.slice(3, -1) // Remove prefix and quotes
+                  accumulatedText += textChunk
+                  assistantMessage.content = accumulatedText
+
+                  // Update message in place
+                  setMessages(prev => [
+                    ...prev.slice(0, -1),
+                    { ...assistantMessage }
+                  ])
+                }
+              }
+            }
+
+            // Emit event to notify pages that data might have changed
+            window.dispatchEvent(new CustomEvent('arnaldo-data-updated'))
+
+            // Update full history after streaming completes
+            setFullHistory(prev => [
+              ...prev,
+              { role: 'user', content: messageContent },
+              { role: 'assistant', content: accumulatedText }
+            ])
+
+          } catch (streamError) {
+            console.error('[Chat] Streaming error:', streamError)
+            const errorMessage: Message = {
               role: 'assistant',
-              content: result.message,
+              content: 'Desculpe, houve um erro durante o streaming. Tente novamente.',
               timestamp: new Date()
             }
-            setMessages([...newMessages, assistantMessage])
+            setMessages([...newMessages, errorMessage])
           }
         } else {
-          const error = await response.json()
+          // Fallback to error handling
+          const error = await response.json().catch(() => ({ error: 'Erro desconhecido' }))
           const errorMessage: Message = {
             role: 'assistant',
             content: `Desculpe, ocorreu um erro: ${error.error || 'Erro desconhecido'}`,
