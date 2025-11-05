@@ -98,7 +98,7 @@ export default function RegisterPage() {
               <div className="w-8 h-8 bg-neutral-900 rounded flex items-center justify-center">
                 <span className="text-white font-semibold text-sm">A</span>
               </div>
-              <h1 className="text-xl font-semibold text-neutral-900 tracking-tight">ArqCashflow</h1>
+              <h1 className="text-xl font-semibold text-neutral-900 tracking-tight">Arnaldo</h1>
             </div>
           </div>
           <h2 className="mt-4 sm:mt-6 text-center text-xl sm:text-2xl lg:text-3xl font-bold text-neutral-900">

@@ -17,12 +17,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ArqCashflow - Controle Financeiro Simples para Arquitetos",
+  title: "Arnaldo - Controle Financeiro Simples para Arquitetos",
   description: "Sistema de controle financeiro para arquitetos, advogados e profissionais liberais. Organize suas finanças em 5 minutos, sem complicação. Assistente IA incluído.",
   keywords: "controle financeiro, arquitetos, advogados, médicos, fluxo de caixa, gestão financeira, IA, Brasil",
-  authors: [{ name: "ArqCashflow" }],
+  authors: [{ name: "Arnaldo" }],
   openGraph: {
-    title: "ArqCashflow - Pare de viver ansioso com suas finanças",
+    title: "Arnaldo - Pare de viver ansioso com suas finanças",
     description: "Para arquitetos e profissionais que querem controle financeiro sem complicação. Setup em 5 minutos.",
     type: "website",
     locale: "pt_BR",

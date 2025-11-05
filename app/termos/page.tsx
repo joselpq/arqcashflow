@@ -10,12 +10,12 @@ export default function TermosPage() {
             <section>
               <h2 className="text-xl font-semibold text-neutral-900 mb-4">1. Aceitação dos Termos</h2>
               <p className="text-neutral-700 mb-4">
-                Ao acessar e usar a plataforma ArqCashflow ("Plataforma", "Serviço"), você concorda em estar vinculado
+                Ao acessar e usar a plataforma Arnaldo ("Plataforma", "Serviço"), você concorda em estar vinculado
                 por estes Termos de Uso e Serviço ("Termos"). Se você não concorda com qualquer parte destes termos,
                 não deve usar nossos serviços.
               </p>
               <p className="text-neutral-700">
-                Estes Termos constituem um acordo legal entre você ("Usuário", "Cliente") e a ArqCashflow
+                Estes Termos constituem um acordo legal entre você ("Usuário", "Cliente") e a Arnaldo
                 ("nós", "nosso", "Empresa"), regido pelas leis da República Federativa do Brasil.
               </p>
             </section>
@@ -23,7 +23,7 @@ export default function TermosPage() {
             <section>
               <h2 className="text-xl font-semibold text-neutral-900 mb-4">2. Descrição do Serviço</h2>
               <p className="text-neutral-700 mb-4">
-                A ArqCashflow é uma plataforma digital de gestão financeira especialmente desenvolvida para arquitetos
+                A Arnaldo é uma plataforma digital de gestão financeira especialmente desenvolvida para arquitetos
                 e profissionais liberais, oferecendo:
               </p>
               <ul className="list-disc pl-6 text-neutral-700 space-y-2">
@@ -85,7 +85,7 @@ export default function TermosPage() {
             <section>
               <h2 className="text-xl font-semibold text-neutral-900 mb-4">5. Propriedade Intelectual</h2>
 
-              <h3 className="text-lg font-medium text-neutral-900 mb-3">5.1 Direitos da ArqCashflow</h3>
+              <h3 className="text-lg font-medium text-neutral-900 mb-3">5.1 Direitos da Arnaldo</h3>
               <p className="text-neutral-700 mb-4">
                 A Plataforma, incluindo seu código, design, funcionalidades e conteúdo, é protegida por direitos
                 autorais, marcas registradas e outras leis de propriedade intelectual. Todos os direitos são reservados.
@@ -131,7 +131,7 @@ export default function TermosPage() {
 
               <h3 className="text-lg font-medium text-neutral-900 mb-3">8.1 Limitações Gerais</h3>
               <p className="text-neutral-700 mb-4">
-                Na máxima extensão permitida por lei, a ArqCashflow não será responsável por:
+                Na máxima extensão permitida por lei, a Arnaldo não será responsável por:
               </p>
               <ul className="list-disc pl-6 text-neutral-700 space-y-2 mb-4">
                 <li>Danos indiretos, incidentais ou consequenciais</li>
@@ -150,7 +150,7 @@ export default function TermosPage() {
             <section>
               <h2 className="text-xl font-semibold text-neutral-900 mb-4">9. Indenização</h2>
               <p className="text-neutral-700">
-                Você concorda em indenizar e isentar a ArqCashflow de qualquer reclamação, dano ou despesa
+                Você concorda em indenizar e isentar a Arnaldo de qualquer reclamação, dano ou despesa
                 resultante de: (a) seu uso inadequado da Plataforma; (b) violação destes Termos; (c) violação
                 de direitos de terceiros; ou (d) qualquer atividade realizada através de sua conta.
               </p>
@@ -165,7 +165,7 @@ export default function TermosPage() {
                 entrando em contato conosco.
               </p>
 
-              <h3 className="text-lg font-medium text-neutral-900 mb-3">10.2 Rescisão pela ArqCashflow</h3>
+              <h3 className="text-lg font-medium text-neutral-900 mb-3">10.2 Rescisão pela Arnaldo</h3>
               <p className="text-neutral-700 mb-4">
                 Podemos suspender ou encerrar sua conta em caso de:
               </p>

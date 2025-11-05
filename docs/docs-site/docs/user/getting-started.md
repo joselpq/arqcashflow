@@ -90,7 +90,7 @@ New users experience a multi-step guided setup:
 ## Quick Start
 
 ### 1. Account Creation
-1. Visit [ArqCashflow](https://arnaldo.ai)
+1. Visit [Arnaldo](https://arnaldo.ai)
 2. Click "Register" to create your account
 3. Complete the onboarding process:
    - **Step 1**: Profile setup (Individual vs Company)
