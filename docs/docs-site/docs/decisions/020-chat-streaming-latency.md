@@ -139,7 +139,7 @@ Implement a **three-phase streaming optimization strategy**:
 ### Rationale
 
 **Why Streaming is Critical:**
-- **90% perceived latency reduction** (3-8s → <1s to first token)
+- **90% perceived latency reduction** (3-8s → less than 1s to first token)
 - **Industry standard**: ChatGPT, Claude Web, and all modern AI chats use streaming
 - **Psychological impact**: Seeing response appear immediately transforms experience from "Is this broken?" to "Wow, it's thinking live!"
 - **Built-in SDK support**: Vercel AI SDK makes this straightforward
@@ -601,8 +601,8 @@ private async buildSystemPrompt(today: string): Promise<string> {
 - Error scenario tests (network interruption, streaming failure)
 
 **Monitoring:**
-- Track time-to-first-token metrics (target: <1s for 95th percentile)
-- Monitor streaming error rates (target: <1%)
+- Track time-to-first-token metrics (target: less than 1s for 95th percentile)
+- Monitor streaming error rates (target: less than 1%)
 - Measure cost reduction from prompt caching (expected: ~90% for cached tokens)
 - Track user engagement metrics (session length, messages per session)
 - Monitor API latency and success rates
@@ -630,7 +630,7 @@ private async buildSystemPrompt(today: string): Promise<string> {
 ### Positive Consequences
 
 **User Experience:**
-- ✅ **90% perceived latency reduction** (3-8s → <1s to first token)
+- ✅ **90% perceived latency reduction** (3-8s → less than 1s to first token)
 - ✅ **10x better perceived responsiveness** - users see response immediately
 - ✅ **Reduced anxiety** - no more "Is this working?" moments
 - ✅ **Better first impression** - AI feels instant and responsive
@@ -735,7 +735,7 @@ private async buildSystemPrompt(today: string): Promise<string> {
 **Technical Metrics:**
 - ✅ Zero regression in conversation history integrity (automated tests)
 - ✅ Tool calls work correctly during streaming (100% success rate)
-- ✅ Server CPU/memory usage remains stable (<10% increase)
+- ✅ Server CPU/memory usage remains stable (less than 10% increase)
 
 ### Measurement Plan
 
@@ -751,15 +751,15 @@ private async buildSystemPrompt(today: string): Promise<string> {
 - Gather initial user feedback
 
 **Post-Phase 2 (Week 2-3):**
-- Measure time-to-first-token (target: <1s for 95th percentile)
-- Measure streaming error rate (target: <1%)
+- Measure time-to-first-token (target: less than 1s for 95th percentile)
+- Measure streaming error rate (target: less than 1%)
 - Measure chat engagement increase (target: +30%)
 - Measure completion rate increase (target: ≥95%)
 
 **Ongoing (Monthly):**
-- Monitor latency trends (should remain <1s)
+- Monitor latency trends (should remain less than 1s)
 - Monitor cost trends (should see sustained reduction)
-- Monitor streaming reliability (should maintain >99% success)
+- Monitor streaming reliability (should maintain greater than 99% success)
 
 ### Review Schedule
 
@@ -773,7 +773,7 @@ private async buildSystemPrompt(today: string): Promise<string> {
 - **Bi-annually**: Evaluate for new Claude API features (extended thinking, etc.)
 - **Trigger Events**:
   - Streaming error rate exceeds 2%
-  - Latency regression (>1.5s average time-to-first-token)
+  - Latency regression (greater than 1.5s average time-to-first-token)
   - User complaints about chat responsiveness
   - Significant Claude API pricing or feature changes
 
