@@ -148,7 +148,7 @@ if (isLargeFile) {
   // Use multipart/form-data for files ≥3MB
   await processWithFormData(file);
 } else {
-  // Use JSON + base64 for files `<3MB` (faster)
+  // Use JSON + base64 for files less than 3MB (faster)
   await processWithJSON(file);
 }
 ```
