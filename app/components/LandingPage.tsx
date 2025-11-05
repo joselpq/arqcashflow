@@ -44,16 +44,6 @@ export default function LandingPage() {
       description: "Adicione contratos e despesas enviando uma mensagem ou foto pelo WhatsApp"
     },
     {
-      icon: "🔔",
-      title: "Alertas Automáticos",
-      description: "Nunca mais perca um recebimento ou esqueça de pagar uma conta importante"
-    },
-    {
-      icon: "📄",
-      title: "Importação Automática",
-      description: "Jogue suas planilhas e documentos bagunçados - organizamos tudo automaticamente"
-    },
-    {
       icon: "🎯",
       title: "Zero Configuração",
       description: "Sem complicação para configurar. Em 5 minutos você já está controlando suas finanças"
@@ -169,9 +159,11 @@ export default function LandingPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="bg-white rounded-xl p-8 shadow-sm border border-neutral-200">
-              <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mb-6">
-                <span className="text-2xl">😰</span>
+            <div className="bg-white rounded-xl p-8 shadow-sm border border-neutral-200 hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 bg-gradient-to-br from-orange-100 to-red-50 rounded-full flex items-center justify-center mb-6">
+                <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
               </div>
               <h3 className="text-xl font-semibold text-neutral-900 mb-4">
                 Ansiedade Financeira
@@ -181,9 +173,11 @@ export default function LandingPage() {
               </p>
             </div>
 
-            <div className="bg-white rounded-xl p-8 shadow-sm border border-neutral-200">
-              <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mb-6">
-                <span className="text-2xl">📊</span>
+            <div className="bg-white rounded-xl p-8 shadow-sm border border-neutral-200 hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 bg-gradient-to-br from-orange-100 to-red-50 rounded-full flex items-center justify-center mb-6">
+                <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
               </div>
               <h3 className="text-xl font-semibold text-neutral-900 mb-4">
                 Planilhas Bagunçadas
@@ -193,9 +187,11 @@ export default function LandingPage() {
               </p>
             </div>
 
-            <div className="bg-white rounded-xl p-8 shadow-sm border border-neutral-200">
-              <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mb-6">
-                <span className="text-2xl">💸</span>
+            <div className="bg-white rounded-xl p-8 shadow-sm border border-neutral-200 hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 bg-gradient-to-br from-orange-100 to-red-50 rounded-full flex items-center justify-center mb-6">
+                <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
               </div>
               <h3 className="text-xl font-semibold text-neutral-900 mb-4">
                 Recebimentos Perdidos
@@ -205,9 +201,11 @@ export default function LandingPage() {
               </p>
             </div>
 
-            <div className="bg-white rounded-xl p-8 shadow-sm border border-neutral-200">
-              <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mb-6">
-                <span className="text-2xl">❓</span>
+            <div className="bg-white rounded-xl p-8 shadow-sm border border-neutral-200 hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 bg-gradient-to-br from-orange-100 to-red-50 rounded-full flex items-center justify-center mb-6">
+                <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
               </div>
               <h3 className="text-xl font-semibold text-neutral-900 mb-4">
                 Sem Visibilidade
@@ -217,9 +215,11 @@ export default function LandingPage() {
               </p>
             </div>
 
-            <div className="bg-white rounded-xl p-8 shadow-sm border border-neutral-200">
-              <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mb-6">
-                <span className="text-2xl">⏰</span>
+            <div className="bg-white rounded-xl p-8 shadow-sm border border-neutral-200 hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 bg-gradient-to-br from-orange-100 to-red-50 rounded-full flex items-center justify-center mb-6">
+                <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
               </div>
               <h3 className="text-xl font-semibold text-neutral-900 mb-4">
                 Tempo Desperdiçado
@@ -229,9 +229,11 @@ export default function LandingPage() {
               </p>
             </div>
 
-            <div className="bg-white rounded-xl p-8 shadow-sm border border-neutral-200">
-              <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mb-6">
-                <span className="text-2xl">🧠</span>
+            <div className="bg-white rounded-xl p-8 shadow-sm border border-neutral-200 hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 bg-gradient-to-br from-orange-100 to-red-50 rounded-full flex items-center justify-center mb-6">
+                <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
               </div>
               <h3 className="text-xl font-semibold text-neutral-900 mb-4">
                 Sobrecarga Mental
@@ -268,7 +270,7 @@ export default function LandingPage() {
                       Jogue seus documentos
                     </h3>
                     <p className="text-neutral-600">
-                      Envie suas planilhas, anotações ou documentos. Nossa IA organiza tudo automaticamente em segundos.
+                      Envie planilhas, contratos ou anotações. Nossa IA organiza tudo automaticamente em segundos. Zero esforço para configurar.
                     </p>
                   </div>
                 </div>
@@ -279,10 +281,10 @@ export default function LandingPage() {
                   </div>
                   <div>
                     <h3 className="text-xl font-semibold text-neutral-900 mb-2">
-                      Controle pelo WhatsApp
+                      Tenha controle total
                     </h3>
                     <p className="text-neutral-600">
-                      Adicione novos contratos ou despesas simplesmente enviando uma mensagem ou foto pelo WhatsApp.
+                      Dashboard limpo mostra sua saúde financeira, próximos recebimentos e alertas. Em 5 minutos você já está controlando suas finanças.
                     </p>
                   </div>
                 </div>
@@ -293,10 +295,10 @@ export default function LandingPage() {
                   </div>
                   <div>
                     <h3 className="text-xl font-semibold text-neutral-900 mb-2">
-                      Tenha controle total
+                      Assistente financeiro 24/7
                     </h3>
                     <p className="text-neutral-600">
-                      Dashboard limpo mostra sua saúde financeira. Alertas automáticos garantem que nunca perca nada.
+                      Pergunte qualquer coisa sobre suas finanças - lucro do mês, recebimentos pendentes, ou qualquer análise que precisar.
                     </p>
                   </div>
                 </div>
@@ -379,7 +381,11 @@ export default function LandingPage() {
           <div className="max-w-4xl mx-auto">
             <div className="bg-white rounded-2xl p-8 shadow-xl border border-neutral-200">
               <div className="text-center">
-                <div className="w-16 h-16 bg-neutral-200 rounded-full mx-auto mb-6"></div>
+                <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full mx-auto mb-6 flex items-center justify-center overflow-hidden border-4 border-white shadow-lg">
+                  <span className="text-3xl font-bold text-blue-600">
+                    {testimonials[currentTestimonial].name.charAt(0)}
+                  </span>
+                </div>
                 <blockquote className="text-xl sm:text-2xl text-neutral-700 mb-6 leading-relaxed">
                   &quot;{testimonials[currentTestimonial].text}&quot;
                 </blockquote>
