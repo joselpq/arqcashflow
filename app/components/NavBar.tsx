@@ -95,8 +95,7 @@ export default function NavBar() {
     { href: "/", label: "Dashboard" },
     { href: "/projetos", label: terminology.contracts }, // Pacientes for medicina, Contratos for arquitetura
     { href: "/recebiveis", label: "Recebíveis" },
-    { href: "/despesas", label: "Despesas" },
-    { href: "/ai-chat", label: "Assistente IA" }
+    { href: "/despesas", label: "Despesas" }
   ];
 
   return (
