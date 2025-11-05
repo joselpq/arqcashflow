@@ -257,11 +257,8 @@ export const RefinedFieldSchemas = {
       message: 'Date cannot be more than 5 years old'
     }),
 
-  // Signed date (cannot be in future, not too old)
+  // Signed date (allow future dates for scheduled contracts/appointments, not too old for historical data)
   signedDate: BaseFieldSchemas.dateString
-    .refine(ValidationUtils.notInFuture, {
-      message: 'Signed date cannot be in the future'
-    })
     .refine(date => ValidationUtils.notTooOld(date, 10), {
       message: 'Signed date cannot be more than 10 years old'
     }),

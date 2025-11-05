@@ -1,7 +1,7 @@
 # ArqCashflow Development Backlog
 
 **Purpose**: Central source of truth for project priorities and development status
-**Last Updated**: 2025-11-03 (Week 1 Profession Modularization COMPLETE + Bug Fixes)
+**Last Updated**: 2025-11-04 (ADR-020 Chat Streaming created, ready for implementation)
 **Update Frequency**: Every LLM session MUST update this document when completing tasks
 
 ---
@@ -280,22 +280,37 @@ This backlog **DOES NOT** replace other documentation:
 
 ### **Chat with Arnaldo Latency Optimization** 🚀 IN PROGRESS (Started 2025-10-28)
 **Goal**: Achieve sub-second response start with streaming
-**Status**: Paused - prioritizing profession modularization
+**Status**: ✅ ADR-020 created, ready for implementation
 **Priority**: HIGH (critical for AI-first positioning)
-**Estimated Time**: 4-6 hours
+**Related**: ADR-020 Chat Streaming for Sub-Second Response Latency
+**Estimated Time**: 5-7 hours total (phased implementation)
 
-**Problem**: User perceives lag in chat responses
-**Goal**: Sub-second response start with streaming
-**Scope**:
-- Claude API latency profiling
-- Streaming optimization
-- Caching strategies for common queries
-- Response time measurement and monitoring
+**Problem**: Users experience 3-8 second blocking waits with only a loading spinner
+**Solution**: Three-phase streaming optimization strategy
+
+**Implementation Plan** (from ADR-020):
+- **Phase 1 (1 hour)**: Quick wins - Optimistic UI + Prompt caching
+  - 20-30% perceived improvement + 90% cost reduction for cached tokens
+- **Phase 2 (4-6 hours)**: Core fix - Streaming implementation
+  - 90% perceived latency reduction (3-8s → <1s to first token)
+  - `generateText()` → `streamText()` with frontend streaming handler
+- **Phase 3 (2-3 hours)**: Optional polish - System prompt optimization
+  - Additional ~5% improvement + cleaner code
 
 **Success Criteria**:
-- Time to first token < 1 second for 95% of queries
-- Full streaming implementation with immediate feedback
-- Improved perceived responsiveness
+- Time to first token < 1 second for 95% of queries (currently 3-8s)
+- 90% perceived latency reduction
+- 90% cost reduction for cached tokens (~400 tokens)
+- Streaming error rate < 1%
+- Chat engagement increase ≥ 30%
+
+**Files to Modify**:
+- `lib/services/OperationsAgentService.ts` - Add streaming + caching
+- `app/api/ai/operations/route.ts` - Add streaming endpoint
+- `app/contexts/ChatContext.tsx` - Implement streaming handler
+- `app/components/chat/ThinkingIndicator.tsx` (NEW) - Optimistic UI
+
+**Documentation**: See `/CHAT_LATENCY_OPTIONS.md` for detailed analysis
 
 ---
 
@@ -781,5 +796,5 @@ Users clicking "Resolver" on overdue items were greeted with 14-21 field forms. 
 
 ---
 
-**Last Updated**: 2025-10-28
-**Status**: DOING (2 active - Chat Latency + Onboarding), TO DO (2 items - file speed + landing page), BACKLOG (22+ items), DONE (4 recent)
+**Last Updated**: 2025-11-04
+**Status**: DOING (2 active - Profession Modularization Week 3 + Chat Latency ADR ready), TO DO (2 items - file speed + landing page), BACKLOG (22+ items), DONE (4 recent)

@@ -168,8 +168,10 @@ export class SetupAssistantService extends BaseService<any, any, any, any> {
    * Architecture:
    * - XLSX/CSV: Two-phase parallel extraction (analysis + parallel sheets)
    * - PDF/Images: Single-phase vision extraction (direct schema-based extraction)
+   *
+   * @param professionOverride - Optional profession hint (used during onboarding when DB may not be updated yet)
    */
-  async processFile(fileBuffer: Buffer, filename: string): Promise<ProcessingResult> {
+  async processFile(fileBuffer: Buffer, filename: string, professionOverride?: string): Promise<ProcessingResult> {
     try {
       // Step 1: Detect file type
       const fileType = this.detectFileType(filename, fileBuffer)
@@ -192,11 +194,11 @@ export class SetupAssistantService extends BaseService<any, any, any, any> {
 
         // PHASE 1: Analyze file structure
         console.log('\n📋 PHASE 1: Analyzing file structure...')
-        const extractionPlan = await this.analyzeFileStructure(sheetsData, filename)
+        const extractionPlan = await this.analyzeFileStructure(sheetsData, filename, professionOverride)
 
         // PHASE 2: Extract all sheets in parallel
         console.log('\n⚡ PHASE 2: Extracting sheets in parallel...')
-        const extractionResults = await this.extractSheetsInParallel(sheetsData, extractionPlan, filename)
+        const extractionResults = await this.extractSheetsInParallel(sheetsData, extractionPlan, filename, professionOverride)
 
         // Aggregate results from all sheets
         extractedData = this.aggregateExtractionResults(extractionResults)
@@ -206,7 +208,7 @@ export class SetupAssistantService extends BaseService<any, any, any, any> {
         // PDF/Images: Single-phase vision extraction
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         console.log('🔍 SINGLE-PHASE VISION EXTRACTION')
-        extractedData = await this.extractFromVisionDirect(fileBuffer, filename, fileType)
+        extractedData = await this.extractFromVisionDirect(fileBuffer, filename, fileType, professionOverride)
 
       } else {
         throw new ServiceError('Unsupported file type', 'INVALID_FILE_TYPE', 400)
@@ -214,7 +216,7 @@ export class SetupAssistantService extends BaseService<any, any, any, any> {
 
       // Common post-processing pipeline (both flows)
       console.log('\n📦 Post-processing and creation...')
-      const processedData = this.postProcessWithInference(extractedData)
+      const processedData = await this.postProcessWithInference(extractedData, professionOverride)
       const result = await this.bulkCreateEntities(processedData)
 
       return result
@@ -322,7 +324,8 @@ export class SetupAssistantService extends BaseService<any, any, any, any> {
   private async extractFromVisionDirect(
     fileBuffer: Buffer,
     filename: string,
-    fileType: 'pdf' | 'image'
+    fileType: 'pdf' | 'image',
+    professionOverride?: string
   ): Promise<ExtractionResult> {
     console.log(`🔍 Processing ${fileType.toUpperCase()} with single-phase vision extraction...`)
 
@@ -331,7 +334,11 @@ export class SetupAssistantService extends BaseService<any, any, any, any> {
       where: { id: this.context.teamId },
       select: { profession: true }
     })
-    const professionConfig = getProfessionConfig(team?.profession)
+
+    // Use DB profession if available, otherwise use override (onboarding scenario)
+    const profession = team?.profession || professionOverride
+    console.log(`[SetupAssistant] extractFromVisionDirect - Team profession: ${team?.profession || 'null'}, Override: ${professionOverride || 'null'}, Using: ${profession || 'null'}`)
+    const professionConfig = getProfessionConfig(profession)
 
     // Determine media type and content type for Anthropic API
     const mediaType = fileType === 'pdf'
@@ -371,8 +378,8 @@ SCHEMA DAS ENTIDADES
 {
   "clientName": "string",        // OBRIGATÓRIO - nome do cliente
   "projectName": "string",       // OBRIGATÓRIO - nome do projeto
-  "totalValue": number,          // OBRIGATÓRIO - valor total do contrato
-  "signedDate": "ISO-8601",      // OBRIGATÓRIO - data de assinatura
+  "totalValue": number,          // ${professionConfig.ai.schemaRequirements.contract.totalValue === 'REQUIRED' ? 'OBRIGATÓRIO' : 'OPCIONAL'} - valor total do contrato
+  "signedDate": "ISO-8601",      // ${professionConfig.ai.schemaRequirements.contract.signedDate === 'REQUIRED' ? 'OBRIGATÓRIO' : 'OPCIONAL'} - data de assinatura
   "status": "active" | "completed" | "cancelled",  // OBRIGATÓRIO - se não descobrir, use "active"
   "description": "string" | null,    // OPCIONAL
   "category": "string" | null,       // OPCIONAL
@@ -383,7 +390,7 @@ REGRAS PARA CONTRACTS:
 • Se não encontrar clientName, use projectName como padrão
 • Se não encontrar projectName, use clientName como padrão
 • Se não conseguir descobrir status, defina como "active"
-• Se ambos clientName E projectName forem null, OU totalValue for null, NÃO extraia esta entidade
+• Se ambos clientName E projectName forem null, NÃO extraia esta entidade${professionConfig.ai.schemaRequirements.contract.totalValue === 'REQUIRED' ? ' (ou totalValue for null)' : ''}
 
 💰 RECEIVABLE (Recebíveis):
 {
@@ -648,13 +655,17 @@ COMECE A EXTRAÇÃO
   /**
    * PHASE 1: Analyze file structure and create extraction plan
    */
-  private async analyzeFileStructure(sheetsData: SheetData[], filename: string): Promise<ExtractionPlan> {
+  private async analyzeFileStructure(sheetsData: SheetData[], filename: string, professionOverride?: string): Promise<ExtractionPlan> {
     // Get team profession for context-aware prompts
     const team = await this.context.teamScopedPrisma.raw.team.findUnique({
       where: { id: this.context.teamId },
       select: { profession: true }
     })
-    const professionConfig = getProfessionConfig(team?.profession)
+
+    // Use DB profession if available, otherwise use override (onboarding scenario)
+    const profession = team?.profession || professionOverride
+    console.log(`[SetupAssistant] analyzeFileStructure - Team profession: ${team?.profession || 'null'}, Override: ${professionOverride || 'null'}, Using: ${profession || 'null'}`)
+    const professionConfig = getProfessionConfig(profession)
 
     const allSheetsPreview = sheetsData.map(sheet => ({
       name: sheet.name,
@@ -747,7 +758,8 @@ Retorne APENAS o JSON, nada mais.`
   private async extractSheetsInParallel(
     sheetsData: SheetData[],
     plan: ExtractionPlan,
-    filename: string
+    filename: string,
+    professionOverride?: string
   ): Promise<ExtractionResult[]> {
     const extractionPromises = plan.sheets.map(sheetInfo => {
       const sheetData = sheetsData.find(s => s.name === sheetInfo.name)
@@ -756,7 +768,7 @@ Retorne APENAS o JSON, nada mais.`
         return Promise.resolve({ contracts: [], receivables: [], expenses: [] })
       }
 
-      return this.extractSheet(sheetData, sheetInfo, plan, filename)
+      return this.extractSheet(sheetData, sheetInfo, plan, filename, professionOverride)
     })
 
     console.log(`🚀 Starting ${extractionPromises.length} parallel extractions...`)
@@ -806,14 +818,19 @@ Retorne APENAS o JSON, nada mais.`
     sheetData: SheetData,
     sheetInfo: SheetInfo,
     plan: ExtractionPlan,
-    filename: string
+    filename: string,
+    professionOverride?: string
   ): Promise<ExtractionResult> {
     // Get team profession for context-aware prompts
     const team = await this.context.teamScopedPrisma.raw.team.findUnique({
       where: { id: this.context.teamId },
       select: { profession: true }
     })
-    const professionConfig = getProfessionConfig(team?.profession)
+
+    // Use DB profession if available, otherwise use override (onboarding scenario)
+    const profession = team?.profession || professionOverride
+    console.log(`[SetupAssistant] extractSheet "${sheetData.name}" - Team profession: ${team?.profession || 'null'}, Override: ${professionOverride || 'null'}, Using: ${profession || 'null'}`)
+    const professionConfig = getProfessionConfig(profession)
 
     const prompt = `Você está extraindo dados financeiros de ${professionConfig.businessContext.businessType}.
 
@@ -877,8 +894,8 @@ Aqui estão os requisitos de schema para cada tipo de entidade:
 Contract (Contratos/Projetos):
 - clientName: TEXT (OBRIGATÓRIO, use projectName como padrão se não encontrar clientName)
 - projectName: TEXT (OBRIGATÓRIO, use clientName como padrão se não encontrar projectName)
-- totalValue: DECIMAL (OBRIGATÓRIO)
-- signedDate: TIMESTAMP (OBRIGATÓRIO)
+- totalValue: DECIMAL (${professionConfig.ai.schemaRequirements.contract.totalValue === 'REQUIRED' ? 'OBRIGATÓRIO' : 'OPCIONAL'})
+- signedDate: TIMESTAMP (${professionConfig.ai.schemaRequirements.contract.signedDate === 'REQUIRED' ? 'OBRIGATÓRIO' : 'OPCIONAL'})
 - status: TEXT (OBRIGATÓRIO: active, completed, cancelled; se não conseguir descobrir, pode definir como active por padrão)
 - description, category, notes: TEXT (OPCIONAL, você pode inferir)
 
@@ -1016,11 +1033,21 @@ Retorne APENAS JSON válido com as entidades extraídas.`
    * Step 4: Post-process extracted data with inference for null fields
    * IMPORTANT: Only infer when fields are null - never change non-null values
    * IMPORTANT: Filter out invalid entities that can't be saved
+   * IMPORTANT: Profession-aware filtering (medicina allows null totalValue/signedDate)
    */
-  private postProcessWithInference(data: ExtractionResult): ExtractionResult {
+  private async postProcessWithInference(data: ExtractionResult, professionOverride?: string): Promise<ExtractionResult> {
     console.log('\n' + '='.repeat(80))
     console.log('🔧 POST-PROCESSING WITH INFERENCE')
     console.log('='.repeat(80))
+
+    // Get profession config for validation rules
+    const team = await this.context.teamScopedPrisma.raw.team.findUnique({
+      where: { id: this.context.teamId },
+      select: { profession: true }
+    })
+    const profession = team?.profession || professionOverride
+    const professionConfig = getProfessionConfig(profession)
+    console.log(`Using profession: ${profession} (totalValue ${professionConfig.ai.schemaRequirements.contract.totalValue})`)
 
     const today = new Date()
     today.setHours(0, 0, 0, 0) // Start of today for date comparisons
@@ -1033,12 +1060,20 @@ Retorne APENAS JSON válido com as entidades extraídas.`
     // Infer missing contract fields and filter invalid ones
     data.contracts = data.contracts
       .filter(contract => {
-        // [CONTRACTS] Filter: both clientName and projectName null, OR totalValue null
-        if ((!contract.clientName && !contract.projectName) || !contract.totalValue) {
+        // [CONTRACTS] Filter: both clientName and projectName null
+        if (!contract.clientName && !contract.projectName) {
           filteredContracts++
-          console.log(`⚠️ Filtered invalid contract: ${JSON.stringify(contract).substring(0, 100)}`)
+          console.log(`⚠️ Filtered invalid contract (no name): ${JSON.stringify(contract).substring(0, 100)}`)
           return false
         }
+
+        // [CONTRACTS] Filter: totalValue null ONLY if required for this profession
+        if (professionConfig.ai.schemaRequirements.contract.totalValue === 'REQUIRED' && !contract.totalValue) {
+          filteredContracts++
+          console.log(`⚠️ Filtered invalid contract (no totalValue - required for ${profession}): ${JSON.stringify(contract).substring(0, 100)}`)
+          return false
+        }
+
         return true
       })
       .map(contract => {

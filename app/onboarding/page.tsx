@@ -145,6 +145,9 @@ export default function OnboardingPage() {
       setChatMessages(prev => [...prev, { role: 'user', content: selectedOption?.label || value }]);
       setProfileData(prev => ({ ...prev, profession: value }));
 
+      // ✅ Cache profession in localStorage immediately for NavBar
+      localStorage.setItem('userProfession', value);
+
       // Ask next question: Employee count
       setChatMessages(prev => [...prev, { role: 'assistant', content: 'Quantas pessoas trabalham no negócio?' }]);
       setCurrentQuestion(2);
@@ -623,6 +626,7 @@ export default function OnboardingPage() {
               <ChatFileUpload
                 onUploadStart={handleFileUploadStart}
                 onUploadComplete={handleFileUploadComplete}
+                profession={profileData.profession}
               />
             )}
 
@@ -631,6 +635,7 @@ export default function OnboardingPage() {
               <ChatFileUpload
                 onUploadStart={handleFileUploadStart}
                 onUploadComplete={handleFileUploadComplete}
+                profession={profileData.profession}
               />
             )}
 

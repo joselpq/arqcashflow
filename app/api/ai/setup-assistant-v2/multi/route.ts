@@ -35,6 +35,12 @@ export async function POST(request: NextRequest) {
         return { error: 'Invalid request format. Expected multipart/form-data' }
       }
 
+      // Extract optional profession override from query params (for onboarding timing fix)
+      const professionOverride = request.nextUrl.searchParams.get('profession') || undefined
+      if (professionOverride) {
+        console.log(`📁 [V2 Multi] Profession override provided: ${professionOverride}`)
+      }
+
       const formData = await request.formData()
       const files: File[] = []
 
@@ -85,8 +91,8 @@ export async function POST(request: NextRequest) {
           const arrayBuffer = await file.arrayBuffer()
           const fileBuffer = Buffer.from(arrayBuffer)
 
-          // Process single file
-          const result = await setupAssistantService.processFile(fileBuffer, file.name)
+          // Process single file (with optional profession override for onboarding)
+          const result = await setupAssistantService.processFile(fileBuffer, file.name, professionOverride)
 
           // ALWAYS aggregate entity counts (even with partial failures)
           totalContractsCreated += result.contractsCreated

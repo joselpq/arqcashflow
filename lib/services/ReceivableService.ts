@@ -151,19 +151,9 @@ export class ReceivableService extends BaseService<
       }
     }
 
-    // Business rule: Received date cannot be before expected date
-    if (data.receivedDate && data.expectedDate) {
-      const receivedDate = new Date(data.receivedDate)
-      const expectedDate = new Date(data.expectedDate)
-
-      if (receivedDate < expectedDate) {
-        throw new ServiceError(
-          'Received date cannot be before expected date',
-          'INVALID_RECEIVED_DATE',
-          400
-        )
-      }
-    }
+    // NOTE: Removed restrictive validation - receivedDate can be before expectedDate
+    // Real-world scenario: Prepayments, deposits, and early payments are common in all industries
+    // (e.g., architecture deposits, medical prepayments, advance invoices)
   }
 
   /**
