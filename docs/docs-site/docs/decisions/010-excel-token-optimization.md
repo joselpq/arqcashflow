@@ -138,7 +138,7 @@ function trimEmptyRows(worksheet) {
 **When to implement:**
 - Production monitoring shows files still hitting token limits after Phase 1
 - User feedback indicates common use of 30+ sheet files
-- Analytics show `>5%` of files need batching
+- Analytics show greater than 5% of files need batching
 
 **Implementation Strategy (when needed):**
 - Group sheets into batches staying under 20k token budget
@@ -246,8 +246,8 @@ describe('trimEmptyRows', () => {
 ```
 
 **Alert thresholds:**
-- Token usage `>25k` after trimming → investigate for Phase 2
-- Failure rate `>1%` → review edge cases
+- Token usage greater than 25k after trimming → investigate for Phase 2
+- Failure rate greater than 1% → review edge cases
 - Average reduction under 50% → trimming not effective for user data patterns
 
 ## References
@@ -299,7 +299,7 @@ Result: 28% of limit (SUCCESS)
 
 **Indicators:**
 - User feedback: "My 30-sheet budget spreadsheet fails"
-- Analytics: `>5%` of files hit token limits after Phase 1
+- Analytics: greater than 5% of files hit token limits after Phase 1
 - Support tickets: Token limit errors persist
 
 **Implementation Checklist:**
@@ -433,7 +433,7 @@ Result: ❌ Error - "SyntaxError: Expected ',' or ']' after array element"
   - Input tokens are fine (32k), output tokens are the bottleneck
 - Solution Implemented:
   - **Sheet-boundary-respecting batches**: Never split sheets across batches ✅
-  - **Large sheet isolation**: Sheets `>5000` est. tokens get dedicated batch ✅
+  - **Large sheet isolation**: Sheets greater than 5000 est. tokens get dedicated batch ✅
   - **Dynamic grouping**: Small sheets grouped if they fit ✅
   - **Sequential processing**: 10s delays between batches ✅
   - **Result aggregation**: Merge contracts/receivables/expenses arrays ✅

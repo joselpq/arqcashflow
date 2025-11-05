@@ -92,7 +92,7 @@ After implementing Phase A (sheet structure analysis + semantic hints) and Phase
 
 #### ❌ Issue 2: Output Token Limit - REAL BOTTLENECK
 
-**Problem**: Claude stops mid-response when generating `>8,192` output tokens
+**Problem**: Claude stops mid-response when generating greater than 8,192 output tokens
 
 **Evidence from logs (2025-09-30)**:
 ```
@@ -121,7 +121,7 @@ Batch 5: Custos
 **Key Insight**:
 - Claude's JSON format: ~80-100 tokens per entity (includes all fields, descriptions, notes)
 - 8,192 tokens ÷ 100 tokens/entity = **~80 entity hard limit**
-- Sheets with `>80` entities will ALWAYS truncate
+- Sheets with greater than 80 entities will ALWAYS truncate
 
 **Not a prompt engineering problem**: Phase A proved Claude identifies and understands all entities correctly, but the API physically stops generating output at 8,192 tokens.
 
@@ -161,7 +161,7 @@ After implementing Phase A+C and analyzing results, we've identified the true bo
 
 **Chosen Solution: Sub-Batch Splitting for Large Sheets (Phase D)**
 
-Implement intelligent row-range splitting for sheets with `>80` entities.
+Implement intelligent row-range splitting for sheets with greater than 80 entities.
 
 ### Phase D: Sub-Batch Splitting Implementation
 
@@ -169,7 +169,7 @@ Implement intelligent row-range splitting for sheets with `>80` entities.
 
 **Why This Approach:**
 
-✅ **Surgical fix**: Only affects sheets `>80` entities (small sheets unchanged)
+✅ **Surgical fix**: Only affects sheets greater than 80 entities (small sheets unchanged)
 ✅ **Works within API constraints**: Respects 8K output token hard limit
 ✅ **Leverages existing infrastructure**: Reuses batch processing logic
 ✅ **Predictable**: No guessing on token counts
@@ -780,7 +780,7 @@ vs
 - Overall accuracy improved from 61% → **~100%** (expected based on implementation)
 - Semantic confusion eliminated (type detection 100% accurate)
 - Root cause solved: Implemented sub-batch splitting to work within Claude API's 8,192 output token hard limit
-- Large sheets (`>80` entities) now split into sub-batches of 60 entities each
+- Large sheets (greater than 80 entities) now split into sub-batches of 60 entities each
 - Small sheets (under 80 entities) processed as single batches
 
 **Implementation Complete:**
