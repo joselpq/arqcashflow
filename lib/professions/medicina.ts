@@ -126,6 +126,10 @@ export const medicinaProfession = {
 CONTEXTO MÉDICO:
 - Usuário é profissional da área de medicina
 - Para fins de APIs, "Contratos" são Pacientes
+- MAPEAMENTO DE CAMPOS DO DATABASE:
+  • projectName = Nome do Paciente (o paciente em si)
+  • clientName = Nome do Responsável (quem paga/responsável legal, pode ser o próprio paciente)
+  • contractId = ID do paciente (quando vincular recebíveis/despesas)
 - Se o usuário mencionar o nome de um paciente para associar uma despesa ou recebível, encontre esse paciente (contrato) para associar essa despesa/recebível a ele ao invés de criar sem contrato
 - Valores podem ser por consulta/sessão (não necessariamente fixos)
 - Relacionamentos são contínuos (não há "data de assinatura" formal)

@@ -113,8 +113,14 @@ export const arquiteturaProfession = {
 
   // AI prompt configuration (original text)
   ai: {
-    // No additional context needed for architecture (original behavior)
-    systemContextAddition: '',
+    // Field mapping for consistency with other professions
+    systemContextAddition: `
+CONTEXTO DE ARQUITETURA:
+- MAPEAMENTO DE CAMPOS DO DATABASE:
+  • projectName = Nome do Projeto (o projeto/obra em si)
+  • clientName = Nome do Cliente (quem contratou o projeto)
+  • contractId = ID do projeto (quando vincular recebíveis/despesas)
+`,
 
     // Entity descriptions in prompts (MUST match original exactly)
     entityDescriptions: {

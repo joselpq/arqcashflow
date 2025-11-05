@@ -376,8 +376,8 @@ SCHEMA DAS ENTIDADES
 
 📋 CONTRACT (Contratos/Projetos):
 {
-  "clientName": "string",        // OBRIGATÓRIO - nome do cliente
-  "projectName": "string",       // OBRIGATÓRIO - nome do projeto
+  "clientName": "string",        // OBRIGATÓRIO - ${professionConfig.terminology.clientName.toLowerCase()}
+  "projectName": "string",       // OBRIGATÓRIO - ${professionConfig.terminology.projectName.toLowerCase()}
   "totalValue": number,          // ${professionConfig.ai.schemaRequirements.contract.totalValue === 'REQUIRED' ? 'OBRIGATÓRIO' : 'OPCIONAL'} - valor total do contrato
   "signedDate": "ISO-8601",      // ${professionConfig.ai.schemaRequirements.contract.signedDate === 'REQUIRED' ? 'OBRIGATÓRIO' : 'OPCIONAL'} - data de assinatura
   "status": "active" | "completed" | "cancelled",  // OBRIGATÓRIO - se não descobrir, use "active"

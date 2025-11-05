@@ -1,13 +1,13 @@
 # Chat Latency Optimization - Options Analysis
 
-> **📋 STATUS UPDATE (2025-11-04)**: This analysis has been formalized into **[ADR-020: Chat Streaming for Sub-Second Response Latency](docs/docs-site/docs/developer/architecture/decisions/adr-020-chat-streaming-latency.md)**
+> **📋 STATUS UPDATE (2025-11-04)**: This analysis has been formalized into **[020: Chat Streaming for Sub-Second Response Latency](docs/docs-site/docs/decisions/020-chat-streaming-latency.md)**
 >
-> **Next Steps**: Refer to ADR-020 for the official decision, rationale, and implementation plan. This document is preserved for reference and detailed technical analysis.
+> **Next Steps**: Refer to decision document 020 for the official decision, rationale, and implementation plan. This document is preserved for reference and detailed technical analysis.
 
 **Date**: 2025-11-03 (Formalized: 2025-11-04)
 **Current Status**: Chat works but users perceive lag (no streaming, blocking response)
 **Goal**: Sub-second time-to-first-token, improved perceived responsiveness
-**Decision**: Accepted (see ADR-020)
+**Decision**: Accepted (see decision 020)
 
 ---
 
