@@ -84,128 +84,7 @@ This backlog **DOES NOT** replace other documentation:
 
 ## 🔄 DOING (Currently In Progress)
 
----
-
-### **Chat-First Onboarding Redesign** 🚀 IN PROGRESS (Started 2025-10-17)
-**Goal**: Transform onboarding into AI-first conversational experience
-**Status**: Phase 5 & 7 COMPLETE ✅ - Phase 6 skipped (manual testing done)
-**Related**: ADR-017 Chat-First Onboarding Redesign
-**Estimated Time**: 15-20 days (phased)
-
-**Phase 5 Complete - Crossfade Animation Approach:**
-- [x] Replaced complex diagonal movement with elegant crossfade
-- [x] Shrink to FAB in center (1200ms) with blur effect
-- [x] Dramatic pause (600ms) - FAB visible in center
-- [x] Simultaneous crossfade (1600ms):
-  - Center FAB fades out
-  - Corner FAB fades in ON onboarding page (seamless handoff)
-- [x] Final pause (400ms) before dashboard redirect
-- [x] Total: 3.8 seconds (currently doubled for analysis)
-- [x] Fixed loading screen flash during transition
-- [x] Smooth, intentional handoff emphasizing chat persistence
-- **Result**: Clean, bug-free animation with no position conflicts
-
-**File Upload Workflow Improvements:**
-- [x] Updated spreadsheet question: "e/ou" for clarity
-- [x] Added "Voltar" button to file upload screen (questions 1-6)
-- [x] New contract upload flow for users without spreadsheets:
-  - Ask: "Você tem contratos ou propostas dos seus projetos?"
-  - If Yes → Upload contracts with message: "Ótimo! Envie seu(s) contrato(s) abaixo:"
-  - If No → Education phase
-- [x] Separate upload tracking for spreadsheets vs contracts
-- [x] Full back navigation support throughout all flows
-- **Result**: More flexible onboarding covering spreadsheets OR contracts
-
-**Loading Experience Enhancement:**
-- [x] Expanded loading messages from 7 → 13 phrases
-- [x] Added fun/engaging Brazilian Portuguese phrases:
-  - "Tomando um cafézinho enquanto processamos... ☕"
-  - "Conversando com a Inteligência Artificial... 🤖"
-  - "Fazendo mágica com seus dados... ✨"
-  - "Preparando tudo com carinho... 💙"
-  - "Deixando tudo nos trinques... 🎨"
-  - "Conferindo os últimos detalhes... 🔍"
-- **Result**: 52-second cycle (vs 28s), less repetition, more engaging
-
-**Strategic Vision**:
-- Introduce Arnaldo (AI assistant) as primary interaction from day 1
-- Optimize for users with existing spreadsheets (80%+ of new users)
-- Educational onboarding that teaches platform capabilities
-- Visual transition showing chat persistence
-
-**Phase 1: Registration Auto-Login** ✅ COMPLETE (2025-10-17)
-- [x] Update registration to auto-login after signup
-- [x] Redirect to existing `/onboarding` instead of `/login`
-- [x] Fix NavBar flash on auth pages
-- [x] Prevent authenticated users from accessing registration
-- **Result**: Seamless entry, zero flash on registration flow
-
-**Phase 2: Chat Interface for Profile Questions** ✅ COMPLETE (2025-10-22)
-- [x] Create `OnboardingChatContainer` component with auto-scroll
-- [x] Create `ChipButtons` component for guided responses
-- [x] Enhanced `ChipButtons` with `selectedValue` prop for pre-selection
-- [x] Replace Step 2 form with 5-question chat flow (business type → profession → employee count → revenue → has spreadsheet)
-- [x] Implement back/undo navigation (← Voltar button on questions 1-4)
-- [x] Store answers: business type → profession → employee count → revenue → has spreadsheet
-- [x] Uses existing database fields (employeeCount, revenueTier, profession)
-- [x] Fixed chip button positioning (stay at bottom)
-- **Files**: `app/onboarding/page.tsx`, `OnboardingChatContainer.tsx`, `ChipButtons.tsx`
-- **Result**: Conversational profile collection with excellent UX and back navigation
-
-**Phase 3: File Upload in Chat** ✅ COMPLETE (2025-10-21)
-- [x] After profile questions, ask: "Tem alguma planilha onde controla seus projetos?"
-- [x] Created `ChatFileUpload` component (simplified for chat)
-- [x] Multi-file loop: "Tem outros arquivos para importar?"
-- [x] Shows results as chat messages
-- [x] Fun loading messages (coffee, water, stretching)
-- [x] Uses existing SetupAssistant API endpoint
-- **Files**: `app/onboarding/page.tsx`, `ChatFileUpload.tsx`
-- **Result**: Seamless file upload within chat conversation
-
-**Phase 2 & 3: Completed Improvements** ✅
-- [x] **Animated loading text**: Rotate through 7 phrases every 4 seconds with streaming effect
-- [x] **Missing business type question**: Added profession question (6 options: Arquitetura, Engenharia Civil, Design de Interiores, Paisagismo, Urbanismo, Outros)
-- [x] **Integrated file upload UI**: Complete chat-native redesign with collapsible file list, auto-scroll, compact design (~57% space reduction)
-- [x] **Back/undo functionality**: Users can go back to previous questions (1-4) and change answers with pre-selected values highlighted (2025-10-22)
-
-**Phase 4: Education Messages** ✅ COMPLETE (2025-10-22)
-- [x] Create `StreamingMessage` component (letter-by-letter typing)
-- [x] Create `EducationPhase` component (message sequence manager)
-- [x] Create `TypingIndicator` component (animated dots)
-- [x] Show AI capabilities messages with streaming effect
-- [x] Fixed streaming double-write bug (useRef pattern)
-- [x] Fixed runtime error with guard clauses
-- [x] Optimized timing: 2s typing indicator → 1s delay → button
-- [x] Custom blinking cursor animation (step-end infinite)
-- [x] Auto-scroll during streaming and transitions
-- [x] Updated message texts per user feedback
-- **Files**: `StreamingMessage.tsx`, `EducationPhase.tsx`, `TypingIndicator.tsx`, `app/onboarding/page.tsx`
-- **Messages**:
-  1. "Se precisar de mim para criar ou editar contratos, recebíveis ou despesas, é só me mandar uma mensagem." (2s typing indicator)
-  2. "Ah, e também pode contar comigo para responder perguntas sobre seus projetos e finanças, como o lucro de um mês específico, receita média por projeto etc. Estarei logo ali!" (1s delay → "Continuar" button)
-- **Result**: Polished, engaging user education with perfect timing and smooth UX
-
-**Phase 5: Transition Animation** ✅ COMPLETE (2025-10-27)
-- [x] Create `useOnboardingTransition` hook with state machine
-- [x] Replaced complex diagonal movement with elegant crossfade approach
-- [x] Destination FAB appears on onboarding page during crossfade (not after redirect)
-- [x] Animation timeline: Shrink (1.2s) → Pause (0.6s) → Crossfade (1.6s) → Final Pause (0.4s)
-- [x] Fixed loading screen flash during transition
-- [x] SessionStorage coordination between onboarding and dashboard
-- [x] Reduced-motion accessibility fallback
-- [x] GlobalChat automatic handoff (seamless appearance)
-- **Files**: `useOnboardingTransition.ts`, `OnboardingChatContainer.tsx`, `GlobalChat.tsx`, `page.tsx` (dashboard), `onboarding/page.tsx`
-- **Result**: Smooth 3.8s crossfade animation with no position conflicts, emphasizing chat persistence
-
-**Phase 6: Polish & Testing** ⏱️ PENDING (2-3 days)
-- [ ] E2E tests, unit tests
-- [ ] Accessibility audit
-- [ ] Performance optimization
-
-**Success Criteria**:
-- Onboarding completion rate ≥ 85%
-- Total time < 3 minutes
-- Chat usage in first month ≥ 60%
+*No active work in progress*
 
 ---
 
@@ -421,302 +300,93 @@ This backlog **DOES NOT** replace other documentation:
 
 ## ✅ DONE (Recently Completed)
 
-### **Chat Streaming & Latency Optimization (Phases 1 & 2)** ✅ COMPLETE (2025-11-05)
-**Impact**: 90% perceived latency reduction + 90% cost reduction for cached tokens
-**Time Spent**: ~4-5 hours (Phase 1: 1h, Phase 2: 3-4h)
-**Related**: ADR-020 Chat Streaming for Sub-Second Response Latency
-
-**Problem Solved**:
-- Users experienced 3-8 second blocking waits with only a loading spinner
-- No feedback during AI processing
-- Poor first impression after onboarding
-- Higher abandonment rates (~40% for quick actions)
-
-**Phase 1: Quick Wins** ✅ COMPLETE (1 hour)
-- ✅ Created `ThinkingIndicator` component with animated dots and "Arnaldo está pensando 💭"
-- ✅ Integrated optimistic UI into MessageList (replaced simple dots)
-- ✅ Added Anthropic prompt caching with `cache_control: { type: 'ephemeral' }`
-- ✅ Expected 90% cost reduction for ~400 tokens of cached system prompt
-
-**Phase 2: Core Streaming Implementation** ✅ COMPLETE (3-4 hours)
-- ✅ Added `processCommandStream()` method to OperationsAgentService using `streamText()`
-- ✅ Updated API route `/api/ai/operations` to support both streaming and non-streaming modes
-- ✅ Implemented frontend streaming handler in ChatContext with ReadableStream
-- ✅ Token-by-token response rendering with real-time UI updates
-- ✅ Maintains conversation history integrity during streaming
-- ✅ Backward compatibility preserved (`stream: false` option)
-
-**Technical Implementation**:
-- **Backend**: `streamText()` with same tools and prompt caching as `generateText()`
-- **API Route**: Streaming mode by default, non-streaming for backward compatibility
-- **Frontend**: Manual ReadableStream parsing with Vercel AI SDK data format
-- **Error Handling**: Graceful fallback on streaming failures
-
-**Files Modified**:
-- `lib/services/OperationsAgentService.ts` - Added `processCommandStream()` method
-- `app/api/ai/operations/route.ts` - Streaming support with `toDataStreamResponse()`
-- `app/contexts/ChatContext.tsx` - Streaming response handler
-- `app/components/chat/ThinkingIndicator.tsx` (NEW) - Optimistic UI component
-- `app/components/chat/MessageList.tsx` - Integrated ThinkingIndicator
-
-**Expected Impact** (to be measured):
-- ✅ Time-to-first-token: 3-8s → <1s (90% improvement)
-- ✅ Cost reduction: ~90% for cached tokens (prompt caching)
-- 🔜 Chat engagement increase: Target ≥30%
-- 🔜 Streaming error rate: Target <1%
-
-**Phase 3 Status**: DEFERRED (Optional system prompt optimization - only ~5% additional gain)
-
----
-
-### **Profession-Based Modularization - Phase 1 (Doctors MVP)** ✅ COMPLETE (2025-11-04)
-**Impact**: Multi-vertical expansion - Doctors can now use platform with medical terminology
-**Time Spent**: ~2 weeks (Week 1: Core infrastructure, Week 2: UI components)
-**Related**: ADR-019 Profession-Based Application Modularization
+### **Chat-First Onboarding Redesign** ✅ COMPLETE (2025-10-27)
+**Goal**: Transform onboarding into AI-first conversational experience
+**Status**: Phases 1-5 & 7 COMPLETE ✅ - Phase 6 (Polish & Testing) deferred
+**Related**: ADR-017 Chat-First Onboarding Redesign
+**Time Spent**: ~15-20 days (phased implementation)
 
 **Strategic Achievement**:
-- Validated hybrid approach: Phase 1 MVP with hardcoded configs (vs full config system)
-- Platform now supports multiple professions (arquitetura + medicina)
-- 3-5x TAM potential unlocked
-- 100% backward compatibility maintained for architects
+- Transformed onboarding from form-based to conversational AI-first experience
+- Arnaldo (AI assistant) now primary interaction from day 1
+- 100% file upload functionality integrated into chat
+- Seamless registration → onboarding → dashboard flow
+- Visual transition emphasizes chat persistence
 
-**Week 1: Core Infrastructure** ✅ COMPLETE (2025-11-03)
-- ✅ Database: Optional fields for medicina (`totalValue?`, `signedDate?`)
-- ✅ Profession configs: Created `lib/professions/` with medicina.ts & arquitetura.ts
-- ✅ Validation layer: Profession-aware validation with parameter support
-- ✅ AI Services: OperationsAgent & SetupAssistant fully profession-aware
-- ✅ Onboarding: Profession selection & profession-specific questions
-- ✅ Navigation: Dynamic terminology (Pacientes vs Contratos)
-- ✅ Bug fixes: 4 critical issues fixed post-testing
+**Phase 1: Registration Auto-Login** ✅ COMPLETE (2025-10-17)
+- ✅ Auto-login after successful registration
+- ✅ Redirect to `/onboarding` instead of `/login`
+- ✅ Fix NavBar flash on auth pages
+- ✅ Prevent authenticated users from accessing registration
+- **Result**: Seamless entry, zero flash on registration flow
 
-**Week 2: UI Components** ✅ COMPLETE (2025-11-04)
-- ✅ Created `useTerminology()` React hook with localStorage caching
-- ✅ Updated 19 files with profession-aware functionality
-- ✅ 18+ hardcoded instances replaced with dynamic terminology
-- ✅ Profession-aware form options (categories, statuses)
-- ✅ Dynamic VALOR column calculation (profession-based logic)
-- ✅ All forms, modals, tables, filters profession-aware
-- ✅ Manual testing completed (both professions)
-- ✅ Bug fixes: 3 critical UX issues resolved
+**Phase 2: Chat Interface for Profile Questions** ✅ COMPLETE (2025-10-22)
+- ✅ Created `OnboardingChatContainer` component with auto-scroll
+- ✅ Created `ChipButtons` component for guided responses
+- ✅ 5-question chat flow (business type → profession → employee count → revenue → has spreadsheet)
+- ✅ Implemented back/undo navigation (← Voltar button)
+- ✅ Fixed chip button positioning (stay at bottom)
+- **Result**: Conversational profile collection with excellent UX
 
-**Key Technical Achievements**:
-- Profession-based logic (not inference-based) for calculations
-- Client-side VALOR calculation using existing API data (zero API changes)
-- Optional field handling for medicina (totalValue, signedDate)
-- Form validation adapts per profession (required vs optional)
-- Chat interface fully customized per profession
-- Full backward compatibility for arquitetura users
+**Phase 3: File Upload in Chat** ✅ COMPLETE (2025-10-21)
+- ✅ Created `ChatFileUpload` component (simplified for chat)
+- ✅ Multi-file loop: "Tem outros arquivos para importar?"
+- ✅ Fun loading messages (13 phrases: coffee, AI, magic, etc.)
+- ✅ Uses existing SetupAssistant API endpoint
+- **Result**: Seamless file upload within chat conversation
 
-**Files Modified Summary**:
-- Profession configs: 4 files (medicina.ts, arquitetura.ts, index.ts, terminology.ts)
-- Forms: 4 files (ContractForm, ExpenseForm, EnhancedExpenseForm, ReceivableForm)
-- Tables/Tabs: 3 files (ContractsTab, ExpensesTab, ReceivablesTab)
-- Modals: 3 files (DashboardEmptyState, ContractDeletionModal, ContractDetailsModal)
-- Chat: 2 files (ChatInput, MessageList)
-- Onboarding: 3 files (onboarding/page.tsx, SetupAssistantModal, MultiFileSetupAssistant)
-- Services: 3 files (OperationsAgentService, SetupAssistantService, ContractService)
-- Navigation: NavBar.tsx + new API route (`/api/user/team`)
-- Database: schema.prisma
-- Total: 25+ files modified
+**Phase 4: Education Messages** ✅ COMPLETE (2025-10-22)
+- ✅ Created `StreamingMessage` component (letter-by-letter typing)
+- ✅ Created `EducationPhase` component (message sequence manager)
+- ✅ Created `TypingIndicator` component (animated dots)
+- ✅ Optimized timing: 2s typing indicator → 1s delay → button
+- ✅ Custom blinking cursor animation
+- **Result**: Polished, engaging user education with perfect timing
 
-**Testing Results**:
-- ✅ Medicina users see "Pacientes", "Responsável", medical categories
-- ✅ Optional fields work correctly (no validation errors)
-- ✅ VALOR column shows correct sums for both professions
-- ✅ Chat examples relevant to each profession
-- ✅ Architects maintain 100% existing behavior
-- ✅ All regression tests passed
+**Phase 5: Transition Animation** ✅ COMPLETE (2025-10-27)
+- ✅ Created `useOnboardingTransition` hook with state machine
+- ✅ Elegant crossfade approach: Shrink (1.2s) → Pause (0.6s) → Crossfade (1.6s) → Final Pause (0.4s)
+- ✅ Fixed loading screen flash during transition
+- ✅ SessionStorage coordination between onboarding and dashboard
+- ✅ Reduced-motion accessibility fallback
+- ✅ GlobalChat automatic handoff (seamless appearance)
+- **Result**: Smooth 3.8s crossfade animation emphasizing chat persistence
 
-**Decision**: Week 3 (Pilot Launch) postponed - feature complete and ready for organic adoption
+**Phase 7: Expense Registration Reinforcement** ✅ COMPLETE (2025-10-27)
+- ✅ Dashboard banner for contracts without expenses
+- ✅ AI proactive message after 10 seconds (auto-opens chat)
+- ✅ Natural language expense creation via OperationsAgent
+- **Result**: Multi-touchpoint reinforcement ensuring data completeness
 
----
+**File Upload Workflow Improvements**:
+- ✅ Updated spreadsheet question: "e/ou" for clarity
+- ✅ Added "Voltar" button to file upload screen
+- ✅ New contract upload flow for users without spreadsheets
+- ✅ Separate upload tracking for spreadsheets vs contracts
+- ✅ Full back navigation support throughout all flows
 
-### **Domain Migration Cleanup & Landing Page Improvements** ✅ COMPLETE (2025-11-05)
-**Impact**: Complete rebrand to "Arnaldo" + Professional landing page
-**Time Spent**: ~3 hours (domain cleanup + design improvements)
-**PR**: #10 (5 commits, 12 files modified)
+**Loading Experience Enhancement**:
+- ✅ Expanded loading messages from 7 → 13 phrases
+- ✅ Brazilian Portuguese phrases (cafézinho, mágica, carinho, etc.)
+- ✅ 52-second cycle (vs 28s), less repetition, more engaging
 
-**Domain Migration (Complete Rebrand)**:
-- ✅ Updated 20 documentation URLs (arqcashflow.vercel.app → arnaldo.ai)
-- ✅ Updated contact emails (contato@arqcashflow.com → contato@arnaldo.ai)
-- ✅ Updated 15+ user-facing branding instances
-  - NavBar, LandingPage, Login, Register, Onboarding headers
-  - Dashboard welcome message
-  - Legal documents (privacy policy, terms of service)
-  - SEO metadata (title, OpenGraph, authors)
-- ✅ **CRITICAL**: Updated AI agent system prompt
-  - OperationsAgentService now introduces itself as "Arnaldo"
-  - Consistent brand personality across UI and AI interactions
+**Components Created**:
+- `OnboardingChatContainer.tsx` - Main chat container
+- `ChipButtons.tsx` - Guided response buttons
+- `ChatFileUpload.tsx` - File upload in chat
+- `StreamingMessage.tsx` - Typing animation
+- `EducationPhase.tsx` - Message sequence manager
+- `TypingIndicator.tsx` - Animated dots
+- `useOnboardingTransition.ts` - Transition state machine
+- `ExpenseMissingBanner.tsx` - Dashboard banner
+- `useExpenseReinforcement.ts` - Reinforcement hook
 
-**Landing Page Professional Redesign**:
-- ✅ Replaced emoji cards with professional SVG Heroicons
-  - Gradient circles (orange-100 to red-50) with hover effects
-  - 6 problem cards with consistent modern design
-- ✅ Created 3 rotating interactive mockups showcasing:
-  - AI answering financial queries
-  - Registering expenses via message
-  - Importing files automatically (12 patients, 38 receivables, 15 expenses)
-- ✅ Auto-rotation every 10 seconds (mockups + testimonials)
-  - Users can still manually click dots
-  - Proper React cleanup on unmount
-- ✅ Streamlined content
-  - Removed redundant "Tudo que você precisa" section (4 cards)
-  - Consolidated features into solution section (3 steps)
-- ✅ Fixed background color consistency
-  - Alternating white → grey pattern throughout page
-  - Professional visual rhythm
-- ✅ Added avatar circles with user initials for testimonials
-  - Gradient (blue-100 to purple-100) with white border
+**Success Metrics (Target)**:
+- Onboarding completion rate ≥ 85%
+- Total time < 3 minutes
+- Chat usage in first month ≥ 60%
 
-**Results**:
-- 100% consistent "Arnaldo" branding across entire app
-- Modern SaaS-grade landing page aesthetic
-- More engaging user experience (auto-rotating demos)
-- Better visual hierarchy and section separation
-- AI agent personality aligned with brand
-
-**Files Modified**: 12 files (139 additions, 133 deletions)
-**Build Status**: ✅ Production build passing
-
----
-
-### **Chat Visibility & Onboarding Integration** ✅ COMPLETE (2025-10-27)
-**Impact**: Chat now prominently featured throughout user journey
-**Result**: Onboarding redesign made Arnaldo the primary interaction method
-
-**Improvements:**
-- ✅ Chat-first onboarding (Phases 1-5)
-- ✅ File upload integrated into chat conversation
-- ✅ GlobalChat FAB appears immediately after onboarding transition
-- ✅ Expense reinforcement via AI proactive messaging
-- ✅ Users now discover chat naturally as part of core flow
-
-**Related**: ADR-017, Onboarding redesign PR #5
-
----
-
-### **File Import Reliability & PDF Processing** ✅ COMPLETE (2025-10-27)
-**Impact**: Robust file handling across all formats
-**Result**: PDF processing working, import reliability at production quality
-
-**Improvements:**
-- ✅ PDF processing implemented and working
-- ✅ Excel/spreadsheet import reliability fixed
-- ✅ Error handling improved
-- ✅ Multi-file upload stability achieved
-
-**Status**: Reliability complete, speed optimization remains in TO DO
-
----
-
-### **Dashboard "Resolver" Modals Redesign** ✅ COMPLETE (2025-10-27)
-**Impact**: Transformed first-touch experience from overwhelming to delightful
-**Time Spent**: ~3 hours (all 5 steps)
-**Status**: Production-ready
-
-**Problem Solved**:
-Users clicking "Resolver" on overdue items were greeted with 14-21 field forms. This created:
-- Analysis paralysis (which fields matter?)
-- Slow resolution (30+ seconds)
-- High abandonment (~40%)
-- Poor first impression after onboarding
-
-**Solution Implemented**: "Quick Actions First" Pattern
-- Progressive disclosure: Action selection → Minimal form → Full form (opt-in)
-- Task-oriented UX: "What do you want to do?" vs "Fill these fields"
-- Smart defaults: Today's date, full amount pre-filled
-- Friendly copy: "Quando você recebeu?" vs "Received Date"
-
-**Implementation**:
-- [x] QuickResolveModal - Action selection with 2 big buttons + small "editar detalhes" link
-- [x] QuickReceiveForm - 2 fields (date + amount) with smart defaults
-- [x] QuickPostponeForm - 1 field (new date) with quick +7/+15/+30 day buttons
-- [x] Dashboard integration - Seamless flow with back navigation
-- [x] Full forms preserved - Accessible via "editar detalhes" link
-
-**Files Created**:
-- `app/components/modals/QuickResolveModal.tsx`
-- `app/components/modals/QuickReceiveForm.tsx`
-- `app/components/modals/QuickPostponeForm.tsx`
-
-**Files Modified**:
-- `app/page.tsx` (Dashboard - integrated quick modals, added handlers)
-
-**Expected Impact** (to be measured):
-- Time to resolve: 30s → 5s (83% reduction) ⏱️
-- Click count: 15+ → 3 clicks ✓
-- Completion rate: ~60% → ~95% 📈
-- First impression: "This is complicated" → "This is easy!" 😊
-
-**UX Improvements**:
-- ✅ Visual hierarchy: Green primary button, blue secondary, small text link
-- ✅ Contextual info: Shows entity details, days overdue, amount
-- ✅ Progressive complexity: Can go deeper if needed
-- ✅ Mobile responsive: Works on all screen sizes
-- ✅ Keyboard accessible: Tab navigation, Enter to submit
-- ✅ Error handling: Validation, network failures
-- ✅ Loading states: Disabled buttons, "Salvando..." text
-
-**Result**: Critical first impression moment transformed from cognitive burden to confidence builder
-
-**Related**: BACKLOG Dashboard Modals entry, User Feedback priorities
-
----
-
-### **Expense Registration Reinforcement (Phase 7)** ✅ COMPLETE (2025-10-27)
-**Impact**: Multi-touchpoint strategy to guide contract-only users to add expenses
-**Time Spent**: ~6 hours (all 3 phases)
-**Status**: Production-ready
-
-**Implementation**:
-- [x] **Phase 7.1: Dashboard Banner** - Detects contracts without expenses, shows dismissible banner
-- [x] **Phase 7.2: AI Proactive Message** - 10-second delay, personalized Arnaldo message, auto-opens chat
-- [x] **Phase 7.3: Conversational Creation** - Leverages existing OperationsAgent for natural language expense creation
-
-**Files Created/Modified**:
-- `app/components/dashboard/ExpenseMissingBanner.tsx` (new component)
-- `app/hooks/useExpenseReinforcement.ts` (new hook)
-- `app/contexts/ChatContext.tsx` (added `addProactiveMessage` method)
-- `app/page.tsx` (integrated banner and hook)
-- `app/api/dashboard/route.ts` (added expense count and receivables total)
-
-**Features**:
-- ✅ Dashboard banner with contract count and receivables total
-- ✅ LocalStorage persistence for banner dismissal
-- ✅ SessionStorage for one-time proactive message per session
-- ✅ Auto-opens chat after 10 seconds with personalized message
-- ✅ Natural language expense creation via existing OperationsAgent
-- ✅ Multi-touchpoint reinforcement (visual + conversational)
-
-**Result**: Complete post-onboarding reinforcement system ensuring data completeness
-
-**Related**: ADR-017 Chat-First Onboarding (Phase 7), BACKLOG entry implementation
-
----
-
-### **Phase 1: Registration Auto-Login to Onboarding** ✅ COMPLETE (2025-10-17)
-**Impact**: Seamless entry from registration to onboarding with zero UI flash
-**Time Spent**: ~2 hours (implementation + edge case fixes)
-**Status**: Production-ready, all flash issues resolved
-
-**Implementation**:
-- [x] Auto-login after successful registration
-- [x] Redirect to `/onboarding` instead of `/login`
-- [x] Handle edge cases (duplicate emails, validation errors)
-- [x] Prevent authenticated users from accessing registration (back button fix)
-- [x] Hide NavBar on `/login`, `/register`, `/onboarding` regardless of auth status
-- [x] Hide GlobalChat on onboarding page
-- [x] Fix auth page flash with early return when authenticated
-
-**Files Modified**:
-- `app/register/page.tsx` (auto-login + anti-flash logic)
-- `app/login/page.tsx` (auth check + early return)
-- `app/components/NavBar.tsx` (simplified conditional)
-- `app/components/chat/GlobalChat.tsx` (hide on onboarding)
-
-**Result**: Seamless registration → auto-login → onboarding flow with zero flash
-
-**Related**: ADR-017 Chat-First Onboarding, Part of Phase 1
+**Phase 6 Status**: DEFERRED (E2E tests, accessibility audit, performance optimization - not critical for launch)
 
 ---
 
@@ -747,5 +417,5 @@ Users clicking "Resolver" on overdue items were greeted with 14-21 field forms. 
 
 ---
 
-**Last Updated**: 2025-11-04
-**Status**: DOING (2 active - Profession Modularization Week 3 + Chat Latency ADR ready), TO DO (2 items - file speed + landing page), BACKLOG (22+ items), DONE (4 recent)
+**Last Updated**: 2025-11-05
+**Status**: DOING (none), TO DO (2 items - file speed + landing page), BACKLOG (22+ items), DONE (1 recent - Chat-First Onboarding)
