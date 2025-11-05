@@ -1,7 +1,7 @@
 # ArqCashflow Development Backlog
 
 **Purpose**: Central source of truth for project priorities and development status
-**Last Updated**: 2025-11-04 (ADR-020 Chat Streaming created, ready for implementation)
+**Last Updated**: 2025-11-05 (Domain cleanup & landing page improvements complete)
 **Update Frequency**: Every LLM session MUST update this document when completing tasks
 
 ---
@@ -450,20 +450,19 @@ This backlog **DOES NOT** replace other documentation:
 
 ---
 
-### **Landing Page Redesign** (8-12 hours)
+### **Landing Page Redesign** (PARTIALLY COMPLETE - Pricing Section Remaining)
 
-**Current Issues**:
-- Too wordy, needs more objective content
-- Missing pricing information
-- Doesn't emphasize conversational AI
-- Too many sections dilute message
+**✅ Completed (2025-11-05)**:
+- Professional modern design with SVG icons
+- Rotating interactive mockups (3 examples)
+- Auto-rotation every 10 seconds for engagement
+- Streamlined content (removed redundant features section)
+- Consistent background color pattern
+- "Arnaldo" branding throughout
 
-**Goals**:
-- More professional look (modern, clean design)
-- Add pricing section with clear tiers
-- Focus on conversational AI (Arnaldo as primary method)
-- Reduce content, remove redundant sections
-- Show agent in action (demo/video)
+**❌ Remaining**:
+- Add pricing section with clear tiers (4-6 hours)
+- Demo video or interactive agent showcase (optional)
 
 **Location**: `app/components/LandingPage.tsx`
 
@@ -649,6 +648,55 @@ This backlog **DOES NOT** replace other documentation:
 ---
 
 ## ✅ DONE (Recently Completed)
+
+### **Domain Migration Cleanup & Landing Page Improvements** ✅ COMPLETE (2025-11-05)
+**Impact**: Complete rebrand to "Arnaldo" + Professional landing page
+**Time Spent**: ~3 hours (domain cleanup + design improvements)
+**PR**: #10 (5 commits, 12 files modified)
+
+**Domain Migration (Complete Rebrand)**:
+- ✅ Updated 20 documentation URLs (arqcashflow.vercel.app → arnaldo.ai)
+- ✅ Updated contact emails (contato@arqcashflow.com → contato@arnaldo.ai)
+- ✅ Updated 15+ user-facing branding instances
+  - NavBar, LandingPage, Login, Register, Onboarding headers
+  - Dashboard welcome message
+  - Legal documents (privacy policy, terms of service)
+  - SEO metadata (title, OpenGraph, authors)
+- ✅ **CRITICAL**: Updated AI agent system prompt
+  - OperationsAgentService now introduces itself as "Arnaldo"
+  - Consistent brand personality across UI and AI interactions
+
+**Landing Page Professional Redesign**:
+- ✅ Replaced emoji cards with professional SVG Heroicons
+  - Gradient circles (orange-100 to red-50) with hover effects
+  - 6 problem cards with consistent modern design
+- ✅ Created 3 rotating interactive mockups showcasing:
+  - AI answering financial queries
+  - Registering expenses via message
+  - Importing files automatically (12 patients, 38 receivables, 15 expenses)
+- ✅ Auto-rotation every 10 seconds (mockups + testimonials)
+  - Users can still manually click dots
+  - Proper React cleanup on unmount
+- ✅ Streamlined content
+  - Removed redundant "Tudo que você precisa" section (4 cards)
+  - Consolidated features into solution section (3 steps)
+- ✅ Fixed background color consistency
+  - Alternating white → grey pattern throughout page
+  - Professional visual rhythm
+- ✅ Added avatar circles with user initials for testimonials
+  - Gradient (blue-100 to purple-100) with white border
+
+**Results**:
+- 100% consistent "Arnaldo" branding across entire app
+- Modern SaaS-grade landing page aesthetic
+- More engaging user experience (auto-rotating demos)
+- Better visual hierarchy and section separation
+- AI agent personality aligned with brand
+
+**Files Modified**: 12 files (139 additions, 133 deletions)
+**Build Status**: ✅ Production build passing
+
+---
 
 ### **Chat Visibility & Onboarding Integration** ✅ COMPLETE (2025-10-27)
 **Impact**: Chat now prominently featured throughout user journey
