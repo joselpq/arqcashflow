@@ -555,6 +555,27 @@ This backlog **DOES NOT** replace other documentation:
 
 ### Platform & Architecture
 
+#### **Validation & Audit Logging Review** (3-5 days)
+- **Problem**: Current validation and audit logging systems add complexity with limited value
+- **Scope**: Review and simplify validation rules and audit logging logic
+- **Issues Identified**:
+  - Overly restrictive validation rules blocking valid use cases (e.g., prepayments, scheduled dates)
+  - Audit logging creating foreign key constraints that complicate deletion flows
+  - Business rule warnings generating noise without clear actionable insights
+  - Validation logic duplicated across multiple layers (schemas, services, database)
+- **Potential Solutions**:
+  - Simplify validation to critical rules only (security, data integrity)
+  - Make audit logging optional or move to separate event log with soft references
+  - Remove business rule warnings or convert to passive analytics
+  - Consolidate validation into single layer
+- **Benefits**:
+  - Faster development (less validation to maintain)
+  - More flexible system (fewer blocked edge cases)
+  - Simpler deletion flows (no audit log constraints)
+  - Clearer error messages (only critical validations fail)
+- **Priority**: MEDIUM-HIGH (affecting development velocity and UX)
+- **Risks**: Need to ensure critical data integrity rules remain enforced
+
 #### **Profession-Based Application Modularization** (6-8 weeks)
 - **Problem**: Application is architecture-centric, needs to adapt to different professions
 - **Scope**: Make platform adaptable to different professional contexts

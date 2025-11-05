@@ -1,5 +1,5 @@
 ---
-title: "ADR-020: Chat Streaming for Sub-Second Response Latency"
+title: "020: Chat Streaming for Sub-Second Response Latency"
 type: "decision"
 audience: ["developer", "agent"]
 contexts: ["architecture", "performance", "ai-integration", "user-experience"]
@@ -10,12 +10,13 @@ agent_roles: ["architecture-reviewer", "performance-specialist", "ai-integration
 decision_status: "accepted"
 decision_date: "2025-11-04"
 related:
-  - developer/architecture/decisions/adr-002-claude-ai-integration.md
-  - agents/contexts/ai-agent-development.md
+  - decisions/002-claude-migration.md
+  - decisions/008-ai-agent-strategy.md
+  - decisions/017-chat-first-onboarding-redesign.md
 dependencies: ["vercel-ai-sdk", "anthropic-sdk", "claude-api"]
 ---
 
-# ADR-020: Chat Streaming for Sub-Second Response Latency
+# 020: Chat Streaming for Sub-Second Response Latency
 
 ## Context for LLM Agents
 
@@ -779,9 +780,9 @@ private async buildSystemPrompt(today: string): Promise<string> {
 ## References
 
 ### Related Decisions
-- [ADR-002: Claude AI Integration](./adr-002-claude-ai-integration.md): Original AI integration architecture
-- [Operations Agent Service](../../../reference/services/operations-agent.md): Service implementation details
-- [Chat Architecture](../../../developer/architecture/chat-system.md): Overall chat system design
+- [002: Claude Migration](./002-claude-migration.md): Original AI integration architecture
+- [008: AI Agent Strategy](./008-ai-agent-strategy.md): Overall AI agent strategy and vision
+- [017: Chat-First Onboarding](./017-chat-first-onboarding-redesign.md): Chat-first UX design
 
 ### External Resources
 - [Vercel AI SDK - Streaming](https://sdk.vercel.ai/docs/ai-sdk-core/streaming): Official streaming documentation
