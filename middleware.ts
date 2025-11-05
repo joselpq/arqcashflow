@@ -4,6 +4,15 @@ import { NextResponse } from "next/server";
 export default withAuth(
   function middleware(req) {
     const pathname = req.nextUrl.pathname;
+    const hostname = req.headers.get('host');
+
+    // Domain Migration: Redirect from old domain to new domain (arnaldo.ai)
+    if (hostname === 'arqcashflow.vercel.app') {
+      const newUrl = req.nextUrl.clone();
+      newUrl.hostname = 'arnaldo.ai';
+      newUrl.protocol = 'https:';
+      return NextResponse.redirect(newUrl, { status: 301 }); // Permanent redirect
+    }
 
     // Redirect old individual pages to new Projetos sub-tabs
     if (pathname === '/contracts') {
