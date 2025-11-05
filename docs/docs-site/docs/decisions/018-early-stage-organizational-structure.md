@@ -157,7 +157,7 @@ dependencies: ["claude-api", "service-layer", "onboarding-flow"]
 - Target: 60%+ use Arnaldo in first month
 
 **Secondary Metrics**:
-- Time to first value (currently ~5 min, target `<3 min`)
+- Time to first value (currently ~5 min, target less than 3 min)
 - Week 1 retention rate (target: 70%+)
 - Organic traffic growth (MoM increase)
 - Cost per activated user (CAC efficiency)
