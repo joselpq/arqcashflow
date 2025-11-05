@@ -20,7 +20,7 @@
  */
 
 import { createAnthropic } from '@ai-sdk/anthropic'
-import { generateText, tool, stepCountIs, type CoreMessage } from 'ai'
+import { generateText, streamText, tool, stepCountIs, type CoreMessage } from 'ai'
 import { z } from 'zod'
 import type { ServiceContext } from './BaseService'
 import { ExpenseService } from './ExpenseService'
@@ -64,10 +64,17 @@ export class OperationsAgentService {
     console.log('[Operations] Received history items:', history.length)
 
     // ✅ Vercel AI SDK handles the entire agentic loop automatically!
+    // Note: For prompt caching, we add system message to messages array (not system parameter)
     const result = await generateText({
       model: this.anthropic('claude-sonnet-4-20250514'),
-      system: systemPrompt,
       messages: [
+        {
+          role: 'system',
+          content: systemPrompt,
+          providerOptions: {
+            anthropic: { cacheControl: { type: 'ephemeral' } } // ✅ 90% cost reduction for cached tokens
+          }
+        },
         ...history, // Previous conversation WITH all tool_use/tool_result blocks
         { role: 'user', content: message }
       ],
@@ -149,6 +156,87 @@ export class OperationsAgentService {
       conversationHistory: fullHistory, // ✅ Complete conversation with all tool context
       displayHistory: displayHistory    // User-facing messages only
     }
+  }
+
+  /**
+   * Process command with STREAMING (Phase 2 - ADR-020)
+   * Returns a streamable result for real-time token-by-token response
+   */
+  async processCommandStream(
+    message: string,
+    history: CoreMessage[] = []
+  ) {
+    const today = new Date().toISOString().split('T')[0]
+    const systemPrompt = await this.buildSystemPrompt(today)
+
+    console.log('[Operations] Starting STREAMING agentic loop')
+    console.log('[Operations] Received history items:', history.length)
+
+    // ✅ Use streamText() for real-time streaming responses
+    // Note: For prompt caching, we add system message to messages array (not system parameter)
+    const result = streamText({
+      model: this.anthropic('claude-sonnet-4-20250514'),
+      messages: [
+        {
+          role: 'system',
+          content: systemPrompt,
+          providerOptions: {
+            anthropic: { cacheControl: { type: 'ephemeral' } } // ✅ 90% cost reduction for cached tokens
+          }
+        },
+        ...history, // Previous conversation WITH all tool_use/tool_result blocks
+        { role: 'user', content: message }
+      ],
+      tools: {
+        query_database: tool({
+          description: 'Execute SELECT query on PostgreSQL database to retrieve financial data',
+          inputSchema: z.object({
+            sql: z.string().describe('PostgreSQL SELECT query with proper column quoting. Must filter by teamId.')
+          }),
+          execute: async ({ sql }) => {
+            console.log('[Operations] Tool: query_database')
+            console.log('[Operations] SQL:', sql)
+            const results = await this.executeQuery(sql)
+            console.log('[Operations] Query returned', results.length, 'rows')
+            if (results.length > 0) {
+              const ids = results.map(r => r.id).filter(Boolean)
+              if (ids.length > 0) {
+                console.log('[Operations] IDs returned:', ids)
+              }
+            }
+            return results
+          }
+        }),
+        call_service: tool({
+          description: 'Execute CRUD operations on financial entities (contracts, receivables, expenses)',
+          inputSchema: z.object({
+            service: z.enum(['ExpenseService', 'ContractService', 'ReceivableService', 'RecurringExpenseService'])
+              .describe('Service to call'),
+            method: z.enum(['create', 'update', 'delete', 'bulkCreate', 'bulkUpdate', 'bulkDelete'])
+              .describe('Method to execute'),
+            params: z.any().describe('Operation parameters (entity data, IDs, etc.)')
+          }),
+          execute: async ({ service, method, params }) => {
+            console.log(`[Operations] Tool: call_service`)
+            console.log(`[Operations] ${service}.${method}`)
+            const result = await this.executeServiceCall(service, method, params)
+            console.log(`[Operations] ${service}.${method} completed`)
+            return result
+          }
+        })
+      },
+      stopWhen: stepCountIs(15), // Allow multi-step tool calling
+      onStepFinish: (stepResult) => {
+        console.log('[Operations] Streaming step finished:', {
+          finishReason: stepResult.finishReason,
+          usage: stepResult.usage,
+          toolCalls: stepResult.toolCalls?.length || 0,
+          hasText: !!stepResult.text
+        })
+      }
+    })
+
+    return result
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

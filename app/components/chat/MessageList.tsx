@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import { useTerminology } from '@/lib/hooks/useTerminology'
+import { ThinkingIndicator } from './ThinkingIndicator'
 
 export interface Message {
   role: 'user' | 'assistant'
@@ -80,12 +81,8 @@ export default function MessageList({ messages, loading = false }: MessageListPr
 
       {loading && (
         <div className="flex justify-start">
-          <div className="bg-neutral-100 rounded-lg px-4 py-2">
-            <div className="flex gap-1">
-              <span className="w-2 h-2 bg-neutral-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-              <span className="w-2 h-2 bg-neutral-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-              <span className="w-2 h-2 bg-neutral-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-            </div>
+          <div className="bg-neutral-100 rounded-lg">
+            <ThinkingIndicator />
           </div>
         </div>
       )}
