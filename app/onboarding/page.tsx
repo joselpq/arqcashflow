@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import OnboardingFileUpload from "../components/onboarding/OnboardingFileUpload";
@@ -440,6 +440,17 @@ export default function OnboardingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 to-blue-50 p-4 sm:p-6 lg:p-8">
       <div className="relative w-full h-full min-h-screen">
+        {/* Logout button - top right */}
+        <div className="absolute top-0 right-0 z-10">
+          <button
+            onClick={() => signOut({ callbackUrl: '/' })}
+            className="text-sm text-neutral-600 hover:text-neutral-900 transition-colors px-4 py-2 rounded-lg hover:bg-white/50"
+            title="Sair e voltar para página inicial"
+          >
+            Sair
+          </button>
+        </div>
+
         {/* Progress Indicator */}
         <div className="mb-8">
           <div className="flex items-center justify-center mb-4">
