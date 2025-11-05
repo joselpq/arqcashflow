@@ -5,6 +5,25 @@ import { useState } from "react";
 
 export default function LandingPage() {
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
+  const [currentMockup, setCurrentMockup] = useState(0);
+
+  const mockups = [
+    {
+      type: "query",
+      userMessage: "Qual foi meu lucro nos últimos 3 meses?",
+      aiResponse: "Nos últimos 3 meses seu lucro foi de R$ 127.450. Cresceu 23% comparado ao trimestre anterior. Seus principais clientes foram..."
+    },
+    {
+      type: "expense",
+      userMessage: "Comprei materiais na Leroy Merlin por R$ 3.200, vence dia 15",
+      aiResponse: "✓ Despesa registrada com sucesso! Categoria: Materiais | Valor: R$ 3.200 | Vencimento: 15/11/2025 | Fornecedor: Leroy Merlin"
+    },
+    {
+      type: "import",
+      userMessage: "📎 planilha-financeira-outubro.xlsx",
+      aiResponse: "✓ Arquivo importado com sucesso! Encontrei e organizei: 12 pacientes, 38 recebíveis e 15 despesas. Tudo pronto no seu dashboard!"
+    }
+  ];
 
   const testimonials = [
     {
@@ -24,29 +43,6 @@ export default function LandingPage() {
       role: "Advogada - Oliveira & Associados",
       text: "Simplesmente joguei minhas planilhas bagunçadas e em 5 minutos estava tudo organizado. Incrível!",
       image: "/testimonial-3.jpg"
-    }
-  ];
-
-  const features = [
-    {
-      icon: "🤖",
-      title: "Assistente IA Personal",
-      description: "Um CFO pessoal disponível 24/7 para responder qualquer pergunta sobre suas finanças"
-    },
-    {
-      icon: "📊",
-      title: "Dashboard Inteligente",
-      description: "Veja sua saúde financeira, próximos recebimentos e gastos em uma tela limpa e clara"
-    },
-    {
-      icon: "📱",
-      title: "Controle por WhatsApp",
-      description: "Adicione contratos e despesas enviando uma mensagem ou foto pelo WhatsApp"
-    },
-    {
-      icon: "🎯",
-      title: "Zero Configuração",
-      description: "Sem complicação para configurar. Em 5 minutos você já está controlando suas finanças"
     }
   ];
 
@@ -313,55 +309,43 @@ export default function LandingPage() {
                       <span className="text-white text-sm font-semibold">IA</span>
                     </div>
                     <div>
-                      <div className="font-semibold text-neutral-900">Assistente IA</div>
+                      <div className="font-semibold text-neutral-900">Arnaldo</div>
                       <div className="text-sm text-neutral-500">Online agora</div>
                     </div>
                   </div>
                   <div className="bg-blue-50 rounded-lg p-4 mb-3">
                     <p className="text-neutral-700 text-sm">
-                      &quot;Qual foi meu lucro nos últimos 3 meses?&quot;
+                      {mockups[currentMockup].userMessage}
                     </p>
                   </div>
                   <div className="bg-neutral-100 rounded-lg p-4">
                     <p className="text-neutral-700 text-sm">
-                      Nos últimos 3 meses seu lucro foi de <strong>R$ 127.450</strong>.
-                      Cresceu 23% comparado ao trimestre anterior. Seus principais clientes foram...
+                      {mockups[currentMockup].aiResponse}
                     </p>
                   </div>
                 </div>
+
+                {/* Mockup Navigation Dots */}
+                <div className="flex justify-center space-x-2 mb-4">
+                  {mockups.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentMockup(index)}
+                      className={`w-2 h-2 rounded-full transition-colors ${
+                        index === currentMockup ? 'bg-blue-600' : 'bg-neutral-300'
+                      }`}
+                      aria-label={`Ver exemplo ${index + 1}`}
+                    />
+                  ))}
+                </div>
+
                 <div className="text-center text-sm text-neutral-500">
-                  Pergunte qualquer coisa sobre suas finanças
+                  {currentMockup === 0 && "Pergunte qualquer coisa sobre suas finanças"}
+                  {currentMockup === 1 && "Registre despesas por mensagem"}
+                  {currentMockup === 2 && "Importe arquivos automaticamente"}
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="py-20 bg-neutral-50 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-neutral-900 mb-6">
-              Tudo que você precisa em um lugar
-            </h2>
-            <p className="text-xl text-neutral-600 max-w-3xl mx-auto">
-              Recursos pensados especificamente para profissionais que querem simplicidade
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {features.map((feature, index) => (
-              <div key={index} className="bg-white rounded-xl p-8 shadow-sm border border-neutral-200 hover:shadow-md transition-shadow">
-                <div className="text-4xl mb-6">{feature.icon}</div>
-                <h3 className="text-xl font-semibold text-neutral-900 mb-4">
-                  {feature.title}
-                </h3>
-                <p className="text-neutral-600">
-                  {feature.description}
-                </p>
-              </div>
-            ))}
           </div>
         </div>
       </section>
