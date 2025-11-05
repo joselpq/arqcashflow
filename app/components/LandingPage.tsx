@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function LandingPage() {
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
@@ -45,6 +45,22 @@ export default function LandingPage() {
       image: "/testimonial-3.jpg"
     }
   ];
+
+  // Auto-rotate mockups every 10 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentMockup((prev) => (prev + 1) % mockups.length);
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [mockups.length]);
+
+  // Auto-rotate testimonials every 10 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [testimonials.length]);
 
   return (
     <div className="min-h-screen bg-white">
@@ -351,7 +367,7 @@ export default function LandingPage() {
       </section>
 
       {/* Testimonials Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
+      <section className="py-20 bg-neutral-50 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-neutral-900 mb-6">
