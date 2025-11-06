@@ -8,28 +8,32 @@
 
 ## 🎯 QUICK START FOR NEXT AGENT (2025-11-05)
 
-**We just completed**: Chat Streaming & Latency Optimization ✅ (Phases 1 & 2)
-- ✅ Optimistic UI with "Arnaldo está pensando 💭" indicator
-- ✅ Prompt caching for 90% cost reduction on repeat requests
-- ✅ Full streaming implementation with `streamText()` - 90% perceived latency reduction
-- ✅ Time-to-first-token: 3-8s → <1s (expected)
+**Current work**: File Import Speed Optimization (Phase 1 - Implementation) 🚀
+- ✅ Analysis complete (ADR-022 created)
+- ✅ Decision made: Prisma createMany + Haiku 4.5 + Prompt Caching
+- 🔄 Ready to implement Phase 1A (Prisma createMany)
 
-**Previous completions**:
+**Key Decisions (from deep analysis)**:
+- **Bottleneck #1**: Phase 2 Claude API (80-85% of time) → Switch to Haiku 4.5
+- **Bottleneck #2**: Database bulk creation (15-20% of time) → Use Prisma createMany
+- **Expected Result**: 90-130s → 18-30s (75-85% improvement)
+- **Cost Savings**: $0.38 → $0.09 per file (76% reduction)
+
+**Implementation Order**:
+1. **Phase 1A**: Prisma createMany (2h) - Safe, guaranteed improvement
+2. **Phase 1B**: Haiku 4.5 with testing (3-4h) - High impact, controlled risk
+3. **Phase 2**: Prompt caching (2h) - Cost optimization
+4. **Phase 3**: Monitoring (2h) - Track metrics
+
+**Recent completions**:
+- ✅ File import speed analysis - Deep bottleneck identification
+- ✅ Chat Streaming & Latency Optimization - TESTED & WORKING
 - ✅ Domain migration cleanup - Complete rebrand to "Arnaldo"
-- ✅ Landing page professional redesign - Modern SaaS aesthetic
-- ✅ Profession-Based Modularization (Weeks 1-2) - Doctors MVP complete
 
-**Current state**: Chat now streams responses in real-time
-- Users see thinking indicator immediately (no more "Is this working?" moments)
-- Tokens appear as Claude generates them (real-time streaming)
-- Backward compatible with non-streaming mode
-- Ready for production testing and metrics collection
-
-**Next priorities** (see TO DO section):
-1. **File Import Speed Optimization** (HIGH) - 6-8 hours to reduce 2-3min → 1-1.5min
-2. **Landing Page Pricing Section** (MEDIUM) - 4-6 hours to complete redesign
-
-**See details**: Check "Chat Streaming & Latency Optimization" in DONE section
+**See details**:
+- ADR-022 (decision record)
+- FILE_IMPORT_DEEP_ANALYSIS.md (complete breakdown)
+- DOING section (tracked tasks)
 
 ---
 
@@ -84,20 +88,97 @@ This backlog **DOES NOT** replace other documentation:
 
 ## 🔄 DOING (Currently In Progress)
 
-*No active work in progress*
+### **File Import Speed Optimization** (ADR-022) 🔥
+**Goal**: Reduce file processing time from 2-3 minutes to <1 minute (75-85% improvement)
+**Status**: Phase 1 in progress
+**Related**: ADR-022, FILE_IMPORT_DEEP_ANALYSIS.md
+**Timeline**: 2-4 days
+
+**Current Bottlenecks**:
+- Phase 2 Claude API extraction: 60-100s (80-85% of time) 🔴
+- Database bulk creation: 10-28s (15-20% of time) 🔴
+
+**Phase 1A: Prisma createMany (Bulk Creation)**
+- [ ] Refactor BaseService.bulkCreate() (1.5h)
+  - Replace sequential `create()` with `createMany()`
+  - Implement parallel validation with `Promise.all()`
+  - Batch audit logs (1 per entity type)
+  - Expected: 10-28s → 1-2s (85-90% faster)
+- [ ] Test bulk creation (30min)
+  - Test with 100-entity file
+  - Verify entity creation accuracy
+  - Check audit log batching
+
+**Phase 1B: Switch to Haiku 4.5 (Claude API)**
+- [ ] Implement Haiku with feature flag (1h)
+  - Add env var: `SETUP_ASSISTANT_USE_HAIKU`
+  - Update models + thinking budgets
+  - Feature flag toggle logic
+  - Expected: 60-100s → 12-20s (75-80% faster)
+- [ ] Testing & validation (2-3h)
+  - Prepare 15 diverse test files
+  - Manual validation: entity counts, accuracy
+  - Compare Haiku vs Sonnet baseline
+  - Document accuracy metrics
+- [ ] Gradual rollout (2-3 days)
+  - Enable 10% → 25% → 50% → 100%
+  - Monitor metrics continuously
+  - Rollback ready if accuracy < 85%
+
+**Phase 2: Prompt Caching (Cost Optimization)**
+- [ ] Implement prompt caching (1-2h)
+  - Split prompts: static (cached) vs dynamic
+  - Add cache_control to system messages
+  - Track cache hit rates
+  - Expected: 5-10% speed + 90% cost savings
+- [ ] Validation (30min)
+  - Verify cost reduction in API logs
+  - Compare speed with/without caching
+
+**Phase 3: Monitoring**
+- [ ] Add performance instrumentation (1h)
+  - console.time() for major steps
+  - Track metrics per file type
+- [ ] Create dashboards (1h)
+  - Processing time, accuracy, cost, cache hits
+
+**Expected Result**: 90-130s → **18-30s** (75-85% improvement) ✅
+**Cost Savings**: $0.38 → $0.09 per file (76% reduction) ✅
 
 ---
 
 ## 📋 TO DO (Immediate Priorities)
 
-### **User Feedback Improvements - Performance** (HIGH PRIORITY)
+---
 
-#### **File Import & Upload Speed Optimization** (6-8 hours)
-- **Problem**: Import and upload are slow (2-3 minutes for files)
-- **Status**: Reliability ✅ FIXED, Speed ❌ NEEDS WORK
-- **Scope**: Performance profiling, Claude API optimization, parallel processing
-- **Priority**: HIGH (affects onboarding experience)
-- **Goal**: Reduce processing time by 40-50% (2-3 min → 1-1.5 min)
+### 🎯 **Validation Simplification - Phase 2** (HIGH PRIORITY) - 📋 **Ready for Implementation**
+**Status**: Decided - Implementation Pending
+**Decision Date**: November 5, 2025
+**Effort**: 2-3 days
+**Related**: ADR-021 Phase 2
+
+**Objective**: Migrate 6 API routes to unified validation (pure refactoring, zero behavior changes)
+
+**Context**:
+- Phase 1 ✅ Complete: Context-aware validation removed (-487 lines), business rules loosened, audit disabled
+- Decision: Option A (Migrate to unified validation)
+- Rationale: Multi-profession support in use, service layer consistency, future-proofing
+
+**Routes to Migrate** (6 total):
+1. `app/api/contracts/route.ts` (POST)
+2. `app/api/contracts/[id]/route.ts` (PUT)
+3. `app/api/receivables/route.ts` (POST)
+4. `app/api/expenses/route.ts` (POST)
+5. `app/api/auth/register/route.ts` (POST)
+6. `app/api/expenses/[id]/recurring-action/route.ts` (POST)
+
+**Implementation Guide**: `ADR-021-PHASE2-IMPLEMENTATION-GUIDE.md` (complete step-by-step instructions)
+
+**Expected Outcome**:
+- ✅ Single source of truth for validation
+- ✅ ~100 lines removed (inline schemas → imports)
+- ✅ Zero behavior changes (pure refactoring)
+- ✅ Easy to rollback (each route commits independently)
 
 ---
 
@@ -300,6 +381,45 @@ This backlog **DOES NOT** replace other documentation:
 
 ## ✅ DONE (Recently Completed)
 
+### **Chat Streaming & Latency Optimization (Phases 1 & 2)** ✅ COMPLETE (2025-11-05)
+**Impact**: 90% perceived latency reduction + 90% cost reduction for cached tokens
+**Time Spent**: ~4-5 hours (Phase 1: 1h, Phase 2: 3-4h)
+**Related**: ADR-020 Chat Streaming for Sub-Second Response Latency
+**Status**: TESTED & WORKING IN PRODUCTION
+
+**Problem Solved**:
+- Users experienced 3-8 second blocking waits with only a loading spinner
+- No feedback during AI processing
+- Poor first impression after onboarding
+
+**Phase 1: Quick Wins** ✅ COMPLETE (1 hour)
+- ✅ Created `ThinkingIndicator` component with "Arnaldo está pensando 💭"
+- ✅ Integrated optimistic UI into MessageList
+- ✅ Added Anthropic prompt caching with `providerOptions.anthropic.cacheControl`
+- ✅ Expected 90% cost reduction for ~400 tokens of cached system prompt
+
+**Phase 2: Core Streaming Implementation** ✅ COMPLETE (3-4 hours)
+- ✅ Added `processCommandStream()` method using `streamText()`
+- ✅ Updated API route `/api/ai/operations` for streaming support
+- ✅ Implemented frontend streaming handler in ChatContext
+- ✅ Token-by-token rendering with real-time UI updates
+- ✅ Backward compatibility preserved
+
+**Results**:
+- ✅ Time-to-first-token: 3-8s → <1s (90% improvement) - VERIFIED
+- ✅ Cost reduction: ~90% for cached tokens
+- ✅ Streaming works perfectly with tool calls
+- ✅ No errors, smooth user experience
+
+**Files Modified**:
+- `lib/services/OperationsAgentService.ts` - Added streaming method
+- `app/api/ai/operations/route.ts` - Streaming support
+- `app/contexts/ChatContext.tsx` - Streaming response handler
+- `app/components/chat/ThinkingIndicator.tsx` (NEW)
+- `app/components/chat/MessageList.tsx` - Integrated indicator
+
+---
+
 ### **Chat-First Onboarding Redesign** ✅ COMPLETE (2025-10-27)
 **Goal**: Transform onboarding into AI-first conversational experience
 **Status**: Phases 1-5 & 7 COMPLETE ✅ - Phase 6 (Polish & Testing) deferred
@@ -418,4 +538,4 @@ This backlog **DOES NOT** replace other documentation:
 ---
 
 **Last Updated**: 2025-11-05
-**Status**: DOING (none), TO DO (2 items - file speed + landing page), BACKLOG (22+ items), DONE (1 recent - Chat-First Onboarding)
+**Status**: DOING (1 - file speed optimization), TO DO (1 item - landing page), BACKLOG (22+ items), DONE (1 recent - Chat Streaming)

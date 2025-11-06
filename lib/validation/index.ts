@@ -52,20 +52,8 @@ export {
   MiddlewareSchemas,
 } from './api'
 
-// Context-aware validation system
-export type {
-  ValidationContext,
-} from './context'
-
-export {
-  ValidationLevel,
-  DEFAULT_CONTEXTS,
-  ContextAwareSchema,
-  ValidationContextDetector,
-  validateWithContext,
-  createContextValidator,
-  validationMiddleware,
-} from './context'
+// Context-aware validation system removed (ADR-021 Phase 1)
+// Events now use simple .partial() validation for flexibility
 
 // Re-export Zod for convenience
 export { z } from 'zod'
