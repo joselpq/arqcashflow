@@ -88,11 +88,11 @@ This backlog **DOES NOT** replace other documentation:
 
 ## 🔄 DOING (Currently In Progress)
 
-### **File Import Speed Optimization** (ADR-022) 🔥
-**Goal**: Reduce file processing time from 2-3 minutes to <1 minute (75-85% improvement)
-**Status**: ✅ Phase 1 Complete - Testing Needed
-**Related**: ADR-022, FILE_IMPORT_DEEP_ANALYSIS.md, commit c101d85
-**Timeline**: Testing (2-3 days), then Phase 2 (2-3h)
+### **File Import Speed Optimization** (ADR-022 & ADR-023) 🔥
+**Goal**: Reduce file processing time from 2-3 minutes to <10 seconds (70%+ improvement)
+**Status**: Phase 1 Complete ✅, Architecture V2 Planned (ADR-023)
+**Related**: ADR-022 (Phase 1), ADR-023 (Architecture V2), FILE_IMPORT_DEEP_ANALYSIS.md
+**Timeline**: 3-4 weeks for full V2 implementation
 
 **Current Status**:
 - ✅ Phase 2 Claude API bottleneck addressed (Haiku 4.5 feature flag)
@@ -125,25 +125,35 @@ This backlog **DOES NOT** replace other documentation:
   - Monitor metrics continuously
   - Rollback ready if accuracy < 85%
 
-**Phase 2: Prompt Caching (Cost Optimization)** - Ready to Implement
-- [ ] Implement prompt caching (1-2h)
-  - Split prompts: static (cached) vs dynamic
-  - Add cache_control to system messages
-  - Track cache hit rates
-  - Expected: 5-10% speed + 90% cost savings
-- [ ] Validation (30min)
-  - Verify cost reduction in API logs
-  - Compare speed with/without caching
+**Next: Architecture V2 (ADR-023)** - 70% improvement 🚀
+Goal: Chunked + Deterministic extraction for maximum speed
 
-**Phase 3: Monitoring**
-- [ ] Add performance instrumentation (1h)
-  - console.time() for major steps
-  - Track metrics per file type
-- [ ] Create dashboards (1h)
-  - Processing time, accuracy, cost, cache hits
+**Week 1: Row Chunking**
+- [ ] Create SetupAssistantServiceV2 (de-risked parallel implementation)
+- [ ] Implement sheet chunking (100 rows per chunk)
+- [ ] Add feature flag (SETUP_ASSISTANT_USE_V2)
+- [ ] Test with diverse files
+- Expected: 28s → 21s (25% faster)
 
-**Expected Result**: 90-130s → **18-30s** (75-85% improvement) ✅
-**Cost Savings**: $0.38 → $0.09 per file (76% reduction) ✅
+**Week 2-3: Deterministic Extraction**
+- [ ] Build column mapping prompts (AI maps columns once)
+- [ ] Build row classification (chunked + parallel)
+- [ ] Build deterministic extraction engine (pure code)
+- [ ] Extensive testing (50 files)
+- Expected: 28s → 11.5s (60% faster)
+
+**Week 4: Integration & Testing**
+- [ ] Combine chunking + deterministic
+- [ ] Add performance monitoring
+- [ ] Comprehensive test suite (100+ scenarios)
+- [ ] Gradual rollout (10% → 25% → 50% → 100%)
+- Expected: 28s → **8.5s** (70% faster) ✅
+
+**Expected Final Result**:
+- Speed: 90-130s → **8.5s** (70-90% improvement) 🏆
+- Cost: $0.38 → $0.02 per file (95% reduction)
+- Accuracy: Maintained at 95%+
+- Scalability: Linear O(n) with low constant factor
 
 ---
 
@@ -538,4 +548,4 @@ This backlog **DOES NOT** replace other documentation:
 ---
 
 **Last Updated**: 2025-11-06
-**Status**: DOING (1 - file speed optimization Phase 1 complete, testing pending), TO DO (2 items - validation simplification, landing page), BACKLOG (22+ items), DONE (1 recent - Chat Streaming)
+**Status**: DOING (1 - file speed optimization V2 ready to implement), TO DO (2 items - validation simplification, landing page), BACKLOG (22+ items), DONE (1 recent - Chat Streaming)
