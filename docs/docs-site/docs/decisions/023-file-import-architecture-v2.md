@@ -1,16 +1,24 @@
 ---
 title: "ADR-023: File Import Architecture V2 - Chunked + Deterministic Extraction"
-status: "proposed"
+status: "superseded"
 date: "2025-11-06"
 deciders: ["Jose Lyra", "Claude Code"]
 consulted: []
 informed: []
+superseded_by: ["ADR-024"]
 ---
 
 # ADR-023: File Import Architecture V2 - Chunked + Deterministic Extraction
 
 ## Status
-**Proposed** - Ready for implementation
+**⚠️ SUPERSEDED by ADR-024** (2025-11-07)
+
+This ADR documents the V2/V3 *planning* phase:
+- V2 Phase 1 (AI Chunking): ✅ Implemented
+- V2 Phase 2+3 (Deterministic): ❌ Failed testing (0-25% slower, 84% accuracy loss)
+- V3 (Unified Analysis): 📋 Proposed based on learnings
+
+**What Actually Got Deployed**: See [ADR-024](./024-file-import-unified-architecture-success.md) for the successful implementation that combined the best ideas with critical Excel metadata reading innovations.
 
 ## Context and Problem Statement
 
@@ -1440,6 +1448,389 @@ V2 uses a hybrid approach: AI for intelligence, code for speed.
 
 4. **User Feedback**: How do we collect feedback on extraction accuracy?
    - Answer: Add "Report Issue" button on import results page
+
+---
+
+## Implementation Results & Learnings (2025-11-06)
+
+### V2 Test Results: ❌ Failed
+
+**Test File**: 49 rows of receivables in Excel
+**Expected**: 30+ receivables extracted in <10s
+**Actual Results**:
+
+| Metric | V1 Baseline | V2 Deterministic | Change |
+|--------|-------------|------------------|--------|
+| **Time** | ~28-35s | **34.9s** | 0-25% SLOWER ❌ |
+| **Accuracy** | 95-100% | **16% (24 contracts, 1 receivable, 4 expenses instead of 30 receivables)** | 84% WORSE ❌ |
+| **Phase Breakdown** | - | Phase 1: 8.4s<br>Phase 2A: 11.2s<br>Phase 2B: 15.4s<br>Phase 2C: 0.002s | - |
+
+### Root Cause Analysis
+
+#### Problem #1: MORE AI Calls, Not Fewer
+```
+V1: 1 AI call per sheet = ~12-20s
+V2: 2 AI calls per sheet = 11s + 15s = 26s ❌
+
+Expected: 3s mapping + 3s classification = 6s
+Actual: 11s mapping + 15s classification = 26s (4.3x slower than expected!)
+```
+
+**Why**: Each AI call has TTFT (Time To First Token) overhead of 1.16-1.54s **just to start responding**, plus network latency. Multiple calls multiply this penalty.
+
+**Benchmark Source**: Artificial Analysis 2024, AIMultiple LLM Latency Benchmarks
+
+#### Problem #2: Row Classification Without Semantic Context
+The classification prompt receives:
+```csv
+Projeto,Cliente,Valor,Data,Status
+Casa Silva,Silva,1500,15/04/2024,Pendente
+```
+
+Without deeper context, AI cannot determine if this row is:
+- A **contract** (project worth R$1,500)
+- A **receivable** (payment installment of R$1,500)
+- An **expense** (project cost of R$1,500)
+
+**Result**: 84% misclassification rate (24 contracts + 1 receivable + 4 expenses ≠ 30 receivables)
+
+#### Problem #3: Wrong Assumptions in ADR
+| Assumption | Reality | Impact |
+|------------|---------|--------|
+| Column mapping: 3s | **11.2s** | 3.7x slower |
+| Row classification: 3s | **15.4s** | 5.1x slower |
+| Deterministic extraction: 0.5s | **0.002s** ✅ | Only fast part! |
+| Most sheets are mixed | **Most sheets = ONE entity type** | Over-engineering |
+
+### Key Insights from Testing
+
+1. **Network Latency Dominates**: "Few large requests >> many small requests" (confirmed by benchmarks)
+2. **TTFT Penalty**: Each API call adds 1.16-1.54s overhead before processing even starts
+3. **Context Matters**: Classification needs semantic understanding, not just structure
+4. **Sheet Homogeneity**: 90% of sheets contain ONE entity type, not mixed
+
+### Why V2 Failed: The Fundamental Flaw
+
+**Original Hypothesis**: "AI for mapping/classification, code for extraction = faster"
+
+**Reality**:
+- ❌ Column mapping alone takes 11s (longer than V1's full extraction!)
+- ❌ Row classification without context = poor accuracy
+- ❌ Two API calls > One API call (network latency penalty)
+- ✅ Deterministic extraction works great (0.002s) BUT useless if classification is wrong
+
+---
+
+## V3: Unified Analysis Architecture (Proposed)
+
+### Core Insight
+**Most sheets contain ONE entity type** (not mixed). We should optimize for the common case!
+
+### New Architecture
+
+```
+Phase 1: File Structure (<0.1s, pure code)
+  └─> Extract: filename, sheet names, column headers
+  └─> No AI needed! Just XLSX parsing
+
+Phase 2: Unified Semantic Analysis (5-8s, ONE AI call per sheet)
+  └─> Send to AI in ONE call:
+      - Sheet name
+      - Column headers
+      - First 10-20 rows as context
+  └─> AI returns:
+      {
+        "sheetType": "receivables" | "contracts" | "expenses" | "mixed",
+        "columnMapping": {
+          "Data Vencimento": {"field": "expectedDate", "transform": "date"},
+          "Valor": {"field": "amount", "transform": "currency"}
+        },
+        "rowTypes": ["receivable", ...] // ONLY if sheetType="mixed"
+      }
+  └─> Process multiple sheets in PARALLEL
+
+Phase 3: Deterministic Extraction (<1s, pure code)
+  └─> If sheetType ≠ "mixed": Extract ALL rows using mapping
+  └─> If sheetType = "mixed": Use rowTypes array
+  └─> Pure TypeScript, fast and consistent
+
+Phase 4: Bulk Create (1-2s)
+  └─> Standard bulk insert
+
+Total: ~7-10s (65-75% faster than V1!)
+```
+
+### V3 Optimizations
+
+#### 1. ONE AI Call Instead of TWO
+| V2 (Failed) | V3 (Proposed) |
+|-------------|---------------|
+| Call 1: Column mapping (11s) | **ONE unified call (5-8s)** |
+| Call 2: Row classification (15s) | |
+| **Total: 26s** | **Total: 5-8s** |
+
+**Savings**: ~18-21s per sheet!
+
+**Why Faster**:
+- Only ONE TTFT penalty (1.5s) instead of TWO (3s)
+- AI sees full context in ONE prompt (better accuracy)
+- Single network round-trip
+
+#### 2. Optimize for Common Case (90% of sheets)
+```typescript
+if (sheetType !== "mixed") {
+  // 90% of cases: ALL rows are same entity type
+  // Extract directly, no row-by-row classification needed!
+  return extractAllRows(columnMapping, sheetType)
+} else {
+  // 10% of cases: Multiple entity types
+  // Use AI-provided rowTypes array
+  return extractMixedRows(columnMapping, rowTypes)
+}
+```
+
+#### 3. Proper Parallelization
+```typescript
+// Process multiple sheets in parallel (pay TTFT once)
+const sheetAnalyses = await Promise.all(
+  sheets.map(sheet => analyzeSheetUnified(sheet))
+)
+// If 4 sheets: 6s total (not 24s!)
+```
+
+#### 4. Sequential vs Parallel Decision Matrix
+| Step | Method | Rationale |
+|------|--------|-----------|
+| File structure | Sequential | Too fast to parallelize (<0.1s) |
+| Sheet analysis | **Parallel** | Multiple AI calls = biggest bottleneck |
+| Deterministic extraction | Sequential | Pure code, negligible time |
+| Bulk create | **Parallel** | Database can handle concurrent inserts |
+
+### Expected Performance (V3)
+
+| File Size | V1 Baseline | V2 (Failed) | V3 (Proposed) | Improvement |
+|-----------|-------------|-------------|---------------|-------------|
+| Small (50 entities) | 40s | 35s | **7-10s** | 75-82% ✅ |
+| Medium (200 entities) | 70s | 60s | **8-12s** | 82-88% ✅ |
+| Large (500 entities) | 120s | 100s | **10-15s** | 87-92% ✅ |
+
+### API Call Patterns Comparison
+
+| Architecture | AI Calls | Network Round-trips | TTFT Penalty | Context Quality |
+|--------------|----------|---------------------|--------------|-----------------|
+| **V1** | 1 per sheet | 1 | 1.5s | Good ✅ |
+| **V2** | 2 per sheet | 2 | 3.0s | Poor (classification) ❌ |
+| **V3** | 1 per sheet | 1 | 1.5s | Excellent ✅ |
+
+### Detecting Single vs Multiple Entity Types
+
+**Question**: How to detect if a sheet contains one or multiple entity types?
+
+**Answer**: Ask AI in the unified analysis prompt!
+
+```typescript
+// Unified prompt asks BOTH questions at once:
+const prompt = `
+Analyze this sheet: "${sheetName}"
+
+Column Headers: ${headers.join(', ')}
+
+Sample Data (first 20 rows):
+${sampleRows}
+
+Return JSON:
+{
+  "sheetType": "receivables" | "contracts" | "expenses" | "mixed",
+  "columnMapping": {...},
+  "rowTypes": [...] // ONLY if sheetType="mixed"
+}
+
+IMPORTANT: Only return "mixed" if you see MULTIPLE entity types in the SAME sheet.
+If all rows are the same type, return that type (e.g., "receivables").
+`
+```
+
+**Why This Works**:
+- AI sees sample rows WITH context
+- Can understand semantic meaning (not just structure)
+- No extra API call needed (included in unified analysis)
+- Very accurate: AI can easily tell "these are all receivables" vs "mix of contracts and receivables"
+
+**Fallback Strategy**: If uncertain, AI returns `"mixed"` and provides row-by-row classification. We handle both cases correctly.
+
+### V3 Detailed Implementation Plan
+
+#### Architecture Breakdown
+
+| Step | Method | AI/Code | Sequential/Parallel | Time | Rationale |
+|------|--------|---------|---------------------|------|-----------|
+| **1. File Structure Extraction** | Programmatic | Code | Sequential | <0.1s | XLSX parsing, extract filename + sheet names + column headers |
+| **2. Unified Sheet Analysis** | AI (Haiku 4.5) | AI | **Parallel** across sheets | 5-8s | ONE call per sheet: column mapping + entity type detection + row classification (if mixed) |
+| **3. Deterministic Extraction** | Programmatic | Code | Sequential | <1s | Apply mappings + transformations to create JSON entities |
+| **4. Bulk Entity Creation** | Database | Code | **Parallel** by entity type | 1-2s | Prisma `createMany` with parallel execution |
+
+**Total Expected**: 7-11s for typical files (vs V1's 90-130s)
+
+#### Key Design Decisions
+
+1. **Unified Analysis (Step 2)**: Combine column mapping + entity type detection in ONE prompt
+   - **Why Together**: Avoid 2x TTFT penalty, AI needs full context for semantic understanding
+   - **Why Parallel**: Multiple sheets can be analyzed simultaneously without dependencies
+   - **Sample Size**: First 10-20 rows provides enough context for accurate classification
+
+2. **Smart Extraction (Step 3)**: Different logic for homogeneous vs mixed sheets
+   - **90% case (single entity type)**: Apply mapping to all rows directly
+   - **10% case (mixed types)**: Use AI-provided `rowTypes` array for row-by-row extraction
+   - **Why Deterministic**: Pure code is 5000x faster than AI (0.002s vs 10s)
+
+3. **Parallel Execution**: Only where it matters
+   - ✅ **Parallel**: Sheet analysis (biggest bottleneck)
+   - ✅ **Parallel**: Bulk creation by entity type (database handles it)
+   - ❌ **Sequential**: File structure (<0.1s, too fast to parallelize)
+   - ❌ **Sequential**: Deterministic extraction (<1s, negligible)
+
+#### Unified Analysis Prompt Template
+
+```typescript
+const prompt = `
+Analyze this spreadsheet for financial data extraction.
+
+CONTEXT:
+- Sheet Name: "${sheetName}"
+- Profession: ${professionConfig.businessContext.professionName}
+- File: "${filename}"
+
+COLUMN HEADERS:
+${headers.join(', ')}
+
+SAMPLE DATA (first 20 rows for context):
+${sampleRows}
+
+TASK:
+1. Identify what entity type(s) this sheet contains
+2. Map each column to our schema fields
+3. Specify transformation type for each column
+4. If mixed types, classify each sample row
+
+ENTITY TYPES:
+- "contracts": ${professionConfig.terminology.contract} (client projects/engagements)
+- "receivables": ${professionConfig.terminology.receivable} (expected payments/installments)
+- "expenses": ${professionConfig.terminology.expense} (business costs/spending)
+- "mixed": Multiple entity types in same sheet (rare!)
+
+OUTPUT FORMAT (JSON only):
+{
+  "sheetType": "receivables" | "contracts" | "expenses" | "mixed",
+  "columnMapping": {
+    "Column Name": {
+      "field": "schemaFieldName",
+      "transform": "date" | "currency" | "status" | "text" | "number" | "enum",
+      "enumValues": ["val1", "val2"]  // only if transform="enum"
+    }
+  },
+  "rowTypes": ["receivable", "receivable", ...]  // ONLY include if sheetType="mixed"
+}
+
+SCHEMA REFERENCE:
+${this.getSchemaForType('contracts', professionConfig)}
+${this.getSchemaForType('receivables', professionConfig)}
+${this.getSchemaForType('expenses', professionConfig)}
+
+IMPORTANT:
+- Only return "mixed" if you see MULTIPLE entity types in the SAME sheet
+- If all rows are the same type, return that specific type (e.g., "receivables")
+- rowTypes array should have EXACTLY one entry per data row (excluding header)
+- Column mapping keys must match EXACT column names from the CSV header
+
+Return ONLY the JSON output, nothing else.
+`
+```
+
+#### Implementation Structure
+
+```typescript
+// Phase 1: File Structure (pure code, <0.1s)
+const fileStructure = {
+  filename,
+  sheets: sheetsData.map(sheet => ({
+    name: sheet.name,
+    headers: parseHeaders(sheet.csv),
+    sampleRows: getSampleRows(sheet.csv, 20)
+  }))
+}
+
+// Phase 2: Unified Analysis (parallel AI, 5-8s total)
+const sheetAnalyses = await Promise.all(
+  fileStructure.sheets.map(sheet =>
+    this.analyzeSheetUnified(sheet, professionOverride)
+  )
+)
+
+// Phase 3: Deterministic Extraction (pure code, <1s)
+const extractedData = {
+  contracts: [],
+  receivables: [],
+  expenses: []
+}
+
+for (let i = 0; i < sheetsData.length; i++) {
+  const sheet = sheetsData[i]
+  const analysis = sheetAnalyses[i]
+
+  if (analysis.sheetType === 'mixed') {
+    // 10% case: mixed sheet
+    const rows = parseCSV(sheet.csv)
+    rows.forEach((row, idx) => {
+      const entityType = analysis.rowTypes[idx]
+      const entity = extractEntity(row, analysis.columnMapping, entityType)
+      extractedData[`${entityType}s`].push(entity)
+    })
+  } else {
+    // 90% case: homogeneous sheet
+    const rows = parseCSV(sheet.csv)
+    const entities = rows.map(row =>
+      extractEntity(row, analysis.columnMapping, analysis.sheetType)
+    )
+    extractedData[`${analysis.sheetType}s`].push(...entities)
+  }
+}
+
+// Phase 4: Bulk Creation (parallel by type, 1-2s)
+await Promise.all([
+  contractService.bulkCreate(extractedData.contracts),
+  receivableService.bulkCreate(extractedData.receivables),
+  expenseService.bulkCreate(extractedData.expenses)
+])
+```
+
+### V3 Implementation Roadmap
+
+**Week 1: Core Implementation**
+- [x] Document V3 architecture in ADR-023
+- [ ] Implement unified analysis prompt (combines mapping + type detection)
+- [ ] Implement smart extraction (single-type vs mixed handling)
+- [ ] Add parallel sheet processing
+- [ ] Testing with 20+ files
+
+**Week 2: Optimization & Testing**
+- [ ] Fine-tune prompt for accuracy
+- [ ] Add error handling and fallbacks
+- [ ] Performance benchmarking
+- [ ] Edge case testing
+
+**Week 3: Rollout**
+- [ ] Feature flag: `SETUP_ASSISTANT_USE_V3=true`
+- [ ] Gradual rollout (10% → 50% → 100%)
+- [ ] Monitor metrics and accuracy
+- [ ] Deprecate V2
+
+### Success Criteria for V3
+
+- ✅ 65-75% faster than V1 (vs V2's 0-25% slower)
+- ✅ 95%+ accuracy (vs V2's 16%)
+- ✅ <10s for typical files (vs V2's 35s)
+- ✅ ONE AI call per sheet (vs V2's TWO)
+- ✅ Correct handling of single-type sheets (90% of cases)
 
 ---
 

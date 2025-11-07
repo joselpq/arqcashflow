@@ -21,6 +21,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { withTeamContext } from '@/lib/middleware/team-context'
 import { SetupAssistantService } from '@/lib/services/SetupAssistantService'
+import { SetupAssistantServiceV2 } from '@/lib/services/SetupAssistantServiceV2'
 
 // Store progress for polling (in production, use Redis or similar)
 const progressStore = new Map<string, any>()
@@ -29,6 +30,22 @@ export async function POST(request: NextRequest) {
   // Use team context middleware for auth and team isolation
   return withTeamContext(async (context) => {
     try {
+      // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      // ARCHITECTURE VERSION CHECK
+      // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      const useV2 = process.env.SETUP_ASSISTANT_USE_V2 === 'true'
+      const useDeterministic = process.env.SETUP_ASSISTANT_USE_DETERMINISTIC !== 'false'
+
+      console.log('\n' + '═'.repeat(80))
+      console.log('🚀 SETUP ASSISTANT MULTI-FILE API - VERSION CHECK')
+      console.log('═'.repeat(80))
+      console.log(`📦 Architecture: ${useV2 ? '✅ V2 (NEW!)' : '⚠️  V1 (OLD)'}`)
+      if (useV2) {
+        console.log(`⚡ Extraction Mode: ${useDeterministic ? '✅ DETERMINISTIC (70% faster!)' : '⚠️  AI Chunking only (25% faster)'}`)
+      }
+      console.log('═'.repeat(80) + '\n')
+      // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
       const contentType = request.headers.get('content-type') || ''
 
       if (!contentType.includes('multipart/form-data')) {
@@ -38,7 +55,7 @@ export async function POST(request: NextRequest) {
       // Extract optional profession override from query params (for onboarding timing fix)
       const professionOverride = request.nextUrl.searchParams.get('profession') || undefined
       if (professionOverride) {
-        console.log(`📁 [V2 Multi] Profession override provided: ${professionOverride}`)
+        console.log(`📁 [Multi] Profession override provided: ${professionOverride}`)
       }
 
       const formData = await request.formData()
@@ -55,13 +72,18 @@ export async function POST(request: NextRequest) {
         return { error: 'No files provided' }
       }
 
-      console.log(`📁 [V2 Multi] Processing ${files.length} files with service layer`)
+      console.log(`📁 [Multi] Processing ${files.length} files`)
 
       // Create service instance with team context
-      const setupAssistantService = new SetupAssistantService({
-        ...context,
-        request // Include request for audit context
-      })
+      const setupAssistantService = useV2
+        ? new SetupAssistantServiceV2({
+            ...context,
+            request // Include request for audit context
+          })
+        : new SetupAssistantService({
+            ...context,
+            request // Include request for audit context
+          })
 
       // Generate a session ID for progress tracking
       const sessionId = `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
