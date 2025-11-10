@@ -145,30 +145,37 @@ const isReasonable = BusinessRuleValidation.validateExpenseDueDate(
 
 ## Migration Strategy
 
-### Current State (Phase 1 Complete)
-- ✅ Unified validation layer implemented
-- ✅ All schemas centralized and tested
-- ✅ Build system verified
-- ⚠️ Current code still uses inline validation schemas
+### ✅ Migration Complete (Phases 1 & 2)
+- ✅ Unified validation layer implemented (Phase 1)
+- ✅ All schemas centralized and tested (Phase 1)
+- ✅ Build system verified (Phase 1)
+- ✅ **All 6 API routes migrated** (Phase 2 - November 10, 2025)
 
-### Phase 2 (Future): Incremental Migration
+### Phase 2 Complete: All API Routes Migrated
 ```typescript
-// Before (current inline validation)
+// BEFORE (inline validation - DEPRECATED)
 const ContractSchema = z.object({
   clientName: z.string(),
   totalValue: z.number(),
   // ...
 })
 
-// After (unified validation)
-import { ContractSchema } from '@/lib/validation'
+// AFTER (unified validation - CURRENT)
+import { ContractSchemas } from '@/lib/validation'
+
+const profession = context.user.team.profession
+const validated = ContractSchemas.create(profession).parse(body)
 ```
 
-Migration can be done incrementally:
-1. Replace individual API route schemas
-2. Update service layer schemas
-3. Migrate form validation schemas
-4. Remove duplicate inline schemas
+**Migrated Routes (6/6 - 100% Complete)**:
+1. ✅ `app/api/contracts/route.ts` - ContractSchemas.create(profession)
+2. ✅ `app/api/contracts/[id]/route.ts` - ContractSchemas.update(profession)
+3. ✅ `app/api/receivables/route.ts` - ReceivableSchemas.create
+4. ✅ `app/api/expenses/route.ts` - ExpenseSchemas.create
+5. ✅ `app/api/auth/register/route.ts` - AuthSchemas.register
+6. ✅ `app/api/expenses/[id]/recurring-action/route.ts` - RecurringExpenseSchemas.action
+
+**Result**: Single source of truth achieved across all API routes
 
 ## Benefits Achieved
 

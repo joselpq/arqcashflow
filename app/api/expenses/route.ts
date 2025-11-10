@@ -15,6 +15,7 @@
 import { NextRequest } from 'next/server'
 import { withTeamContext } from '@/lib/middleware/team-context'
 import { ExpenseService } from '@/lib/services/ExpenseService'
+import { ExpenseSchemas } from '@/lib/validation'
 
 
 export async function GET(request: NextRequest) {
@@ -52,10 +53,13 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   return withTeamContext(async (context) => {
-    const expenseService = new ExpenseService(context)
     const body = await request.json()
 
-    const expense = await expenseService.create(body)
+    // Use unified validation schema
+    const validatedData = ExpenseSchemas.create.parse(body)
+
+    const expenseService = new ExpenseService(context)
+    const expense = await expenseService.create(validatedData)
 
     return { expense }
   })

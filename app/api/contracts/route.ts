@@ -6,20 +6,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { z } from 'zod'
 import { withTeamContext } from '@/lib/middleware/team-context'
 import { ContractService } from '@/lib/services/ContractService'
-
-const ContractSchema = z.object({
-  clientName: z.string(),
-  projectName: z.string(),
-  description: z.string().optional(),
-  totalValue: z.number(),
-  signedDate: z.string(),
-  status: z.string().optional(),
-  category: z.string().optional(),
-  notes: z.string().optional(),
-})
+import { ContractSchemas } from '@/lib/validation'
 
 export async function GET(request: NextRequest) {
   return withTeamContext(async (context) => {
@@ -50,9 +39,13 @@ export async function POST(request: NextRequest) {
   return withTeamContext(async (context) => {
     const body = await request.json()
 
-    const contractService = new ContractService({ ...context, request })
-    const validatedData = ContractSchema.parse(body)
+    // Get profession for profession-aware validation
+    const profession = context.user.team.profession
 
+    // Use unified validation schema
+    const validatedData = ContractSchemas.create(profession).parse(body)
+
+    const contractService = new ContractService({ ...context, request })
     const contract = await contractService.create(validatedData)
 
     return {

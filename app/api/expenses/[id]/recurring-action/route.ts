@@ -13,23 +13,10 @@
  */
 
 import { NextRequest } from 'next/server'
-import { z } from 'zod'
 import { withTeamContext } from '@/lib/middleware/team-context'
 import { createAuditContextFromAPI, auditUpdate, auditDelete, safeAudit } from '@/lib/utils/audit'
 import { prisma } from '@/lib/prisma'
-
-const RecurringActionSchema = z.object({
-  action: z.enum(['edit', 'delete']),
-  scope: z.enum(['this', 'future', 'all']),
-  // For edit actions, include the updated data
-  updatedData: z.object({
-    description: z.string().optional(),
-    amount: z.number().optional(),
-    category: z.string().optional(),
-    vendor: z.string().optional(),
-    notes: z.string().optional(),
-  }).optional()
-})
+import { RecurringExpenseSchemas } from '@/lib/validation'
 
 export async function POST(
   request: NextRequest,
@@ -39,7 +26,8 @@ export async function POST(
     const { id } = await params
     const body = await request.json()
 
-    const { action, scope, updatedData } = RecurringActionSchema.parse(body)
+    // Use unified validation schema
+    const { action, scope, updatedData } = RecurringExpenseSchemas.action.parse(body)
 
     // Get the target expense and verify it's recurring - using team-scoped prisma
     const expense = await teamScopedPrisma.expense.findUnique({
