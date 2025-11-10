@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, ReactNode, useCallback } from 'react'
+import { createContext, useContext, useState, ReactNode, useCallback, useRef, useEffect } from 'react'
 import { Message } from '../components/chat/MessageList'
 
 interface ConversationMessage {
@@ -13,6 +13,7 @@ interface ChatContextType {
   isExpanded: boolean
   messages: Message[]
   loading: boolean
+  isStreamingPaused: boolean
   fullHistory: ConversationMessage[]
   openChat: () => void
   closeChat: () => void
@@ -31,6 +32,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [messages, setMessages] = useState<Message[]>([])
   const [fullHistory, setFullHistory] = useState<ConversationMessage[]>([])
   const [loading, setLoading] = useState(false)
+  const [isStreamingPaused, setIsStreamingPaused] = useState(false)
+  const streamingTimeoutRef = useRef<NodeJS.Timeout>()
 
   const openChat = useCallback(() => setIsOpen(true), [])
   const closeChat = useCallback(() => setIsOpen(false), [])
@@ -145,14 +148,48 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
           try {
             let accumulatedText = ''
+            let lastChunkTime = Date.now()
 
             while (true) {
               const { done, value } = await reader.read()
-              if (done) break
+              if (done) {
+                // Clear timeout when streaming completes
+                if (streamingTimeoutRef.current) {
+                  clearTimeout(streamingTimeoutRef.current)
+                }
+                setIsStreamingPaused(false)
+                break
+              }
+
+              // Clear previous timeout
+              if (streamingTimeoutRef.current) {
+                clearTimeout(streamingTimeoutRef.current)
+              }
+
+              // Set new pause detection timeout
+              streamingTimeoutRef.current = setTimeout(() => {
+                console.log('[Chat] Streaming paused - showing thinking indicator')
+                setIsStreamingPaused(true)
+              }, 1000)
+
+              // Hide pause indicator when chunk arrives
+              setIsStreamingPaused(false)
 
               // Decode chunk - simple text format from toTextStreamResponse()
               const chunk = decoder.decode(value, { stream: true })
+              const now = Date.now()
+              const pauseDuration = now - lastChunkTime
+
+              // Add spacing after long pause (tool call completion)
+              if (pauseDuration > 1000 && chunk.trim() && accumulatedText.trim()) {
+                // Ensure double line break after pause
+                if (!accumulatedText.endsWith('\n\n')) {
+                  accumulatedText += '\n\n'
+                }
+              }
+
               accumulatedText += chunk
+              lastChunkTime = now
               assistantMessage.content = accumulatedText
 
               // Update message in place
@@ -174,6 +211,11 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
           } catch (streamError) {
             console.error('[Chat] Streaming error:', streamError)
+            // Cleanup timeout on error
+            if (streamingTimeoutRef.current) {
+              clearTimeout(streamingTimeoutRef.current)
+            }
+            setIsStreamingPaused(false)
             const errorMessage: Message = {
               role: 'assistant',
               content: 'Desculpe, houve um erro durante o streaming. Tente novamente.',
@@ -203,7 +245,16 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false)
     }
-  }, [messages, fullHistory, loading])
+  }, [messages, fullHistory, loading, isStreamingPaused])
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (streamingTimeoutRef.current) {
+        clearTimeout(streamingTimeoutRef.current)
+      }
+    }
+  }, [])
 
   return (
     <ChatContext.Provider
@@ -212,6 +263,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         isExpanded,
         messages,
         loading,
+        isStreamingPaused,
         fullHistory,
         openChat,
         closeChat,

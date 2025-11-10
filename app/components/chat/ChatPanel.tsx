@@ -12,6 +12,7 @@ interface ChatPanelProps {
   onToggleExpand: () => void
   messages: Message[]
   loading: boolean
+  isStreamingPaused: boolean
   onSendMessage: (message: string) => void
 }
 
@@ -22,6 +23,7 @@ export default function ChatPanel({
   onToggleExpand,
   messages,
   loading,
+  isStreamingPaused,
   onSendMessage
 }: ChatPanelProps) {
   // Handle Escape key to close
@@ -62,7 +64,7 @@ export default function ChatPanel({
           onClose={onClose}
           onToggleExpand={onToggleExpand}
         />
-        <MessageList messages={messages} loading={loading} />
+        <MessageList messages={messages} loading={loading} isStreamingPaused={isStreamingPaused} />
         <ChatInput onSend={onSendMessage} disabled={loading} />
       </div>
     </>

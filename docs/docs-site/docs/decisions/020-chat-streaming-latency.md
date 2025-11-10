@@ -4,8 +4,8 @@ type: "decision"
 audience: ["developer", "agent"]
 contexts: ["architecture", "performance", "ai-integration", "user-experience"]
 complexity: "intermediate"
-last_updated: "2025-11-04"
-version: "1.0"
+last_updated: "2025-11-10"
+version: "1.1"
 agent_roles: ["architecture-reviewer", "performance-specialist", "ai-integration-specialist"]
 decision_status: "accepted"
 decision_date: "2025-11-04"
@@ -124,17 +124,20 @@ TOTAL PERCEIVED LATENCY: ~3-8 seconds ⚠️
 
 ### What We Decided
 
-Implement a **three-phase streaming optimization strategy**:
+Implement a **four-phase streaming optimization strategy**:
 
-**Phase 1 (Quick Wins - 1 hour):**
+**Phase 1 (Quick Wins - 1 hour) - ✅ COMPLETE:**
 1. **Optimistic UI**: Show "Arnaldo está pensando... 💭" with animated dots immediately
 2. **Prompt Caching**: Enable Claude's ephemeral prompt caching (1-line change)
 
-**Phase 2 (Core Fix - 4-6 hours):**
+**Phase 2 (Core Fix - 4-6 hours) - ✅ COMPLETE:**
 3. **Streaming Implementation**: Replace `generateText()` → `streamText()` for real-time token streaming
 
-**Phase 3 (Optional Polish - 2-3 hours):**
+**Phase 3 (Optional Polish - 2-3 hours) - DEFERRED:**
 4. **System Prompt Optimization**: Cache profession config and pre-build static sections
+
+**Phase 4 (UX Enhancement - 2-4 hours) - 🔄 CURRENT:**
+5. **Streaming Pause Feedback**: Show thinking indicator during mid-stream pauses, fix spacing
 
 ### Rationale
 
@@ -476,7 +479,7 @@ const StreamingCursor = () => (
 
 ---
 
-### Phase 3: Polish - System Prompt Optimization (2-3 hours) - OPTIONAL
+### Phase 3: Polish - System Prompt Optimization (2-3 hours) - OPTIONAL, DEFERRED
 
 #### 3.1 Cache Profession Config Per Team
 
@@ -562,6 +565,352 @@ private async buildSystemPrompt(today: string): Promise<string> {
 **Expected Impact:**
 - Prompt build time: ~100ms → ~10-20ms (~5% total improvement)
 - Cleaner, more maintainable code structure
+
+---
+
+### Phase 4: Streaming Pause UX Enhancement (2-4 hours) - CURRENT FOCUS
+
+#### 4.1 Problem Statement
+
+**Issue**: When Claude pauses mid-stream (for thinking or tool execution), the streaming UI provides no feedback:
+- **Thinking indicator disappears** as soon as streaming starts (line 144 in ChatContext.tsx)
+- **No visual feedback** when stream pauses for 1+ seconds
+- **Paragraph spacing breaks** when streaming resumes after pause
+- **User confusion**: Message appears finished, then suddenly continues
+
+**Expected Behavior**:
+- Show thinking indicator during extended pauses (>1s without tokens)
+- Maintain proper paragraph spacing when resuming
+- Seamless visual transition between streaming states
+
+**Root Cause**:
+- Frontend sets `loading = false` immediately when streaming starts
+- No tracking of streaming activity/pause state
+- No timeout detection for extended pauses
+- Chunks may not include proper line breaks after tool calls
+
+#### 4.2 Solution Architecture
+
+**Pause Detection Strategy:**
+```typescript
+// Track streaming state
+const [isStreamingPaused, setIsStreamingPaused] = useState(false)
+const streamingTimeoutRef = useRef<NodeJS.Timeout>()
+
+// In streaming loop (ChatContext.tsx):
+// Reset timeout on each chunk arrival
+if (streamingTimeoutRef.current) {
+  clearTimeout(streamingTimeoutRef.current)
+}
+
+// Set new timeout to detect pause
+streamingTimeoutRef.current = setTimeout(() => {
+  setIsStreamingPaused(true) // Show thinking indicator
+}, 1000) // 1 second threshold
+
+// On chunk received:
+accumulatedText += chunk
+setIsStreamingPaused(false) // Hide thinking indicator
+```
+
+**Visual Feedback Update:**
+```typescript
+// MessageList.tsx: Show thinking indicator when loading OR streaming paused
+{(loading || isStreamingPaused) && (
+  <div className="flex justify-start">
+    <div className="bg-neutral-100 rounded-lg">
+      <ThinkingIndicator />
+    </div>
+  </div>
+)}
+```
+
+**Paragraph Spacing Fix:**
+```typescript
+// Ensure proper spacing after tool calls
+const chunk = decoder.decode(value, { stream: true })
+
+// Detect if this chunk follows a pause (no text in last 1s)
+// and add spacing if needed
+if (wasJustPaused && chunk.trim() && !chunk.startsWith('\n')) {
+  accumulatedText += '\n\n' + chunk
+} else {
+  accumulatedText += chunk
+}
+```
+
+#### 4.3 Implementation Details
+
+**Frontend Changes (app/contexts/ChatContext.tsx):**
+
+```typescript
+export function ChatProvider({ children }: { children: ReactNode }) {
+  const [isOpen, setIsOpen] = useState(false)
+  const [isExpanded, setIsExpanded] = useState(false)
+  const [messages, setMessages] = useState<Message[]>([])
+  const [fullHistory, setFullHistory] = useState<ConversationMessage[]>([])
+  const [loading, setLoading] = useState(false)
+  const [isStreamingPaused, setIsStreamingPaused] = useState(false) // ✅ NEW
+  const streamingTimeoutRef = useRef<NodeJS.Timeout>() // ✅ NEW
+
+  const sendMessage = useCallback(async (messageContent: string, file?: File) => {
+    // ... existing code ...
+
+    if (response.ok && response.body) {
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+
+      const assistantMessage: Message = {
+        role: 'assistant',
+        content: '',
+        timestamp: new Date()
+      }
+
+      setMessages([...newMessages, assistantMessage])
+      setLoading(false)
+
+      try {
+        let accumulatedText = ''
+        let lastChunkTime = Date.now()
+
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) {
+            // ✅ Clear timeout when streaming completes
+            if (streamingTimeoutRef.current) {
+              clearTimeout(streamingTimeoutRef.current)
+            }
+            setIsStreamingPaused(false)
+            break
+          }
+
+          // ✅ Clear previous timeout
+          if (streamingTimeoutRef.current) {
+            clearTimeout(streamingTimeoutRef.current)
+          }
+
+          // ✅ Set new pause detection timeout
+          streamingTimeoutRef.current = setTimeout(() => {
+            console.log('[Chat] Streaming paused - showing thinking indicator')
+            setIsStreamingPaused(true)
+          }, 1000)
+
+          // ✅ Hide pause indicator when chunk arrives
+          if (isStreamingPaused) {
+            console.log('[Chat] Streaming resumed')
+            setIsStreamingPaused(false)
+          }
+
+          const chunk = decoder.decode(value, { stream: true })
+          const now = Date.now()
+          const pauseDuration = now - lastChunkTime
+
+          // ✅ Add spacing after long pause (tool call completion)
+          if (pauseDuration > 1000 && chunk.trim() && accumulatedText.trim()) {
+            // Ensure double line break after pause
+            if (!accumulatedText.endsWith('\n\n')) {
+              accumulatedText += '\n\n'
+            }
+          }
+
+          accumulatedText += chunk
+          lastChunkTime = now
+          assistantMessage.content = accumulatedText
+
+          setMessages(prev => [
+            ...prev.slice(0, -1),
+            { ...assistantMessage }
+          ])
+        }
+
+        // ... existing history update code ...
+      } catch (streamError) {
+        // ✅ Cleanup on error
+        if (streamingTimeoutRef.current) {
+          clearTimeout(streamingTimeoutRef.current)
+        }
+        setIsStreamingPaused(false)
+        // ... existing error handling ...
+      }
+    }
+  }, [messages, fullHistory, loading, isStreamingPaused])
+
+  // ✅ Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (streamingTimeoutRef.current) {
+        clearTimeout(streamingTimeoutRef.current)
+      }
+    }
+  }, [])
+
+  return (
+    <ChatContext.Provider
+      value={{
+        isOpen,
+        isExpanded,
+        messages,
+        loading,
+        isStreamingPaused, // ✅ NEW - expose to MessageList
+        fullHistory,
+        openChat,
+        closeChat,
+        toggleChat,
+        toggleExpanded,
+        sendMessage,
+        clearHistory,
+        addProactiveMessage
+      }}
+    >
+      {children}
+    </ChatContext.Provider>
+  )
+}
+```
+
+**Context Type Update:**
+```typescript
+interface ChatContextType {
+  isOpen: boolean
+  isExpanded: boolean
+  messages: Message[]
+  loading: boolean
+  isStreamingPaused: boolean // ✅ NEW
+  fullHistory: ConversationMessage[]
+  openChat: () => void
+  closeChat: () => void
+  toggleChat: () => void
+  toggleExpanded: () => void
+  sendMessage: (message: string, file?: File) => Promise<void>
+  clearHistory: () => void
+  addProactiveMessage: (content: string) => void
+}
+```
+
+**MessageList Component Update (app/components/chat/MessageList.tsx):**
+
+```typescript
+interface MessageListProps {
+  messages: Message[]
+  loading?: boolean
+  isStreamingPaused?: boolean // ✅ NEW
+}
+
+export default function MessageList({
+  messages,
+  loading = false,
+  isStreamingPaused = false // ✅ NEW
+}: MessageListProps) {
+  // ... existing code ...
+
+  return (
+    <div ref={containerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
+      {messages.map((msg, index) => (
+        // ... existing message rendering ...
+      ))}
+
+      {/* ✅ Show thinking indicator when loading OR streaming paused */}
+      {(loading || isStreamingPaused) && (
+        <div className="flex justify-start">
+          <div className="bg-neutral-100 rounded-lg">
+            <ThinkingIndicator />
+          </div>
+        </div>
+      )}
+
+      <div ref={messagesEndRef} />
+    </div>
+  )
+}
+```
+
+**Global Chat Update (app/components/GlobalChat.tsx):**
+
+```typescript
+// Pass isStreamingPaused to MessageList
+<MessageList
+  messages={messages}
+  loading={loading}
+  isStreamingPaused={isStreamingPaused} // ✅ NEW
+/>
+```
+
+#### 4.4 Files Modified
+
+- `app/contexts/ChatContext.tsx` - Add pause detection state and timeout tracking
+- `app/components/chat/MessageList.tsx` - Accept and use `isStreamingPaused` prop
+- `app/components/GlobalChat.tsx` - Pass `isStreamingPaused` to MessageList
+
+#### 4.5 Expected Impact
+
+**UX Improvements:**
+- ✅ **Continuous feedback**: Users always know Claude is working
+- ✅ **No confusion**: Clear indication during mid-stream pauses
+- ✅ **Professional feel**: Matches ChatGPT/Claude web app behavior
+- ✅ **Better spacing**: Proper paragraph breaks after tool calls
+
+**Performance:**
+- ✅ **Minimal overhead**: Timeout logic is lightweight (~0ms impact)
+- ✅ **No latency impact**: Pause detection doesn't slow streaming
+- ✅ **Smooth UX**: Seamless transitions between states
+
+**Edge Cases Handled:**
+- ✅ **Tool calls**: Thinking indicator shows during tool execution
+- ✅ **Network delays**: Pauses >1s show thinking indicator
+- ✅ **Quick bursts**: Rapid chunks don't flicker thinking indicator
+- ✅ **Completion**: Timeout cleared when stream ends
+
+#### 4.6 Testing Strategy
+
+**Manual Testing Scenarios:**
+1. **Normal streaming**: Verify thinking indicator appears at start, disappears on first chunk
+2. **Tool call pause**: Verify thinking indicator reappears during tool execution
+3. **Network delay**: Simulate slow network, verify indicator shows during pauses
+4. **Rapid completion**: Fast responses shouldn't flicker indicator
+5. **Multiple tool calls**: Verify indicator shows/hides correctly for each pause
+6. **Paragraph spacing**: Verify proper spacing after tool call completion
+7. **Error during streaming**: Verify timeout cleanup on error
+8. **Component unmount**: Verify timeout cleanup on unmount
+
+**Automated Test Cases:**
+```typescript
+describe('Streaming Pause Detection', () => {
+  it('shows thinking indicator after 1s pause', async () => {
+    // Simulate streaming with pause
+    // Assert thinking indicator appears
+  })
+
+  it('hides thinking indicator when chunks resume', async () => {
+    // Simulate pause then resume
+    // Assert thinking indicator disappears
+  })
+
+  it('adds spacing after tool call pause', async () => {
+    // Simulate tool call with pause
+    // Assert double line break added
+  })
+
+  it('cleans up timeout on unmount', () => {
+    // Mount component, start streaming, unmount
+    // Assert no timeout leaks
+  })
+})
+```
+
+#### 4.7 Timeline
+
+**Day 1 (2-3 hours):**
+- Add pause detection to ChatContext (1 hour)
+- Update MessageList to show indicator during pause (30 min)
+- Add paragraph spacing logic (30 min)
+- Manual testing with various scenarios (1 hour)
+
+**Day 2 (1 hour):**
+- Address any bugs found in testing
+- Deploy to production
+- Monitor for edge cases
+
+**Total Effort**: 2-4 hours
 
 ---
 
