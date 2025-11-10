@@ -65,6 +65,10 @@ import type {
   FileType
 } from './SetupAssistantService'
 
+// Extracted components (ADR-026)
+import { FileTypeDetector } from './setup-assistant/core/FileTypeDetector'
+import { ExcelParser } from './setup-assistant/core/ExcelParser'
+
 /**
  * Column mapping for deterministic extraction
  */
@@ -152,6 +156,10 @@ export class SetupAssistantServiceV2 extends BaseService<any, any, any, any> {
   private receivableService: ReceivableService
   private expenseService: ExpenseService
 
+  // Extracted components (ADR-026: Service Decomposition)
+  private fileDetector: FileTypeDetector
+  private excelParser: ExcelParser
+
   constructor(context: ServiceContext) {
     super(context, 'setup_assistant_v2', [])
 
@@ -162,6 +170,10 @@ export class SetupAssistantServiceV2 extends BaseService<any, any, any, any> {
     this.contractService = new ContractService(context)
     this.receivableService = new ReceivableService(context)
     this.expenseService = new ExpenseService(context)
+
+    // Initialize extracted components (ADR-026)
+    this.fileDetector = new FileTypeDetector()
+    this.excelParser = new ExcelParser()
   }
 
   async validateBusinessRules(_data: any): Promise<void> {
@@ -207,185 +219,8 @@ export class SetupAssistantServiceV2 extends BaseService<any, any, any, any> {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // PHASE 1: FILE STRUCTURE EXTRACTION (Pure Code, <0.1s)
+  // Delegated to FileTypeDetector and ExcelParser components (ADR-026)
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  private detectFileType(filename: string, buffer: Buffer): FileType {
-    const ext = filename.toLowerCase().split('.').pop()
-
-    if (ext === 'xlsx' || ext === 'xls') return 'xlsx'
-    if (ext === 'csv') return 'csv'
-    if (ext === 'pdf') return 'pdf'
-    if (['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(ext || '')) return 'image'
-
-    if (buffer.length >= 2) {
-      if (buffer[0] === 0x25 && buffer[1] === 0x50) return 'pdf'
-      if (buffer[0] === 0x89 && buffer[1] === 0x50) return 'image'
-      if (buffer[0] === 0xFF && buffer[1] === 0xD8) return 'image'
-      if (buffer[0] === 0x47 && buffer[1] === 0x49) return 'image'
-    }
-
-    throw new ServiceError(
-      'Unsupported file type. Please upload XLSX, CSV, PDF, or image files.',
-      'INVALID_FILE_TYPE',
-      400
-    )
-  }
-
-  private parseXlsx(fileBuffer: Buffer): XLSX.WorkBook {
-    try {
-      return XLSX.read(fileBuffer, { type: 'buffer' })
-    } catch (error) {
-      throw new ServiceError(
-        'Failed to parse Excel file. Please ensure the file is not corrupted.',
-        'PARSE_ERROR',
-        400
-      )
-    }
-  }
-
-  /**
-   * Extract sheets with NORMALIZED data using Excel cell metadata
-   * This approach reads raw cell values and types BEFORE CSV conversion
-   * Benefits:
-   * - Dates are properly formatted (yyyy-mm-dd)
-   * - Numbers are actual numbers (not formatted strings)
-   * - Preserves precision for currency values
-   * - Detects header row correctly (handles title rows, metadata, etc.)
-   */
-  private extractSheetsData(workbook: XLSX.WorkBook): SheetData[] {
-    const sheetsData: SheetData[] = []
-
-    for (const sheetName of workbook.SheetNames) {
-      const sheet = workbook.Sheets[sheetName]
-
-      // Step 1: Get raw data as array of arrays (with Excel date formatting)
-      const rawData = XLSX.utils.sheet_to_json<any[]>(sheet, {
-        header: 1,         // Return array of arrays (not objects)
-        raw: false,        // Format dates/numbers as strings
-        dateNF: 'yyyy-mm-dd',  // Standardize date format to ISO
-        defval: ''         // Empty cells become empty strings
-      })
-
-      if (rawData.length === 0) continue
-
-      // Step 2: For mixed sheet support, we DON'T detect headers here!
-      // We need to preserve the entire sheet structure (including title rows, multiple headers)
-      // Header detection will happen within each segmented table
-
-      // However, for backward compatibility with homogeneous sheets,
-      // we still detect headers to skip title rows at the top
-      let startRowIndex = 0
-      if (!this.supportMixedSheets) {
-        // Legacy behavior: detect and use first header row
-        let headerRowIndex = -1
-        let bestScore = 0
-        for (let i = 0; i < Math.min(5, rawData.length); i++) {
-          const row = rawData[i]
-          if (!row || row.length === 0) continue
-
-          const score = this.scoreAsHeaderRow(row.map(v => String(v || '')))
-          if (score >= 3 && score > bestScore) {
-            bestScore = score
-            headerRowIndex = i
-          }
-        }
-
-        if (headerRowIndex !== -1) {
-          console.log(`   🔍 Detected headers in row ${headerRowIndex + 1} (score: ${bestScore})`)
-          startRowIndex = headerRowIndex
-        } else {
-          console.log(`   ⚠️  No headers detected in "${sheetName}", skipping`)
-          continue
-        }
-      } else {
-        // Mixed sheet mode: include ALL rows from the start
-        console.log(`   🔍 Mixed sheet mode: preserving all ${rawData.length} rows for boundary detection`)
-      }
-
-      // Step 3: Extract ALL rows from start point (no header row used)
-      const allRows = rawData.slice(startRowIndex)
-
-      // CRITICAL: DO NOT filter empty rows here!
-      // We need to preserve blank rows for mixed sheet boundary detection (ADR-025)
-      // Empty rows will be handled during table segmentation
-
-      // Only skip if there are literally no rows at all
-      if (allRows.length === 0) continue
-
-      // Step 4: Convert to CSV format (WITHOUT assuming headers!)
-      const escapeCsvValue = (value: any): string => {
-        const str = String(value || '')
-        // Escape values containing commas, quotes, or newlines
-        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-          return `"${str.replace(/"/g, '""')}"`
-        }
-        return str
-      }
-
-      // For mixed sheet mode: convert ALL rows as-is (each row determines its own column count)
-      // For legacy mode: still use header-based column structure
-      const csvRows = allRows.map(row => {
-        if (!row) return ''
-        // Determine max columns in this row
-        const maxCols = row.length
-        const cells: string[] = []
-        for (let i = 0; i < maxCols; i++) {
-          cells.push(escapeCsvValue(row[i]))
-        }
-        return cells.join(',')
-      })
-
-      const csv = csvRows.join('\n')
-
-      if (csv.trim() === '') continue
-
-      sheetsData.push({
-        name: sheetName,
-        csv: csv
-      })
-    }
-
-    return sheetsData
-  }
-
-
-  /**
-   * Score a row based on how likely it is to be a header row
-   * Higher score = more likely to be headers
-   */
-  private scoreAsHeaderRow(cells: string[]): number {
-    let score = 0
-
-    // Count cells with text (not numbers, not empty)
-    const textCells = cells.filter(c => {
-      if (c === '') return false
-      // Not a number
-      if (/^[\d\s,.$%R-]+$/.test(c)) return false
-      return true
-    })
-
-    // More text cells = more likely headers
-    score += Math.min(textCells.length, 5)
-
-    // Check for common header keywords (Portuguese and generic)
-    const headerKeywords = [
-      'nome', 'data', 'valor', 'status', 'descrição', 'categoria',
-      'projeto', 'cliente', 'fornecedor', 'parcela', 'tipo',
-      'name', 'date', 'value', 'description', 'category'
-    ]
-
-    const hasKeywords = cells.some(c =>
-      headerKeywords.some(kw => c.toLowerCase().includes(kw))
-    )
-
-    if (hasKeywords) score += 3
-
-    // Check if row has consistent non-empty cells (headers usually fill most columns)
-    const nonEmptyRatio = cells.filter(c => c !== '').length / cells.length
-    if (nonEmptyRatio > 0.5) score += 2
-
-    return score
-  }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // TABLE BOUNDARY DETECTION (ADR-025: Mixed Entity Sheet Support)
@@ -1937,7 +1772,7 @@ IMPORTANTE:
     }
 
     try {
-      const fileType = this.detectFileType(filename, fileBuffer)
+      const fileType = this.fileDetector.detectFileType(filename, fileBuffer)
 
       console.log('\n' + '='.repeat(80))
       console.log('🚀 OPTIMIZED FILE IMPORT: Unified Analysis + Deterministic Extraction')
@@ -1986,8 +1821,11 @@ IMPORTANTE:
       console.log('\n📊 PHASE 1: File Structure Extraction...')
       const phase1Start = Date.now()
 
-      const workbook = this.parseXlsx(fileBuffer)
-      const sheetsData = this.extractSheetsData(workbook)
+      const workbook = this.excelParser.parseWorkbook(fileBuffer)
+      const sheetsData = this.excelParser.extractSheetsData(workbook, {
+        supportMixedSheets: this.supportMixedSheets,
+        detectHeaders: true
+      })
 
       metrics.phase1_structure = Date.now() - phase1Start
       console.log(`   ⏱️  Phase 1: ${metrics.phase1_structure}ms`)
