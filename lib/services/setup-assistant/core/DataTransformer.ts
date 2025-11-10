@@ -163,12 +163,18 @@ export class DataTransformer {
    */
   private transformStatus(cleaned: string, enumValues?: string[]): string {
     const statusMap: Record<string, string> = {
+      // Architecture profession statuses
       'Ativo': 'active',
       'Concluído': 'completed',
       'Completo': 'completed',
       'Finalizado': 'completed',
       'Pausado': 'paused',
       'Cancelado': 'cancelled',
+      // Medicina profession statuses
+      'Em Tratamento': 'active',      // Medicina: patient in treatment
+      'Alta Médica': 'completed',     // Medicina: medical discharge
+      'Alta Medica': 'completed',     // Without accent (just in case)
+      // Financial statuses (receivables/expenses)
       'Recebido': 'received',
       'Pago': 'paid',
       'Pendente': 'pending',
@@ -203,7 +209,10 @@ export class DataTransformer {
       }
     }
 
-    return lowerCleaned
+    // FALLBACK: If status is unknown/unmapped, default to 'active' instead of dropping the entity
+    // This prevents data loss from unknown status values in imports
+    console.log(`   ⚠️  Unknown status "${cleaned}" - defaulting to "active"`)
+    return 'active'
   }
 
   /**
@@ -432,6 +441,17 @@ export class DataTransformer {
 
     // Process EXPENSES
     data.expenses = data.expenses
+      .map(expense => {
+        const processed = { ...expense }
+
+        // INFERENCE: If paidAmount is set but amount is not, copy paidAmount to amount
+        // This handles cases where AI maps "Valor" column to paidAmount instead of amount
+        if (!processed.amount && processed.paidAmount) {
+          processed.amount = processed.paidAmount
+        }
+
+        return processed
+      })
       .filter(expense => {
         // Filter: description null OR amount null or <= 0 → SKIP
         if (!expense.description || !expense.amount || expense.amount <= 0) {
