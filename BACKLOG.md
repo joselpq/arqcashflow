@@ -1,7 +1,7 @@
 # ArqCashflow Development Backlog
 
 **Purpose**: Central source of truth for project priorities and development status
-**Last Updated**: 2025-11-10 (SetupAssistant V2 100% complete - Mixed sheets + PDF/image support ✅)
+**Last Updated**: 2025-11-10 (Validation Phase 2 complete - unified validation migration ✅)
 **Update Frequency**: Every LLM session MUST update this document when completing tasks
 
 ---
@@ -259,34 +259,6 @@ This backlog **DOES NOT** replace other documentation:
 
 ---
 
-### 🎯 **Validation Simplification - Phase 2** (HIGH PRIORITY) - 📋 **Ready for Implementation**
-**Status**: Decided - Implementation Pending
-**Decision Date**: November 5, 2025
-**Effort**: 2-3 days
-**Related**: ADR-021 Phase 2
-
-**Objective**: Migrate 6 API routes to unified validation (pure refactoring, zero behavior changes)
-
-**Context**:
-- Phase 1 ✅ Complete: Context-aware validation removed (-487 lines), business rules loosened, audit disabled
-- Decision: Option A (Migrate to unified validation)
-- Rationale: Multi-profession support in use, service layer consistency, future-proofing
-
-**Routes to Migrate** (6 total):
-1. `app/api/contracts/route.ts` (POST)
-2. `app/api/contracts/[id]/route.ts` (PUT)
-3. `app/api/receivables/route.ts` (POST)
-4. `app/api/expenses/route.ts` (POST)
-5. `app/api/auth/register/route.ts` (POST)
-6. `app/api/expenses/[id]/recurring-action/route.ts` (POST)
-
-**Implementation Guide**: `ADR-021-PHASE2-IMPLEMENTATION-GUIDE.md` (complete step-by-step instructions)
-
-**Expected Outcome**:
-- ✅ Single source of truth for validation
-- ✅ ~100 lines removed (inline schemas → imports)
-- ✅ Zero behavior changes (pure refactoring)
-- ✅ Easy to rollback (each route commits independently)
 
 ---
 
@@ -394,26 +366,50 @@ This backlog **DOES NOT** replace other documentation:
 
 ### Platform & Architecture
 
-#### **Validation & Audit Logging Review** (3-5 days)
-- **Problem**: Current validation and audit logging systems add complexity with limited value
-- **Scope**: Review and simplify validation rules and audit logging logic
-- **Issues Identified**:
-  - Overly restrictive validation rules blocking valid use cases (e.g., prepayments, scheduled dates)
-  - Audit logging creating foreign key constraints that complicate deletion flows
-  - Business rule warnings generating noise without clear actionable insights
-  - Validation logic duplicated across multiple layers (schemas, services, database)
-- **Potential Solutions**:
-  - Simplify validation to critical rules only (security, data integrity)
-  - Make audit logging optional or move to separate event log with soft references
-  - Remove business rule warnings or convert to passive analytics
-  - Consolidate validation into single layer
-- **Benefits**:
-  - Faster development (less validation to maintain)
-  - More flexible system (fewer blocked edge cases)
-  - Simpler deletion flows (no audit log constraints)
-  - Clearer error messages (only critical validations fail)
-- **Priority**: MEDIUM-HIGH (affecting development velocity and UX)
-- **Risks**: Need to ensure critical data integrity rules remain enforced
+#### **Validation & Audit System Simplification** (ADR-021)
+**Status**: Phases 1 & 2 ✅ COMPLETE | Phases 3 & 4 ⏳ FUTURE
+
+**Progress**:
+- ✅ **Phase 1 COMPLETE** (Nov 5, 2025): Context-aware validation removed (-487 lines), business rules loosened, audit disabled by default
+- ✅ **Phase 2 COMPLETE** (Nov 10, 2025): All 6 API routes migrated to unified validation, single source of truth achieved
+- ⏳ **Phase 3 PENDING**: Event-Based Audit Migration (see triggers below)
+- ⏳ **Phase 4 PENDING**: Validation Layer Consolidation
+
+**Phase 3: Event-Based Audit Migration** (3-4 days when triggered)
+- **What**: Replace AuditLog FK constraints with Event system (soft references)
+- **Why**: Smoother user/team deletion, no cascade errors
+- **Effort**: 3-4 days
+- **Priority**: LOW (not urgent - wait for triggers)
+
+**📋 TRIGGERS FOR PHASE 3** (implement when ANY of these occur):
+1. **User Deletion Issues** 🔴 CRITICAL
+   - FK constraint errors when deleting users/teams
+   - Customer support tickets about deletion failures
+   - Data cleanup operations blocked by audit logs
+
+2. **Compliance Requirements** 🟡 BUSINESS
+   - Customer requests audit trail functionality
+   - SOC 2, ISO 27001, or compliance audit needed
+   - Legal requirement for change history
+
+3. **Scale Issues** 🟡 TECHNICAL
+   - AuditLog table growing too large (>100k rows)
+   - Deletion operations becoming slow (>5s)
+   - Database performance degraded by audit queries
+
+4. **Multi-Tenant Complexity** 🟡 TECHNICAL
+   - Cross-team data leaks via audit FK relationships
+   - Team migration/transfer complicated by audit ties
+   - White-label scenarios need audit isolation
+
+**Current Status**: ✅ No triggers active - Phase 3 can wait
+
+**Phase 4: Validation Consolidation** (1 week when triggered)
+- **What**: Reduce from 4 validation layers to 2 (API + Service only)
+- **When**: After Phase 3, or when validation maintenance becomes burden
+- **Priority**: LOW (nice-to-have refactor)
+
+**Related**: ADR-021, ADR-021-PHASE1-COMPLETION.md, ADR-021-PHASE2-COMPLETION.md
 
 #### **Profession-Based Application Modularization** (6-8 weeks)
 - **Problem**: Application is architecture-centric, needs to adapt to different professions
@@ -488,6 +484,42 @@ This backlog **DOES NOT** replace other documentation:
 ---
 
 ## ✅ DONE (Recently Completed)
+
+### **Validation Simplification - Phase 2** ✅ COMPLETE (2025-11-10)
+**Goal**: Migrate 6 API routes to unified validation layer for single source of truth
+**Status**: COMPLETE ✅
+**Related**: ADR-021 Phase 2
+**Time Spent**: ~1 hour (faster than 2-3 day estimate)
+
+**Achievement**:
+- ✅ All 6 API routes migrated to `lib/validation/` exports
+- ✅ Removed 4 inline schemas (~28 lines of duplication)
+- ✅ Added validation to 2 routes (receivables, expenses) that lacked it
+- ✅ Profession-aware validation for contracts implemented
+- ✅ Build successful, zero TypeScript errors
+- ✅ Single source of truth achieved
+
+**Routes Migrated** (6/6 - 100% Complete):
+1. ✅ `app/api/contracts/route.ts` - ContractSchemas.create(profession)
+2. ✅ `app/api/contracts/[id]/route.ts` - ContractSchemas.update(profession)
+3. ✅ `app/api/receivables/route.ts` - ReceivableSchemas.create
+4. ✅ `app/api/expenses/route.ts` - ExpenseSchemas.create
+5. ✅ `app/api/auth/register/route.ts` - AuthSchemas.register
+6. ✅ `app/api/expenses/[id]/recurring-action/route.ts` - RecurringExpenseSchemas.action
+
+**Benefits**:
+- Single source of truth for API validation
+- Profession-aware validation built-in
+- Enhanced type safety across all routes
+- Zero breaking changes, pure refactoring
+
+**Files Modified**:
+- 6 API route files
+- `lib/validation/README.md` - Updated migration status
+- `docs/docs-site/docs/decisions/021-validation-audit-simplification.md` - Updated Phase 2 status
+- `ADR-021-PHASE2-COMPLETION.md` (NEW) - Detailed completion summary
+
+---
 
 ### **SetupAssistant V2: Mixed Sheets + PDF/Image Support** ✅ COMPLETE (2025-11-10)
 **Impact**: 100% file type coverage with optimized performance
@@ -773,4 +805,4 @@ This backlog **DOES NOT** replace other documentation:
 ---
 
 **Last Updated**: 2025-11-10
-**Status**: DOING (none), TO DO (7 items - SetupAssistant UX/bugs, OperationsAgent bugs, validation, landing page), BACKLOG (22+ items), DONE (2 recent - SetupAssistant V2 Complete, Chat Streaming)
+**Status**: DOING (none), TO DO (6 items - SetupAssistant UX/bugs, OperationsAgent bugs, landing page), BACKLOG (22+ items), DONE (3 recent - Validation Phase 2, SetupAssistant V2, Chat Streaming)

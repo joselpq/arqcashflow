@@ -15,6 +15,7 @@
 import { NextRequest } from 'next/server'
 import { withTeamContext } from '@/lib/middleware/team-context'
 import { ReceivableService } from '@/lib/services/ReceivableService'
+import { ReceivableSchemas } from '@/lib/validation'
 
 export async function GET(request: NextRequest) {
   return withTeamContext(async (context) => {
@@ -38,10 +39,13 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   return withTeamContext(async (context) => {
-    const receivableService = new ReceivableService(context)
     const body = await request.json()
 
-    const receivable = await receivableService.create(body)
+    // Use unified validation schema
+    const validatedData = ReceivableSchemas.create.parse(body)
+
+    const receivableService = new ReceivableService(context)
+    const receivable = await receivableService.create(validatedData)
 
     return { receivable }
   })

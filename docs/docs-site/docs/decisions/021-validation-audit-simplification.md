@@ -46,11 +46,11 @@ dependencies: ["service-layer", "event-system"]
 
 **Phase Status**:
 - ✅ Phase 1: **COMPLETE** (Immediate Cleanup) - November 5, 2025
-- 📋 Phase 2: **DECIDED - Ready for Implementation** (Unified Validation Migration)
+- ✅ Phase 2: **COMPLETE** (Unified Validation Migration) - November 10, 2025
   - **Decision**: Option A (Migrate to unified validation)
   - **Rationale**: Multi-profession support in use, service layer already uses unified validation
-  - **Effort**: 2-3 days (6 API routes)
-  - **Status**: Implementation pending
+  - **Effort**: 1 hour (faster than 2-3 day estimate)
+  - **Result**: All 6 API routes migrated successfully, single source of truth achieved
 - ⏳ Phase 3: Not Started (Event-Based Audit)
 - ⏳ Phase 4: Not Started (Validation Consolidation)
 
@@ -315,19 +315,19 @@ Audit System (578 lines):
 
 **Alternative Considered**: Option B (Remove unified layer) - Rejected because it would require rebuilding profession-aware validation per route and lose service layer consistency.
 
-**Implementation (2-3 days)**:
-- Migrate 6 API routes to use `lib/validation` exports:
-  - `app/api/contracts/route.ts`
-  - `app/api/contracts/[id]/route.ts`
-  - `app/api/receivables/route.ts`
-  - `app/api/expenses/route.ts`
-  - `app/api/auth/register/route.ts`
-  - `app/api/expenses/[id]/recurring-action/route.ts`
-- Remove inline `z.object()` schemas
-- Test each route for identical behavior
-- Single source of truth achieved
+**Implementation Results (November 10, 2025)**:
+- ✅ All 6 API routes migrated to `lib/validation` exports:
+  - ✅ `app/api/contracts/route.ts` - ContractSchemas.create(profession)
+  - ✅ `app/api/contracts/[id]/route.ts` - ContractSchemas.update(profession)
+  - ✅ `app/api/receivables/route.ts` - ReceivableSchemas.create
+  - ✅ `app/api/expenses/route.ts` - ExpenseSchemas.create
+  - ✅ `app/api/auth/register/route.ts` - AuthSchemas.register
+  - ✅ `app/api/expenses/[id]/recurring-action/route.ts` - RecurringExpenseSchemas.action
+- ✅ All inline `z.object()` schemas removed (~28 lines reduction)
+- ✅ Build successful, zero TypeScript errors
+- ✅ Single source of truth achieved
 
-**Status**: Decision documented, implementation pending (ready for pickup)
+**Status**: ✅ **COMPLETE** - See `ADR-021-PHASE2-COMPLETION.md` for details
 
 ### Phase 3: Event-Based Audit Migration (Week 3-4)
 

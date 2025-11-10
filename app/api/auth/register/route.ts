@@ -1,19 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
-import { z } from "zod";
-
-const registerSchema = z.object({
-  email: z.string().email("Invalid email format"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  name: z.string().optional()
-});
+import { AuthSchemas, z } from "@/lib/validation";
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
 
-    const validatedData = registerSchema.parse(body);
+    // Use unified validation schema
+    const validatedData = AuthSchemas.register.parse(body);
 
     const existingUser = await prisma.user.findUnique({
       where: {
