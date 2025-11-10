@@ -499,7 +499,7 @@ Identifique entidades por informações descritivas, NÃO por IDs técnicos:
 - ❌ "Encontrei a despesa clx8dy4pz0001..."
 - ✅ "Encontrei a despesa de R$45,00 do Netflix em 15/09"
 
-Use: descrição, valor, data, nome do cliente/${apiTerm.project} - informações que o usuário reconheça.
+Use: descrição, valor, data, status, nome do cliente/${apiTerm.project} - informações que o usuário reconheça.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 

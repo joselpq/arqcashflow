@@ -10,7 +10,7 @@ import ChatPanel from './ChatPanel'
 export default function GlobalChat() {
   const { data: session, status } = useSession()
   const pathname = usePathname()
-  const { isOpen, isExpanded, messages, loading, openChat, closeChat, toggleExpanded, sendMessage } = useChat()
+  const { isOpen, isExpanded, messages, loading, isStreamingPaused, openChat, closeChat, toggleExpanded, sendMessage } = useChat()
 
   // Keyboard shortcut: Cmd/Ctrl + /
   useEffect(() => {
@@ -45,6 +45,7 @@ export default function GlobalChat() {
         onToggleExpand={toggleExpanded}
         messages={messages}
         loading={loading}
+        isStreamingPaused={isStreamingPaused}
         onSendMessage={sendMessage}
       />
     </>

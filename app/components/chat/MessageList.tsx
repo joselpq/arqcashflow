@@ -13,9 +13,10 @@ export interface Message {
 interface MessageListProps {
   messages: Message[]
   loading?: boolean
+  isStreamingPaused?: boolean
 }
 
-export default function MessageList({ messages, loading = false }: MessageListProps) {
+export default function MessageList({ messages, loading = false, isStreamingPaused = false }: MessageListProps) {
   const { profession } = useTerminology()
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -79,7 +80,7 @@ export default function MessageList({ messages, loading = false }: MessageListPr
         </div>
       ))}
 
-      {loading && (
+      {(loading || isStreamingPaused) && (
         <div className="flex justify-start">
           <div className="bg-neutral-100 rounded-lg">
             <ThinkingIndicator />
