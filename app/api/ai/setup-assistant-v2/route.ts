@@ -23,11 +23,28 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { withTeamContext } from '@/lib/middleware/team-context'
 import { SetupAssistantService } from '@/lib/services/SetupAssistantService'
+import { SetupAssistantServiceV2 } from '@/lib/services/SetupAssistantServiceV2'
 
 export async function POST(request: NextRequest) {
   // Use team context middleware for auth and team isolation
   return withTeamContext(async (context) => {
     try {
+      // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      // ARCHITECTURE VERSION CHECK
+      // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      const useV2 = process.env.SETUP_ASSISTANT_USE_V2 === 'true'
+      const useDeterministic = process.env.SETUP_ASSISTANT_USE_DETERMINISTIC !== 'false'
+
+      console.log('\n' + '═'.repeat(80))
+      console.log('🚀 SETUP ASSISTANT API - VERSION CHECK')
+      console.log('═'.repeat(80))
+      console.log(`📦 Architecture: ${useV2 ? '✅ V2 (NEW!)' : '⚠️  V1 (OLD)'}`)
+      if (useV2) {
+        console.log(`⚡ Extraction Mode: ${useDeterministic ? '✅ DETERMINISTIC (70% faster!)' : '⚠️  AI Chunking only (25% faster)'}`)
+      }
+      console.log('═'.repeat(80) + '\n')
+      // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
       const contentType = request.headers.get('content-type') || ''
 
       if (!contentType.includes('multipart/form-data')) {
@@ -41,23 +58,28 @@ export async function POST(request: NextRequest) {
         return { error: 'No file provided' }
       }
 
-      console.log('📁 [V2] Processing file with service layer:', file.name, 'Type:', file.type)
+      console.log('📁 Processing file:', file.name, 'Type:', file.type)
 
       // Convert File to Buffer
       const arrayBuffer = await file.arrayBuffer()
       const fileBuffer = Buffer.from(arrayBuffer)
 
       // Create service instance with team context
-      const setupAssistantService = new SetupAssistantService({
-        ...context,
-        request // Include request for audit context
-      })
+      const setupAssistantService = useV2
+        ? new SetupAssistantServiceV2({
+            ...context,
+            request // Include request for audit context
+          })
+        : new SetupAssistantService({
+            ...context,
+            request // Include request for audit context
+          })
 
       // Process file using service layer
       const result = await setupAssistantService.processFile(fileBuffer, file.name)
 
-      console.log('✅ [V2] File processed successfully')
-      console.log(`📊 [V2] Created: ${result.contractsCreated} contracts, ${result.receivablesCreated} receivables, ${result.expensesCreated} expenses`)
+      console.log(`✅ [${useV2 ? 'V3' : 'V1'}] File processed successfully`)
+      console.log(`📊 Created: ${result.contractsCreated} contracts, ${result.receivablesCreated} receivables, ${result.expensesCreated} expenses`)
 
       return {
         success: result.success,

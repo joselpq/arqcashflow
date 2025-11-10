@@ -276,9 +276,10 @@ export const RecurringExpenseSchemas = {
 export const BusinessRuleValidation = {
   /**
    * Validate that received amount doesn't exceed expected amount for receivables
+   * ADR-021 Phase 1: Increased tolerance to allow prepayments and overpayments
    */
   validateReceivedAmount: (expectedAmount: number, receivedAmount: number) => {
-    return receivedAmount <= expectedAmount * 1.1 // Allow 10% tolerance for fees/interest
+    return receivedAmount <= expectedAmount * 1.5 // Allow 50% tolerance for prepayments/fees
   },
 
   /**
@@ -290,11 +291,12 @@ export const BusinessRuleValidation = {
 
   /**
    * Validate that expense due date is reasonable (not too far in the future)
+   * ADR-021 Phase 1: Increased to 10 years to allow long-term scheduled expenses
    */
   validateExpenseDueDate: (dueDate: string) => {
     const due = new Date(dueDate)
     const maxDate = new Date()
-    maxDate.setFullYear(maxDate.getFullYear() + 2) // Max 2 years in future
+    maxDate.setFullYear(maxDate.getFullYear() + 10) // Max 10 years in future
     return due <= maxDate
   },
 

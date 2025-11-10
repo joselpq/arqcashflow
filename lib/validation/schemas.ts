@@ -257,10 +257,11 @@ export const RefinedFieldSchemas = {
       message: 'Date cannot be more than 5 years old'
     }),
 
-  // Signed date (allow future dates for scheduled contracts/appointments, not too old for historical data)
+  // Signed date (ADR-021 Phase 1: Allow old contracts for historical data import)
+  // Removed 10-year restriction - users should be able to import old contracts
   signedDate: BaseFieldSchemas.dateString
-    .refine(date => ValidationUtils.notTooOld(date, 10), {
-      message: 'Signed date cannot be more than 10 years old'
+    .refine(date => ValidationUtils.notTooOld(date, 50), {
+      message: 'Signed date cannot be more than 50 years old (extreme sanity check)'
     }),
 
   // Safe string (no HTML tags)

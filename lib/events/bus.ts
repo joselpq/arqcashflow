@@ -17,7 +17,7 @@ import type {
 } from './types'
 import { EventTypes } from './types'
 import { EventSchemas } from './types'
-import { ValidationError, validateSchema, validateWithContext, DEFAULT_CONTEXTS } from '@/lib/validation'
+import { ValidationError, validateSchema } from '@/lib/validation'
 
 /**
  * Event Persistence Interface
@@ -254,9 +254,9 @@ export class ArqEventBus implements EventBus {
         schema = EventSchemas.system
     }
 
-    // Validate using context-aware flexible validation for events
+    // Validate using partial schema (events may have incomplete data)
     try {
-      validateWithContext(schema, event, DEFAULT_CONTEXTS.event)
+      schema.partial().parse(event)
     } catch (error) {
       throw new Error(`Event validation failed: ${error}`)
     }

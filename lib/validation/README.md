@@ -1,8 +1,28 @@
 # Unified Validation Layer
 
-**Status**: ✅ Complete - Ready for incremental adoption
+**Status**: ✅ Complete - Phase 1 Simplification Applied (ADR-021)
 **Created**: September 25, 2025
-**Last Updated**: September 25, 2025
+**Last Updated**: November 5, 2025
+
+## 📋 Recent Changes (ADR-021 Phase 1 - November 5, 2025)
+
+**Context-Aware Validation Removed**: The complex context-aware validation system (`context.ts`) has been removed to simplify the codebase. Events now use simple `.partial()` validation for flexibility.
+
+**Business Rules Loosened**: Overly restrictive validation rules have been relaxed to allow valid edge cases:
+- ✅ **Contract signed dates**: Now accepts contracts up to 50 years old (was 10 years)
+- ✅ **Expense due dates**: Now allows expenses up to 10 years in future (was 2 years)
+- ✅ **Receivable overpayments**: Now tolerates up to 50% over expected (was 10%)
+
+These changes improve user experience by allowing:
+- Historical contract imports from old data
+- Long-term scheduled expenses (annual renewals, etc.)
+- Prepayments and overpayments with fees/interest
+
+**Audit Logging**: Disabled by default (`AUDIT_ENABLED=false`). Can be re-enabled when compliance requirements arise.
+
+**Phase 2 Pending**: Decision required on unified validation adoption (see `UNIFIED_VALIDATION_DECISION_FRAMEWORK.md`).
+
+---
 
 ## Overview
 
