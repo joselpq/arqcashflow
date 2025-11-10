@@ -71,6 +71,8 @@ import { ExcelParser } from './setup-assistant/core/ExcelParser'
 import { DataTransformer, ColumnMapping as DataColumnMapping } from './setup-assistant/core/DataTransformer'
 import { TableSegmenter, DetectedTable } from './setup-assistant/analysis/TableSegmenter'
 import { SheetAnalyzer, SheetType, SheetAnalysis, ModelConfig } from './setup-assistant/analysis/SheetAnalyzer'
+import { VisionExtractor } from './setup-assistant/extraction/VisionExtractor'
+import { BulkEntityCreator } from './setup-assistant/extraction/BulkEntityCreator'
 
 /**
  * Column mapping for deterministic extraction
@@ -125,6 +127,8 @@ export class SetupAssistantServiceV2 extends BaseService<any, any, any, any> {
   private tableSegmenter: TableSegmenter
   private sheetAnalyzer: SheetAnalyzer
   private dataTransformer: DataTransformer
+  private visionExtractor: VisionExtractor
+  private bulkCreator: BulkEntityCreator
 
   constructor(context: ServiceContext) {
     super(context, 'setup_assistant_v2', [])
@@ -143,6 +147,12 @@ export class SetupAssistantServiceV2 extends BaseService<any, any, any, any> {
     this.tableSegmenter = new TableSegmenter()
     this.sheetAnalyzer = new SheetAnalyzer(this.anthropic)
     this.dataTransformer = new DataTransformer()
+    this.visionExtractor = new VisionExtractor(this.anthropic)
+    this.bulkCreator = new BulkEntityCreator(
+      this.contractService,
+      this.receivableService,
+      this.expenseService
+    )
   }
 
   async validateBusinessRules(_data: any): Promise<void> {
@@ -240,357 +250,33 @@ export class SetupAssistantServiceV2 extends BaseService<any, any, any, any> {
    * Map contractId (project name string) to actual contract UUID
    * If no match found, set contractId to null (standalone receivable)
    */
-  private async mapContractIds(receivables: ExtractedReceivable[]): Promise<ExtractedReceivable[]> {
-    if (receivables.length === 0) return receivables
-
-    console.log('\n🔗 CONTRACT ID MAPPING...')
-
-    // Get all contracts for this team
-    const contracts = await this.contractService.findMany({})
-    console.log(`   Found ${contracts.length} existing contracts`)
-
-    // Map project names to contract UUIDs
-    let mapped = 0
-    let notFound = 0
-
-    const mappedReceivables = receivables.map(receivable => {
-      // If contractId is already null or undefined, keep it
-      if (!receivable.contractId) {
-        return { ...receivable, contractId: null }
-      }
-
-      // If contractId is already a UUID format, keep it
-      if (typeof receivable.contractId === 'string' &&
-          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(receivable.contractId)) {
-        return receivable
-      }
-
-      // Try to find matching contract by project name (case-insensitive)
-      const projectNameLower = receivable.contractId.toLowerCase()
-      const matchingContract = contracts.find(c =>
-        c.projectName.toLowerCase() === projectNameLower
-      )
-
-      if (matchingContract) {
-        mapped++
-        return { ...receivable, contractId: matchingContract.id }
-      } else {
-        notFound++
-        return { ...receivable, contractId: null }
-      }
-    })
-
-    console.log(`   Mapped: ${mapped} | Not found: ${notFound}`)
-
-    // 🔍 DIAGNOSTIC: Show sample mapping
-    if (mappedReceivables.length > 0) {
-      const sample = mappedReceivables[0]
-      console.log(`   Sample mapping: contractId = ${sample.contractId ? sample.contractId.substring(0, 8) + '...' : 'null (standalone)'}`)
-    }
-
-    return mappedReceivables
-  }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // PHASE 4: BULK CREATION (Database, Parallel by entity type)
+  // PHASE 4 & VISION EXTRACTION - EXTRACTED TO COMPONENTS
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // The following sections have been extracted (ADR-026 Day 4):
+  //
+  // Contract ID Mapping & Bulk Creation:
+  //   - mapContractIds() → BulkEntityCreator.mapContractIds()
+  //   - bulkCreateEntities() → BulkEntityCreator.createEntities()
+  //   - Location: lib/services/setup-assistant/extraction/BulkEntityCreator.ts
+  //   - Usage: this.bulkCreator.createEntities(data)
+  //
+  // Vision Extraction:
+  //   - extractFromVisionDirect() → VisionExtractor.extractFromPdfOrImage()
+  //   - getImageMediaType() → VisionExtractor (private method)
+  //   - Location: lib/services/setup-assistant/extraction/VisionExtractor.ts
+  //   - Usage: this.visionExtractor.extractFromPdfOrImage(...)
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  private async bulkCreateEntities(data: ExtractionResult): Promise<ProcessingResult> {
-    console.log('\n💾 PHASE 4: Bulk Creation')
-    console.log(`   Creating: ${data.contracts.length}c, ${data.receivables.length}r, ${data.expenses.length}e`)
-
-    const errors: string[] = []
-    let contractsCreated = 0
-    let receivablesCreated = 0
-    let expensesCreated = 0
-
-    // Helper to convert null to undefined for service layer compatibility
-    const cleanEntity = <T extends Record<string, any>>(entity: T): any => {
-      const cleaned: any = {}
-      for (const [key, value] of Object.entries(entity)) {
-        cleaned[key] = value === null ? undefined : value
-      }
-      return cleaned
-    }
-
-    // CRITICAL: For mixed sheet imports, we must create contracts FIRST
-    // so that receivables can be mapped to the newly created contracts
-
-    // Step 1: Create contracts first (sequential)
-    let contractResult = null
-    if (data.contracts.length > 0) {
-      try {
-        // CRITICAL: Use continueOnError to skip duplicates and create new contracts
-        contractResult = await this.contractService.bulkCreate(
-          data.contracts.map(cleanEntity) as any,
-          { continueOnError: true }  // Skip duplicates, create new ones
-        )
-        contractsCreated = contractResult.successCount
-        errors.push(...contractResult.errors)
-        console.log(`   ✅ Contracts created: ${contractsCreated} (${contractResult.failureCount} duplicates skipped)`)
-      } catch (error) {
-        errors.push(`Contracts bulk create failed: ${error}`)
-      }
-    }
-
-    // Step 2: Map receivables' contractId (now includes newly created contracts!)
-    const mappedReceivables = await this.mapContractIds(data.receivables)
-
-    // Step 3: Create receivables and expenses in parallel
-    // Use continueOnError for both to handle potential duplicates gracefully
-    const results = await Promise.allSettled([
-      mappedReceivables.length > 0
-        ? this.receivableService.bulkCreate(mappedReceivables.map(cleanEntity) as any, { continueOnError: true })
-        : null,
-      data.expenses.length > 0
-        ? this.expenseService.bulkCreate(data.expenses.map(cleanEntity) as any, { continueOnError: true })
-        : null
-    ])
-
-    // Process results (receivables and expenses)
-    if (results[0].status === 'fulfilled' && results[0].value) {
-      receivablesCreated = results[0].value.successCount
-      errors.push(...results[0].value.errors)
-    } else if (results[0].status === 'rejected') {
-      errors.push(`Receivables bulk create failed: ${results[0].reason}`)
-    }
-
-    if (results[1].status === 'fulfilled' && results[1].value) {
-      expensesCreated = results[1].value.successCount
-      errors.push(...results[1].value.errors)
-    } else if (results[1].status === 'rejected') {
-      errors.push(`Expenses bulk create failed: ${results[1].reason}`)
-    }
-
-    console.log(`   ✅ Created: ${contractsCreated}c, ${receivablesCreated}r, ${expensesCreated}e`)
-    if (errors.length > 0) {
-      console.log(`   ⚠️  Errors: ${errors.length}`)
-      // 🔍 DIAGNOSTIC: Show actual errors
-      console.log(`\n   🔍 BULK CREATION ERRORS:`)
-      errors.slice(0, 3).forEach((err, idx) => {
-        console.log(`      ${idx + 1}. ${err}`)
-      })
-      if (errors.length > 3) {
-        console.log(`      ... and ${errors.length - 3} more errors`)
-      }
-    }
-
-    return {
-      success: true,
-      contractsCreated,
-      receivablesCreated,
-      expensesCreated,
-      errors
-    }
-  }
-
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // PDF/IMAGE VISION EXTRACTION (Single-phase direct extraction)
+  // MAIN ENTRY POINT: PROCESS FILE (Orchestration Layer)
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   /**
-   * Single-phase vision extraction: Direct schema-based extraction from PDF/images
-   * Ported from V1 with proven performance (50% cheaper, 50% faster than multi-phase)
+   * Main entry point for file processing
+   * Orchestrates the 4-phase workflow using extracted components
    */
-  private async extractFromVisionDirect(
-    fileBuffer: Buffer,
-    filename: string,
-    fileType: 'pdf' | 'image',
-    professionOverride?: string
-  ): Promise<ExtractionResult> {
-    console.log(`🔍 Processing ${fileType.toUpperCase()} with single-phase vision extraction...`)
-
-    // Get team profession for context-aware prompts
-    const team = await this.context.teamScopedPrisma.raw.team.findUnique({
-      where: { id: this.context.teamId },
-      select: { profession: true }
-    })
-
-    const profession = team?.profession || professionOverride
-    const professionConfig = getProfessionConfig(profession)
-
-    // Determine media type and content type for Anthropic API
-    const mediaType = fileType === 'pdf'
-      ? 'application/pdf'
-      : this.getImageMediaType(filename)
-
-    const contentType = fileType === 'pdf' ? 'document' : 'image'
-
-    // Full schema prompt with profession-aware context (from V1)
-    const prompt = `Você está analisando um documento de ${professionConfig.businessContext.businessType}.
-
-• Este documento pode estar em formato PDF, imagem, ou qualquer outro formato visual, pode se tratar por exemplo de um contrato, uma proposta, um recibo, etc.
-• Sua tarefa é extrair TODAS as entidades financeiras (contratos, recebíveis, despesas) encontradas neste documento.
-• Preste atenção no tipo e nome do documento pois fornecem indícios dos tipos de entidade financeira que você deve encontrar
-• Se encontrar formas de pagamento (recebíveis ou despesas), preste atenção nas condições de pagamento: quanto é à vista, quanto é parcelado, quais as datas de pagamento
-   • É comum encontrar propostas com valores diferentes entre parcelas, que podem ser explícitos ou implícitos
-   • Calcule quanto deve ser pago à vista, quantas parcelas são e qual o valor e data específico de cada parcela, evitando erros de interpretação por assumir algo incorretamente
-• Revise o documento por inteiro antes de extrair as entidades financeiras, para ter todo contexto necessário
-
-═══════════════════════════════════════════════════════════════════
-CONTEXTO FINANCEIRO - ${professionConfig.businessContext.professionName.toUpperCase()}
-═══════════════════════════════════════════════════════════════════
-
-${professionConfig.businessContext.revenueDescription}
-
-${professionConfig.businessContext.projectTypes}
-
-${professionConfig.businessContext.expenseDescription}
-
-Use este contexto para identificar e classificar corretamente as entidades financeiras.
-
-═══════════════════════════════════════════════════════════════════
-SCHEMA DAS ENTIDADES
-═══════════════════════════════════════════════════════════════════
-
-📋 CONTRACT (Contratos/Projetos):
-{
-  "clientName": "string",        // OBRIGATÓRIO
-  "projectName": "string",       // OBRIGATÓRIO
-  "totalValue": number,          // ${professionConfig.ai.schemaRequirements.contract.totalValue === 'REQUIRED' ? 'OBRIGATÓRIO' : 'OPCIONAL'}
-  "signedDate": "ISO-8601",      // ${professionConfig.ai.schemaRequirements.contract.signedDate === 'REQUIRED' ? 'OBRIGATÓRIO' : 'OPCIONAL'}
-  "status": "active" | "completed" | "cancelled",  // OBRIGATÓRIO - se não descobrir, use "active"
-  "description": "string" | null,
-  "category": "string" | null,
-  "notes": "string" | null
-}
-
-💰 RECEIVABLE (Recebíveis):
-{
-  "contractId": "string" | null,     // OPCIONAL - nome do projeto associado
-  "clientName": "string" | null,     // OPCIONAL - nome do cliente
-  "expectedDate": "ISO-8601" | null,
-  "amount": number,                  // OBRIGATÓRIO
-  "status": "pending" | "received" | "overdue" | null,
-  "receivedDate": "ISO-8601" | null,
-  "receivedAmount": number | null,
-  "description": "string" | null,
-  "category": "string" | null
-}
-
-💳 EXPENSE (Despesas):
-{
-  "description": "string",           // OBRIGATÓRIO
-  "amount": number,                  // OBRIGATÓRIO
-  "dueDate": "ISO-8601" | null,
-  "category": "string",              // OBRIGATÓRIO - use "Outros" se não souber
-  "status": "pending" | "paid" | "overdue" | "cancelled" | null,
-  "paidDate": "ISO-8601" | null,
-  "paidAmount": number | null,
-  "vendor": "string" | null,
-  "invoiceNumber": "string" | null,
-  "contractId": "string" | null,
-  "notes": "string" | null
-}
-
-═══════════════════════════════════════════════════════════════════
-FORMATO DE RESPOSTA
-═══════════════════════════════════════════════════════════════════
-
-Retorne APENAS um objeto JSON válido neste formato:
-
-{
-  "contracts": [ /* array de contratos */ ],
-  "receivables": [ /* array de recebíveis */ ],
-  "expenses": [ /* array de despesas */ ]
-}
-
-IMPORTANTE:
-• Retorne apenas JSON válido, sem markdown, sem explicações
-• Arrays vazios são permitidos se não houver entidades daquele tipo
-• Extraia TODAS as entidades encontradas
-• Use valores null para campos opcionais não encontrados
-• Formate datas no padrão ISO-8601 (ex: "2024-01-15T00:00:00.000Z")
-• Valores monetários devem ser números (sem símbolos de moeda)`
-
-    try {
-      // Call Claude Vision API with extended thinking for complex calculations
-      const message = await this.anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 16000,
-        temperature: 1,
-        thinking: {
-          type: 'enabled',
-          budget_tokens: 10000
-        },
-        messages: [{
-          role: 'user',
-          content: [
-            {
-              type: contentType as 'document' | 'image',
-              source: {
-                type: 'base64',
-                media_type: mediaType as any,
-                data: fileBuffer.toString('base64')
-              }
-            },
-            {
-              type: 'text',
-              text: prompt
-            }
-          ]
-        }]
-      })
-
-      // Extract JSON from response (skip thinking blocks)
-      let responseText = ''
-      for (const block of message.content) {
-        if (block.type === 'text') {
-          responseText = block.text
-          break
-        }
-      }
-
-      const thinkingBlocks = message.content.filter(b => b.type === 'thinking')
-      if (thinkingBlocks.length > 0) {
-        console.log(`💭 Claude used ${thinkingBlocks.length} thinking block(s) for reasoning`)
-      }
-
-      if (!responseText.trim()) {
-        throw new Error('Claude did not return any data from the file')
-      }
-
-      // Extract JSON
-      const jsonMatch = responseText.match(/\{[\s\S]*\}/)
-      if (!jsonMatch) {
-        throw new Error('Claude did not return valid JSON')
-      }
-
-      // Parse JSON (direct parse, no repair needed for V2)
-      const extractedData = JSON.parse(jsonMatch[0]) as ExtractionResult
-
-      console.log(`✅ Vision extraction: ${extractedData.contracts.length}c, ${extractedData.receivables.length}r, ${extractedData.expenses.length}e`)
-
-      return extractedData
-    } catch (error) {
-      console.error('Vision extraction error:', error)
-      throw new ServiceError(
-        `Failed to extract data from ${fileType}: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        'VISION_EXTRACTION_ERROR',
-        500
-      )
-    }
-  }
-
-  /**
-   * Helper: Get image media type from filename
-   */
-  private getImageMediaType(filename: string): string {
-    const ext = filename.toLowerCase().split('.').pop()
-    const mediaTypes: Record<string, string> = {
-      'png': 'image/png',
-      'jpg': 'image/jpeg',
-      'jpeg': 'image/jpeg',
-      'gif': 'image/gif',
-      'webp': 'image/webp'
-    }
-    return mediaTypes[ext || 'png'] || 'image/png'
-  }
-
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // MAIN ENTRY POINT: PROCESS FILE
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
   async processFile(
     fileBuffer: Buffer,
     filename: string,
@@ -617,7 +303,20 @@ IMPORTANTE:
       // Handle PDF/Image files with vision extraction
       if (fileType === 'pdf' || fileType === 'image') {
         console.log(`\n🖼️ VISION EXTRACTION: ${fileType.toUpperCase()}`)
-        const extractedData = await this.extractFromVisionDirect(fileBuffer, filename, fileType, professionOverride)
+
+        // Get team profession for context
+        const team = await this.context.teamScopedPrisma.raw.team.findUnique({
+          where: { id: this.context.teamId },
+          select: { profession: true }
+        })
+
+        const extractedData = await this.visionExtractor.extractFromPdfOrImage(
+          fileBuffer,
+          filename,
+          fileType,
+          professionOverride,
+          team?.profession || undefined
+        )
 
         // Apply post-processing
         const processedData = this.dataTransformer.postProcessEntities(extractedData)
@@ -625,7 +324,7 @@ IMPORTANTE:
         // Bulk creation
         console.log('\n💾 PHASE 4: Bulk Creation')
         const phase4Start = Date.now()
-        const creationResult = await this.bulkCreateEntities(processedData)
+        const creationResult = await this.bulkCreator.createEntities(processedData)
         metrics.phase4_bulkcreate = Date.now() - phase4Start
 
         metrics.total = Date.now() - startTime
@@ -704,7 +403,7 @@ IMPORTANTE:
 
       // PHASE 4: Bulk Creation (1-2s, parallel by entity type)
       const phase4Start = Date.now()
-      const result = await this.bulkCreateEntities(processedData)
+      const result = await this.bulkCreator.createEntities(processedData)
       metrics.phase4_bulkcreate = Date.now() - phase4Start
       console.log(`   ⏱️  Phase 4: ${metrics.phase4_bulkcreate}ms`)
 
@@ -735,5 +434,129 @@ IMPORTANTE:
         500
       )
     }
+  }
+
+  /**
+   * Process sheet with mixed entity support (ADR-025)
+   * Automatically detects homogeneous vs mixed sheets and routes appropriately
+   */
+  private async processSheetWithMixedSupport(
+    sheet: SheetData,
+    filename: string,
+    professionOverride?: string
+  ): Promise<ExtractionResult> {
+    // Get team profession for analysis context
+    const team = await this.context.teamScopedPrisma.raw.team.findUnique({
+      where: { id: this.context.teamId },
+      select: { profession: true }
+    })
+    const profession = professionOverride || team?.profession || undefined
+
+    // Feature flag check: if mixed sheet support is disabled, use fast path only
+    const detectedTables = this.supportMixedSheets
+      ? this.tableSegmenter.segmentTablesWithHeaders(sheet)
+      : [{
+          rowRange: [0, 0] as [number, number],
+          colRange: [0, 0] as [number, number],
+          sampleRows: [],
+          confidence: 1.0,
+          headerRow: 0
+        }]  // Single table (force fast path)
+
+    if (detectedTables.length === 1) {
+      // FAST PATH (90%): Homogeneous sheet
+      console.log(`   ✅ Single table detected - fast path`)
+
+      const analysis = await this.sheetAnalyzer.analyzeSheet(sheet, filename, {
+        profession,
+        modelConfig: this.getModelConfig()
+      })
+
+      if (analysis.sheetType === 'skip') {
+        return { contracts: [], receivables: [], expenses: [] }
+      }
+
+      // Extract using homogeneous logic with DataTransformer
+      const rows = this.dataTransformer.parseCSV(sheet.csv)
+      const entities = rows
+        .map(row => this.dataTransformer.extractEntity(row, analysis.columnMapping))
+        .filter(e => e !== null)
+
+      const result: ExtractionResult = {
+        contracts: [],
+        receivables: [],
+        expenses: []
+      }
+
+      const sheetType = analysis.sheetType as 'contracts' | 'receivables' | 'expenses'
+      result[sheetType] = entities
+
+      return result
+    }
+
+    // MIXED PATH (10%): Multiple tables
+    console.log(`   🔀 ${detectedTables.length} tables detected - parallel analysis`)
+
+    // Step 2: Create virtual sheet for each table
+    const virtualSheets = detectedTables.map((table, idx) =>
+      this.tableSegmenter.extractTableAsSheet(sheet, table, idx)
+    )
+
+    // Step 3: Analyze ALL virtual sheets in parallel using SheetAnalyzer
+    const analyses = await Promise.all(
+      virtualSheets.map(vs =>
+        this.sheetAnalyzer.analyzeSheet(
+          { name: vs.name, csv: vs.csv },
+          filename,
+          {
+            profession,
+            modelConfig: this.getModelConfig()
+          }
+        )
+      )
+    )
+
+    // Step 4: Extract from multiple analyses and combine
+    return this.extractFromMultipleAnalyses(virtualSheets, analyses)
+  }
+
+  /**
+   * Extract from multiple analyses (mixed sheets)
+   * Combines entities from all virtual sheets
+   */
+  private extractFromMultipleAnalyses(
+    virtualSheets: VirtualSheet[],
+    analyses: SheetAnalysis[]
+  ): ExtractionResult {
+    const result: ExtractionResult = {
+      contracts: [],
+      receivables: [],
+      expenses: []
+    }
+
+    // Process each virtual sheet with its analysis
+    for (let i = 0; i < virtualSheets.length; i++) {
+      const virtualSheet = virtualSheets[i]
+      const analysis = analyses[i]
+
+      // Skip non-financial sheets
+      if (analysis.sheetType === 'skip') continue
+
+      console.log(`   📋 ${virtualSheet.name}: ${analysis.sheetType}`)
+
+      // Use DataTransformer for extraction
+      const rows = this.dataTransformer.parseCSV(virtualSheet.csv)
+      const entities = rows
+        .map(row => this.dataTransformer.extractEntity(row, analysis.columnMapping))
+        .filter(e => e !== null)
+
+      // Accumulate entities by type
+      const sheetType = analysis.sheetType as 'contracts' | 'receivables' | 'expenses'
+      result[sheetType].push(...entities)
+    }
+
+    console.log(`   ✅ Mixed extraction complete: ${result.contracts.length}c, ${result.receivables.length}r, ${result.expenses.length}e`)
+
+    return result
   }
 }
