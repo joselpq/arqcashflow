@@ -10,8 +10,8 @@
  * Part of ADR-026: SetupAssistant Service Decomposition
  */
 
-import { ServiceError } from '../BaseService'
-import type { FileType } from '../SetupAssistantService'
+import { ServiceError } from '../../BaseService'
+import type { FileType } from '../../SetupAssistantService'
 
 /**
  * Detects file type from filename extension and buffer magic bytes

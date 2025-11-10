@@ -12,8 +12,8 @@
  */
 
 import * as XLSX from 'xlsx'
-import { ServiceError } from '../BaseService'
-import type { SheetData } from '../SetupAssistantService'
+import { ServiceError } from '../../BaseService'
+import type { SheetData } from '../../SetupAssistantService'
 
 /**
  * Options for sheet extraction
