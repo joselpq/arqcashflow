@@ -538,7 +538,9 @@ export default function Dashboard() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="text-4xl mb-4">⏳</div>
+          <div className="flex justify-center mb-4">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          </div>
           <p>Carregando...</p>
         </div>
       </div>
@@ -558,7 +560,9 @@ export default function Dashboard() {
         <div className="max-w-7xl mx-auto">
           <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
           <div className="text-center py-20">
-            <div className="text-4xl mb-4">⏳</div>
+            <div className="flex justify-center mb-4">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            </div>
             <p>Carregando dados...</p>
             {retryAttempt > 1 && (
               <p className="text-sm text-gray-500 mt-2">
