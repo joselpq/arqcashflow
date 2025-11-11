@@ -1,7 +1,7 @@
 # ArqCashflow Development Backlog
 
 **Purpose**: Central source of truth for project priorities and development status
-**Last Updated**: 2025-11-10 (ADR-026 Day 4 Complete - SetupAssistant Service Decomposition ✅)
+**Last Updated**: 2025-11-10 (Added 2 new TO DO tasks: Onboarding Simplification + Personal Finances Assessment)
 **Update Frequency**: Every LLM session MUST update this document when completing tasks
 
 ---
@@ -286,6 +286,96 @@ This backlog **DOES NOT** replace other documentation:
 - Demo video or interactive agent showcase (optional)
 
 **Location**: `app/components/LandingPage.tsx`
+
+---
+
+### 🎯 **Onboarding Simplification: Quick Start Mode for Current Contracts** (MEDIUM PRIORITY)
+**Status**: Idea - Needs UX design and user research
+**Effort**: 1-2 weeks
+**Prerequisites**: None
+
+**Problem**:
+- Current onboarding assumes users want to import full historic data from spreadsheets
+- Some users just want to add existing contracts and expenses going forward
+- No clear "simple mode" or "quick start" path for users who don't have/want historic data
+- Step-by-step process could be more intuitive and less overwhelming
+
+**User Scenarios**:
+1. **New business**: Just started, no historic data to import
+2. **Fresh start**: Want to track from now on, don't care about past
+3. **Simple setup**: Just want to manually add current active contracts
+4. **Gradual adoption**: Start simple, maybe import historic later
+
+**Proposed Solutions**:
+1. **Two-Path Onboarding**: Early question "Do you have financial data to import?" → Yes (current flow) or No (simplified flow)
+2. **Guided Contract Creation**: Step-by-step wizard for adding first 1-3 contracts manually
+3. **Minimal Setup Mode**: Skip file upload entirely, go straight to "Add your first contract"
+4. **Progressive Disclosure**: Start simple, offer import option later in dashboard banner
+5. **Quick Start Templates**: Pre-filled example contracts based on profession
+
+**Expected Impact**:
+- Lower barrier to entry for new users
+- Faster time to first value
+- Better onboarding completion rate
+- Reduced user confusion and drop-off
+
+**Related**: Chat-first onboarding (ADR-017), Setup Assistant V2
+
+---
+
+### 💳 **Personal Finances Integration Assessment** (HIGH PRIORITY - STRATEGIC)
+**Status**: Research needed - Product strategy decision
+**Effort**: 2-3 weeks (assessment + prototype)
+**Prerequisites**: User research, competitive analysis, compliance review
+
+**Opportunity**:
+- Expand from business finances to personal finances control
+- Unified view of business + personal cash flow
+- Major value proposition for solo professionals (architects, doctors, lawyers)
+
+**Data Sources**:
+1. **Manual Image Upload**: Credit card statements, bank statements (PDF/photos)
+2. **Open Banking API**: Automated bank/credit card sync (Pluggy, Belvo, etc.)
+3. **CSV Import**: Bank exports, credit card exports
+
+**Value Propositions**:
+1. **Historic Analysis**:
+   - Understand past spending patterns
+   - Categorize expenses automatically
+   - Identify saving opportunities
+   - Compare business vs personal spending
+2. **Future Projections**:
+   - Remind about upcoming bills (credit card due dates)
+   - Alert about upcoming expenses (subscriptions, installments)
+   - Cash flow projection (business + personal)
+   - Avoid overdrafts and late fees
+3. **Unified Financial Health**:
+   - Complete picture of finances (not just business)
+   - Better decisions for solo professionals
+   - Tax planning (business vs personal deductions)
+
+**Technical Challenges**:
+- Data privacy and security (bank credentials, transaction data)
+- Open Banking integration complexity and cost
+- Multi-institution support (dozens of banks)
+- Transaction categorization accuracy
+- Personal vs business expense classification
+
+**Business Questions**:
+- Is this our core value proposition or feature creep?
+- Do our target users want this, or prefer separate tools?
+- Can we compete with Guiabolso, Mobills, Organizze?
+- Should we partner with existing personal finance tools instead?
+- What's the ROI vs building better business features?
+
+**Research Needed**:
+1. User interviews: Do architects/doctors want unified business+personal?
+2. Competitive analysis: What do personal finance apps do well/poorly?
+3. Compliance review: Open Banking regulations, data privacy (LGPD)
+4. Technical POC: Pluggy/Belvo integration feasibility
+5. Pricing strategy: Premium feature or core offering?
+
+**Related**: Open Finance Integration (BACKLOG), Setup Assistant (file import patterns)
 
 ---
 
@@ -814,4 +904,4 @@ This backlog **DOES NOT** replace other documentation:
 ---
 
 **Last Updated**: 2025-11-10
-**Status**: DOING (none), TO DO (6 items - SetupAssistant UX/bugs, OperationsAgent bugs, landing page), BACKLOG (22+ items), DONE (3 recent - Validation Phase 2, SetupAssistant V2, Chat Streaming)
+**Status**: DOING (none), TO DO (8 items - SetupAssistant UX/bugs, OperationsAgent bugs, landing page, onboarding simplification, personal finances), BACKLOG (22+ items), DONE (3 recent - Validation Phase 2, SetupAssistant V2, Chat Streaming)
