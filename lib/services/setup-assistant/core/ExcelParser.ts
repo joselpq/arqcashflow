@@ -3,6 +3,7 @@
  *
  * Responsibilities:
  * - Parse XLSX workbook from buffer
+ * - Parse CSV files with dedicated parser (no XLSX auto-conversion)
  * - Extract sheet data with normalized formats (dates, numbers)
  * - Convert sheets to CSV format
  * - Header detection for legacy mode
@@ -13,7 +14,8 @@
 
 import * as XLSX from 'xlsx'
 import { ServiceError } from '../../BaseService'
-import type { SheetData } from '../../SetupAssistantService'
+import type { SheetData, FileType } from '../../SetupAssistantService'
+import { SimpleCsvParser } from './SimpleCsvParser'
 
 /**
  * Options for sheet extraction
@@ -38,12 +40,16 @@ export interface SheetExtractionOptions {
  *
  * Features:
  * - Reads Excel cell metadata directly (preserves types)
- * - Dates properly formatted (yyyy-mm-dd)
- * - Numbers as actual numbers (not formatted strings)
- * - Preserves precision for currency values
+ * - CSV files: Dedicated parser (no auto-conversion, preserves UTF-8)
+ * - XLSX files: Cell metadata reading (preserves dates/numbers)
  * - Intelligent header detection
  */
 export class ExcelParser {
+  private csvParser: SimpleCsvParser
+
+  constructor() {
+    this.csvParser = new SimpleCsvParser()
+  }
   /**
    * Parse Excel workbook from buffer
    *
@@ -64,21 +70,108 @@ export class ExcelParser {
   }
 
   /**
-   * Extract sheets with NORMALIZED data using Excel cell metadata
+   * Extract sheets with NORMALIZED data
    *
-   * This approach reads raw cell values and types BEFORE CSV conversion.
-   *
-   * Benefits:
-   * - Dates are properly formatted (yyyy-mm-dd)
-   * - Numbers are actual numbers (not formatted strings)
-   * - Preserves precision for currency values
-   * - Detects header row correctly (handles title rows, metadata, etc.)
+   * Routes to appropriate parser based on file type:
+   * - CSV: SimpleCsvParser (preserves text, no auto-conversion)
+   * - XLSX: Excel cell metadata reading (preserves types)
    *
    * @param workbook - Parsed Excel workbook
    * @param options - Extraction options
+   * @param fileType - File type for routing
+   * @param fileBuffer - Original file buffer (needed for CSV parsing)
    * @returns Array of sheet data with CSV format
    */
   extractSheetsData(
+    workbook: XLSX.WorkBook,
+    options: SheetExtractionOptions,
+    fileType?: FileType,
+    fileBuffer?: Buffer
+  ): SheetData[] {
+    // Route CSV files to dedicated CSV parser (better coverage)
+    if (fileType === 'csv' && fileBuffer) {
+      return this.extractCsvData(fileBuffer, options)
+    }
+
+    // XLSX files use Excel cell metadata reading
+    return this.extractXlsxData(workbook, options)
+  }
+
+  /**
+   * Extract CSV data using dedicated CSV parser
+   * Preserves original text (no date/number auto-conversion)
+   * Full UTF-8 support (fixes encoding issues)
+   *
+   * Logic copied from extractXlsxData() - only difference is parsing method
+   *
+   * @param fileBuffer - CSV file buffer
+   * @param options - Extraction options
+   * @returns Array of sheet data
+   */
+  private extractCsvData(
+    fileBuffer: Buffer,
+    options: SheetExtractionOptions
+  ): SheetData[] {
+    const sheetsData: SheetData[] = []
+
+    // Step 1: Parse CSV to array of arrays (same as XLSX.utils.sheet_to_json)
+    // This preserves UTF-8 and keeps dates as text strings
+    const rawData = this.csvParser.parseAllRows(fileBuffer)
+
+    if (rawData.length === 0) {
+      return []
+    }
+
+    // Step 2: Determine start row (same logic as XLSX)
+    let startRowIndex = 0
+
+    if (!options.supportMixedSheets && options.detectHeaders) {
+      // Legacy behavior: detect and use first header row
+      const headerDetection = this.detectHeaderRow(rawData)
+
+      if (headerDetection.found) {
+        console.log(`   🔍 Detected headers in row ${headerDetection.rowIndex + 1} (score: ${headerDetection.score})`)
+        startRowIndex = headerDetection.rowIndex
+      } else {
+        console.log(`   ⚠️  No headers detected in CSV, skipping`)
+        return []
+      }
+    } else if (options.supportMixedSheets) {
+      // Mixed sheet mode: include ALL rows from the start
+      console.log(`   🔍 Mixed sheet mode: preserving all ${rawData.length} rows for boundary detection`)
+    }
+
+    // Step 3: Extract rows from start point
+    const allRows = rawData.slice(startRowIndex)
+
+    if (allRows.length === 0) {
+      return []
+    }
+
+    // Step 4: Convert to CSV format (same as XLSX path)
+    const csv = this.convertToCSV(allRows)
+
+    if (csv.trim() === '') {
+      return []
+    }
+
+    sheetsData.push({
+      name: 'Sheet1',
+      csv: csv
+    })
+
+    return sheetsData
+  }
+
+  /**
+   * Extract XLSX data using Excel cell metadata
+   * (Original implementation - preserves dates, numbers, etc.)
+   *
+   * @param workbook - Parsed Excel workbook
+   * @param options - Extraction options
+   * @returns Array of sheet data
+   */
+  private extractXlsxData(
     workbook: XLSX.WorkBook,
     options: SheetExtractionOptions
   ): SheetData[] {

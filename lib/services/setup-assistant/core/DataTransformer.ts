@@ -168,7 +168,7 @@ export class DataTransformer {
       'Concluído': 'completed',
       'Completo': 'completed',
       'Finalizado': 'completed',
-      'Pausado': 'paused',
+      'Pausado': 'active',        // Note: Contracts don't have "paused", map to "active"
       'Cancelado': 'cancelled',
       // Medicina profession statuses
       'Em Tratamento': 'active',      // Medicina: patient in treatment
@@ -524,10 +524,27 @@ export class DataTransformer {
 
   /**
    * Normalize date to ISO-8601 format (YYYY-MM-DD)
-   * Handles multiple formats: DD/MM/YYYY, DD-MMM-YY, YYYY-MM-DD, etc.
+   * Handles multiple formats: DD/MM/YYYY, DD-MMM-YY, YYYY-MM-DD, Excel serial numbers, etc.
    */
-  normalizeDate(dateInput: string | Date): string {
-    if (!dateInput) return new Date().toISOString().substring(0, 10)
+  normalizeDate(dateInput: string | Date | number): string {
+    if (!dateInput && dateInput !== 0) return new Date().toISOString().substring(0, 10)
+
+    // Handle Excel serial numbers (for XLSX files)
+    // Excel stores dates as days since December 30, 1899
+    // Example: 45869 = August 1, 2025
+    if (typeof dateInput === 'number') {
+      const excelEpoch = new Date(1899, 11, 30) // December 30, 1899
+      const milliseconds = excelEpoch.getTime() + (dateInput * 24 * 60 * 60 * 1000)
+      const date = new Date(milliseconds)
+
+      if (!isNaN(date.getTime())) {
+        return date.toISOString().substring(0, 10)
+      }
+
+      // If invalid, fall through to return current date
+      console.log(`   ⚠️  Invalid Excel serial number: ${dateInput}`)
+      return new Date().toISOString().substring(0, 10)
+    }
 
     // If already ISO-8601, return as-is
     if (typeof dateInput === 'string' && /^\d{4}-\d{2}-\d{2}/.test(dateInput)) {

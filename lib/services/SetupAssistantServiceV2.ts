@@ -355,10 +355,15 @@ export class SetupAssistantServiceV2 extends BaseService<any, any, any, any> {
       const phase1Start = Date.now()
 
       const workbook = this.excelParser.parseWorkbook(fileBuffer)
-      const sheetsData = this.excelParser.extractSheetsData(workbook, {
-        supportMixedSheets: this.supportMixedSheets,
-        detectHeaders: true
-      })
+      const sheetsData = this.excelParser.extractSheetsData(
+        workbook,
+        {
+          supportMixedSheets: this.supportMixedSheets,
+          detectHeaders: true
+        },
+        fileType,      // Pass file type for CSV routing
+        fileBuffer     // Pass original buffer for CSV parsing
+      )
 
       metrics.phase1_structure = Date.now() - phase1Start
       console.log(`   ⏱️  Phase 1: ${metrics.phase1_structure}ms`)

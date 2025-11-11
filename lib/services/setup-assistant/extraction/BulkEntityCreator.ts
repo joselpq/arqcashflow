@@ -147,11 +147,11 @@ export class BulkEntityCreator {
       console.log(`   ⚠️  Errors: ${errors.length}`)
       // 🔍 DIAGNOSTIC: Show actual errors
       console.log(`\n   🔍 BULK CREATION ERRORS:`)
-      errors.slice(0, 3).forEach((err, idx) => {
+      errors.slice(0, 50).forEach((err, idx) => {
         console.log(`      ${idx + 1}. ${err}`)
       })
-      if (errors.length > 3) {
-        console.log(`      ... and ${errors.length - 3} more errors`)
+      if (errors.length > 50) {
+        console.log(`      ... and ${errors.length - 50} more errors`)
       }
     }
 
