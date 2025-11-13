@@ -122,11 +122,11 @@ export class ExcelParser {
       return []
     }
 
-    // Step 2: Determine start row (same logic as XLSX)
+    // Step 2: Determine start row - ALWAYS detect headers if requested
     let startRowIndex = 0
 
-    if (!options.supportMixedSheets && options.detectHeaders) {
-      // Legacy behavior: detect and use first header row
+    if (options.detectHeaders) {
+      // Detect and use first header row (even in mixed sheet mode!)
       const headerDetection = this.detectHeaderRow(rawData)
 
       if (headerDetection.found) {
@@ -136,9 +136,11 @@ export class ExcelParser {
         console.log(`   ⚠️  No headers detected in CSV, skipping`)
         return []
       }
-    } else if (options.supportMixedSheets) {
-      // Mixed sheet mode: include ALL rows from the start
-      console.log(`   🔍 Mixed sheet mode: preserving all ${rawData.length} rows for boundary detection`)
+    }
+
+    if (options.supportMixedSheets) {
+      // Mixed sheet mode: preserve all rows AFTER headers (including blanks for boundary detection)
+      console.log(`   🔍 Mixed sheet mode: preserving all ${rawData.length - startRowIndex} rows from row ${startRowIndex + 1}`)
     }
 
     // Step 3: Extract rows from start point
@@ -190,11 +192,11 @@ export class ExcelParser {
 
       if (rawData.length === 0) continue
 
-      // Step 2: Determine start row based on mixed sheet support
+      // Step 2: Determine start row - ALWAYS detect headers if requested
       let startRowIndex = 0
 
-      if (!options.supportMixedSheets && options.detectHeaders) {
-        // Legacy behavior: detect and use first header row
+      if (options.detectHeaders) {
+        // Detect and use first header row (even in mixed sheet mode!)
         const headerDetection = this.detectHeaderRow(rawData)
 
         if (headerDetection.found) {
@@ -204,9 +206,11 @@ export class ExcelParser {
           console.log(`   ⚠️  No headers detected in "${sheetName}", skipping`)
           continue
         }
-      } else if (options.supportMixedSheets) {
-        // Mixed sheet mode: include ALL rows from the start
-        console.log(`   🔍 Mixed sheet mode: preserving all ${rawData.length} rows for boundary detection`)
+      }
+
+      if (options.supportMixedSheets) {
+        // Mixed sheet mode: preserve all rows AFTER headers (including blanks for boundary detection)
+        console.log(`   🔍 Mixed sheet mode: preserving all ${rawData.length - startRowIndex} rows from row ${startRowIndex + 1}`)
       }
 
       // Step 3: Extract ALL rows from start point
@@ -250,12 +254,14 @@ export class ExcelParser {
     let headerRowIndex = -1
     let bestScore = 0
 
-    for (let i = 0; i < Math.min(5, rawData.length); i++) {
+    // Search first 10 rows (increased from 5) to handle sheets with multiple metadata rows
+    for (let i = 0; i < Math.min(10, rawData.length); i++) {
       const row = rawData[i]
       if (!row || row.length === 0) continue
 
       const score = this.scoreAsHeaderRow(row.map(v => String(v || '')))
-      if (score >= 3 && score > bestScore) {
+      // Increased threshold from 3 to 5 to better distinguish headers from metadata
+      if (score >= 5 && score > bestScore) {
         bestScore = score
         headerRowIndex = i
       }

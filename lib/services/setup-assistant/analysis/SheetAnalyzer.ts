@@ -266,12 +266,15 @@ CONTRACTS (${professionConfig.terminology.contracts}):
 
 INSTRUÇÕES DE MAPEAMENTO:
 
-1. MAPEIE TODAS AS COLUNAS (não filtre nada - a validação será feita depois)
+1. Mapeie todas as colunas que representarem um campo do schema
 2. Para cada coluna, identifique:
    - Qual campo do schema ela representa
    - Que tipo de transformação será necessária
 
-3. TIPOS DE TRANSFORMAÇÃO (para o parser determinístico):
+3. Só pode haver uma coluna mapeada para cada campo do schema, escolha a que melhor representa o campo desejado.
+   - A única exceção é para o campo "description", que pode ter múltiplas colunas mapeadas para ele
+
+4. TIPOS DE TRANSFORMAÇÃO (para o parser determinístico):
    - "date": datas em qualquer formato (15/04/2024, 2024-04-15, etc)
    - "currency": valores monetários (R$ 1.500,50, 1500.5, etc)
    - "status": status/estado (Pendente, Pago, Recebido, Ativo, etc)
@@ -279,9 +282,8 @@ INSTRUÇÕES DE MAPEAMENTO:
    - "text": texto simples
    - "number": números inteiros (não monetários, ex: número de parcela)
 
-4. Se uma coluna não corresponde a nenhum campo específico:
+5. Se uma coluna não corresponde a nenhum campo específico:
    - Mapeie para "description" (como informação adicional)
-   - Ou use múltiplas colunas para preencher "description" concatenando informações
 
 FORMATO DE SAÍDA (retorne APENAS JSON válido, SEM "rowTypes"):
 
