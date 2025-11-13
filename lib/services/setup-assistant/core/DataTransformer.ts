@@ -235,6 +235,7 @@ export class DataTransformer {
     mapping: ColumnMapping
   ): any {
     const entity: any = {}
+    const descriptionParts: string[] = []
 
     for (const [csvColumn, config] of Object.entries(mapping)) {
       const rawValue = row[csvColumn]
@@ -243,6 +244,16 @@ export class DataTransformer {
         config.transform,
         config.enumValues
       )
+
+      // Special handling for description field - concatenate all mapped columns
+      if (config.field === 'description') {
+        if (transformedValue !== null && transformedValue !== undefined && transformedValue !== '') {
+          // Convert to string and add to parts array
+          const stringValue = String(transformedValue)
+          descriptionParts.push(`${csvColumn}: ${stringValue}`)
+        }
+        continue // Skip the normal assignment logic
+      }
 
       // Handle duplicate field mappings: prioritize FIRST non-null value
       // Don't overwrite existing non-null values with null
@@ -257,6 +268,11 @@ export class DataTransformer {
         // This handles cases like: "Valor RT" (10285) vs "Valor da Parcela" (null)
       }
       // If currentValue is non-null and transformedValue is null, do nothing (keep current)
+    }
+
+    // Concatenate all description parts with comma separation
+    if (descriptionParts.length > 0) {
+      entity.description = descriptionParts.join(', ')
     }
 
     return entity
