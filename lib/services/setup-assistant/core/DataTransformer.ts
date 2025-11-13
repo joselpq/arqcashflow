@@ -159,9 +159,10 @@ export class DataTransformer {
   /**
    * Transform status/enum value
    * Maps Portuguese terms to English enums
+   * Returns null for unknown statuses (to be inferred in post-processing)
    * @private
    */
-  private transformStatus(cleaned: string, enumValues?: string[]): string {
+  private transformStatus(cleaned: string, enumValues?: string[]): string | null {
     const statusMap: Record<string, string> = {
       // Architecture profession statuses
       'Ativo': 'active',
@@ -209,10 +210,10 @@ export class DataTransformer {
       }
     }
 
-    // FALLBACK: If status is unknown/unmapped, default to 'active' instead of dropping the entity
-    // This prevents data loss from unknown status values in imports
-    console.log(`   ⚠️  Unknown status "${cleaned}" - defaulting to "active"`)
-    return 'active'
+    // FALLBACK: If status is unknown/unmapped, return null so postProcessing can infer
+    // based on entity type (contracts → 'active', receivables → 'pending', expenses → 'pending')
+    console.log(`   ⚠️  Unknown status "${cleaned}" - will be inferred in post-processing`)
+    return null
   }
 
   /**
@@ -366,6 +367,15 @@ export class DataTransformer {
           processed.projectName = processed.clientName
         }
 
+        // VALIDATION: Ensure status is compatible with contracts entity type
+        // Valid contract statuses: 'active', 'completed', 'paused', 'cancelled'
+        // If status is invalid (e.g., 'pending', 'paid', 'received'), reset to undefined for inference
+        const validContractStatuses = ['active', 'completed', 'paused', 'cancelled']
+        if (processed.status && !validContractStatuses.includes(processed.status)) {
+          console.log(`   ⚠️  Invalid contract status "${processed.status}" - defaulting to "active"`)
+          processed.status = undefined
+        }
+
         // Inference: status null → 'active'
         if (!processed.status) {
           processed.status = 'active'
@@ -408,6 +418,15 @@ export class DataTransformer {
           processed.expectedDate = this.normalizeDate(processed.expectedDate)
         }
 
+        // VALIDATION: Ensure status is compatible with receivables entity type
+        // Valid receivable statuses: 'pending', 'received', 'overdue'
+        // If status is invalid (e.g., 'active', 'completed'), reset to undefined for inference
+        const validReceivableStatuses = ['pending', 'received', 'overdue']
+        if (processed.status && !validReceivableStatuses.includes(processed.status)) {
+          console.log(`   ⚠️  Invalid receivable status "${processed.status}" - will be inferred`)
+          processed.status = undefined
+        }
+
         // Inference: status null → based on expectedDate
         if (!processed.status) {
           const expectedDate = new Date(processed.expectedDate)
@@ -422,14 +441,15 @@ export class DataTransformer {
         }
 
         // Inference: if status='received', fill receivedDate and receivedAmount
+        // This happens AFTER expectedDate inference to ensure we have a valid expectedDate
         if (processed.status === 'received') {
           if (!processed.receivedDate) {
-            processed.receivedDate = processed.expectedDate
+            processed.receivedDate = processed.expectedDate  // Use expectedDate if not specified
           } else {
             processed.receivedDate = this.normalizeDate(processed.receivedDate)
           }
           if (!processed.receivedAmount) {
-            processed.receivedAmount = processed.amount
+            processed.receivedAmount = processed.amount  // Assume full amount was received
           }
         }
 
@@ -492,6 +512,15 @@ export class DataTransformer {
           processed.dueDate = this.normalizeDate(processed.dueDate)
         }
 
+        // VALIDATION: Ensure status is compatible with expenses entity type
+        // Valid expense statuses: 'pending', 'paid', 'overdue', 'cancelled'
+        // If status is invalid (e.g., 'active', 'completed', 'received'), reset to undefined for inference
+        const validExpenseStatuses = ['pending', 'paid', 'overdue', 'cancelled']
+        if (processed.status && !validExpenseStatuses.includes(processed.status)) {
+          console.log(`   ⚠️  Invalid expense status "${processed.status}" - will be inferred`)
+          processed.status = undefined
+        }
+
         // Inference: status null → based on dueDate
         if (!processed.status) {
           const dueDate = new Date(processed.dueDate)
@@ -506,14 +535,15 @@ export class DataTransformer {
         }
 
         // Inference: if status='paid', fill paidDate and paidAmount
+        // This happens AFTER dueDate inference to ensure we have a valid dueDate
         if (processed.status === 'paid') {
           if (!processed.paidDate) {
-            processed.paidDate = processed.dueDate
+            processed.paidDate = processed.dueDate  // Use dueDate if not specified
           } else {
             processed.paidDate = this.normalizeDate(processed.paidDate)
           }
           if (!processed.paidAmount) {
-            processed.paidAmount = processed.amount
+            processed.paidAmount = processed.amount  // Assume full amount was paid
           }
         }
 
